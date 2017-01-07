@@ -1,5 +1,9 @@
 package com.faforever.server.entity;
 
+import com.faforever.server.game.GameState;
+import lombok.EqualsAndHashCode;
+import lombok.Setter;
+
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,12 +12,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
 @Table(name = "game_stats")
+@EqualsAndHashCode
+@Setter
 public class Game {
 
   private int id;
@@ -25,15 +31,12 @@ public class Game {
   private String gameName;
   private byte validity;
   private List<GamePlayerStats> playerStats;
+  private GameState gameState;
 
   @Id
   @Column(name = "id")
   public int getId() {
     return id;
-  }
-
-  public void setId(int id) {
-    this.id = id;
   }
 
   @Basic
@@ -42,18 +45,10 @@ public class Game {
     return startTime;
   }
 
-  public void setStartTime(Timestamp startTime) {
-    this.startTime = startTime;
-  }
-
   @Basic
   @Column(name = "gameType")
   public VictoryCondition getVictoryCondition() {
     return victoryCondition;
-  }
-
-  public void setVictoryCondition(VictoryCondition gameType) {
-    this.victoryCondition = gameType;
   }
 
   @Basic
@@ -62,18 +57,10 @@ public class Game {
     return gameMod;
   }
 
-  public void setGameMod(byte gameMod) {
-    this.gameMod = gameMod;
-  }
-
   @ManyToOne
   @JoinColumn(name = "host")
   public Player getHost() {
     return host;
-  }
-
-  public void setHost(Player host) {
-    this.host = host;
   }
 
   @ManyToOne
@@ -82,18 +69,10 @@ public class Game {
     return map;
   }
 
-  public void setMap(MapVersion map) {
-    this.map = map;
-  }
-
   @Basic
   @Column(name = "gameName")
   public String getGameName() {
     return gameName;
-  }
-
-  public void setGameName(String gameName) {
-    this.gameName = gameName;
   }
 
   @Basic
@@ -102,40 +81,13 @@ public class Game {
     return validity;
   }
 
-  public void setValidity(byte validity) {
-    this.validity = validity;
-  }
-
   @OneToMany(mappedBy = "game")
   public List<GamePlayerStats> getPlayerStats() {
     return playerStats;
   }
 
-  public void setPlayerStats(List<GamePlayerStats> playerStats) {
-    this.playerStats = playerStats;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, startTime, victoryCondition, gameMod, host, map, gameName, validity);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Game that = (Game) o;
-    return id == that.id &&
-        gameMod == that.gameMod &&
-        validity == that.validity &&
-        Objects.equals(startTime, that.startTime) &&
-        Objects.equals(victoryCondition, that.victoryCondition) &&
-        Objects.equals(host, that.host) &&
-        Objects.equals(map, that.map) &&
-        Objects.equals(gameName, that.gameName);
+  @Transient
+  public GameState getGameState() {
+    return gameState;
   }
 }

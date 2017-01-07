@@ -1,12 +1,14 @@
 package com.faforever.server.config;
 
 import com.faforever.server.integration.ChannelNames;
-import com.faforever.server.legacyadapter.LegacyRequestTransformer;
-import com.faforever.server.legacyadapter.LegacyResponseTransformer;
+import com.faforever.server.integration.legacy.transformer.LegacyRequestTransformer;
+import com.faforever.server.integration.legacy.transformer.LegacyResponseTransformer;
 import com.google.common.collect.ImmutableMap;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.Transformers;
@@ -15,7 +17,6 @@ import org.springframework.integration.ip.tcp.connection.TcpNioServerConnectionF
 import org.springframework.integration.ip.tcp.serializer.ByteArrayLengthHeaderSerializer;
 import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.integration.transformer.GenericTransformer;
-import org.springframework.messaging.MessageChannel;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -27,16 +28,14 @@ import static org.springframework.messaging.MessageHeaders.REPLY_CHANNEL;
 @Configuration
 public class LegacyAdapterConfig {
 
-  private final MessageChannel errorChannel;
+  static final String ORIGIN_HEADER = "legacy";
   private final FafServerProperties fafServerProperties;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
-  /**
-   * @param errorChannel the channel to send any errors to
-   */
   @Inject
-  public LegacyAdapterConfig(MessageChannel errorChannel, FafServerProperties fafServerProperties) {
-    this.errorChannel = errorChannel;
+  public LegacyAdapterConfig(FafServerProperties fafServerProperties, ApplicationEventPublisher applicationEventPublisher) {
     this.fafServerProperties = fafServerProperties;
+    this.applicationEventPublisher = applicationEventPublisher;
   }
 
   /**
@@ -47,17 +46,17 @@ public class LegacyAdapterConfig {
     TcpInboundGateway tcpInboundGateway = new TcpInboundGateway();
     tcpInboundGateway.setConnectionFactory(tcpServerConnectionFactory());
     tcpInboundGateway.setRequestChannel(new DirectChannel());
-    tcpInboundGateway.setErrorChannel(errorChannel);
+    tcpInboundGateway.setErrorChannelName(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME);
     return tcpInboundGateway;
   }
-
 
   /**
    * Non-blocking TCP connection factory that deserializes into byte array messages.
    */
   private TcpNioServerConnectionFactory tcpServerConnectionFactory() {
     ByteArrayLengthHeaderSerializer serializer = new ByteArrayLengthHeaderSerializer();
-    serializer.setMaxMessageSize(4096);
+    serializer.setMaxMessageSize(100 * 1024);
+    serializer.setApplicationEventPublisher(applicationEventPublisher);
 
     TcpNioServerConnectionFactory tcpNioServerConnectionFactory = new TcpNioServerConnectionFactory(fafServerProperties.getPort());
     tcpNioServerConnectionFactory.setDeserializer(serializer);
@@ -76,7 +75,7 @@ public class LegacyAdapterConfig {
       .transform(legacyByteArrayToStringTransformer())
       .transform(Transformers.fromJson(HashMap.class))
       .transform(new LegacyRequestTransformer())
-      .enrichHeaders(ImmutableMap.of("legacy", true))
+      .enrichHeaders(ImmutableMap.of(ORIGIN_HEADER, true))
       .channel(ChannelNames.CLIENT_INBOUND)
       .get();
   }

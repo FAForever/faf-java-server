@@ -51,7 +51,7 @@ This project uses:
 * [Gradle](https://gradle.org/) as a build automation tool
 * [Docker](https://www.docker.com/) to deploy and run the application
 
-
 ## Learn
 
 Learn about Spring Integration: https://www.youtube.com/watch?v=icIosLjHu3I&list=PLr2Nvl0YJxI5-QasO8XY5m8Fy34kG-YF2
+

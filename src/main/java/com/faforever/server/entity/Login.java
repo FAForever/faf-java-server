@@ -1,5 +1,7 @@
 package com.faforever.server.entity;
 
+import lombok.EqualsAndHashCode;
+
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;

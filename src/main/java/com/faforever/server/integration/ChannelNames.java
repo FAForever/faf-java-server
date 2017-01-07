@@ -1,13 +1,14 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.request.AskSessionRequest;
-import com.faforever.server.request.AvatarRequest;
+import com.faforever.server.integration.request.UpdateGameStateRequest;
+import com.faforever.server.integration.session.AskSessionRequest;
+import com.faforever.server.avatar.AvatarRequest;
 import com.faforever.server.request.ClientRequest;
-import com.faforever.server.request.HostGameRequest;
-import com.faforever.server.request.JoinGameRequest;
-import com.faforever.server.request.LoginRequest;
-import com.faforever.server.request.SocialAddRequest;
-import com.faforever.server.request.SocialRemoveRequest;
+import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.integration.request.JoinGameRequest;
+import com.faforever.server.security.LoginRequest;
+import com.faforever.server.social.SocialAddRequest;
+import com.faforever.server.social.SocialRemoveRequest;
 import com.faforever.server.response.ServerResponse;
 
 public class ChannelNames {
@@ -15,7 +16,7 @@ public class ChannelNames {
   /**
    * Channel for {@link JoinGameRequest JoinGameRequests}
    */
-  public static final String JOIN_GAME = "joinGameRequest";
+  public static final String JOIN_GAME_REQUEST = "joinGameRequest";
 
   /**
    * Channel for {@link LoginRequest}.
@@ -25,12 +26,12 @@ public class ChannelNames {
   /**
    * Channel for outbound client messages. The payload of messages in this channel is {@link ServerResponse}.
    */
-  public static final String CLIENT_OUTBOUND = "clientResponse";
+  public static final String CLIENT_OUTBOUND = "clientOutbound";
 
   /**
    * Channel for inbound client messages. The payload of messages in this channel is {@link ClientRequest}.
    */
-  public static final String CLIENT_INBOUND = "client.request";
+  public static final String CLIENT_INBOUND = "clientInbound";
 
   /**
    * Channel for {@link AskSessionRequest}.
@@ -40,7 +41,7 @@ public class ChannelNames {
   /**
    * Channel for outbound legacy messages. The payload of messages in this channel is {@code Map<String, Serializable>}.
    */
-  public static final String LEGACY_OUTBOUND = "client.legacy.outbound";
+  public static final String LEGACY_OUTBOUND = "legacyOutbound";
 
   /**
    * Channel for {@link AvatarRequest}.
@@ -61,4 +62,9 @@ public class ChannelNames {
    * Channel for {@link HostGameRequest}.
    */
   public static final String HOST_GAME_REQUEST = "hostGameRequest";
+
+  /**
+   * Channel for {@link UpdateGameStateRequest}.
+   */
+  public static final String UPDATE_GAME_STATE_REQUEST = "updateGameStateRequest";
 }

@@ -1,0 +1,10 @@
+spring:
+  jackson:
+      serialization.indent_output: true
+  datasource:
+    url: jdbc:mysql://${DATABASE_ADDRESS:192.168.99.100}/${DATABASE_NAME:faf_lobby}?useSSL=false
+    name: faf_lobby
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:banana}
+  jpa:
+    show-sql: true
