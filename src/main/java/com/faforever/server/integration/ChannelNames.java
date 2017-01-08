@@ -1,15 +1,17 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.integration.request.UpdateGameStateRequest;
-import com.faforever.server.integration.session.AskSessionRequest;
 import com.faforever.server.avatar.AvatarRequest;
-import com.faforever.server.request.ClientRequest;
+import com.faforever.server.entity.Game;
+import com.faforever.server.entity.Player;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.integration.request.JoinGameRequest;
+import com.faforever.server.integration.request.UpdateGameStateRequest;
+import com.faforever.server.integration.session.AskSessionRequest;
+import com.faforever.server.request.ClientRequest;
+import com.faforever.server.response.ServerResponse;
 import com.faforever.server.security.LoginRequest;
 import com.faforever.server.social.SocialAddRequest;
 import com.faforever.server.social.SocialRemoveRequest;
-import com.faforever.server.response.ServerResponse;
 
 public class ChannelNames {
 
@@ -67,4 +69,14 @@ public class ChannelNames {
    * Channel for {@link UpdateGameStateRequest}.
    */
   public static final String UPDATE_GAME_STATE_REQUEST = "updateGameStateRequest";
+
+  /**
+   * Channel for dirty {@link Game Games} which need to be broadcasted to connected clients.
+   */
+  public static final String DIRTY_GAMES = "dirtyGames";
+
+  /**
+   * Channel for dirty {@link Player Players} which need to be broadcasted to connected clients.
+   */
+  public static final String DIRTY_PLAYERS = "dirtyPlayers";
 }

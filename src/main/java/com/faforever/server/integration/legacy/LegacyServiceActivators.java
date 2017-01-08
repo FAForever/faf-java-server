@@ -5,7 +5,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.legacy.dto.LoginResponse;
 import com.faforever.server.integration.legacy.dto.SessionResponse;
-import com.faforever.server.integration.session.Session;
+import com.faforever.server.integration.session.ClientConnection;
 import com.faforever.server.integration.session.SessionManager;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.LoginRequest;
@@ -19,7 +19,7 @@ import org.springframework.security.core.Authentication;
 
 import javax.inject.Inject;
 
-import static com.faforever.server.integration.session.Session.SESSION;
+import static com.faforever.server.integration.session.ClientConnection.CLIENT_CONNECTION;
 
 @MessageEndpoint
 public class LegacyServiceActivators {
@@ -33,18 +33,18 @@ public class LegacyServiceActivators {
     this.sessionManager = sessionManager;
   }
 
-  @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.LEGACY_OUTBOUND)
+  @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
   public SessionResponse askSession() {
     return SessionResponse.INSTANCE;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
-  public LoginResponse loginRequest(LoginRequest loginRequest, @Header(SESSION) Session session) {
+  public LoginResponse loginRequest(LoginRequest loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     try {
       Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword()));
       FafUserDetails userDetails = (FafUserDetails) authentication.getPrincipal();
 
-      session.setUserDetails(userDetails);
+      clientConnection.setUserDetails(userDetails);
 
       return new LoginResponse(userDetails);
     } catch (BadCredentialsException e) {

@@ -2,7 +2,9 @@ package com.faforever.server.entity;
 
 import com.faforever.server.game.GameState;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -19,7 +21,9 @@ import java.util.List;
 @Entity
 @Table(name = "game_stats")
 @EqualsAndHashCode
+@NoArgsConstructor
 @Setter
+@ToString
 public class Game {
 
   private int id;
@@ -32,6 +36,10 @@ public class Game {
   private byte validity;
   private List<GamePlayerStats> playerStats;
   private GameState gameState;
+
+  public Game(int id) {
+    this.id = id;
+  }
 
   @Id
   @Column(name = "id")

@@ -3,6 +3,7 @@ package com.faforever.server.security;
 import com.faforever.server.entity.BanDetails;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
+import lombok.ToString;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.sql.Timestamp;
@@ -10,6 +11,7 @@ import java.time.Instant;
 
 import static java.util.Collections.singletonList;
 
+@ToString
 public class FafUserDetails extends org.springframework.security.core.userdetails.User {
 
   private final User user;

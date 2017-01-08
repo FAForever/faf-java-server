@@ -59,7 +59,7 @@ jacocoTestReport {
   }
 }
 
-// DOCKER
+// DOCKER & APPLICATION
 
 apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: 'application'
@@ -69,6 +69,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 import com.bmuschko.gradle.docker.DockerRemoteApiPlugin
 
 applicationName = rootProject.name
+applicationDistribution.exclude("**/spring-boot-devtools*.jar")
 docker {
   if (project.hasProperty('dockerHost')) {
     url = dockerHost
@@ -138,6 +139,7 @@ dependencies {
   compile("org.springframework:spring-context-support")
   compile("org.springframework.integration:spring-integration-ip")
   compile("org.springframework.integration:spring-integration-security")
+  compile("org.springframework.boot:spring-boot-devtools")
 
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
   compile("com.google.guava:guava:${guavaVersion}")

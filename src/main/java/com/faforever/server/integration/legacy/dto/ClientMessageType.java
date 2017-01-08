@@ -14,6 +14,7 @@ public enum ClientMessageType {
   SOCIAL_REMOVE("social_remove"),
   LOGIN("hello"),
   GAME_MATCH_MAKING("game_matchmaking"),
+  GAME_STATE("GameState"),
   AVATAR("avatar");
 
   private static Map<String, ClientMessageType> fromString;

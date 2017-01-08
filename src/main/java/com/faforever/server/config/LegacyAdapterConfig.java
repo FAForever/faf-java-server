@@ -1,21 +1,26 @@
 package com.faforever.server.config;
 
 import com.faforever.server.integration.ChannelNames;
+import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.legacy.transformer.LegacyRequestTransformer;
 import com.faforever.server.integration.legacy.transformer.LegacyResponseTransformer;
+import com.faforever.server.integration.session.ClientConnection;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.context.IntegrationContextUtils;
+import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.support.Consumer;
 import org.springframework.integration.dsl.support.Transformers;
+import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.ip.tcp.TcpInboundGateway;
+import org.springframework.integration.ip.tcp.TcpSendingMessageHandler;
 import org.springframework.integration.ip.tcp.connection.TcpNioServerConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayLengthHeaderSerializer;
-import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.integration.transformer.GenericTransformer;
 
 import javax.inject.Inject;
@@ -23,12 +28,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
-import static org.springframework.messaging.MessageHeaders.REPLY_CHANNEL;
-
 @Configuration
 public class LegacyAdapterConfig {
 
-  static final String ORIGIN_HEADER = "legacy";
   private final FafServerProperties fafServerProperties;
   private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -48,6 +50,17 @@ public class LegacyAdapterConfig {
     tcpInboundGateway.setRequestChannel(new DirectChannel());
     tcpInboundGateway.setErrorChannelName(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME);
     return tcpInboundGateway;
+  }
+
+  /**
+   * Message handler which sends messages to one or more connected clients.
+   */
+  @Bean
+  public TcpSendingMessageHandler tcpSendingMessageHandler() {
+    TcpSendingMessageHandler tcpSendingMessageHandler = new TcpSendingMessageHandler();
+    tcpSendingMessageHandler.setConnectionFactory(tcpServerConnectionFactory());
+    tcpSendingMessageHandler.setStatsEnabled(true);
+    return tcpSendingMessageHandler;
   }
 
   /**
@@ -75,7 +88,7 @@ public class LegacyAdapterConfig {
       .transform(legacyByteArrayToStringTransformer())
       .transform(Transformers.fromJson(HashMap.class))
       .transform(new LegacyRequestTransformer())
-      .enrichHeaders(ImmutableMap.of(ORIGIN_HEADER, true))
+      .enrichHeaders(ImmutableMap.of("protocol", Protocol.LEGACY_UTF_16))
       .channel(ChannelNames.CLIENT_INBOUND)
       .get();
   }
@@ -91,7 +104,7 @@ public class LegacyAdapterConfig {
       .transform(new LegacyResponseTransformer())
       .transform(Transformers.toJson())
       .transform(stringToLegacyByteArrayTransformer())
-      .route(new HeaderValueRouter(REPLY_CHANNEL))
+      .enrichHeaders(connectionIdEnricher())
       .get();
   }
 
@@ -107,5 +120,14 @@ public class LegacyAdapterConfig {
 
   private GenericTransformer<byte[], String> legacyByteArrayToStringTransformer() {
     return source -> new String(source, Integer.BYTES, source.length - Integer.BYTES, StandardCharsets.UTF_16BE);
+  }
+
+  private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
+    return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
+      if (message.getHeaders().getReplyChannel() == null) {
+        return ImmutableMap.of(IpHeaders.CONNECTION_ID, (message.getHeaders().get(ClientConnection.CLIENT_CONNECTION, ClientConnection.class)).getId());
+      }
+      return ImmutableMap.of();
+    });
   }
 }

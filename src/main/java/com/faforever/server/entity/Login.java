@@ -1,6 +1,7 @@
 package com.faforever.server.entity;
 
-import lombok.EqualsAndHashCode;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -13,6 +14,8 @@ import javax.persistence.OneToOne;
 
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.JOINED)
+@ToString(includeFieldNames = false, of = {"id", "login"})
+@Setter
 public abstract class Login {
 
   private int id;
@@ -29,18 +32,10 @@ public abstract class Login {
     return id;
   }
 
-  public void setId(int id) {
-    this.id = id;
-  }
-
   @Basic
   @Column(name = "login")
   public String getLogin() {
     return login;
-  }
-
-  public void setLogin(String login) {
-    this.login = login;
   }
 
   @Basic
@@ -49,18 +44,10 @@ public abstract class Login {
     return eMail;
   }
 
-  public void setEMail(String eMail) {
-    this.eMail = eMail;
-  }
-
   @Basic
   @Column(name = "steamid")
   public String getSteamId() {
     return steamId;
-  }
-
-  public void setSteamId(String steamId) {
-    this.steamId = steamId;
   }
 
   @Basic
@@ -69,26 +56,14 @@ public abstract class Login {
     return userAgent;
   }
 
-  public void setUserAgent(String userAgent) {
-    this.userAgent = userAgent;
-  }
-
   @OneToOne(mappedBy = "player")
   public BanDetails getBanDetails() {
     return banDetails;
-  }
-
-  public void setBanDetails(BanDetails banDetails) {
-    this.banDetails = banDetails;
   }
 
   @Basic
   @Column(name = "ip")
   public String getIp() {
     return ip;
-  }
-
-  public void setIp(String ip) {
-    this.ip = ip;
   }
 }

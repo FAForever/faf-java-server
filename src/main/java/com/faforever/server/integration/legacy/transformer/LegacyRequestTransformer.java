@@ -1,20 +1,23 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.error.ProgrammingError;
-import com.faforever.server.integration.legacy.dto.ClientMessageType;
-import com.faforever.server.integration.session.AskSessionRequest;
 import com.faforever.server.avatar.AvatarRequest;
-import com.faforever.server.request.ClientRequest;
+import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameAccess;
+import com.faforever.server.game.GameState;
 import com.faforever.server.game.GameVisibility;
+import com.faforever.server.integration.legacy.dto.ClientMessageType;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.integration.request.JoinGameRequest;
-import com.faforever.server.security.LoginRequest;
+import com.faforever.server.integration.request.UpdateGameStateRequest;
+import com.faforever.server.integration.session.AskSessionRequest;
 import com.faforever.server.matchmaker.MatchmakerRequest;
+import com.faforever.server.request.ClientRequest;
+import com.faforever.server.security.LoginRequest;
 import com.faforever.server.social.SocialAddRequest;
 import com.faforever.server.social.SocialRemoveRequest;
 import org.springframework.integration.transformer.GenericTransformer;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -54,7 +57,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new MatchmakerRequest();
       case AVATAR:
         return new AvatarRequest();
-
+      case GAME_STATE:
+        return new UpdateGameStateRequest(GameState.fromString(((ArrayList<String>) source.get("args")).get(0)));
       default:
         throw new ProgrammingError("Uncovered command: " + command);
     }

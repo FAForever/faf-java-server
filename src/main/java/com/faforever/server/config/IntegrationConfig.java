@@ -4,11 +4,12 @@ import com.faforever.server.avatar.AvatarRequest;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.integration.ChannelNames;
+import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.integration.request.JoinGameRequest;
 import com.faforever.server.integration.request.UpdateGameStateRequest;
 import com.faforever.server.integration.session.AskSessionRequest;
-import com.faforever.server.integration.session.Session;
+import com.faforever.server.integration.session.ClientConnection;
 import com.faforever.server.integration.session.SessionManager;
 import com.faforever.server.security.LoginRequest;
 import com.faforever.server.social.SocialAddRequest;
@@ -36,10 +37,11 @@ import org.springframework.messaging.MessageHandlingException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.faforever.server.integration.session.ClientConnection.CLIENT_CONNECTION;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
-@IntegrationComponentScan
+@IntegrationComponentScan("com.faforever.server.integration")
 public class IntegrationConfig {
 
   private final SessionManager sessionManager;
@@ -97,10 +99,12 @@ public class IntegrationConfig {
     return new AbstractMappingMessageRouter() {
       @Override
       protected List<Object> getChannelKeys(Message<?> message) {
-        if (message.getHeaders().containsKey("legacy")) {
-          return Collections.singletonList(ChannelNames.LEGACY_OUTBOUND);
+        switch (((ClientConnection) message.getHeaders().get(CLIENT_CONNECTION)).getProtocol()) {
+          case LEGACY_UTF_16:
+            return Collections.singletonList(ChannelNames.LEGACY_OUTBOUND);
+          default:
+            throw new UnsupportedOperationException("Only legacy outbound route is currently specified");
         }
-        throw new UnsupportedOperationException("Only legacy outbound route is specified");
       }
     };
   }
@@ -148,22 +152,21 @@ public class IntegrationConfig {
 
         MessageBuilder<ErrorResponse> builder = MessageBuilder.withPayload(new ErrorResponse(cause.getErrorCode()))
           .copyHeaders(message.getHeaders());
-        if (failedMessage.getHeaders().containsKey(LegacyAdapterConfig.ORIGIN_HEADER)) {
-          builder.setHeader(LegacyAdapterConfig.ORIGIN_HEADER, true);
-        }
-
+        builder.setHeader(CLIENT_CONNECTION, failedMessage.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class));
         return builder.build();
       }
     };
   }
 
   /**
-   * Adds the {@link Session} to the message's header, using the correlationId header as a session ID.
+   * Adds an existing or new {@link ClientConnection} to the message's header, using the correlationId header as a
+   * session ID.
    */
   private Consumer<HeaderEnricherSpec> sessionHeaderEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
       String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
-      return ImmutableMap.of(Session.SESSION, sessionManager.obtainSession(sessionId));
+      Protocol protocol = (Protocol) message.getHeaders().get("protocol");
+      return ImmutableMap.of(CLIENT_CONNECTION, sessionManager.obtainSession(sessionId, protocol));
     });
   }
 }

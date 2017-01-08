@@ -6,3 +6,8 @@ spring:
     password: ${DATABASE_PASSWORD}
   jpa:
     show-sql: false
+
+logging:
+  level:
+    org.springframework: warn
+    com.faforever.server: info

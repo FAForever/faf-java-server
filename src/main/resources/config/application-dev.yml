@@ -8,3 +8,9 @@ spring:
     password: ${DATABASE_PASSWORD:banana}
   jpa:
     show-sql: true
+
+logging:
+  level:
+    org.springframework: warn
+    com.faforever.server: debug
+

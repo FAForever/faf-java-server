@@ -1,5 +1,6 @@
 package com.faforever.server.integration.session;
 
+import com.faforever.server.integration.Protocol;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -11,14 +12,14 @@ public class SessionManager {
   /**
    * Sessions by ID.
    */
-  private final Map<String, Session> sessions;
+  private final Map<String, ClientConnection> sessions;
 
   public SessionManager() {
     sessions = new ConcurrentHashMap<>();
   }
 
-  public Session obtainSession(String sessionId) {
-    sessions.computeIfAbsent(sessionId, Session::new);
+  public ClientConnection obtainSession(String sessionId, Protocol protocol) {
+    sessions.computeIfAbsent(sessionId, id -> new ClientConnection(id, protocol));
     return sessions.get(sessionId);
   }
 }
