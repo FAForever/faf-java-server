@@ -1,1 +1,0 @@
-ALTER TABLE `login` ADD COLUMN `user_agent` VARCHAR(50);
