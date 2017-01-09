@@ -47,7 +47,8 @@ public class Game {
   private String gameName;
 
   @Column(name = "validity")
-  private byte validity;
+  @Enumerated(EnumType.ORDINAL)
+  private GameValidity validity;
 
   @OneToMany(mappedBy = "game")
   private List<GamePlayerStats> playerStats;

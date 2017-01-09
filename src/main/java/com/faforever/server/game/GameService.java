@@ -4,6 +4,7 @@ import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.Player;
+import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
@@ -13,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -113,6 +117,9 @@ public class GameService {
     } else {
       log.trace("Updating game option for game '{}': '{}' = '{}'", game.getId(), key, value);
       game.getOptions().put(key, value);
+      if (VictoryCondition.GAME_OPTION_NAME.equals(key)) {
+        game.setVictoryCondition(VictoryCondition.fromString((String) value));
+      }
     }
   }
 
