@@ -1,7 +1,7 @@
 package com.faforever.server.player;
 
 import com.faforever.server.entity.Player;
-import com.faforever.server.integration.session.ClientConnection;
+import com.faforever.server.client.ClientConnection;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlayerService {
 
   private final List<Player> players;
-  private final Map<Integer, ClientConnection> sessionsByPlayerId;
 
   public PlayerService() {
     players = new ArrayList<>();
-    sessionsByPlayerId = new ConcurrentHashMap<>();
   }
 
   @EventListener

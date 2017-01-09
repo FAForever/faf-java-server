@@ -7,6 +7,7 @@ public enum GameState {
   IDLE("Idle"),
   LOBBY("Lobby"),
   PLAYING("Playing"),
+  LAUNCHING("Launching"),
   ENDED("Ended");
 
   private static final Map<String, GameState> fromString;

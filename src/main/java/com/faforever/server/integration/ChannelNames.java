@@ -79,4 +79,24 @@ public class ChannelNames {
    * Channel for dirty {@link Player Players} which need to be broadcasted to connected clients.
    */
   public static final String DIRTY_PLAYERS = "dirtyPlayers";
+
+  /**
+   * Channel for {@link com.faforever.server.game.GameOptionRequest}.
+   */
+  public static final String GAME_OPTION_REQUEST = "gameOptionRequest";
+
+  /**
+   * Channel for {@link com.faforever.server.game.PlayerOptionRequest}.
+   */
+  public static final String PLAYER_OPTION_REQUEST = "playerOptionRequest";
+
+  /**
+   * Channel for {@link com.faforever.server.game.ClearSlotRequest}.
+   */
+  public static final String CLEAR_SLOT_REQUEST = "clearSlotRequest";
+
+  /**
+   * Channel for {@link com.faforever.server.game.AiOptionRequest}.
+   */
+  public static final String AI_OPTION_REQUEST = "aiOptionRequest";
 }

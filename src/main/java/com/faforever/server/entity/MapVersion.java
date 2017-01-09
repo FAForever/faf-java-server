@@ -1,5 +1,10 @@
 package com.faforever.server.entity;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Immutable;
+
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,154 +15,43 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "map_version")
+@Immutable
+@EqualsAndHashCode
+@Getter
 public class MapVersion {
-
-  private Integer id;
-  private String description;
-  private Integer maxPlayers;
-  private int width;
-  private int height;
-  private int version;
-  private String filename;
-  private byte ranked;
-  private byte hidden;
-  private Timestamp createTime;
-  private Timestamp updateTime;
 
   @Id
   @Column(name = "id")
-  public Integer getId() {
-    return id;
-  }
+  private int id;
 
-  public void setId(Integer id) {
-    this.id = id;
-  }
-
-  @Basic
   @Column(name = "description")
-  public String getDescription() {
-    return description;
-  }
+  private String description;
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  @Basic
   @Column(name = "max_players")
-  public Integer getMaxPlayers() {
-    return maxPlayers;
-  }
+  private Integer maxPlayers;
 
-  public void setMaxPlayers(Integer maxPlayers) {
-    this.maxPlayers = maxPlayers;
-  }
-
-  @Basic
   @Column(name = "width")
-  public int getWidth() {
-    return width;
-  }
+  private int width;
 
-  public void setWidth(int width) {
-    this.width = width;
-  }
-
-  @Basic
   @Column(name = "height")
-  public int getHeight() {
-    return height;
-  }
+  private int height;
 
-  public void setHeight(int height) {
-    this.height = height;
-  }
-
-  @Basic
   @Column(name = "version")
-  public int getVersion() {
-    return version;
-  }
+  private int version;
 
-  public void setVersion(int version) {
-    this.version = version;
-  }
-
-  @Basic
   @Column(name = "filename")
-  public String getFilename() {
-    return filename;
-  }
+  private String filename;
 
-  public void setFilename(String filename) {
-    this.filename = filename;
-  }
-
-  @Basic
   @Column(name = "ranked")
-  public byte getRanked() {
-    return ranked;
-  }
+  private byte ranked;
 
-  public void setRanked(byte ranked) {
-    this.ranked = ranked;
-  }
-
-  @Basic
   @Column(name = "hidden")
-  public byte getHidden() {
-    return hidden;
-  }
+  private byte hidden;
 
-  public void setHidden(byte hidden) {
-    this.hidden = hidden;
-  }
-
-  @Basic
   @Column(name = "create_time")
-  public Timestamp getCreateTime() {
-    return createTime;
-  }
+  private Timestamp createTime;
 
-  public void setCreateTime(Timestamp createTime) {
-    this.createTime = createTime;
-  }
-
-  @Basic
   @Column(name = "update_time")
-  public Timestamp getUpdateTime() {
-    return updateTime;
-  }
+  private Timestamp updateTime;
 
-  public void setUpdateTime(Timestamp updateTime) {
-    this.updateTime = updateTime;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, description, maxPlayers, width, height, version, filename, ranked, hidden, createTime, updateTime);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    MapVersion that = (MapVersion) o;
-    return width == that.width &&
-        height == that.height &&
-        version == that.version &&
-        ranked == that.ranked &&
-        hidden == that.hidden &&
-        Objects.equals(id, that.id) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(maxPlayers, that.maxPlayers) &&
-        Objects.equals(filename, that.filename) &&
-        Objects.equals(createTime, that.createTime) &&
-        Objects.equals(updateTime, that.updateTime);
-  }
 }

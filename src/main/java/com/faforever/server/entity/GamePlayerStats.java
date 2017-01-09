@@ -2,13 +2,7 @@ package com.faforever.server.entity;
 
 import org.hibernate.annotations.Immutable;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -34,6 +28,7 @@ public class GamePlayerStats {
 
   @Id
   @Column(name = "id")
+  @GeneratedValue
   public long getId() {
     return id;
   }
@@ -187,18 +182,18 @@ public class GamePlayerStats {
     }
     GamePlayerStats that = (GamePlayerStats) o;
     return id == that.id &&
-        ai == that.ai &&
-        faction == that.faction &&
-        color == that.color &&
-        team == that.team &&
-        place == that.place &&
-        score == that.score &&
-        Objects.equals(game, that.game) &&
-        Objects.equals(player, that.player) &&
-        Objects.equals(mean, that.mean) &&
-        Objects.equals(deviation, that.deviation) &&
-        Objects.equals(afterMean, that.afterMean) &&
-        Objects.equals(afterDeviation, that.afterDeviation) &&
-        Objects.equals(scoreTime, that.scoreTime);
+      ai == that.ai &&
+      faction == that.faction &&
+      color == that.color &&
+      team == that.team &&
+      place == that.place &&
+      score == that.score &&
+      Objects.equals(game, that.game) &&
+      Objects.equals(player, that.player) &&
+      Objects.equals(mean, that.mean) &&
+      Objects.equals(deviation, that.deviation) &&
+      Objects.equals(afterMean, that.afterMean) &&
+      Objects.equals(afterDeviation, that.afterDeviation) &&
+      Objects.equals(scoreTime, that.scoreTime);
   }
 }

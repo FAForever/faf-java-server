@@ -1,12 +1,11 @@
 package com.faforever.server.integration.legacy;
 
+import com.faforever.server.client.ClientConnection;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.legacy.dto.LoginResponse;
 import com.faforever.server.integration.legacy.dto.SessionResponse;
-import com.faforever.server.integration.session.ClientConnection;
-import com.faforever.server.integration.session.SessionManager;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.LoginRequest;
 import org.springframework.integration.annotation.MessageEndpoint;
@@ -19,18 +18,16 @@ import org.springframework.security.core.Authentication;
 
 import javax.inject.Inject;
 
-import static com.faforever.server.integration.session.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
 
 @MessageEndpoint
 public class LegacyServiceActivators {
 
   private final AuthenticationManager authenticationManager;
-  private final SessionManager sessionManager;
 
   @Inject
-  public LegacyServiceActivators(AuthenticationManager authenticationManager, SessionManager sessionManager) {
+  public LegacyServiceActivators(AuthenticationManager authenticationManager) {
     this.authenticationManager = authenticationManager;
-    this.sessionManager = sessionManager;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
@@ -45,6 +42,7 @@ public class LegacyServiceActivators {
       FafUserDetails userDetails = (FafUserDetails) authentication.getPrincipal();
 
       clientConnection.setUserDetails(userDetails);
+      userDetails.getPlayer().setClientConnection(clientConnection);
 
       return new LoginResponse(userDetails);
     } catch (BadCredentialsException e) {

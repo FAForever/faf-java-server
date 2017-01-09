@@ -1,15 +1,19 @@
 package com.faforever.server.config;
 
 import com.faforever.server.avatar.AvatarRequest;
+import com.faforever.server.client.ClientConnection;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.error.RequestException;
+import com.faforever.server.game.AiOptionRequest;
+import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.GameOptionRequest;
+import com.faforever.server.game.PlayerOptionRequest;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.integration.request.JoinGameRequest;
 import com.faforever.server.integration.request.UpdateGameStateRequest;
 import com.faforever.server.integration.session.AskSessionRequest;
-import com.faforever.server.integration.session.ClientConnection;
 import com.faforever.server.integration.session.SessionManager;
 import com.faforever.server.security.LoginRequest;
 import com.faforever.server.social.SocialAddRequest;
@@ -25,6 +29,7 @@ import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.Consumer;
+import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.router.AbstractMappingMessageRouter;
 import org.springframework.integration.router.AbstractMessageRouter;
 import org.springframework.integration.router.PayloadTypeRouter;
@@ -37,7 +42,7 @@ import org.springframework.messaging.MessageHandlingException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.faforever.server.integration.session.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
@@ -99,7 +104,7 @@ public class IntegrationConfig {
     return new AbstractMappingMessageRouter() {
       @Override
       protected List<Object> getChannelKeys(Message<?> message) {
-        switch (((ClientConnection) message.getHeaders().get(CLIENT_CONNECTION)).getProtocol()) {
+        switch (message.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class).getProtocol()) {
           case LEGACY_UTF_16:
             return Collections.singletonList(ChannelNames.LEGACY_OUTBOUND);
           default:
@@ -117,6 +122,10 @@ public class IntegrationConfig {
     payloadTypeRouter.setChannelMapping(HostGameRequest.class.getName(), ChannelNames.HOST_GAME_REQUEST);
     payloadTypeRouter.setChannelMapping(JoinGameRequest.class.getName(), ChannelNames.JOIN_GAME_REQUEST);
     payloadTypeRouter.setChannelMapping(UpdateGameStateRequest.class.getName(), ChannelNames.UPDATE_GAME_STATE_REQUEST);
+    payloadTypeRouter.setChannelMapping(GameOptionRequest.class.getName(), ChannelNames.GAME_OPTION_REQUEST);
+    payloadTypeRouter.setChannelMapping(PlayerOptionRequest.class.getName(), ChannelNames.PLAYER_OPTION_REQUEST);
+    payloadTypeRouter.setChannelMapping(ClearSlotRequest.class.getName(), ChannelNames.CLEAR_SLOT_REQUEST);
+    payloadTypeRouter.setChannelMapping(AiOptionRequest.class.getName(), ChannelNames.AI_OPTION_REQUEST);
     payloadTypeRouter.setChannelMapping(LoginRequest.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
     payloadTypeRouter.setChannelMapping(AskSessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
     payloadTypeRouter.setChannelMapping(AvatarRequest.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);

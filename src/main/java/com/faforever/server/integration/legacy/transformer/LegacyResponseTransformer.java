@@ -1,9 +1,10 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.legacy.dto.LoginResponse;
 import com.faforever.server.integration.legacy.dto.SessionResponse;
 import com.faforever.server.error.ErrorResponse;
-import com.faforever.server.integration.response.LaunchGameResponse;
+import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.response.ServerResponse;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
@@ -21,10 +22,11 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerRespo
 
   public LegacyResponseTransformer() {
     transformers = ImmutableMap.<Class<? extends ServerResponse>, GenericTransformer<? extends ServerResponse, Map<String, Serializable>>>builder()
-      .put(LaunchGameResponse.class, LaunchGameResponseTransformer.INSTANCE)
+      .put(StartGameProcessResponse.class, LaunchGameResponseTransformer.INSTANCE)
       .put(SessionResponse.class, SessionResponseTransformer.INSTANCE)
       .put(LoginResponse.class, LoginResponseTransformer.INSTANCE)
       .put(ErrorResponse.class, ErrorResponseTransformer.INSTANCE)
+      .put(HostGameResponse.class, HostGameResponseTransformer.INSTANCE)
       .build();
   }
 

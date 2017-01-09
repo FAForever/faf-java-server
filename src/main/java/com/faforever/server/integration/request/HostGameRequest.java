@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class HostGameRequest implements ClientRequest {
 
-  private final String mapId;
+  private final String mapName;
   private final String title;
   private final String mod;
   private final GameAccess access;

@@ -1,23 +1,22 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.Player;
-import com.faforever.server.integration.response.LaunchGameResponse;
+import com.faforever.server.client.ClientConnection;
+import com.faforever.server.response.ServerResponse;
 import org.springframework.integration.annotation.Gateway;
 import org.springframework.integration.annotation.MessagingGateway;
-import org.springframework.integration.ip.IpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 
+import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+
 /**
- * A gateway to send messages to the client.
+ * A Spring Integration gateway to send messages to the client.
  */
 @MessagingGateway(defaultRequestChannel = ChannelNames.CLIENT_OUTBOUND)
 public interface ClientGateway {
 
+  /**
+   * Sends the specified message to the client with the specified connection ID.
+   */
   @Gateway
-  void joinGame(Game game, Player player);
-
-  @Gateway
-  void launchGame(LaunchGameResponse launchGameResponse,
-                  @Header(name = IpHeaders.CONNECTION_ID, value = "player.clientConnection.id") Player player);
+  void send(ServerResponse serverResponse, @Header(CLIENT_CONNECTION) ClientConnection clientConnection);
 }

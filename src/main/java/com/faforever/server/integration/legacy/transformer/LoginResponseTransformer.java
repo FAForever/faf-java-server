@@ -12,7 +12,7 @@ import org.springframework.integration.transformer.GenericTransformer;
 import java.io.Serializable;
 import java.util.Map;
 
-public enum  LoginResponseTransformer implements GenericTransformer<LoginResponse, Map<String, Serializable>> {
+public enum LoginResponseTransformer implements GenericTransformer<LoginResponse, Map<String, Serializable>> {
 
   INSTANCE;
 
@@ -31,9 +31,9 @@ public enum  LoginResponseTransformer implements GenericTransformer<LoginRespons
       "me", ImmutableMap.builder()
         .put("id", user.getId())
         .put("login", userDetails.getUsername())
-        .put("global_rating", new double[]{globalRating.getMean(), globalRating.getDeviation()})
-        .put("ladder_rating", new double[]{ladder1v1Rating.getMean(), ladder1v1Rating.getDeviation()})
-        .put("number_of_games", globalRating.getNumGames())
+        .put("global_rating", globalRating != null ? new double[]{globalRating.getMean(), globalRating.getDeviation()} : new double[0])
+        .put("ladder_rating", ladder1v1Rating != null ? new double[]{ladder1v1Rating.getMean(), ladder1v1Rating.getDeviation()} : new double[0])
+        .put("number_of_games", globalRating != null ? globalRating.getNumGames() : 0)
         // FIXME implement
         .put("avatar", "")
         .put("country", "")

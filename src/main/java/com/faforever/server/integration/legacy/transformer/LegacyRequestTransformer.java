@@ -2,9 +2,8 @@ package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.avatar.AvatarRequest;
 import com.faforever.server.error.ProgrammingError;
-import com.faforever.server.game.GameAccess;
-import com.faforever.server.game.GameState;
-import com.faforever.server.game.GameVisibility;
+import com.faforever.server.game.*;
+import com.faforever.server.game.PlayerOptionRequest;
 import com.faforever.server.integration.legacy.dto.ClientMessageType;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.integration.request.JoinGameRequest;
@@ -31,7 +30,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     switch (command) {
       case HOST_GAME:
         return new HostGameRequest(
-          (String) source.get("mapId"),
+          (String) source.get("mapname"),
           (String) source.get("title"),
           (String) source.get("mod"),
           GameAccess.fromString((String) source.get("access")),
@@ -58,9 +57,26 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case AVATAR:
         return new AvatarRequest();
       case GAME_STATE:
-        return new UpdateGameStateRequest(GameState.fromString(((ArrayList<String>) source.get("args")).get(0)));
+        return new UpdateGameStateRequest(GameState.fromString((String) getArgs(source).get(0)));
+      case GAME_OPTION:
+        ArrayList<Object> args = getArgs(source);
+        return new GameOptionRequest((String) args.get(0), args.get(1));
+      case PLAYER_OPTION:
+        args = getArgs(source);
+        return new PlayerOptionRequest(Integer.parseInt((String) args.get(0)), (String) args.get(1), args.get(2));
+      case CLEAR_SLOT:
+        args = getArgs(source);
+        return new ClearSlotRequest((int) args.get(0));
+      case AI_OPTION:
+        args = getArgs(source);
+        return new AiOptionRequest((String) args.get(0), (String) args.get(1), args.get(2));
       default:
         throw new ProgrammingError("Uncovered command: " + command);
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private ArrayList<Object> getArgs(Map<String, Object> source) {
+    return (ArrayList<Object>) source.get("args");
   }
 }

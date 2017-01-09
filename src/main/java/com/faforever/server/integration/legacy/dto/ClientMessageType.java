@@ -14,8 +14,14 @@ public enum ClientMessageType {
   SOCIAL_REMOVE("social_remove"),
   LOGIN("hello"),
   GAME_MATCH_MAKING("game_matchmaking"),
+  AVATAR("avatar"),
+
+  // Game messages
   GAME_STATE("GameState"),
-  AVATAR("avatar");
+  GAME_OPTION("GameOption"),
+  PLAYER_OPTION("PlayerOption"),
+  CLEAR_SLOT("ClearSlot"),
+  AI_OPTION("AIOption");
 
   private static Map<String, ClientMessageType> fromString;
 

@@ -1,6 +1,6 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.integration.response.LaunchGameResponse;
+import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
@@ -10,12 +10,12 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public enum LaunchGameResponseTransformer implements GenericTransformer<LaunchGameResponse, Map<String, Serializable>> {
+public enum LaunchGameResponseTransformer implements GenericTransformer<StartGameProcessResponse, Map<String, Serializable>> {
 
   INSTANCE;
 
   @Override
-  public Map<String, Serializable> transform(LaunchGameResponse source) {
+  public Map<String, Serializable> transform(StartGameProcessResponse source) {
     return ImmutableMap.<String, Serializable>builder()
       .put("command", "game_launch")
       .put("mod", source.getMod())

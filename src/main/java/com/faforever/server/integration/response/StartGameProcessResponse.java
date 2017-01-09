@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class LaunchGameResponse implements ServerResponse {
+public class StartGameProcessResponse implements ServerResponse {
 
   private final String mod;
   private final int gameId;

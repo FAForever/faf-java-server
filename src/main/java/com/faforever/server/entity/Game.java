@@ -1,101 +1,97 @@
 package com.faforever.server.entity;
 
 import com.faforever.server.game.GameState;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "game_stats")
 @EqualsAndHashCode
-@NoArgsConstructor
 @Setter
-@ToString
+@Getter
+@ToString(of = {"id", "gameName"}, includeFieldNames = false)
 public class Game {
-
-  private int id;
-  private Timestamp startTime;
-  private VictoryCondition victoryCondition;
-  private byte gameMod;
-  private Player host;
-  private MapVersion map;
-  private String gameName;
-  private byte validity;
-  private List<GamePlayerStats> playerStats;
-  private GameState gameState;
-
-  public Game(int id) {
-    this.id = id;
-  }
 
   @Id
   @Column(name = "id")
-  public int getId() {
-    return id;
-  }
+  private int id;
 
-  @Basic
   @Column(name = "startTime")
-  public Timestamp getStartTime() {
-    return startTime;
-  }
+  private Timestamp startTime;
 
-  @Basic
   @Column(name = "gameType")
-  public VictoryCondition getVictoryCondition() {
-    return victoryCondition;
-  }
+  @Enumerated(EnumType.ORDINAL)
+  private VictoryCondition victoryCondition;
 
-  @Basic
+  /**
+   * Foreign key to "featured mod", but since there's no constraint in the database yet, hope for the best.
+   */
   @Column(name = "gameMod")
-  public byte getGameMod() {
-    return gameMod;
-  }
+  private byte gameMod;
 
   @ManyToOne
   @JoinColumn(name = "host")
-  public Player getHost() {
-    return host;
-  }
+  private Player host;
 
   @ManyToOne
   @JoinColumn(name = "mapId")
-  public MapVersion getMap() {
-    return map;
-  }
+  private MapVersion map;
 
-  @Basic
   @Column(name = "gameName")
-  public String getGameName() {
-    return gameName;
-  }
+  private String gameName;
 
-  @Basic
   @Column(name = "validity")
-  public byte getValidity() {
-    return validity;
-  }
+  private byte validity;
 
   @OneToMany(mappedBy = "game")
-  public List<GamePlayerStats> getPlayerStats() {
-    return playerStats;
-  }
+  private List<GamePlayerStats> playerStats;
 
   @Transient
-  public GameState getGameState() {
-    return gameState;
+  private GameState gameState;
+
+  @Transient
+  private String password;
+
+  /**
+   * Since some maps are unknown by the server (e.g. in-develop versions from map creators), the literal map name
+   * is kept.
+   */
+  @Transient
+  private String mapName;
+
+  /**
+   * Maps player IDs to key-value option maps, like {@code 1234 -> "Color" -> 1 }
+   */
+  @Transient
+  private Map<Integer, Map<String, Object>> playerOptions;
+
+  /**
+   * Maps AI names to key-value option maps, like {@code "AI: Rufus" -> "Color" -> 1 }
+   */
+  @Transient
+  private Map<String, Map<String, Object>> aiOptions;
+
+  /**
+   * A key-value map of gamespecific options, like {@code "PrebuiltUnits" -> "Off"}.
+   */
+  @Transient
+  private final Map<String, Object> options;
+
+  public Game(int id) {
+    this();
+    this.id = id;
+  }
+
+  public Game() {
+    playerOptions = new HashMap<>();
+    playerStats = new ArrayList<>();
+    options = new HashMap<>();
+    aiOptions = new HashMap<>();
   }
 }

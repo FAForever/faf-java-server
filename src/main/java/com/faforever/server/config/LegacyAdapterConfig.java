@@ -1,10 +1,10 @@
 package com.faforever.server.config;
 
+import com.faforever.server.client.ClientConnection;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.legacy.transformer.LegacyRequestTransformer;
 import com.faforever.server.integration.legacy.transformer.LegacyResponseTransformer;
-import com.faforever.server.integration.session.ClientConnection;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +17,7 @@ import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.Consumer;
 import org.springframework.integration.dsl.support.Transformers;
 import org.springframework.integration.ip.IpHeaders;
-import org.springframework.integration.ip.tcp.TcpInboundGateway;
+import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
 import org.springframework.integration.ip.tcp.TcpSendingMessageHandler;
 import org.springframework.integration.ip.tcp.connection.TcpNioServerConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayLengthHeaderSerializer;
@@ -27,6 +27,8 @@ import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+
+import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
 
 @Configuration
 public class LegacyAdapterConfig {
@@ -41,19 +43,19 @@ public class LegacyAdapterConfig {
   }
 
   /**
-   * TCP inbound gateway that accepts connections from clients.
+   * TCP inbound adapter that accepts connections and messages from clients.
    */
   @Bean
-  public TcpInboundGateway tcpInboundGateway() {
-    TcpInboundGateway tcpInboundGateway = new TcpInboundGateway();
-    tcpInboundGateway.setConnectionFactory(tcpServerConnectionFactory());
-    tcpInboundGateway.setRequestChannel(new DirectChannel());
-    tcpInboundGateway.setErrorChannelName(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME);
-    return tcpInboundGateway;
+  public TcpReceivingChannelAdapter tcpReceivingChannelAdapter() {
+    TcpReceivingChannelAdapter tcpReceivingChannelAdapter = new TcpReceivingChannelAdapter();
+    tcpReceivingChannelAdapter.setConnectionFactory(tcpServerConnectionFactory());
+    tcpReceivingChannelAdapter.setOutputChannel(new DirectChannel());
+    tcpReceivingChannelAdapter.setErrorChannelName(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME);
+    return tcpReceivingChannelAdapter;
   }
 
   /**
-   * Message handler which sends messages to one or more connected clients.
+   * Message handler which sends messages to a connected client.
    */
   @Bean
   public TcpSendingMessageHandler tcpSendingMessageHandler() {
@@ -66,7 +68,8 @@ public class LegacyAdapterConfig {
   /**
    * Non-blocking TCP connection factory that deserializes into byte array messages.
    */
-  private TcpNioServerConnectionFactory tcpServerConnectionFactory() {
+  @Bean
+  public TcpNioServerConnectionFactory tcpServerConnectionFactory() {
     ByteArrayLengthHeaderSerializer serializer = new ByteArrayLengthHeaderSerializer();
     serializer.setMaxMessageSize(100 * 1024);
     serializer.setApplicationEventPublisher(applicationEventPublisher);
@@ -84,7 +87,7 @@ public class LegacyAdapterConfig {
   @Bean
   public IntegrationFlow legacyAdapterInboundFlow() {
     return IntegrationFlows
-      .from(tcpInboundGateway())
+      .from(tcpReceivingChannelAdapter())
       .transform(legacyByteArrayToStringTransformer())
       .transform(Transformers.fromJson(HashMap.class))
       .transform(new LegacyRequestTransformer())
@@ -105,6 +108,7 @@ public class LegacyAdapterConfig {
       .transform(Transformers.toJson())
       .transform(stringToLegacyByteArrayTransformer())
       .enrichHeaders(connectionIdEnricher())
+      .handle(tcpSendingMessageHandler())
       .get();
   }
 
@@ -122,12 +126,10 @@ public class LegacyAdapterConfig {
     return source -> new String(source, Integer.BYTES, source.length - Integer.BYTES, StandardCharsets.UTF_16BE);
   }
 
+  /**
+   * Extracts the connection ID from the {@link ClientConnection} header and sets it as {@link IpHeaders#CONNECTION_ID}.
+   */
   private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
-    return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
-      if (message.getHeaders().getReplyChannel() == null) {
-        return ImmutableMap.of(IpHeaders.CONNECTION_ID, (message.getHeaders().get(ClientConnection.CLIENT_CONNECTION, ClientConnection.class)).getId());
-      }
-      return ImmutableMap.of();
-    });
+    return headerEnricherSpec -> headerEnricherSpec.headerFunction(IpHeaders.CONNECTION_ID, message -> message.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class).getId());
   }
 }

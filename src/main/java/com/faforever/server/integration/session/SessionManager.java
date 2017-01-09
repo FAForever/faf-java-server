@@ -1,5 +1,6 @@
 package com.faforever.server.integration.session;
 
+import com.faforever.server.client.ClientConnection;
 import com.faforever.server.integration.Protocol;
 import org.springframework.stereotype.Service;
 
