@@ -1,8 +1,19 @@
-# Spring Boot based FAF-Server Prototype
+# Spring Boot based FAF-Server
  
-This is a prototype of a Spring Boot based server application for Forged Alliance Forever.
+This is a reimplementation of the  [Forged Alliance Forever](https://www.faforever.com/)'s server application.
+
+It aims to abstract the communication protocol as far as possible in order to stay compatible with current server's
+legacy protocol, while at the same time allowing new protocols to be added and supported simultaneously.
  
-## How to run from source
+## How to run
+
+### Prerequisites
+
+In order to run this software, you need to set up a [FAF database](https://github.com/FAForever/db).
+
+### From source
+
+In order to run the application from source code:
 
 1. Clone the repository
 1. Import the project into IntelliJ
@@ -10,10 +21,9 @@ This is a prototype of a Spring Boot based server application for Forged Allianc
 1. Make sure you have the _IntelliJ Lombok plugin_ installed
 1. Launch `FafServerApplication`
  
-## How to run from binary
+### From binary
  
-Either check out the source code and execute the run configuration `FafServerApplication`, or run it directly
-from the published Docker image like so:
+In order to run the application from prebuilt binaries:
  
 ```
 docker run --name faf-server \

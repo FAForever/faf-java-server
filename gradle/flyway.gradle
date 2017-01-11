@@ -1,7 +1,0 @@
-apply plugin: "org.flywaydb.flyway"
-
-flyway {
-  url = 'jdbc:mysql://192.168.99.100:3306/faf_test'
-  user = 'root'
-  password = 'banana'
-}
