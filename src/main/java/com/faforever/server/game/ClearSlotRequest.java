@@ -1,9 +1,9 @@
 package com.faforever.server.game;
 
-import com.faforever.server.request.ClientRequest;
+import com.faforever.server.request.ClientMessage;
 import lombok.Data;
 
 @Data
-public class ClearSlotRequest implements ClientRequest {
+public class ClearSlotRequest implements ClientMessage {
   private final int slotId;
 }

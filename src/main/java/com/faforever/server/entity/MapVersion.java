@@ -1,27 +1,22 @@
 package com.faforever.server.entity;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.sql.Timestamp;
-import java.util.Objects;
 
 @Entity
 @Table(name = "map_version")
 @Immutable
-@EqualsAndHashCode
-@Getter
+@Data
+@NoArgsConstructor
 public class MapVersion {
 
   @Id
   @Column(name = "id")
+  @GeneratedValue
   private int id;
 
   @Column(name = "description")

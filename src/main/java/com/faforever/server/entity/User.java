@@ -1,36 +1,25 @@
 package com.faforever.server.entity;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import javax.persistence.*;
 
 @Entity
 @Table(name = "login")
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@ToString(exclude = "password", callSuper = true)
 public class User extends Login {
 
-  private String password;
-  private Player player;
-
-  @Basic
   @Column(name = "password")
-  public String getPassword() {
-    return password;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
-  }
+  private String password;
 
   @OneToOne
   @JoinColumn(name = "id", insertable = false, updatable = false)
-  public Player getPlayer() {
-    return player;
-  }
+  private Player player;
 
-  public void setPlayer(Player player) {
-    this.player = player;
-  }
 }

@@ -11,6 +11,7 @@ public class RequestException extends RuntimeException {
   private final ErrorCode errorCode;
 
   public RequestException(ErrorCode errorCode) {
+    super(errorCode.getTitle());
     this.errorCode = errorCode;
   }
 }

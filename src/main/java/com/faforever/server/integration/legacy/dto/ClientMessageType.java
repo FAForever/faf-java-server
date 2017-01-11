@@ -15,12 +15,21 @@ public enum ClientMessageType {
   LOGIN("hello"),
   GAME_MATCH_MAKING("game_matchmaking"),
   AVATAR("avatar"),
+  @Deprecated
+  INITIATE_TEST("InitiateTest"),
 
   // Game messages
   GAME_STATE("GameState"),
   GAME_OPTION("GameOption"),
   PLAYER_OPTION("PlayerOption"),
   CLEAR_SLOT("ClearSlot"),
+  DESYNC("Desync"),
+  GAME_MODS("GameMods"),
+  GAME_RESULT("GameResult"),
+  OPERATION_COMPLETE("OperationComplete"),
+  JSON_STATS("JsonStats"),
+  ENFORCE_RATING("EnforceRating"),
+  TEAMKILL_REPORT("TeamkillReport"),
   AI_OPTION("AIOption");
 
   private static Map<String, ClientMessageType> fromString;

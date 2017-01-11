@@ -2,11 +2,11 @@ package com.faforever.server.integration.request;
 
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameVisibility;
-import com.faforever.server.request.ClientRequest;
+import com.faforever.server.request.ClientMessage;
 import lombok.Data;
 
 @Data
-public class HostGameRequest implements ClientRequest {
+public class HostGameRequest implements ClientMessage {
 
   private final String mapName;
   private final String title;

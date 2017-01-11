@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum GameState {
+  NEW(null),
   IDLE("Idle"),
   LOBBY("Lobby"),
-  PLAYING("Playing"),
   LAUNCHING("Launching"),
   ENDED("Ended");
 
@@ -19,6 +19,9 @@ public enum GameState {
     }
   }
 
+  /**
+   * String as sent by the game.
+   */
   private final String string;
 
   GameState(String string) {

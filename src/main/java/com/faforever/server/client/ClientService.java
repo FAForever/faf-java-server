@@ -1,5 +1,6 @@
 package com.faforever.server.client;
 
+import com.faforever.server.api.dto.UpdatedAchievement;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Player;
@@ -47,6 +48,10 @@ public class ClientService {
 
   public void hostGame(Game game, Player player) {
     send(new HostGameResponse(game.getMapName()), player);
+  }
+
+  public void reportUpdatedAchievements(List<UpdatedAchievement> playerAchievements, Player player) {
+    send(new UpdatedAchievementsResponse(playerAchievements), player);
   }
 
   private void send(ServerResponse serverResponse, Player player) {

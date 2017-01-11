@@ -11,3 +11,11 @@ logging:
   level:
     org.springframework: warn
     com.faforever.server: info
+
+security:
+  oauth2:
+    client:
+      clientId: ${API_OAUTH2_CLIENT_ID}
+      clientSecret: ${API_OAUTH2_CLIENT_SECRET}
+      accessTokenUri: ${API_OAUTH2_ACCESS_TOKEN_URI:https://japi.faforever.com/oauth/token}
+      userAuthorizationUri: ${API_OAUTH2_AUTHORIZATION_URI:https://japi.faforever.com/oauth/authorize}

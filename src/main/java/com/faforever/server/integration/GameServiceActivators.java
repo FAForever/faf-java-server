@@ -1,13 +1,10 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.entity.Player;
-import com.faforever.server.game.*;
-import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.integration.request.JoinGameRequest;
-import com.faforever.server.integration.request.UpdateGameStateRequest;
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.map.MapService;
-import com.faforever.server.player.PlayerService;
+import com.faforever.server.game.*;
+import com.faforever.server.integration.request.GameStateReport;
+import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.statistics.ArmyStatisticsReport;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
@@ -34,18 +31,18 @@ public class GameServiceActivators {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.UPDATE_GAME_STATE_REQUEST)
-  public void updateGameState(UpdateGameStateRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.updateGameState(request.getGameState(), clientConnection.getUserDetails().getPlayer());
+  public void updateGameState(GameStateReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.updateGameState(report.getGameState(), clientConnection.getUserDetails().getPlayer());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.GAME_OPTION_REQUEST)
-  public void updateGameOption(GameOptionRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.updateGameOption(clientConnection.getUserDetails().getPlayer(), request.getKey(), request.getValue());
+  public void updateGameOption(GameOptionReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.updateGameOption(clientConnection.getUserDetails().getPlayer(), report.getKey(), report.getValue());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.PLAYER_OPTION_REQUEST)
-  public void updatePlayerOption(PlayerOptionRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.updatePlayerOption(clientConnection.getUserDetails().getPlayer(), request.getPlayerId(), request.getKey(), request.getValue());
+  public void updatePlayerOption(PlayerOptionReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.updatePlayerOption(clientConnection.getUserDetails().getPlayer(), report.getPlayerId(), report.getKey(), report.getValue());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.CLEAR_SLOT_REQUEST)
@@ -54,8 +51,43 @@ public class GameServiceActivators {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.AI_OPTION_REQUEST)
-  public void updateAiOption(AiOptionRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.updateAiOption(clientConnection.getUserDetails().getPlayer(), request.getAiName(), request.getKey(), request.getValue());
+  public void updateAiOption(AiOptionReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.updateAiOption(clientConnection.getUserDetails().getPlayer(), report.getAiName(), report.getKey(), report.getValue());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.DESYNC_REPORT)
+  public void reportDesync(DesyncReport desyncReport, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.reportDesync(clientConnection.getUserDetails().getPlayer());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.GAME_MODS_REPORT)
+  public void updateGameMods(GameModsReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.updateGameMods(clientConnection.getUserDetails().getPlayer().getCurrentGame(), report.getModUids());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.GAME_MODS_COUNT_REPORT)
+  public void updateGameModsCount(GameModsCountReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.updateGameModsCount(clientConnection.getUserDetails().getPlayer().getCurrentGame(), report.getCount());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.ARMY_OUTCOME_REPORT)
+  public void reportArmyOutcome(ArmyOutcomeReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.reportArmyOutcome(clientConnection.getUserDetails().getPlayer(), report.getArmyId(), report.getOutcome());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.ARMY_SCORE_REPORT)
+  public void reportArmyScore(ArmyScoreReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.reportArmyScore(clientConnection.getUserDetails().getPlayer(), report.getArmyId(), report.getScore());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.GAME_STATISTICS_REPORT)
+  public void reportGameStatistics(ArmyStatisticsReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.reportArmyStatistics(clientConnection.getUserDetails().getPlayer(), report.getArmyStatistics());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.ENFORCE_RATING_REQUEST)
+  public void enforceRating(@Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.enforceRating(clientConnection.getUserDetails().getPlayer());
   }
 
   private byte resolveMod(String mod) {

@@ -1,21 +1,27 @@
 package com.faforever.server.entity;
 
 import com.faforever.server.game.GameState;
-import lombok.*;
+import com.faforever.server.statistics.ArmyStatistics;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Entity
 @Table(name = "game_stats")
 @EqualsAndHashCode
 @Setter
 @Getter
-@ToString(of = {"id", "gameName"}, includeFieldNames = false)
+@ToString(of = {"id", "title"}, includeFieldNames = false)
 public class Game {
 
   @Id
@@ -44,11 +50,11 @@ public class Game {
   private MapVersion map;
 
   @Column(name = "gameName")
-  private String gameName;
+  private String title;
 
   @Column(name = "validity")
   @Enumerated(EnumType.ORDINAL)
-  private GameValidity validity;
+  private Rankiness rankiness;
 
   @OneToMany(mappedBy = "game")
   private List<GamePlayerStats> playerStats;
@@ -84,15 +90,62 @@ public class Game {
   @Transient
   private final Map<String, Object> options;
 
+  @Transient
+  private final AtomicInteger desyncCount;
+
+  @Transient
+  private int maxPlayers;
+
+  @Transient
+  private List<String> simMods;
+
+  /**
+   * Maps player IDs to army scores reported by this player.
+   */
+  @Transient
+  private final Map<Integer, List<ArmyScore>> reportedArmyScores;
+
+  /**
+   * Maps player IDs to army outcomes reported by this player.
+   */
+  @Transient
+  private final Map<Integer, List<ArmyOutcome>> reportedArmyOutcomes;
+
+  @Transient
+  private final List<ArmyStatistics> armyStatistics;
+
+  @Transient
+  private boolean ratingEnforced;
+
   public Game(int id) {
     this();
     this.id = id;
   }
 
   public Game() {
-    playerOptions = new HashMap<>();
-    playerStats = new ArrayList<>();
-    options = new HashMap<>();
-    aiOptions = new HashMap<>();
+    playerOptions = new ConcurrentHashMap<>();
+    options = new ConcurrentHashMap<>();
+    aiOptions = new ConcurrentHashMap<>();
+    reportedArmyScores = new ConcurrentHashMap<>();
+    reportedArmyOutcomes = new ConcurrentHashMap<>();
+    armyStatistics = Collections.synchronizedList(new ArrayList<>());
+    playerStats = Collections.synchronizedList(new ArrayList<>());
+    simMods = Collections.synchronizedList(new ArrayList<>());
+    desyncCount = new AtomicInteger();
+    rankiness = Rankiness.RANKED;
+  }
+
+  public void replaceArmyStatistics(List<ArmyStatistics> newList) {
+    synchronized (armyStatistics) {
+      armyStatistics.clear();
+      armyStatistics.addAll(newList);
+    }
+  }
+
+  /**
+   * Returns an unmodifiable list of army statistics.
+   */
+  public List<ArmyStatistics> getArmyStatistics() {
+    return Collections.unmodifiableList(armyStatistics);
   }
 }

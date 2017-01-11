@@ -7,7 +7,7 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.legacy.dto.LoginResponse;
 import com.faforever.server.integration.legacy.dto.SessionResponse;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.security.LoginRequest;
+import com.faforever.server.security.LoginMessage;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
@@ -36,7 +36,7 @@ public class LegacyServiceActivators {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
-  public LoginResponse loginRequest(LoginRequest loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+  public LoginResponse loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     try {
       Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword()));
       FafUserDetails userDetails = (FafUserDetails) authentication.getPrincipal();

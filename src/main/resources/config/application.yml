@@ -1,5 +1,5 @@
 faf-server:
-  version: #faf-api.version#
+  version: #faf-server.version#
 
 spring:
   application:
@@ -20,3 +20,10 @@ spring:
         dialect: org.hibernate.dialect.MySQL5Dialect
   profiles:
     active: ${SERVER_PROFILE:dev}
+  main:
+    banner-mode: off
+
+security:
+  oauth2:
+    client:
+      clientAuthenticationScheme: header

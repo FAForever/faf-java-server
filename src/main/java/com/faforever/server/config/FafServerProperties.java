@@ -9,5 +9,5 @@ public class FafServerProperties {
 
   private int port = 8001;
   private String version = "dev";
-
+  private String apiBaseUrl = "http://localhost:8080";
 }

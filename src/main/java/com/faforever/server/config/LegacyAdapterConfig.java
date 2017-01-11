@@ -5,6 +5,7 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.legacy.transformer.LegacyRequestTransformer;
 import com.faforever.server.integration.legacy.transformer.LegacyResponseTransformer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -85,12 +86,12 @@ public class LegacyAdapterConfig {
    * Integration flow that reads from the TCP inbound gateway and transforms legacy messages into internal messages.
    */
   @Bean
-  public IntegrationFlow legacyAdapterInboundFlow() {
+  public IntegrationFlow legacyAdapterInboundFlow(ObjectMapper objectMapper) {
     return IntegrationFlows
       .from(tcpReceivingChannelAdapter())
       .transform(legacyByteArrayToStringTransformer())
       .transform(Transformers.fromJson(HashMap.class))
-      .transform(new LegacyRequestTransformer())
+      .transform(new LegacyRequestTransformer(objectMapper))
       .enrichHeaders(ImmutableMap.of("protocol", Protocol.LEGACY_UTF_16))
       .channel(ChannelNames.CLIENT_INBOUND)
       .get();
