@@ -29,7 +29,7 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
       .put("featured_mod_versions", "{}")
       .put("sim_mods", game.getSimMods().toArray())
       .put("mapname", game.getMapName())
-      .put("map_file_path", "maps/" + game.getMap().getFilename())
+      .put("map_file_path", String.format("maps/%s.zip", game.getMapName()))
       .put("host", game.getHost().getLogin())
       .put("num_players", game.getPlayerStats().size())
       .put("max_players", game.getMaxPlayers())
