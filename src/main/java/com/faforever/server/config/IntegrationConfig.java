@@ -27,7 +27,6 @@ import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.Consumer;
-import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.integration.router.AbstractMappingMessageRouter;
 import org.springframework.integration.router.AbstractMessageRouter;
 import org.springframework.integration.router.PayloadTypeRouter;
@@ -60,7 +59,6 @@ public class IntegrationConfig {
   public IntegrationFlow inboundFlow() {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_INBOUND)
-      .handle(new LoggingHandler(LoggingHandler.Level.TRACE))
       .enrichHeaders(sessionHeaderEnricher())
       .route(inboundRouter())
       .get();

@@ -62,11 +62,6 @@ public class LegacyRequestTransformerTest {
     assertThat(hostGameRequest.getVisibility(), is(GameVisibility.PUBLIC));
   }
 
-  @Test(expected = UnsupportedOperationException.class)
-  public void transformListReplays() throws Exception {
-    instance.transform(ImmutableMap.of("command", "list"));
-  }
-
   @Test
   public void transformJoinGame() throws Exception {
     JoinGameRequest joinGameRequest = (JoinGameRequest) instance.transform(ImmutableMap.of(

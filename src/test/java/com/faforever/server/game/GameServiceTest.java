@@ -1,10 +1,12 @@
 package com.faforever.server.game;
 
 import com.faforever.server.client.ClientService;
+import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.rating.RatingService;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import org.junit.Before;
@@ -47,6 +49,8 @@ public class GameServiceTest {
   private ModService modService;
   @Mock
   private ArmyStatisticsService armyStatisticsService;
+  @Mock
+  private RatingService ratingService;
 
   private Player player1;
   private Player player2;
@@ -67,8 +71,12 @@ public class GameServiceTest {
     player2.setId(2);
     player2.setLogin(PLAYER_NAME_2);
 
+    FeaturedMod fafFeaturedMod = new FeaturedMod();
+    fafFeaturedMod.setId(FAF_MOD_ID);
+
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
+    when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
 
     instance = new GameService(gameRepository, clientService, mapService, modService, ratingService, armyStatisticsService);
     instance.postConstruct();
@@ -86,7 +94,7 @@ public class GameServiceTest {
     verify(clientService).startGameProcess(game, player1);
     assertThat(game.getTitle(), is("Game title"));
     assertThat(game.getHost(), is(player1));
-    assertThat(game.getGameMod(), is(FAF_MOD_ID));
+    assertThat(game.getFeaturedMod().getId(), is(FAF_MOD_ID));
     assertThat(game.getMap(), is(nullValue()));
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
