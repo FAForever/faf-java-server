@@ -31,20 +31,25 @@ In order to run the application from prebuilt binaries:
  
 ```
 docker run --name faf-server \
-  -e DATABASE_ADDRESS=192.168.99.100:3306 \
+  -e DATABASE_ADDRESS=localhost:3306 \
   -e DATABASE_USERNAME=root \
   -e DATABASE_PASSWORD=banana \
   -e DATABASE_NAME=faf_lobby \
+  -e API_OAUTH2_CLIENT_ID=faf-server \
+  -e API_OAUTH2_CLIENT_SECRET=banana \
+  -e SERVER_PROFILE=dev \
   -d micheljung/faf-server:latest
 ```
 
 To run in production, you probably want to create an environment file (e.g. `env.list`):
 
 ```
-DATABASE_ADDRESS=stable_faf-db_1
-DATABASE_USERNAME=faf_lobby
-DATABASE_PASSWORD=password
-DATABASE_NAME=faf_lobby
+DATABASE_ADDRESS=<db_address>
+DATABASE_USERNAME=<username>
+DATABASE_PASSWORD=<password>
+DATABASE_NAME=<db_name>
+API_OAUTH2_CLIENT_ID=<client_id>
+API_OAUTH2_CLIENT_SECRET=<client_secret>
 SERVER_PROFILE=prod
 ```
 
