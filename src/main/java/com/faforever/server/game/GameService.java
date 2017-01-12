@@ -11,7 +11,6 @@ import com.faforever.server.rating.RatingService;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.google.common.annotations.VisibleForTesting;
-import javafx.collections.FXCollections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
@@ -61,7 +60,7 @@ public class GameService {
     this.ratingService = ratingService;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger();
-    gamesById = FXCollections.observableMap(new ConcurrentHashMap<>());
+    gamesById = new ConcurrentHashMap<>();
   }
 
   /**
