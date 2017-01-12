@@ -15,7 +15,7 @@ public enum ErrorResponseTransformer implements GenericTransformer<ErrorResponse
   public Map<String, Serializable> transform(ErrorResponse source) {
     ErrorCode errorCode = source.getErrorCode();
     return ImmutableMap.of(
-      "command", "notice",
+      "command", source.getErrorCode() == ErrorCode.INVALID_LOGIN ? "authentication_failed" : "notice",
       "style", "error",
       "text", errorCode.getTitle(),
       "code", errorCode.getCode()
