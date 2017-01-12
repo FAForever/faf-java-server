@@ -1,4 +1,4 @@
-package com.faforever.server.integration.legacy.dto;
+package com.faforever.server.client;
 
 import com.faforever.server.response.ServerResponse;
 import lombok.Getter;

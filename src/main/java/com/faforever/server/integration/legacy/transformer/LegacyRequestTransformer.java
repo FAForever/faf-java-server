@@ -1,13 +1,20 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.avatar.AddAvatarAdminRequest;
 import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.avatar.GetAvatarsAdminRequest;
+import com.faforever.server.avatar.RemoveAvatarAdminRequest;
+import com.faforever.server.client.BroadcastRequest;
+import com.faforever.server.client.CloseClientRequest;
+import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
+import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
+import com.faforever.server.error.Requests;
 import com.faforever.server.game.*;
-import com.faforever.server.integration.legacy.dto.ClientMessageType;
+import com.faforever.server.integration.legacy.LegacyClientMessageType;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.integration.session.SessionRequest;
 import com.faforever.server.matchmaker.MatchmakerMessage;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.security.LoginMessage;
@@ -44,7 +51,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
   @Override
   public ClientMessage transform(Map<String, Object> source) {
-    ClientMessageType messageType = ClientMessageType.fromString((String) source.get("command"));
+    LegacyClientMessageType messageType = LegacyClientMessageType.fromString((String) source.get("command"));
     switch (messageType) {
       case HOST_GAME:
         return new HostGameRequest(
@@ -55,10 +62,6 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
           source.get("version") == null ? null : ((Double) source.get("version")).intValue(),
           (String) source.get("password"),
           GameVisibility.fromString((String) source.get("visibility")));
-
-      case LIST_REPLAYS:
-        // FIXME implement
-        throw new UnsupportedOperationException("Not supported");
 
       case JOIN_GAME:
         return new JoinGameRequest(((Double) source.get("uid")).intValue(), (String) source.get("password"));
@@ -161,6 +164,25 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case INITIATE_TEST:
         log.warn("Ignoring " + messageType);
         return null;
+
+      case CREATE_ACCOUNT:
+        Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
+
+      case ADMIN:
+        switch ((String) source.get("action")) {
+          case "closeFA":
+            return new CloseGameRequest((Integer) source.get("user_id"));
+          case "closeLobby":
+            return new CloseClientRequest((Integer) source.get("user_id"));
+          case "requestavatars":
+            return new GetAvatarsAdminRequest();
+          case "remove_avatar":
+            return new RemoveAvatarAdminRequest((int) source.get("idavatar"), (int) source.get("iduser"));
+          case "add_avatar":
+            return new AddAvatarAdminRequest((int) source.get("idavatar"), (int) source.get("iduser"));
+          case "broadcast":
+            return new BroadcastRequest((String) source.get("message"));
+        }
 
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);

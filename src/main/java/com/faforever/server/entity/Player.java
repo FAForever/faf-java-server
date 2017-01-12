@@ -1,6 +1,7 @@
 package com.faforever.server.entity;
 
 import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.game.GameState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,7 +18,7 @@ import javax.persistence.Transient;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true, of = {"currentGame", "gameState"})
-public class Player extends Login {
+public class Player extends Login implements ConnectionAware {
 
   @OneToOne(mappedBy = "player")
   @Nullable

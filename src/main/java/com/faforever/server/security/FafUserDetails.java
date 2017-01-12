@@ -1,5 +1,7 @@
 package com.faforever.server.security;
 
+import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.BanDetails;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
@@ -12,7 +14,7 @@ import java.time.Instant;
 import static java.util.Collections.singletonList;
 
 @ToString
-public class FafUserDetails extends org.springframework.security.core.userdetails.User {
+public class FafUserDetails extends org.springframework.security.core.userdetails.User implements ConnectionAware {
 
   private final User user;
 
@@ -33,5 +35,10 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
 
   public Player getPlayer() {
     return user.getPlayer();
+  }
+
+  @Override
+  public ClientConnection getClientConnection() {
+    return user.getPlayer().getClientConnection();
   }
 }

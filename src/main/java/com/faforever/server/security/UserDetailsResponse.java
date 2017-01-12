@@ -1,7 +1,6 @@
-package com.faforever.server.integration.legacy.dto;
+package com.faforever.server.security;
 
 import com.faforever.server.response.ServerResponse;
-import com.faforever.server.security.FafUserDetails;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -9,7 +8,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class LoginResponse implements ServerResponse {
+public class UserDetailsResponse implements ServerResponse {
 
   private final FafUserDetails userDetails;
 }

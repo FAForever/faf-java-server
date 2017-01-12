@@ -6,6 +6,9 @@ import lombok.Data;
 
 import java.util.List;
 
+/**
+ * Tells the client that the list of achievements has been updated.
+ */
 @Data
 public class UpdatedAchievementsResponse implements ServerResponse {
   private final List<UpdatedAchievement> playerAchievements;

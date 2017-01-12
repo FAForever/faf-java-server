@@ -1,10 +1,10 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.game.*;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.integration.session.SessionRequest;
 import com.faforever.server.security.LoginMessage;
 import com.faforever.server.social.AddFoeMessage;
 import com.faforever.server.social.AddFriendMessage;

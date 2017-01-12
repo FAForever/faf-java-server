@@ -7,6 +7,7 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.Unit;
+import com.faforever.server.mod.ModService;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.achievements.AchievementId;
 import com.faforever.server.stats.achievements.AchievementService;
@@ -30,17 +31,16 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 public class ArmyStatisticsService {
   private static final String CIVILIAN_ARMY_NAME = "civilian";
 
-  private final byte ladder1v1FeaturedModId;
   private final AchievementService achievementService;
   private final EventService eventService;
   private final ClientService clientService;
+  private final ModService modService;
 
-  public ArmyStatisticsService(AchievementService achievementService, EventService eventService, ClientService clientService) {
+  public ArmyStatisticsService(AchievementService achievementService, EventService eventService, ClientService clientService, ModService modService) {
     this.achievementService = achievementService;
     this.eventService = eventService;
     this.clientService = clientService;
-    // FIXME load from database/service
-    ladder1v1FeaturedModId = 1;
+    this.modService = modService;
   }
 
   public void process(Player player, Game game, List<ArmyStatistics> statistics) {
@@ -86,7 +86,7 @@ public class ArmyStatisticsService {
     int finalArmyId = playerArmyId;
     Optional<ArmyOutcome> armyOutcome = game.getReportedArmyOutcomes().values().stream()
       .flatMap(Collection::stream)
-      .filter(item ->item.getArmyId() == finalArmyId)
+      .filter(item -> item.getArmyId() == finalArmyId)
       .findFirst();
     if (!armyOutcome.isPresent()) {
       log.warn("No outcome for army '{}´ (player '{}') has been reported for game '{}'. " +
@@ -107,7 +107,7 @@ public class ArmyStatisticsService {
     ArmyStatistics.CategoryStats categoryStats = armyStats.getCategoryStats();
     boolean scoredHighest = Objects.equals(highestScorerName, player.getLogin());
 
-    if (survived && game.getGameMod() == ladder1v1FeaturedModId) {
+    if (survived && modService.isLadder1v1(game.getFeaturedMod())) {
       unlock(AchievementId.ACH_FIRST_SUCCESS, achievementUpdates);
     }
 

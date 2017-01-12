@@ -1,0 +1,12 @@
+ALTER TABLE teamkills
+  ADD id INT NOT NULL PRIMARY KEY AUTO_INCREMENT;
+ALTER TABLE teamkills
+  MODIFY COLUMN id INT FIRST;
+
+ALTER TABLE teamkills
+  ADD CONSTRAINT teamkiller_fk
+FOREIGN KEY (teamkiller) REFERENCES login (id);
+
+ALTER TABLE teamkills
+  ADD CONSTRAINT victim_fk
+FOREIGN KEY (victim) REFERENCES login (id);

@@ -38,10 +38,10 @@ public class MapVersion {
   private String filename;
 
   @Column(name = "ranked")
-  private byte ranked;
+  private boolean ranked;
 
   @Column(name = "hidden")
-  private byte hidden;
+  private boolean hidden;
 
   @Column(name = "create_time")
   private Timestamp createTime;

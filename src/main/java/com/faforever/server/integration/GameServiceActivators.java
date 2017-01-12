@@ -22,7 +22,8 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.HOST_GAME_REQUEST)
   public void hostGameRequest(HostGameRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.createGame(request.getTitle(), resolveMod(request.getMod()), request.getMapName(), request.getPassword(), clientConnection.getUserDetails().getPlayer());
+    gameService.createGame(request.getTitle(), resolveMod(request.getMod()), request.getMapName(), request.getPassword(),
+      request.getVisibility(), clientConnection.getUserDetails().getPlayer());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.JOIN_GAME_REQUEST)

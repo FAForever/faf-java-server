@@ -25,4 +25,8 @@ public enum GameVisibility {
   public static GameVisibility fromString(String string) {
     return fromString.get(string);
   }
+
+  public String getString() {
+    return string;
+  }
 }

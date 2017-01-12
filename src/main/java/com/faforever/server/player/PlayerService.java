@@ -4,6 +4,7 @@ import com.faforever.server.entity.Player;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,5 +25,9 @@ public class PlayerService {
 
   public Player getPlayer(int id) {
     return playersById.get(id);
+  }
+
+  public Collection<Player> getPlayers() {
+    return playersById.values();
   }
 }

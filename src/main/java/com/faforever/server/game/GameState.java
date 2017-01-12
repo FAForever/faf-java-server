@@ -31,4 +31,8 @@ public enum GameState {
   public static GameState fromString(String string) {
     return fromString.get(string);
   }
+
+  public String getString() {
+    return string;
+  }
 }

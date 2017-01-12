@@ -1,4 +1,4 @@
-package com.faforever.server.integration.session;
+package com.faforever.server.client;
 
 import com.faforever.server.request.ClientMessage;
 

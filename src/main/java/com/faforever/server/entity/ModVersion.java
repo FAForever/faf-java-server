@@ -20,7 +20,7 @@ public class ModVersion {
   private String uid;
 
   @Column(name = "type")
-  private int type;
+  private ModType type;
 
   @Column(name = "description")
   private String description;
@@ -35,10 +35,10 @@ public class ModVersion {
   private String icon;
 
   @Column(name = "ranked")
-  private byte ranked;
+  private boolean ranked;
 
   @Column(name = "hidden")
-  private byte hidden;
+  private boolean hidden;
 
   @Column(name = "create_time")
   private Timestamp createTime;

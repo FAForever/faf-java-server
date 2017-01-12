@@ -70,14 +70,14 @@ public class GameServiceTest {
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, armyStatisticsService);
+    instance = new GameService(gameRepository, clientService, mapService, modService, ratingService, armyStatisticsService);
     instance.postConstruct();
   }
 
   @Test
   public void createGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", player1);
+    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, player1);
 
     Optional<Game> optional = instance.getGame(NEXT_GAME_ID);
     assertThat(optional.isPresent(), is(true));
@@ -91,13 +91,14 @@ public class GameServiceTest {
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
     assertThat(game.getGameState(), is(nullValue()));
+    assertThat(game.getGameVisibility(), is(GameVisibility.PUBLIC));
     assertThat(player1.getCurrentGame(), is(game));
   }
 
   @Test
   public void joinGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, player1);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
     instance.joinGame(NEXT_GAME_ID, player2);
 
     Optional<Game> optional = instance.getGame(NEXT_GAME_ID);
@@ -150,11 +151,11 @@ public class GameServiceTest {
 
   @Test
   public void reportDesync() throws Exception {
-    assertThat(game.getDesyncCount().intValue(), is(0));
+    assertThat(game.getDesyncCounter().intValue(), is(0));
     instance.reportDesync(player1);
     instance.reportDesync(player1);
     instance.reportDesync(player1);
-    assertThat(game.getDesyncCount().intValue(), is(3));
+    assertThat(game.getDesyncCounter().intValue(), is(3));
   }
 
   @Test

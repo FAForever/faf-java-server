@@ -2,10 +2,12 @@ package com.faforever.server.stats;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.ArmyOutcome;
+import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.Outcome;
+import com.faforever.server.mod.ModService;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.achievements.AchievementId;
 import com.faforever.server.stats.achievements.AchievementService;
@@ -44,6 +46,8 @@ public class ArmyStatisticsServiceTest {
   private AchievementService achievementService;
   @Mock
   private ClientService clientService;
+  @Mock
+  private ModService modService;
 
   private ArmyStatisticsService instance;
   private Player player;
@@ -55,7 +59,7 @@ public class ArmyStatisticsServiceTest {
   @Before
   @SuppressWarnings("unchecked")
   public void setUp() {
-    instance = new ArmyStatisticsService(achievementService, eventService, clientService);
+    instance = new ArmyStatisticsService(achievementService, eventService, clientService, modService);
 
     player = new Player();
     player.setLogin("TestUser");
@@ -184,7 +188,10 @@ public class ArmyStatisticsServiceTest {
 
   @Test
   public void testProcessGameWonLadder1v1() throws Exception {
-    game.setGameMod((byte) 1);
+    FeaturedMod ladder1v1FeaturedMod = new FeaturedMod();
+    when(modService.isLadder1v1(ladder1v1FeaturedMod)).thenReturn(true);
+
+    game.setFeaturedMod(ladder1v1FeaturedMod);
     game.getReportedArmyOutcomes().put(player.getId(), singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
 
     List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");

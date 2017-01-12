@@ -28,6 +28,7 @@ targetCompatibility = 1.8
 repositories {
   mavenCentral()
   jcenter()
+  maven { url 'https://jitpack.io' }
 }
 
 configurations {
@@ -143,6 +144,7 @@ dependencies {
   compile("org.springframework.integration:spring-integration-security")
   compile("org.springframework.boot:spring-boot-devtools")
 
+  compile("com.github.nsp:JSkills:${jSkillsVersion}")
   compile("com.github.nocatch:nocatch:${noCatchVersion}")
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
   compile("com.google.guava:guava:${guavaVersion}")

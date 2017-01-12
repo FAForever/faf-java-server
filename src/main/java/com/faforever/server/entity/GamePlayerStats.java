@@ -24,7 +24,7 @@ public class GamePlayerStats {
   private Player player;
 
   @Column(name = "AI")
-  private byte ai;
+  private boolean ai;
 
   @Column(name = "faction")
   private byte faction;

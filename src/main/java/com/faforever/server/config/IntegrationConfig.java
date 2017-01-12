@@ -2,6 +2,8 @@ package com.faforever.server.config;
 
 import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.error.RequestException;
@@ -10,8 +12,6 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.integration.session.SessionRequest;
-import com.faforever.server.integration.session.SessionManager;
 import com.faforever.server.security.LoginMessage;
 import com.faforever.server.social.AddFriendMessage;
 import com.faforever.server.social.SocialRemoveMessage;
@@ -27,6 +27,7 @@ import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.Consumer;
+import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.integration.router.AbstractMappingMessageRouter;
 import org.springframework.integration.router.AbstractMessageRouter;
 import org.springframework.integration.router.PayloadTypeRouter;
@@ -46,10 +47,10 @@ import static org.springframework.integration.IntegrationMessageHeaderAccessor.C
 @IntegrationComponentScan("com.faforever.server.integration")
 public class IntegrationConfig {
 
-  private final SessionManager sessionManager;
+  private final ClientConnectionManager clientConnectionManager;
 
-  public IntegrationConfig(SessionManager sessionManager) {
-    this.sessionManager = sessionManager;
+  public IntegrationConfig(ClientConnectionManager clientConnectionManager) {
+    this.clientConnectionManager = clientConnectionManager;
   }
 
   /**
@@ -59,6 +60,7 @@ public class IntegrationConfig {
   public IntegrationFlow inboundFlow() {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_INBOUND)
+      .handle(new LoggingHandler(LoggingHandler.Level.TRACE))
       .enrichHeaders(sessionHeaderEnricher())
       .route(inboundRouter())
       .get();
@@ -181,7 +183,7 @@ public class IntegrationConfig {
     return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
       String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
       Protocol protocol = (Protocol) message.getHeaders().get("protocol");
-      return ImmutableMap.of(CLIENT_CONNECTION, sessionManager.obtainSession(sessionId, protocol));
+      return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol));
     });
   }
 }

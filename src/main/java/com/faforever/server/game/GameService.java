@@ -1,75 +1,110 @@
 package com.faforever.server.game;
 
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.*;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.rating.RatingService;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
+import com.google.common.annotations.VisibleForTesting;
 import javafx.collections.FXCollections;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class GameService {
 
+  /**
+   * ID of the team that stands for "no team" according to the game.
+   */
+  private static final byte NO_TEAM_ID = 1;
+  private static final String OPTION_FOG_OF_WAR = "FogOfWar";
+  private static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
+  private static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
+  private static final String OPTION_NO_RUSH = "NoRushOption";
+  private static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
+  private static final String OPTION_SLOTS = "Slots";
+  private static final String OPTION_SCENARIO_FILE = "ScenarioFile";
+  private static final String OPTION_TITLE = "Title";
   private final GameRepository gameRepository;
   private final AtomicInteger nextGameId;
   private final ClientService clientService;
-  private final Map<Integer, Game> games;
+  private final Map<Integer, Game> gamesById;
   private final MapService mapService;
   private final ModService modService;
-  private byte ladder1v1FeaturedModId;
+  private final RatingService ratingService;
   private ArmyStatisticsService armyStatisticsService;
 
-  public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService, ModService modService, ArmyStatisticsService armyStatisticsService) {
+  public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
+                     ModService modService, RatingService ratingService, ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
     this.mapService = mapService;
     this.modService = modService;
+    this.ratingService = ratingService;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger();
-    games = FXCollections.observableMap(new ConcurrentHashMap<>());
+    gamesById = FXCollections.observableMap(new ConcurrentHashMap<>());
+  }
+
+  /**
+   * Checks whether a game is allowed to transition from an old game state into a new game state. If not, an
+   * {@link IllegalStateException} will be thrown.
+   */
+  private static void verifyTransition(GameState oldState, GameState newState) {
+    switch (newState) {
+      case LOBBY:
+        Assert.state(oldState == null, "Can't transition from " + oldState + " to " + newState);
+        break;
+      case LAUNCHING:
+        Assert.state(oldState == GameState.LAUNCHING, "Can't transition from " + oldState + " to " + newState);
+        break;
+    }
   }
 
   @PostConstruct
   public void postConstruct() {
     gameRepository.findMaxId().ifPresent(nextGameId::set);
     log.debug("Next game ID is: {}", nextGameId.get());
-
-    // FIXME read from database
-    ladder1v1FeaturedModId = 1;
-    log.debug("Ladder1v1 mod ID is: {}", ladder1v1FeaturedModId);
   }
 
   /**
    * Creates a new, transient game with the specified options and tells the client to start the game process. The
    * player's current game is set to the new game.
    */
-  public void createGame(String title, byte modId, String mapname, String password, Player player) {
+  public void createGame(String title, byte modId, String mapname, String password, GameVisibility visibility, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     int gameId = this.nextGameId.getAndIncrement();
     Game game = new Game(gameId);
     game.setHost(player);
-    game.setGameMod(modId);
+    modService.getFeaturedMod(modId).ifPresent(game::setFeaturedMod);
     game.setTitle(title);
     mapService.findMap(mapname).ifPresent(game::setMap);
     game.setMapName(mapname);
     game.setPassword(password);
+    game.setGameVisibility(visibility);
 
     log.debug("Player '{}' creates game '{}'", player, game);
 
-    games.put(gameId, game);
+    gamesById.put(gameId, game);
     player.setCurrentGame(game);
 
     clientService.startGameProcess(game, player);
@@ -82,7 +117,7 @@ public class GameService {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     getGame(gameId).map(game -> {
-      Requests.verify(game.getGameState() != GameState.LOBBY, ErrorCode.CANT_JOIN_RUNNING_GAME);
+      Requests.verify(game.getGameState() != GameState.LOBBY, ErrorCode.GAME_NOT_JOINABLE);
 
       log.debug("Player '{}' joins game '{}'", player, gameId);
       player.setCurrentGame(game);
@@ -96,6 +131,8 @@ public class GameService {
 
     log.debug("Player '{}' updated his game state from '{}' to '{}'", player, player.getGameState(), newGameState);
     player.setGameState(newGameState);
+
+    // FIXME figure out how leaving/closing a game is detected and clean up player options and stats
 
     Game game = player.getCurrentGame();
     switch (newGameState) {
@@ -121,9 +158,18 @@ public class GameService {
     game.getPlayerStats().forEach(stats -> {
       Player player = stats.getPlayer();
       player.setCurrentGame(null);
-
       armyStatisticsService.process(player, game, game.getArmyStatistics());
     });
+
+    updateGameRankiness(game);
+    updateRatingsIfValid(game);
+  }
+
+  private void updateRatingsIfValid(Game game) {
+    if (game.getRankiness() != Rankiness.RANKED) {
+      return;
+    }
+    ratingService.updateRatings(game.getPlayerStats(), NO_TEAM_ID);
   }
 
   private void onGameLaunching(Player reporter, Game game) {
@@ -132,25 +178,95 @@ public class GameService {
       log.trace("Player '{}' reported launch for game: {}", reporter, game);
       return;
     }
-    log.debug("Game launched: {}", game);
+    game.setLaunchedAt(Instant.now());
     updateGameRankiness(game);
     gameRepository.save(game);
+    log.debug("Game launched: {}", game);
   }
 
   /**
-   * Checks the game settings and determine whether the game is "valid" (= ranked).
+   * Checks the game settings and determines whether the game is ranked. If the game is unranked, its "rankiness"
+   * will be updated
    */
-  private void updateGameRankiness(Game game) {
-    modService.isModRanked(game.getGameMod());
+  @VisibleForTesting
+  void updateGameRankiness(Game game) {
+    if (game.getRankiness() != Rankiness.RANKED) {
+      return;
+    }
+    if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
+      game.setRankiness(Rankiness.BAD_MOD);
+    } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && modService.isCoop(game.getFeaturedMod())) {
+      game.setRankiness(Rankiness.WRONG_VICTORY_CONDITION);
+    } else if (isFreeForAll(game)) {
+      game.setRankiness(Rankiness.FREE_FOR_ALL);
+    } else if (!areTeamsEven(game)) {
+      game.setRankiness(Rankiness.UNEVEN_TEAMS);
+    } else if (!"explored".equals(game.getOptions().get(OPTION_FOG_OF_WAR))) {
+      game.setRankiness(Rankiness.NO_FOG_OF_WAR);
+    } else if (!"false".equals(game.getOptions().get(OPTION_CHEATS_ENABLED))) {
+      game.setRankiness(Rankiness.CHEATS_ENABLED);
+    } else if (!"Off".equals(game.getOptions().get(OPTION_PREBUILT_UNITS))) {
+      game.setRankiness(Rankiness.PREBUILT_ENABLED);
+    } else if (!"Off".equals(game.getOptions().get(OPTION_NO_RUSH))) {
+      game.setRankiness(Rankiness.NO_RUSH_ENABLED);
+    } else if ((int) game.getOptions().get(OPTION_RESTRICTED_CATEGORIES) != 0) {
+      game.setRankiness(Rankiness.BAD_UNIT_RESTRICTIONS);
+    } else if (game.getMap() == null || game.getMap().isRanked()) {
+      game.setRankiness(Rankiness.BAD_MAP);
+    } else if (game.getDesyncCounter().intValue() > game.getPlayerStats().size()) {
+      game.setRankiness(Rankiness.TOO_MANY_DESYNCS);
+    } else if (game.isMutuallyAgreedDraw()) {
+      game.setRankiness(Rankiness.MUTUAL_DRAW);
+    } else if (game.getPlayerStats().size() < 2) {
+      game.setRankiness(Rankiness.SINGLE_PLAYER);
+    } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
+      game.setRankiness(Rankiness.UNKNOWN_RESULT);
+    }
+  }
+
+  private Duration duration(Game game) {
+    return Duration.between(game.getLaunchedAt(), Instant.now());
+  }
+
+  @VisibleForTesting
+  boolean areTeamsEven(Game game) {
+    Map<Byte, Long> playersPerTeam = game.getPlayerStats().stream()
+      .map(GamePlayerStats::getTeam)
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    if (playersPerTeam.containsKey(NO_TEAM_ID)) {
+      // There are players without a team, all other teams must have exactly 1 player
+      return playersPerTeam.entrySet().stream()
+        .filter(teamToCount -> teamToCount.getKey() != NO_TEAM_ID)
+        .allMatch(teamToCount -> teamToCount.getValue() == 1);
+    }
+    // All teams must have the same amount of players
+    return playersPerTeam.values().stream().distinct().count() == 1;
+  }
+
+  @VisibleForTesting
+  boolean isFreeForAll(Game game) {
+    if (game.getPlayerStats().size() < 3) {
+      return false;
+    }
+    Set<Integer> teams = new HashSet<>();
+    for (GamePlayerStats stats : game.getPlayerStats()) {
+      int team = (int) stats.getTeam();
+      if (team != NO_TEAM_ID) {
+        if (teams.contains(team)) {
+          return false;
+        }
+        teams.add(team);
+      }
+    }
+    return true;
   }
 
   public Optional<Game> getGame(int id) {
-    return Optional.ofNullable(games.get(id));
+    return Optional.ofNullable(gamesById.get(id));
   }
 
   public void updateGameOption(Player host, String key, Object value) {
-    Requests.verify(host.getGameState() != GameState.LOBBY, ErrorCode.CANT_JOIN_RUNNING_GAME);
-
     Game game = host.getCurrentGame();
     if (game == null) {
       // Since this is called repeatedly, throwing exceptions here would not be a good idea
@@ -162,11 +278,11 @@ public class GameService {
     game.getOptions().put(key, value);
     if (VictoryCondition.GAME_OPTION_NAME.equals(key)) {
       game.setVictoryCondition(VictoryCondition.fromString((String) value));
-    } else if ("Slots".equals(key)) {
+    } else if (OPTION_SLOTS.equals(key)) {
       game.setMaxPlayers((int) value);
-    } else if ("ScenarioFile".equals(value)) {
+    } else if (OPTION_SCENARIO_FILE.equals(value)) {
       game.setMapName(((String) value).replace("//", "/").replace("\\", "/").split("/")[2]);
-    } else if ("Title".equals(value)) {
+    } else if (OPTION_TITLE.equals(value)) {
       game.setTitle((String) value);
     }
   }
@@ -217,7 +333,7 @@ public class GameService {
       gamePlayerStats.setDeviation(globalRating.getDeviation());
       gamePlayerStats.setMean(globalRating.getMean());
     });
-    if (isLadder1v1(game)) {
+    if (modService.isLadder1v1(game.getFeaturedMod())) {
       Optional.ofNullable(player.getLadder1v1Rating()).ifPresent(ladder1v1Rating -> {
         gamePlayerStats.setDeviation(ladder1v1Rating.getDeviation());
         gamePlayerStats.setMean(ladder1v1Rating.getMean());
@@ -228,21 +344,6 @@ public class GameService {
   }
 
   /**
-   * Checks whether a game is allowed to transition from an old game state into a new game state. If not, an
-   * {@link IllegalStateException} will be thrown.
-   */
-  private static void verifyTransition(GameState oldState, GameState newState) {
-    switch (newState) {
-      case LOBBY:
-        Assert.state(oldState == null, "Can't transition from " + oldState + " to " + newState);
-        break;
-      case LAUNCHING:
-        Assert.state(oldState == GameState.LAUNCHING, "Can't transition from " + oldState + " to " + newState);
-        break;
-    }
-  }
-
-  /**
    * A poor man's solution to clear slots in case of "bugged" game states. Since there is no scenario - in a non-buggy
    * server software - where this can happen this method does nothing but log the action.
    *
@@ -250,11 +351,7 @@ public class GameService {
    */
   @Deprecated
   public void clearSlot(Game game, int slotId) {
-    log.trace("Ignoring clearSlot for game '{}' and ID '{}'", game, slotId);
-  }
-
-  private boolean isLadder1v1(Game game) {
-    return game.getGameMod() == ladder1v1FeaturedModId;
+    log.trace("Ignoring clearSlot for game '{}' and slot ID '{}'", game, slotId);
   }
 
   /**
@@ -265,7 +362,7 @@ public class GameService {
       log.warn("Desync reported by player w/o game: {}", player);
       return;
     }
-    int desyncCount = player.getCurrentGame().getDesyncCount().incrementAndGet();
+    int desyncCount = player.getCurrentGame().getDesyncCounter().incrementAndGet();
     log.debug("Player '{}' increased desync count to '{}' for game: {}", desyncCount, player.getCurrentGame());
   }
 
@@ -342,6 +439,18 @@ public class GameService {
     }
     log.debug("Player '{}' enforced rating for game '{}'", player, game);
     game.setRatingEnforced(true);
+  }
+
+  @EventListener
+  public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
+    clientService.sendGameList(getActiveGames(), (ConnectionAware) event.getAuthentication().getDetails());
+  }
+
+  /**
+   * Returns a list of games which haven't finished yet.
+   */
+  private Collection<Game> getActiveGames() {
+    return Collections.unmodifiableCollection(gamesById.values());
   }
 
   private Optional<Integer> findArmy(int armyId, Game game) {

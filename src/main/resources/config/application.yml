@@ -23,6 +23,14 @@ spring:
   main:
     banner-mode: off
 
+logging:
+  level:
+    org.springframework: warn
+    com.faforever.server: info
+    com.zaxxer.hikari: warn
+    org.hibernate: warn
+    org.eclipse.jetty: warn
+
 security:
   oauth2:
     client:

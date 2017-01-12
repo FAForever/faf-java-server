@@ -3,7 +3,11 @@
 This is a reimplementation of the  [Forged Alliance Forever](https://www.faforever.com/)'s server application.
 
 It aims to abstract the communication protocol as far as possible in order to stay compatible with current server's
-legacy protocol, while at the same time allowing new protocols to be added and supported simultaneously.
+legacy protocol while at the same time allowing new protocols to be added and supported simultaneously.
+
+As the underlying (legacy) database schema isn't based on best education and diligence either, some data types,
+structures, concepts and/or field names may be questionable, too, even though efforts are made to abstract it with a
+clean layer as well (work in progress)
  
 ## How to run
 
@@ -60,6 +64,10 @@ This project uses:
 * [Spring Integration](https://projects.spring.io/spring-integration/) as a messaging framework
 * [Gradle](https://gradle.org/) as a build automation tool
 * [Docker](https://www.docker.com/) to deploy and run the application
+
+## Architecture
+
+Open with [draw.io](https://www.draw.io/): https://drive.google.com/file/d/0B9_8tdXfnFw2MnJjZlJ0RDZlMGc/view?usp=sharing 
 
 ## Learn
 
