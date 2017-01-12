@@ -1,0 +1,23 @@
+language: java
+
+services:
+  - docker
+
+sudo: required
+git:
+  depth: 3
+
+before_install:
+  - sudo /etc/init.d/mysql stop
+
+install:
+  - git clone https://github.com/FAForever/db.git
+  - pushd db && ./setup_db.sh && popd
+
+script:
+  - chmod +x gradlew && ./gradlew build --info
+
+after_success:
+  - if [ "${TRAVIS_BRANCH}" == "master" ]; then
+      ./gradlew jacocoTestReport coveralls pushDockerImage;
+    fi
