@@ -54,7 +54,7 @@ public class ArmyStatisticsService {
     for (ArmyStatistics statsItem : statistics) {
       currentIndex++;
       if (statsItem.getType() == AI && !CIVILIAN_ARMY_NAME.equals(statsItem.getName())) {
-        log.debug("Ignoring AI game reported by '{}'", player);
+        log.debug("AI game reported by '{}', aborting stats processing", player);
         return;
       }
 
@@ -74,12 +74,12 @@ public class ArmyStatisticsService {
     }
 
     if (playerArmyId == -1) {
-      log.warn("No army stats available for player '{}' in game '{}'", player, game);
+      log.warn("No army stats available for player '{}' in game '{}', aborting stats processing", player, game);
       return;
     }
 
     if (numberOfHumans < 2) {
-      log.debug("Ignoring single player game reported by '{}'", player);
+      log.debug("Single player game '{}' reported by '{}', aborting stats processing", player);
       return;
     }
 
@@ -89,8 +89,8 @@ public class ArmyStatisticsService {
       .filter(item -> item.getArmyId() == finalArmyId)
       .findFirst();
     if (!armyOutcome.isPresent()) {
-      log.warn("No outcome for army '{}´ (player '{}') has been reported for game '{}'. " +
-        "Aborting stats processing", playerArmyId, player, game);
+      log.warn("No outcome for army '{}´ (player '{}') has been reported for game '{}', " +
+        "aborting stats processing", playerArmyId, player, game);
       return;
     }
 

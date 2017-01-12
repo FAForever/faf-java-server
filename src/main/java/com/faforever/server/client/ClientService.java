@@ -34,7 +34,7 @@ public class ClientService {
   }
 
   public void startGameProcess(Game game, Player player) {
-    send(new StartGameProcessResponse(resolveMod(game), game.getId(), getCommandLineArgs(player)), player);
+    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), getCommandLineArgs(player)), player);
   }
 
   /**
@@ -84,10 +84,5 @@ public class ClientService {
       throw new IllegalStateException("No connection available: " + connectionAware);
     }
     clientGateway.send(serverResponse, clientConnection);
-  }
-
-  private String resolveMod(Game game) {
-    // FIXME implement
-    return "faf";
   }
 }
