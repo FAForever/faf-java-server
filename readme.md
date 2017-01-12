@@ -38,7 +38,7 @@ docker run --name faf-server \
   -e API_OAUTH2_CLIENT_ID=faf-server \
   -e API_OAUTH2_CLIENT_SECRET=banana \
   -e SERVER_PROFILE=dev \
-  -d micheljung/faf-server:latest
+  -d micheljung/faf-server:0.0.1-SNAPSHOT
 ```
 
 To run in production, you probably want to create an environment file (e.g. `env.list`):
@@ -57,7 +57,7 @@ And run with:
 ```
 docker run --name faf-server \
   --env-file ./env.list \
-  -d micheljung/faf-server:latest
+  -d micheljung/faf-server:0.0.1-SNAPSHOT
 ```
 
 ## Technology Stack
