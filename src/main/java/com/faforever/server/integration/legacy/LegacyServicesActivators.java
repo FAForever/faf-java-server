@@ -20,7 +20,8 @@ import org.springframework.security.core.Authentication;
 
 import javax.inject.Inject;
 
-import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+
 
 @MessageEndpoint
 public class LegacyServicesActivators {

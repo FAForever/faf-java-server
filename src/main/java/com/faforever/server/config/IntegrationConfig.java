@@ -39,7 +39,7 @@ import org.springframework.messaging.MessageHandlingException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.*;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
@@ -71,7 +71,23 @@ public class IntegrationConfig {
   public IntegrationFlow outboundFlow() {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_OUTBOUND)
-      .route(outboundRouter())
+      .route(singleRecipientOutboundRouter())
+      .get();
+  }
+
+  /**
+   * Reads messages from the broadcast channel, enriches them with a "broadcast" header and routes it to all adapter
+   * channels.
+   */
+  @Bean
+  public IntegrationFlow broadcastFlow() {
+    return IntegrationFlows
+      .from(ChannelNames.CLIENT_OUTBOUND_BROADCAST)
+      .enrichHeaders(ImmutableMap.of(BROADCAST, true))
+      .routeToRecipients(recipientListRouterSpec -> recipientListRouterSpec
+        .recipient(ChannelNames.LEGACY_OUTBOUND)
+      )
+      .route(singleRecipientOutboundRouter())
       .get();
   }
 
@@ -97,7 +113,7 @@ public class IntegrationConfig {
   /**
    * Routes response messages to the appropriate outbound adapter (currently, only legacy adapter is supported).
    */
-  private AbstractMessageRouter outboundRouter() {
+  private AbstractMessageRouter singleRecipientOutboundRouter() {
     return new AbstractMappingMessageRouter() {
       @Override
       protected List<Object> getChannelKeys(Message<?> message) {
@@ -180,7 +196,7 @@ public class IntegrationConfig {
   private Consumer<HeaderEnricherSpec> sessionHeaderEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
       String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
-      Protocol protocol = (Protocol) message.getHeaders().get("protocol");
+      Protocol protocol = (Protocol) message.getHeaders().get(PROTOCOL);
       return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol));
     });
   }

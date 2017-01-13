@@ -28,9 +28,16 @@ public class ChannelNames {
   public static final String LEGACY_LOGIN_REQUEST = "loginRequest";
 
   /**
-   * Channel for outbound client messages. The payload of messages in this channel is {@link ServerResponse}.
+   * Channel for single-receiver outbound client messages. The payload of messages in this channel is
+   * {@link ServerResponse}.
    */
   public static final String CLIENT_OUTBOUND = "clientOutbound";
+
+  /**
+   * Channel for broadcast outbound client messages. The payload of messages in this channel is
+   * {@link ServerResponse}.
+   */
+  public static final String CLIENT_OUTBOUND_BROADCAST = "clientOutboundBroadcast";
 
   /**
    * Channel for inbound client messages. The payload of messages in this channel is {@link ClientMessage}.
@@ -43,7 +50,7 @@ public class ChannelNames {
   public static final String LEGACY_SESSION_REQUEST = "sessionRequest";
 
   /**
-   * Channel for outbound legacy messages. The payload of messages in this channel is {@code Map<String, Serializable>}.
+   * Channel for outbound messages to be processed by the legacy adapter.
    */
   public static final String LEGACY_OUTBOUND = "legacyOutbound";
 

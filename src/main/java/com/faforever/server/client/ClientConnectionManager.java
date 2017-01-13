@@ -3,6 +3,8 @@ package com.faforever.server.client;
 import com.faforever.server.integration.Protocol;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,7 +28,7 @@ public class ClientConnectionManager {
     return connections.get(connectionId);
   }
 
-  public void removeConnection(String connectionId) {
-    connections.remove(connectionId);
+  public Collection<ClientConnection> getConnections() {
+    return Collections.unmodifiableCollection(connections.values());
   }
 }

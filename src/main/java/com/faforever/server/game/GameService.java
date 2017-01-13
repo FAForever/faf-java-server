@@ -42,6 +42,9 @@ public class GameService {
   private static final String OPTION_SLOTS = "Slots";
   private static final String OPTION_SCENARIO_FILE = "ScenarioFile";
   private static final String OPTION_TITLE = "Title";
+  private static final String OPTION_TEAM = "Team";
+  private static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
+  private static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
   private final GameRepository gameRepository;
   private final AtomicInteger nextGameId;
   private final ClientService clientService;
@@ -121,6 +124,7 @@ public class GameService {
       log.debug("Player '{}' joins game '{}'", player, gameId);
       player.setCurrentGame(game);
       clientService.startGameProcess(game, player);
+      markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
       return game;
     }).orElseThrow(() -> new IllegalArgumentException("No such game: " + gameId));
   }
@@ -160,8 +164,10 @@ public class GameService {
       armyStatisticsService.process(player, game, game.getArmyStatistics());
     });
 
+    game.setGameState(GameState.ENDED);
     updateGameRankiness(game);
     updateRatingsIfValid(game);
+    markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
   private void updateRatingsIfValid(Game game) {
@@ -177,10 +183,12 @@ public class GameService {
       log.trace("Player '{}' reported launch for game: {}", reporter, game);
       return;
     }
+    game.setGameState(GameState.LAUNCHING);
     game.setLaunchedAt(Instant.now());
     updateGameRankiness(game);
     gameRepository.save(game);
     log.debug("Game launched: {}", game);
+    markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
   /**
@@ -284,6 +292,7 @@ public class GameService {
     } else if (OPTION_TITLE.equals(value)) {
       game.setTitle((String) value);
     }
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   public void updatePlayerOption(Player host, int playerId, String key, Object value) {
@@ -295,6 +304,19 @@ public class GameService {
     }
     log.trace("Updating option for player '{}' in game '{}': '{}' = '{}'", playerId, game.getId(), key, value);
     game.getPlayerOptions().computeIfAbsent(playerId, id -> new HashMap<>()).put(key, value);
+
+    if (OPTION_TEAM.equals(key)) {
+      Optional<GamePlayerStats> playerStats = game.getPlayerStats().stream()
+        .filter(gamePlayerStats -> gamePlayerStats.getPlayer().getId() == playerId)
+        .findFirst();
+      if (!playerStats.isPresent()) {
+        log.warn("Player '{}' reported team '{}' for nonexistent player '{}' in game '{}'", host, value, playerId, game);
+      } else {
+        playerStats.get().setTeam(((Integer) value).byteValue());
+      }
+    }
+
+    markDirty(game, Duration.ofSeconds(1), Duration.ofSeconds(5));
   }
 
   public void updateAiOption(Player host, String aiName, String key, Object value) {
@@ -306,6 +328,7 @@ public class GameService {
     }
     log.trace("Updating option for AI '{}' in game '{}': '{}' = '{}'", aiName, game.getId(), key, value);
     game.getAiOptions().computeIfAbsent(aiName, s -> new HashMap<>()).put(key, value);
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   /**
@@ -340,6 +363,7 @@ public class GameService {
     }
     gamePlayerStats.setPlayer(player);
     game.getPlayerStats().add(gamePlayerStats);
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   /**
@@ -351,6 +375,7 @@ public class GameService {
   @Deprecated
   public void clearSlot(Game game, int slotId) {
     log.trace("Ignoring clearSlot for game '{}' and slot ID '{}'", game, slotId);
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   /**
@@ -372,13 +397,16 @@ public class GameService {
     modService.getMods(modUids);
     // TODO lookup mod names
     game.setSimMods(modUids);
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   public void updateGameModsCount(Game game, int count) {
-    if (count == 0) {
-      log.trace("Clearing mod list for game '{}'", game);
-      game.setSimMods(Collections.emptyList());
+    if (count != 0) {
+      return;
     }
+    log.trace("Clearing mod list for game '{}'", game);
+    game.setSimMods(Collections.emptyList());
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   public void reportArmyScore(Player player, int armyId, int score) {
@@ -457,5 +485,9 @@ public class GameService {
       .map(options -> (int) options.get("Army"))
       .filter(id -> id == armyId)
       .findFirst();
+  }
+
+  private void markDirty(Game game, Duration minDelay, Duration maxDelay) {
+    clientService.submitDirty(game, minDelay, maxDelay, Game::getId, GameResponse::new);
   }
 }

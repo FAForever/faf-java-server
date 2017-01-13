@@ -7,7 +7,8 @@ import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
 
-import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+
 
 @MessageEndpoint
 public class TeamKillServiceActivator {
