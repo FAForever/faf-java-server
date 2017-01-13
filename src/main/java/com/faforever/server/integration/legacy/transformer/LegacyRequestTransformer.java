@@ -95,7 +95,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new AvatarMessage();
 
       case GAME_STATE:
-        return new GameStateReport(GameState.fromString((String) getArgs(source).get(0)));
+        return new GameStateReport(PlayerGameState.fromString((String) getArgs(source).get(0)));
 
       case GAME_OPTION:
         List<Object> args = getArgs(source);

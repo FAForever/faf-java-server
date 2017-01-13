@@ -156,7 +156,7 @@ public class LegacyRequestTransformerTest {
     ));
 
     assertThat(gameStateReport, is(notNullValue()));
-    assertThat(gameStateReport.getGameState(), is(GameState.LOBBY));
+    assertThat(gameStateReport.getState(), is(PlayerGameState.LOBBY));
   }
 
   @Test

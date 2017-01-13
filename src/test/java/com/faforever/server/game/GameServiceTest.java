@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
+import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.Player;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
@@ -98,7 +99,7 @@ public class GameServiceTest {
     assertThat(game.getMap(), is(nullValue()));
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
-    assertThat(game.getGameState(), is(nullValue()));
+    assertThat(game.getState(), is(GameState.INITIALIZING));
     assertThat(game.getGameVisibility(), is(GameVisibility.PUBLIC));
     assertThat(player1.getCurrentGame(), is(game));
   }
@@ -107,11 +108,10 @@ public class GameServiceTest {
   public void joinGame() throws Exception {
     player1.setCurrentGame(null);
     instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.joinGame(NEXT_GAME_ID, player2);
 
-    Optional<Game> optional = instance.getGame(NEXT_GAME_ID);
-    assertThat(optional.isPresent(), is(true));
-    Game game = optional.get();
+    Game game = instance.getGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("Game not found"));
 
     verify(clientService).startGameProcess(game, player1);
     assertThat(player1.getCurrentGame(), is(game));
@@ -119,9 +119,9 @@ public class GameServiceTest {
 
   @Test
   public void updateGameStateIdle() throws Exception {
-    instance.updateGameState(GameState.LOBBY, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
-    assertThat(game.getGameState(), is(GameState.LOBBY));
+    assertThat(game.getState(), is(GameState.OPEN));
   }
 
   @Test
@@ -236,5 +236,24 @@ public class GameServiceTest {
     assertThat(game.isRatingEnforced(), is(false));
     instance.enforceRating(player1);
     assertThat(game.isRatingEnforced(), is(true));
+  }
+
+  @Test
+  public void endGameIfNoPlayerConnected() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    Game game = instance.getGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
+    assertThat(game.getState(), is(GameState.OPEN));
+
+    instance.joinGame(NEXT_GAME_ID, player2);
+    assertThat(game.getState(), is(GameState.OPEN));
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.OPEN));
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+    assertThat(game.getState(), is(GameState.CLOSED));
   }
 }

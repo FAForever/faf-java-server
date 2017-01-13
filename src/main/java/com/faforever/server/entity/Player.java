@@ -2,7 +2,7 @@ package com.faforever.server.entity;
 
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
-import com.faforever.server.game.GameState;
+import com.faforever.server.game.PlayerGameState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -32,9 +32,13 @@ public class Player extends Login implements ConnectionAware {
   private Game currentGame;
 
   @Transient
-  private GameState gameState;
+  private PlayerGameState gameState = PlayerGameState.UNKNOWN;
 
   @Transient
   private ClientConnection clientConnection;
 
+  public void setGameState(PlayerGameState gameState) {
+    PlayerGameState.verifyTransition(this.gameState, gameState);
+    this.gameState = gameState;
+  }
 }

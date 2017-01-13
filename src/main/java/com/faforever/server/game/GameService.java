@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
@@ -66,21 +65,6 @@ public class GameService {
     gamesById = new ConcurrentHashMap<>();
   }
 
-  /**
-   * Checks whether a game is allowed to transition from an old game state into a new game state. If not, an
-   * {@link IllegalStateException} will be thrown.
-   */
-  private static void verifyTransition(GameState oldState, GameState newState) {
-    switch (newState) {
-      case LOBBY:
-        Assert.state(oldState == null, "Can't transition from " + oldState + " to " + newState);
-        break;
-      case LAUNCHING:
-        Assert.state(oldState == GameState.LAUNCHING, "Can't transition from " + oldState + " to " + newState);
-        break;
-    }
-  }
-
   @PostConstruct
   public void postConstruct() {
     gameRepository.findMaxId().ifPresent(nextGameId::set);
@@ -107,7 +91,7 @@ public class GameService {
     log.debug("Player '{}' creates game '{}'", player, game);
 
     gamesById.put(gameId, game);
-    player.setCurrentGame(game);
+    addPlayer(game, player);
 
     clientService.startGameProcess(game, player);
   }
@@ -118,27 +102,25 @@ public class GameService {
   public void joinGame(int gameId, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
-    getGame(gameId).map(game -> {
-      Requests.verify(game.getGameState() != GameState.LOBBY, ErrorCode.GAME_NOT_JOINABLE);
+    Game game = getGame(gameId).orElseThrow(() -> new IllegalArgumentException("No such game: " + gameId));
+    Requests.verify(game.getState() == GameState.OPEN, ErrorCode.GAME_NOT_JOINABLE);
 
-      log.debug("Player '{}' joins game '{}'", player, gameId);
-      player.setCurrentGame(game);
-      clientService.startGameProcess(game, player);
-      markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
-      return game;
-    }).orElseThrow(() -> new IllegalArgumentException("No such game: " + gameId));
+    log.debug("Player '{}' joins game '{}'", player, gameId);
+    addPlayer(game, player);
+    clientService.startGameProcess(game, player);
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
-  public void updateGameState(GameState newGameState, Player player) {
+  public void updatePlayerGameState(PlayerGameState newState, Player player) {
     Requests.verify(player.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
 
-    log.debug("Player '{}' updated his game state from '{}' to '{}'", player, player.getGameState(), newGameState);
-    player.setGameState(newGameState);
+    log.debug("Player '{}' updated his game state from '{}' to '{}'", player, player.getGameState(), newState);
+    player.setGameState(newState);
 
     // FIXME figure out how leaving/closing a game is detected and clean up player options and stats
 
     Game game = player.getCurrentGame();
-    switch (newGameState) {
+    switch (newState) {
       case LOBBY:
         onLobbyEntered(player, game);
         break;
@@ -146,25 +128,44 @@ public class GameService {
         onGameLaunching(player, game);
         break;
       case ENDED:
-        onGameEnded(player, game);
+        onPlayerGameEnded(player, game);
         break;
     }
   }
 
-  private void onGameEnded(Player reporter, Game game) {
-    if (!Objects.equals(game.getHost(), reporter)) {
-      // TODO do non-hosts send this? If not, log to WARN
-      log.trace("Player '{}' reported end of game: {}", reporter, game);
+  private void addPlayer(Game game, Player player) {
+    player.setCurrentGame(game);
+    game.getActivePlayers().put(player.getId(), player);
+  }
+
+  private void removePlayer(Game game, Player player) {
+    player.setCurrentGame(game);
+    game.getActivePlayers().remove(player.getId(), player);
+  }
+
+  private void onPlayerGameEnded(Player reporter, Game game) {
+    if (game == null) {
+      // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
+      log.warn("Received player option for player w/o game: {}", reporter);
       return;
     }
+
+    log.debug("Player '{}' left game: {}", reporter, game);
+    removePlayer(game, reporter);
+
+    if (game.getActivePlayers().isEmpty()) {
+      onGameEnded(game);
+    }
+  }
+
+  private void onGameEnded(Game game) {
     log.debug("Game ended: {}", game);
     game.getPlayerStats().forEach(stats -> {
       Player player = stats.getPlayer();
-      player.setCurrentGame(null);
       armyStatisticsService.process(player, game, game.getArmyStatistics());
     });
 
-    game.setGameState(GameState.ENDED);
+    game.setState(GameState.CLOSED);
     updateGameRankiness(game);
     updateRatingsIfValid(game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
@@ -183,7 +184,7 @@ public class GameService {
       log.trace("Player '{}' reported launch for game: {}", reporter, game);
       return;
     }
-    game.setGameState(GameState.LAUNCHING);
+    game.setState(GameState.PLAYING);
     game.setLaunchedAt(Instant.now());
     updateGameRankiness(game);
     gameRepository.save(game);
@@ -280,6 +281,7 @@ public class GameService {
       log.debug("Received game option for player w/o game: {}", host);
       return;
     }
+    Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
     log.trace("Updating game option for game '{}': '{}' = '{}'", game.getId(), key, value);
     game.getOptions().put(key, value);
@@ -302,6 +304,8 @@ public class GameService {
       log.warn("Received player option for player w/o game: {}", host);
       return;
     }
+    Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
+
     log.trace("Updating option for player '{}' in game '{}': '{}' = '{}'", playerId, game.getId(), key, value);
     game.getPlayerOptions().computeIfAbsent(playerId, id -> new HashMap<>()).put(key, value);
 
@@ -326,15 +330,17 @@ public class GameService {
       log.warn("Received AI option for player w/o game: {}", host);
       return;
     }
+    Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
+
     log.trace("Updating option for AI '{}' in game '{}': '{}' = '{}'", aiName, game.getId(), key, value);
     game.getAiOptions().computeIfAbsent(aiName, s -> new HashMap<>()).put(key, value);
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   /**
-   * <p>Called when a player's game entered {@link GameState#LOBBY}. If the player is host, the state of the {@link Game}
+   * <p>Called when a player's game entered {@link PlayerGameState#LOBBY}. If the player is host, the state of the {@link Game}
    * instance will be updated and the player is requested to "host" a game (open a port so others can connect).
-   * A joining player whose game entered {@link GameState#LOBBY} will be told to connect to the host and any other
+   * A joining player whose game entered {@link PlayerGameState#LOBBY} will be told to connect to the host and any other
    * players in the game.</p>
    * <p>In any case, the player will be added to the game's transient list of participants where team information,
    * faction and color will be set. When the game starts, this list will be reduced to only the players who are in the
@@ -342,8 +348,7 @@ public class GameService {
    */
   private void onLobbyEntered(Player player, Game game) {
     if (Objects.equals(game.getHost(), player)) {
-      verifyTransition(game.getGameState(), GameState.LOBBY);
-      game.setGameState(GameState.LOBBY);
+      game.setState(GameState.OPEN);
       clientService.hostGame(game, player);
     } else {
       log.debug("Telling '{}' to connect to '{}'", game.getHost());

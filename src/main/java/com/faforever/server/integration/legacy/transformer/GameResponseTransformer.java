@@ -1,9 +1,9 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.entity.Game;
+import com.faforever.server.entity.GameState;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameResponse;
-import com.faforever.server.game.GameState;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
 
@@ -25,7 +25,7 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
       .put("password_protected", game.getPassword() != null)
       .put("uid", game.getId())
       .put("title", game.getTitle())
-      .put("state", clientGameState(game.getGameState()))
+      .put("state", clientGameState(game.getState()))
       .put("featured_mod", game.getFeaturedMod().getTechnicalName())
       // FIXME implement this nightmare
       .put("featured_mod_versions", ImmutableMap.of())
@@ -42,14 +42,13 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
 
   private String clientGameState(GameState gameState) {
     switch (gameState) {
-      case NEW:
-      case IDLE:
+      case INITIALIZING:
         return "unknown";
-      case LOBBY:
+      case OPEN:
         return "open";
-      case LAUNCHING:
+      case PLAYING:
         return "playing";
-      case ENDED:
+      case CLOSED:
         return "closed";
       default:
         throw new ProgrammingError("Uncovered game state: " + gameState);

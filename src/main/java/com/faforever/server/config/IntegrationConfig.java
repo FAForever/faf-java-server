@@ -181,7 +181,7 @@ public class IntegrationConfig {
         Message<?> failedMessage = messageHandlingException.getFailedMessage();
         RequestException cause = (RequestException) messageHandlingException.getCause();
 
-        MessageBuilder<ErrorResponse> builder = MessageBuilder.withPayload(new ErrorResponse(cause.getErrorCode()))
+        MessageBuilder<ErrorResponse> builder = MessageBuilder.withPayload(new ErrorResponse(cause.getErrorCode(), cause.getArgs()))
           .copyHeaders(message.getHeaders());
         builder.setHeader(CLIENT_CONNECTION, failedMessage.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class));
         return builder.build();

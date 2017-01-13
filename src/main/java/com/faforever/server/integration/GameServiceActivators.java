@@ -34,7 +34,7 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.UPDATE_GAME_STATE_REQUEST)
   public void updateGameState(GameStateReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.updateGameState(report.getGameState(), clientConnection.getUserDetails().getPlayer());
+    gameService.updatePlayerGameState(report.getState(), clientConnection.getUserDetails().getPlayer());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.GAME_OPTION_REQUEST)
