@@ -1,5 +1,6 @@
 package com.faforever.server.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "teamkills")
 @Data
+@AllArgsConstructor()
 @NoArgsConstructor
 public class TeamKill {
 
@@ -25,4 +27,5 @@ public class TeamKill {
   private int gameTime;
   @Column(name = "reported_at")
   private Timestamp reportedAt;
+
 }
