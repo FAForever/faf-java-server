@@ -21,7 +21,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,6 +46,7 @@ public class ClientService {
   }
 
   public void startGameProcess(Game game, Player player) {
+    log.debug("Telling '{}' to start game progress for game '{}'", game.getHost());
     send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), getCommandLineArgs(player)), player);
   }
 
@@ -49,16 +54,19 @@ public class ClientService {
    * Tells the client to connect to a host. The game process must have been started before.
    */
   public void connectToHost(Game game, @NotNull ConnectionAware connectionAware) {
-    send(new JoinGameResponse(game.getHost().getId()), connectionAware);
+    log.debug("Telling '{}' to connect to '{}'", game.getHost());
+    send(new ConnectToHostResponse(game.getHost().getId()), connectionAware);
   }
 
   /**
-   * @deprecated passing command line args to the client is a bad (legacy) idea.
+   * Tells the client to connect to another player. The game process must have been started before.
+   *
+   * @param player the player to send the message to
+   * @param otherPlayer the player to connect to
    */
-  @Deprecated
-  private List<String> getCommandLineArgs(Player player) {
-    short numGames = Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse((short) 0);
-    return Arrays.asList("/numgames", String.valueOf(numGames));
+  public void connectToPlayer(Player player, Player otherPlayer) {
+    log.debug("Telling '{}' to connect to '{}'", player, otherPlayer);
+    send(new ConnectToPlayerResponse(otherPlayer.getLogin(), otherPlayer.getId()), player);
   }
 
   public void hostGame(Game game, @NotNull ConnectionAware connectionAware) {
@@ -86,14 +94,6 @@ public class ClientService {
     games.forEach(game -> clientGateway.send(new GameResponse(game), connectionAware.getClientConnection()));
   }
 
-  private void send(ServerResponse serverResponse, @NotNull ConnectionAware connectionAware) {
-    ClientConnection clientConnection = connectionAware.getClientConnection();
-    if (clientConnection == null) {
-      throw new IllegalStateException("No connection available: " + connectionAware);
-    }
-    clientGateway.send(serverResponse, clientConnection);
-  }
-
   /**
    * Submits a dirty object that needs to be send to the client. Dirty objects can be hold back for a while in order to
    * avoid message flooding if the object is updated frequently in a short amount of time.
@@ -113,6 +113,23 @@ public class ClientService {
                               Function<T, ServerResponse> responseCreator) {
     dirtyObjects.computeIfAbsent(idFunction.apply(object),
       o -> new DirtyObject<>(object, minDelay, maxDelay, responseCreator)).onUpdated();
+  }
+
+  /**
+   * @deprecated passing command line args to the client is a bad (legacy) idea.
+   */
+  @Deprecated
+  private List<String> getCommandLineArgs(Player player) {
+    short numGames = Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse((short) 0);
+    return Arrays.asList("/numgames", String.valueOf(numGames));
+  }
+
+  private void send(ServerResponse serverResponse, @NotNull ConnectionAware connectionAware) {
+    ClientConnection clientConnection = connectionAware.getClientConnection();
+    if (clientConnection == null) {
+      throw new IllegalStateException("No connection available: " + connectionAware);
+    }
+    clientGateway.send(serverResponse, clientConnection);
   }
 
   @Scheduled(fixedDelay = 1000)

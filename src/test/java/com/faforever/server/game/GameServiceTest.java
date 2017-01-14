@@ -20,7 +20,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
@@ -248,6 +252,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.OPEN));
 
     instance.joinGame(NEXT_GAME_ID, player2);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
     assertThat(game.getState(), is(GameState.OPEN));
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);

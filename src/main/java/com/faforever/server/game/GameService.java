@@ -2,7 +2,14 @@ package com.faforever.server.game;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
-import com.faforever.server.entity.*;
+import com.faforever.server.entity.ArmyOutcome;
+import com.faforever.server.entity.ArmyScore;
+import com.faforever.server.entity.Game;
+import com.faforever.server.entity.GamePlayerStats;
+import com.faforever.server.entity.GameState;
+import com.faforever.server.entity.Player;
+import com.faforever.server.entity.Rankiness;
+import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
@@ -19,7 +26,16 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -106,9 +122,8 @@ public class GameService {
     Requests.verify(game.getState() == GameState.OPEN, ErrorCode.GAME_NOT_JOINABLE);
 
     log.debug("Player '{}' joins game '{}'", player, gameId);
-    addPlayer(game, player);
     clientService.startGameProcess(game, player);
-    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
+    addPlayer(game, player);
   }
 
   public void updatePlayerGameState(PlayerGameState newState, Player player) {
@@ -131,143 +146,6 @@ public class GameService {
         onPlayerGameEnded(player, game);
         break;
     }
-  }
-
-  private void addPlayer(Game game, Player player) {
-    player.setCurrentGame(game);
-    game.getActivePlayers().put(player.getId(), player);
-  }
-
-  private void removePlayer(Game game, Player player) {
-    player.setCurrentGame(game);
-    game.getActivePlayers().remove(player.getId(), player);
-  }
-
-  private void onPlayerGameEnded(Player reporter, Game game) {
-    if (game == null) {
-      // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
-      log.warn("Received player option for player w/o game: {}", reporter);
-      return;
-    }
-
-    log.debug("Player '{}' left game: {}", reporter, game);
-    removePlayer(game, reporter);
-
-    if (game.getActivePlayers().isEmpty()) {
-      onGameEnded(game);
-    }
-  }
-
-  private void onGameEnded(Game game) {
-    log.debug("Game ended: {}", game);
-    game.getPlayerStats().forEach(stats -> {
-      Player player = stats.getPlayer();
-      armyStatisticsService.process(player, game, game.getArmyStatistics());
-    });
-
-    game.setState(GameState.CLOSED);
-    updateGameRankiness(game);
-    updateRatingsIfValid(game);
-    markDirty(game, Duration.ZERO, Duration.ZERO);
-  }
-
-  private void updateRatingsIfValid(Game game) {
-    if (game.getRankiness() != Rankiness.RANKED) {
-      return;
-    }
-    ratingService.updateRatings(game.getPlayerStats(), NO_TEAM_ID);
-  }
-
-  private void onGameLaunching(Player reporter, Game game) {
-    if (!Objects.equals(game.getHost(), reporter)) {
-      // TODO do non-hosts send this? If not, log to WARN
-      log.trace("Player '{}' reported launch for game: {}", reporter, game);
-      return;
-    }
-    game.setState(GameState.PLAYING);
-    game.setLaunchedAt(Instant.now());
-    updateGameRankiness(game);
-    gameRepository.save(game);
-    log.debug("Game launched: {}", game);
-    markDirty(game, Duration.ZERO, Duration.ZERO);
-  }
-
-  /**
-   * Checks the game settings and determines whether the game is ranked. If the game is unranked, its "rankiness"
-   * will be updated
-   */
-  @VisibleForTesting
-  void updateGameRankiness(Game game) {
-    if (game.getRankiness() != Rankiness.RANKED) {
-      return;
-    }
-    if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
-      game.setRankiness(Rankiness.BAD_MOD);
-    } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && modService.isCoop(game.getFeaturedMod())) {
-      game.setRankiness(Rankiness.WRONG_VICTORY_CONDITION);
-    } else if (isFreeForAll(game)) {
-      game.setRankiness(Rankiness.FREE_FOR_ALL);
-    } else if (!areTeamsEven(game)) {
-      game.setRankiness(Rankiness.UNEVEN_TEAMS);
-    } else if (!"explored".equals(game.getOptions().get(OPTION_FOG_OF_WAR))) {
-      game.setRankiness(Rankiness.NO_FOG_OF_WAR);
-    } else if (!"false".equals(game.getOptions().get(OPTION_CHEATS_ENABLED))) {
-      game.setRankiness(Rankiness.CHEATS_ENABLED);
-    } else if (!"Off".equals(game.getOptions().get(OPTION_PREBUILT_UNITS))) {
-      game.setRankiness(Rankiness.PREBUILT_ENABLED);
-    } else if (!"Off".equals(game.getOptions().get(OPTION_NO_RUSH))) {
-      game.setRankiness(Rankiness.NO_RUSH_ENABLED);
-    } else if ((int) game.getOptions().get(OPTION_RESTRICTED_CATEGORIES) != 0) {
-      game.setRankiness(Rankiness.BAD_UNIT_RESTRICTIONS);
-    } else if (game.getMap() == null || game.getMap().isRanked()) {
-      game.setRankiness(Rankiness.BAD_MAP);
-    } else if (game.getDesyncCounter().intValue() > game.getPlayerStats().size()) {
-      game.setRankiness(Rankiness.TOO_MANY_DESYNCS);
-    } else if (game.isMutuallyAgreedDraw()) {
-      game.setRankiness(Rankiness.MUTUAL_DRAW);
-    } else if (game.getPlayerStats().size() < 2) {
-      game.setRankiness(Rankiness.SINGLE_PLAYER);
-    } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
-      game.setRankiness(Rankiness.UNKNOWN_RESULT);
-    }
-  }
-
-  private Duration duration(Game game) {
-    return Duration.between(game.getLaunchedAt(), Instant.now());
-  }
-
-  @VisibleForTesting
-  boolean areTeamsEven(Game game) {
-    Map<Byte, Long> playersPerTeam = game.getPlayerStats().stream()
-      .map(GamePlayerStats::getTeam)
-      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-
-    if (playersPerTeam.containsKey(NO_TEAM_ID)) {
-      // There are players without a team, all other teams must have exactly 1 player
-      return playersPerTeam.entrySet().stream()
-        .filter(teamToCount -> teamToCount.getKey() != NO_TEAM_ID)
-        .allMatch(teamToCount -> teamToCount.getValue() == 1);
-    }
-    // All teams must have the same amount of players
-    return playersPerTeam.values().stream().distinct().count() == 1;
-  }
-
-  @VisibleForTesting
-  boolean isFreeForAll(Game game) {
-    if (game.getPlayerStats().size() < 3) {
-      return false;
-    }
-    Set<Integer> teams = new HashSet<>();
-    for (GamePlayerStats stats : game.getPlayerStats()) {
-      int team = (int) stats.getTeam();
-      if (team != NO_TEAM_ID) {
-        if (teams.contains(team)) {
-          return false;
-        }
-        teams.add(team);
-      }
-    }
-    return true;
   }
 
   public Optional<Game> getGame(int id) {
@@ -334,40 +212,6 @@ public class GameService {
 
     log.trace("Updating option for AI '{}' in game '{}': '{}' = '{}'", aiName, game.getId(), key, value);
     game.getAiOptions().computeIfAbsent(aiName, s -> new HashMap<>()).put(key, value);
-    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
-  }
-
-  /**
-   * <p>Called when a player's game entered {@link PlayerGameState#LOBBY}. If the player is host, the state of the {@link Game}
-   * instance will be updated and the player is requested to "host" a game (open a port so others can connect).
-   * A joining player whose game entered {@link PlayerGameState#LOBBY} will be told to connect to the host and any other
-   * players in the game.</p>
-   * <p>In any case, the player will be added to the game's transient list of participants where team information,
-   * faction and color will be set. When the game starts, this list will be reduced to only the players who are in the
-   * game and then persisted.</p>
-   */
-  private void onLobbyEntered(Player player, Game game) {
-    if (Objects.equals(game.getHost(), player)) {
-      game.setState(GameState.OPEN);
-      clientService.hostGame(game, player);
-    } else {
-      log.debug("Telling '{}' to connect to '{}'", game.getHost());
-      clientService.connectToHost(game, player);
-    }
-
-    GamePlayerStats gamePlayerStats = new GamePlayerStats();
-    Optional.ofNullable(player.getGlobalRating()).ifPresent(globalRating -> {
-      gamePlayerStats.setDeviation(globalRating.getDeviation());
-      gamePlayerStats.setMean(globalRating.getMean());
-    });
-    if (modService.isLadder1v1(game.getFeaturedMod())) {
-      Optional.ofNullable(player.getLadder1v1Rating()).ifPresent(ladder1v1Rating -> {
-        gamePlayerStats.setDeviation(ladder1v1Rating.getDeviation());
-        gamePlayerStats.setMean(ladder1v1Rating.getMean());
-      });
-    }
-    gamePlayerStats.setPlayer(player);
-    game.getPlayerStats().add(gamePlayerStats);
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -478,6 +322,112 @@ public class GameService {
     clientService.sendGameList(getActiveGames(), (ConnectionAware) event.getAuthentication().getDetails());
   }
 
+  private void addPlayer(Game game, Player player) {
+    GamePlayerStats gamePlayerStats = new GamePlayerStats();
+    Optional.ofNullable(player.getGlobalRating()).ifPresent(globalRating -> {
+      gamePlayerStats.setDeviation(globalRating.getDeviation());
+      gamePlayerStats.setMean(globalRating.getMean());
+    });
+    if (modService.isLadder1v1(game.getFeaturedMod())) {
+      Optional.ofNullable(player.getLadder1v1Rating()).ifPresent(ladder1v1Rating -> {
+        gamePlayerStats.setDeviation(ladder1v1Rating.getDeviation());
+        gamePlayerStats.setMean(ladder1v1Rating.getMean());
+      });
+    }
+    gamePlayerStats.setPlayer(player);
+    game.getPlayerStats().add(gamePlayerStats);
+    game.getActivePlayers().put(player.getId(), player);
+    player.setCurrentGame(game);
+
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
+  }
+
+  private void removePlayer(Game game, Player player) {
+    player.setCurrentGame(game);
+    game.getActivePlayers().remove(player.getId(), player);
+  }
+
+  private void onPlayerGameEnded(Player reporter, Game game) {
+    if (game == null) {
+      // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
+      log.warn("Received player option for player w/o game: {}", reporter);
+      return;
+    }
+
+    log.debug("Player '{}' left game: {}", reporter, game);
+    removePlayer(game, reporter);
+
+    if (game.getActivePlayers().isEmpty()) {
+      onGameEnded(game);
+    }
+  }
+
+  private void onGameEnded(Game game) {
+    log.debug("Game ended: {}", game);
+    game.getPlayerStats().forEach(stats -> {
+      Player player = stats.getPlayer();
+      armyStatisticsService.process(player, game, game.getArmyStatistics());
+    });
+
+    game.setState(GameState.CLOSED);
+    updateGameRankiness(game);
+    updateRatingsIfValid(game);
+    markDirty(game, Duration.ZERO, Duration.ZERO);
+  }
+
+  private void updateRatingsIfValid(Game game) {
+    if (game.getRankiness() != Rankiness.RANKED) {
+      return;
+    }
+    ratingService.updateRatings(game.getPlayerStats(), NO_TEAM_ID);
+  }
+
+  private void onGameLaunching(Player reporter, Game game) {
+    if (!Objects.equals(game.getHost(), reporter)) {
+      // TODO do non-hosts send this? If not, log to WARN
+      log.trace("Player '{}' reported launch for game: {}", reporter, game);
+      return;
+    }
+    game.setState(GameState.PLAYING);
+    game.setLaunchedAt(Instant.now());
+    updateGameRankiness(game);
+    gameRepository.save(game);
+    log.debug("Game launched: {}", game);
+    markDirty(game, Duration.ZERO, Duration.ZERO);
+  }
+
+  private Duration duration(Game game) {
+    return Duration.between(game.getLaunchedAt(), Instant.now());
+  }
+
+  /**
+   * <p>Called when a player's game entered {@link PlayerGameState#LOBBY}. If the player is host, the state of the {@link Game}
+   * instance will be updated and the player is requested to "host" a game (open a port so others can connect).
+   * A joining player whose game entered {@link PlayerGameState#LOBBY} will be told to connect to the host and any other
+   * players in the game.</p>
+   * <p>In any case, the player will be added to the game's transient list of participants where team information,
+   * faction and color will be set. When the game starts, this list will be reduced to only the players who are in the
+   * game and then persisted.</p>
+   */
+  private void onLobbyEntered(Player player, Game game) {
+    if (Objects.equals(game.getHost(), player)) {
+      game.setState(GameState.OPEN);
+      clientService.hostGame(game, player);
+      markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
+    } else {
+      clientService.connectToHost(game, player);
+      game.getActivePlayers().values().forEach(otherPlayer -> connectPeers(player, otherPlayer));
+    }
+  }
+
+  private void connectPeers(Player player, Player otherPlayer) {
+    if (player == otherPlayer) {
+      log.warn("Player '{}' should not be told to connect to himself");
+      return;
+    }
+    clientService.connectToPlayer(player, player);
+  }
+
   /**
    * Returns a list of games which haven't finished yet.
    */
@@ -494,5 +444,79 @@ public class GameService {
 
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {
     clientService.submitDirty(game, minDelay, maxDelay, Game::getId, GameResponse::new);
+  }
+
+  /**
+   * Checks the game settings and determines whether the game is ranked. If the game is unranked, its "rankiness"
+   * will be updated
+   */
+  @VisibleForTesting
+  void updateGameRankiness(Game game) {
+    if (game.getRankiness() != Rankiness.RANKED) {
+      return;
+    }
+    if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
+      game.setRankiness(Rankiness.BAD_MOD);
+    } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && modService.isCoop(game.getFeaturedMod())) {
+      game.setRankiness(Rankiness.WRONG_VICTORY_CONDITION);
+    } else if (isFreeForAll(game)) {
+      game.setRankiness(Rankiness.FREE_FOR_ALL);
+    } else if (!areTeamsEven(game)) {
+      game.setRankiness(Rankiness.UNEVEN_TEAMS);
+    } else if (!"explored".equals(game.getOptions().get(OPTION_FOG_OF_WAR))) {
+      game.setRankiness(Rankiness.NO_FOG_OF_WAR);
+    } else if (!"false".equals(game.getOptions().get(OPTION_CHEATS_ENABLED))) {
+      game.setRankiness(Rankiness.CHEATS_ENABLED);
+    } else if (!"Off".equals(game.getOptions().get(OPTION_PREBUILT_UNITS))) {
+      game.setRankiness(Rankiness.PREBUILT_ENABLED);
+    } else if (!"Off".equals(game.getOptions().get(OPTION_NO_RUSH))) {
+      game.setRankiness(Rankiness.NO_RUSH_ENABLED);
+    } else if ((int) game.getOptions().get(OPTION_RESTRICTED_CATEGORIES) != 0) {
+      game.setRankiness(Rankiness.BAD_UNIT_RESTRICTIONS);
+    } else if (game.getMap() == null || game.getMap().isRanked()) {
+      game.setRankiness(Rankiness.BAD_MAP);
+    } else if (game.getDesyncCounter().intValue() > game.getPlayerStats().size()) {
+      game.setRankiness(Rankiness.TOO_MANY_DESYNCS);
+    } else if (game.isMutuallyAgreedDraw()) {
+      game.setRankiness(Rankiness.MUTUAL_DRAW);
+    } else if (game.getPlayerStats().size() < 2) {
+      game.setRankiness(Rankiness.SINGLE_PLAYER);
+    } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
+      game.setRankiness(Rankiness.UNKNOWN_RESULT);
+    }
+  }
+
+  @VisibleForTesting
+  boolean areTeamsEven(Game game) {
+    Map<Byte, Long> playersPerTeam = game.getPlayerStats().stream()
+      .map(GamePlayerStats::getTeam)
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    if (playersPerTeam.containsKey(NO_TEAM_ID)) {
+      // There are players without a team, all other teams must have exactly 1 player
+      return playersPerTeam.entrySet().stream()
+        .filter(teamToCount -> teamToCount.getKey() != NO_TEAM_ID)
+        .allMatch(teamToCount -> teamToCount.getValue() == 1);
+    }
+    // All teams must have the same amount of players
+    return playersPerTeam.values().stream().distinct().count() == 1;
+  }
+
+  @VisibleForTesting
+  boolean isFreeForAll(Game game) {
+    if (game.getPlayerStats().size() < 3) {
+      return false;
+    }
+    Set<Integer> teams = new HashSet<>();
+    for (GamePlayerStats stats : game.getPlayerStats()) {
+      int team = (int) stats.getTeam();
+      if (team != NO_TEAM_ID) {
+        if (teams.contains(team)) {
+          return false;
+        }
+        teams.add(team);
+      }
+    }
+    return true;
   }
 }
