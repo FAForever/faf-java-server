@@ -3,12 +3,13 @@ package com.faforever.server.integration.legacy;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.client.ListCoopRequest;
+import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.security.LoginMessage;
 import com.faforever.server.security.UidService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -60,5 +61,10 @@ public class LegacyServicesActivators {
     } catch (BadCredentialsException e) {
       throw new RequestException(ErrorCode.INVALID_LOGIN);
     }
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.LEGACY_COOP_LIST)
+  public void listCoopMissions(ListCoopRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    clientService.sendCoopList(clientConnection);
   }
 }

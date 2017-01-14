@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.sql.Time;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -44,5 +45,9 @@ public class CoopService {
 
       coopLeaderboardRepository.save(coopLeaderboardEntry);
     }
+  }
+
+  public List<CoopMap> getMaps() {
+    return coopMapRepository.findAll();
   }
 }

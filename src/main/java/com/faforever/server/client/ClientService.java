@@ -1,6 +1,8 @@
 package com.faforever.server.client;
 
 import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.coop.CoopMissionResponse;
+import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
@@ -23,10 +25,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,11 +40,13 @@ import java.util.stream.Collectors;
 public class ClientService {
 
   private final ClientGateway clientGateway;
-  private Map<Object, DirtyObject<?>> dirtyObjects;
+  private final CoopService coopService;
+  private final Map<Object, DirtyObject<?>> dirtyObjects;
 
-  public ClientService(ClientGateway clientGateway) {
+  public ClientService(ClientGateway clientGateway, CoopService coopService) {
     this.clientGateway = clientGateway;
-    dirtyObjects = new ConcurrentHashMap<>();
+    this.coopService = coopService;
+    dirtyObjects = new HashMap<>();
   }
 
   public void startGameProcess(Game game, Player player) {
@@ -111,8 +115,20 @@ public class ClientService {
    */
   public <T> void submitDirty(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction,
                               Function<T, ServerResponse> responseCreator) {
-    dirtyObjects.computeIfAbsent(idFunction.apply(object),
-      o -> new DirtyObject<>(object, minDelay, maxDelay, responseCreator)).onUpdated();
+    synchronized (dirtyObjects) {
+      dirtyObjects.computeIfAbsent(idFunction.apply(object),
+        o -> new DirtyObject<>(object, minDelay, maxDelay, responseCreator)).onUpdated();
+    }
+  }
+
+  /**
+   * @deprecated the client should ask the API instead
+   */
+  @Deprecated
+  public void sendCoopList(ClientConnection clientConnection) {
+    coopService.getMaps().stream()
+      .map(map -> new CoopMissionResponse(map.getName(), map.getDescription(), map.getFilename()))
+      .forEach(coopMissionResponse -> clientGateway.send(coopMissionResponse, clientConnection));
   }
 
   /**
@@ -134,25 +150,27 @@ public class ClientService {
 
   @Scheduled(fixedDelay = 1000)
   private void sendDirtyObjects() {
-    List<Object> objectIds = dirtyObjects.entrySet().stream()
-      .filter(entry -> {
-        DirtyObject<?> dirtyObject = entry.getValue();
-        Instant now = Instant.now();
+    synchronized (dirtyObjects) {
+      List<Object> objectIds = dirtyObjects.entrySet().stream()
+        .filter(entry -> {
+          DirtyObject<?> dirtyObject = entry.getValue();
+          Instant now = Instant.now();
 
-        return now.isAfter(dirtyObject.getUpdateTime().plus(dirtyObject.getMinDelay()))
-          || now.isAfter(dirtyObject.getCreateTime().plus(dirtyObject.getMaxDelay()));
-      })
-      .map(Map.Entry::getKey)
-      .collect(Collectors.toList());
+          return now.isAfter(dirtyObject.getUpdateTime().plus(dirtyObject.getMinDelay()))
+            || now.isAfter(dirtyObject.getCreateTime().plus(dirtyObject.getMaxDelay()));
+        })
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toList());
 
-    int size = objectIds.size();
-    if (size > 0) {
-      log.trace("Sending '{}' dirty objects", size);
-      objectIds.forEach(id -> {
-        DirtyObject<?> dirtyObject = dirtyObjects.get(id);
-        clientGateway.broadcast(dirtyObject.createResponse());
-        dirtyObjects.remove(id);
-      });
+      int size = objectIds.size();
+      if (size > 0) {
+        log.trace("Sending '{}' dirty objects", size);
+        objectIds.forEach(id -> {
+          DirtyObject<?> dirtyObject = dirtyObjects.get(id);
+          clientGateway.broadcast(dirtyObject.createResponse());
+          dirtyObjects.remove(id);
+        });
+      }
     }
   }
 }

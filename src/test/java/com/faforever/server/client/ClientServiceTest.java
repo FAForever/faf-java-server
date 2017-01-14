@@ -1,5 +1,6 @@
 package com.faforever.server.client;
 
+import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
 import com.faforever.server.integration.ClientGateway;
@@ -23,6 +24,8 @@ public class ClientServiceTest {
 
   @Mock
   private ClientGateway clientGateway;
+  @Mock
+  private CoopService coopService;
 
   private ClientConnection clientConnection;
 
@@ -30,7 +33,7 @@ public class ClientServiceTest {
   public void setUp() throws Exception {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
 
-    instance = new ClientService(clientGateway);
+    instance = new ClientService(clientGateway, coopService);
   }
 
   @Test

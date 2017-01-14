@@ -1,11 +1,11 @@
-package com.faforever.server.security;
+package com.faforever.server.client;
 
 import com.faforever.server.request.ClientMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * @deprecated the clien't shouldn't send login information, instead it should provide a JWT token acquired from the
+ * @deprecated the client shouldn't send login information, instead it should provide a JWT token acquired from the
  * API.
  */
 @Getter
