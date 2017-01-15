@@ -2,6 +2,8 @@ package com.faforever.server.error;
 
 import lombok.Getter;
 
+import java.text.MessageFormat;
+
 /**
  * Exceptions of this type are converted to messages and sent back to the client.
  */
@@ -17,7 +19,7 @@ public class RequestException extends RuntimeException {
   }
 
   public RequestException(ErrorCode errorCode, Object[] args) {
-    super(errorCode.getTitle());
+    super(MessageFormat.format(errorCode.getTitle() + ": " + errorCode.getDetail(), args));
     this.errorCode = errorCode;
     this.args = args;
   }

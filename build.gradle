@@ -64,10 +64,11 @@ jacocoTestReport {
 
 apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: 'application'
+
+import com.bmuschko.gradle.docker.DockerRemoteApiPlugin
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 import com.bmuschko.gradle.docker.tasks.image.Dockerfile
-import com.bmuschko.gradle.docker.DockerRemoteApiPlugin
 
 applicationName = rootProject.name
 applicationDistribution.exclude("**/spring-boot-devtools*.jar")

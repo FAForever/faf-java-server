@@ -11,6 +11,7 @@ public class FafServerProperties {
   private String version = "dev";
   private String apiBaseUrl = "http://localhost:8080";
   private TrueSkill trueSkill = new TrueSkill();
+  private Uid uid = new Uid();
 
   @Data
   public static class TrueSkill {
@@ -19,5 +20,15 @@ public class FafServerProperties {
     private double beta;
     private double dynamicFactor;
     private double drawProbability;
+  }
+
+  @Data
+  public static class Uid {
+    private boolean enabled;
+    /**
+     * Base64-DER-encoded private key.
+     */
+    private String privateKey;
+    private String linkToSteamUrl;
   }
 }
