@@ -8,6 +8,7 @@ import com.faforever.server.entity.Rating;
 import com.faforever.server.error.ProgrammingError;
 import jskills.GameInfo;
 import jskills.IPlayer;
+import jskills.ITeam;
 import jskills.Player;
 import jskills.Team;
 import jskills.TrueSkillCalculator;
@@ -17,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +40,8 @@ public class RatingService {
 
   private final GameInfo gameInfo;
 
-  public RatingService(ServerProperties serverProperties) {
-    ServerProperties.TrueSkill params = serverProperties.getTrueSkill();
+  public RatingService(ServerProperties properties) {
+    ServerProperties.TrueSkill params = properties.getTrueSkill();
     gameInfo = new GameInfo(
       params.getInitialMean(),
       params.getInitialStandardDeviation(),
@@ -46,6 +49,14 @@ public class RatingService {
       params.getDynamicFactor(),
       params.getDrawProbability()
     );
+  }
+
+  public double calculateQuality(com.faforever.server.entity.Rating left, com.faforever.server.entity.Rating right) {
+    Collection<ITeam> teams = Arrays.asList(
+      new Team(new Player<>(1), new jskills.Rating(left.getMean(), left.getDeviation())),
+      new Team(new Player<>(2), new jskills.Rating(right.getMean(), right.getDeviation()))
+    );
+    return TrueSkillCalculator.calculateMatchQuality(gameInfo, teams);
   }
 
   /**

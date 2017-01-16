@@ -19,6 +19,7 @@ import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
@@ -32,7 +33,7 @@ import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.legacy.LegacyClientMessageType;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.matchmaker.MatchmakerMessage;
+import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.social.AddFoeRequest;
 import com.faforever.server.social.AddFriendRequest;
@@ -109,8 +110,12 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
           (String) source.get("unique_id"));
 
       case GAME_MATCH_MAKING:
-        // FIXME implement
-        return new MatchmakerMessage();
+        switch ((String) source.get("state")) {
+          case "stop":
+            // FIXME implement
+          default:
+            return new MatchMakerSearchRequest(Faction.valueOf((String) source.get("faction")), "ladder1v1");
+        }
 
       case AVATAR:
         // FIXME implement?

@@ -14,6 +14,7 @@ import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.response.StartGameProcessResponse;
+import com.faforever.server.matchmaker.MatchMakerResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.response.ServerResponse;
@@ -202,6 +203,15 @@ public class ClientService {
         dirtyObjects.remove(id);
       });
     }
+  }
+
+  /**
+   * Notifies the player about available opponents in the matchmaker.
+   *
+   * @param queueName name of the queue that has opponents available
+   */
+  public void sendMatchmakerNotification(String queueName, ConnectionAware recipient) {
+    send(new MatchMakerResponse(queueName), recipient);
   }
 
   /**

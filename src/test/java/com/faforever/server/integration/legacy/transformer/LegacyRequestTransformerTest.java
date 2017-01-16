@@ -261,7 +261,7 @@ public class LegacyRequestTransformerTest {
   public void transformPlayerOption() throws Exception {
     PlayerOptionReport playerOptionReport = (PlayerOptionReport) instance.transform(ImmutableMap.of(
       "command", "PlayerOption",
-      "args", Arrays.asList("1", "Faction", 3d)
+      "args", Arrays.asList("1", "Faction", 3)
     ));
 
     assertThat(playerOptionReport, is(notNullValue()));
@@ -274,7 +274,7 @@ public class LegacyRequestTransformerTest {
   public void transformClearSlot() throws Exception {
     ClearSlotRequest clearSlotRequest = (ClearSlotRequest) instance.transform(ImmutableMap.of(
       "command", "ClearSlot",
-      "args", Collections.singletonList(1d)
+      "args", Collections.singletonList(1)
     ));
 
     assertThat(clearSlotRequest, is(notNullValue()));
@@ -323,7 +323,7 @@ public class LegacyRequestTransformerTest {
   public void transformAiOption() throws Exception {
     AiOptionReport aiOptionReport = (AiOptionReport) instance.transform(ImmutableMap.of(
       "command", "AIOption",
-      "args", Arrays.asList("QAI", "Faction", 3d)
+      "args", Arrays.asList("QAI", "Faction", 3)
     ));
 
     assertThat(aiOptionReport, is(notNullValue()));
@@ -349,7 +349,7 @@ public class LegacyRequestTransformerTest {
   public void aiOption() throws Exception {
     AiOptionReport report = (AiOptionReport) instance.transform(ImmutableMap.of(
       "command", "AIOption",
-      "args", Arrays.asList("QAI", "Team", 1d)
+      "args", Arrays.asList("QAI", "Team", 1)
     ));
 
     assertThat(report.getAiName(), is("QAI"));

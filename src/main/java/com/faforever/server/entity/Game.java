@@ -62,14 +62,23 @@ public class Game {
    */
   @Transient
   private final Map<Integer, Player> activePlayers;
-
+  /**
+   * Maps player IDs to key-value option maps, like {@code 1234 -> "Color" -> 1 }
+   */
+  @Transient
+  private final Map<Integer, Map<String, Object>> playerOptions;
+  /**
+   * Maps AI names to key-value option maps, like {@code "AI: Rufus" -> "Color" -> 1 }
+   */
+  @Transient
+  private final Map<String, Map<String, Object>> aiOptions;
+  @Transient
+  private final List<String> simMods;
   @Id
   @Column(name = "id")
   private int id;
-
   @Column(name = "startTime")
   private Timestamp startTime;
-
   @Column(name = "gameType")
   @Enumerated(EnumType.ORDINAL)
   private VictoryCondition victoryCondition;
@@ -79,56 +88,31 @@ public class Game {
   @JoinColumn(name = "gameMod")
   @ManyToOne
   private FeaturedMod featuredMod;
-
   @ManyToOne
   @JoinColumn(name = "host")
   private Player host;
-
   @ManyToOne
   @JoinColumn(name = "mapId")
   private MapVersion map;
-
   @Column(name = "gameName")
   private String title;
-
   @Column(name = "validity")
   @Enumerated(EnumType.ORDINAL)
   private Rankiness rankiness;
-
   @OneToMany(mappedBy = "game")
   private List<GamePlayerStats> playerStats;
-
   @Transient
   private GameState state = GameState.INITIALIZING;
-
   @Transient
   private String password;
-
   /**
    * Since some maps are unknown by the server (e.g. in-develop versions from map creators), the literal map name
    * is kept.
    */
   @Transient
   private String mapName;
-
-  /**
-   * Maps player IDs to key-value option maps, like {@code 1234 -> "Color" -> 1 }
-   */
-  @Transient
-  private Map<Integer, Map<String, Object>> playerOptions;
-
-  /**
-   * Maps AI names to key-value option maps, like {@code "AI: Rufus" -> "Color" -> 1 }
-   */
-  @Transient
-  private Map<String, Map<String, Object>> aiOptions;
-
   @Transient
   private int maxPlayers;
-
-  @Transient
-  private List<String> simMods;
-
   @Transient
   private boolean ratingEnforced;
 

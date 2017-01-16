@@ -28,6 +28,7 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.lang.ref.WeakReference;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -42,6 +43,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -51,22 +53,26 @@ import java.util.stream.Collectors;
 @Service
 public class GameService {
 
-  static final String OPTION_FOG_OF_WAR = "FogOfWar";
-  static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
-  static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
-  static final String OPTION_NO_RUSH = "NoRushOption";
-  static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
-  static final String OPTION_SLOT = "Slot";
-  static final String OPTION_SLOTS = "Slots";
-  static final String OPTION_SCENARIO_FILE = "ScenarioFile";
-  static final String OPTION_TITLE = "Title";
-  static final String OPTION_TEAM = "Team";
-  static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
-  static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
   /**
    * ID of the team that stands for "no team" according to the game.
    */
-  private static final byte NO_TEAM_ID = 1;
+  public static final int NO_TEAM_ID = 1;
+  public static final String OPTION_FOG_OF_WAR = "FogOfWar";
+  public static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
+  public static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
+  public static final String OPTION_NO_RUSH = "NoRushOption";
+  public static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
+  public static final String OPTION_SLOT = "Slot";
+  public static final String OPTION_SLOTS = "Slots";
+  public static final String OPTION_SCENARIO_FILE = "ScenarioFile";
+  public static final String OPTION_TITLE = "Title";
+  public static final String OPTION_TEAM = "Team";
+  public static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
+  public static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
+  public static final String OPTION_START_SPOT = "StartSpot";
+  public static final String OPTION_FACTION = "Faction";
+  public static final String OPTION_COLOR = "Color";
+  public static final String OPTION_ARMY = "Army";
   private final GameRepository gameRepository;
   private final AtomicInteger nextGameId;
   private final ClientService clientService;
@@ -76,6 +82,7 @@ public class GameService {
   private final PlayerService playerService;
   private final RatingService ratingService;
   private ArmyStatisticsService armyStatisticsService;
+  private List<WeakReference<CompletableFuture<Game>>> gameFutures;
 
   public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
                      ModService modService, PlayerService playerService, RatingService ratingService,
@@ -89,6 +96,7 @@ public class GameService {
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
     gamesById = new ConcurrentHashMap<>();
+    gameFutures = Collections.synchronizedList(new ArrayList<>());
   }
 
   @PostConstruct
@@ -100,8 +108,12 @@ public class GameService {
   /**
    * Creates a new, transient game with the specified options and tells the client to start the game process. The
    * player's current game is set to the new game.
+   *
+   * @return a future that will be completed as soon as the player's game has been started and is ready to be joined.
+   * Be aware that there are various reasons for the game to never start (crash, disconnect, abort) so never wait
+   * without a timeout.
    */
-  public void createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
+  public CompletableFuture<Game> createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     int gameId = this.nextGameId.getAndIncrement();
@@ -120,6 +132,10 @@ public class GameService {
     addPlayer(game, player);
 
     clientService.startGameProcess(game, player);
+
+    CompletableFuture<Game> future = new CompletableFuture<>();
+    gameFutures.add(new WeakReference<>(future));
+    return future;
   }
 
   /**
@@ -274,7 +290,8 @@ public class GameService {
   public void updateGameMods(Game game, List<String> modUids) {
     modService.getMods(modUids);
     // TODO lookup mod names
-    game.setSimMods(modUids);
+    game.getSimMods().clear();
+    game.getSimMods().addAll(modUids);
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -283,7 +300,7 @@ public class GameService {
       return;
     }
     log.trace("Clearing mod list for game '{}'", game);
-    game.setSimMods(Collections.emptyList());
+    game.getSimMods().clear();
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -483,6 +500,8 @@ public class GameService {
     if (Objects.equals(game.getHost(), player)) {
       game.setState(GameState.OPEN);
       clientService.hostGame(game, player);
+
+      // TODO send only to players allowed to see
       markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     } else {
       clientService.connectToHost(game, player);

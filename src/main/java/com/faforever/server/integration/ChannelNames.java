@@ -22,6 +22,7 @@ import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.response.ServerResponse;
 import com.faforever.server.social.AddFoeRequest;
@@ -183,6 +184,11 @@ public class ChannelNames {
    * Channel for {@link ListCoopRequest}
    */
   public static final String LEGACY_COOP_LIST = "listCoopRequest";
+
+  /**
+   * Channel for {@link MatchMakerSearchRequest}.
+   */
+  public static final String MATCH_MAKER_MESSAGE = "matchMakerMessage";
 
   /**
    * Channel for {@link DisconnectPeerRequest}

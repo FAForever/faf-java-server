@@ -18,8 +18,8 @@ public final class RequestExceptionWithCode extends BaseMatcher<RequestException
 
   @Override
   public boolean matches(Object item) {
-    RequestException apiException = (RequestException) item;
-    return apiException.getErrorCode() == errorCode;
+    return item instanceof RequestException
+      && ((RequestException) item).getErrorCode() == errorCode;
   }
 
   public static RequestExceptionWithCode requestExceptionWithCode(ErrorCode errorCode) {
