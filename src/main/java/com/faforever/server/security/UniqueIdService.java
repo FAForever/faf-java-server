@@ -137,16 +137,20 @@ public class UniqueIdService {
     byte[] aesKey = rsaDecrypt(rsaEncryptedAesKey);
 
     // Then decrypt the AES encrypted message
+    byte[] plaintext = aesDecrypt(initVector, aesEncryptedJson, aesKey);
+
+    // The JSON string is prefixed with the magic byte "2", meaning version 2 of the UID's JSON
+    String json = new String(plaintext, 1, plaintext.length - 1, UTF_8);
+    return objectMapper.readValue(json, HardwareInfo.class);
+  }
+
+  private byte[] aesDecrypt(byte[] initVector, byte[] aesEncryptedJson, byte[] aesKey) throws InvalidCipherTextException {
     PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESFastEngine()));
     cipher.init(false, new ParametersWithIV(new KeyParameter(aesKey), initVector));
 
     int plaintextSize = cipher.processBytes(aesEncryptedJson, 0, aesEncryptedJson.length, aesEncryptedJson, 0);
     plaintextSize += cipher.doFinal(aesEncryptedJson, plaintextSize);
-    byte[] plaintext = Arrays.copyOf(aesEncryptedJson, plaintextSize);
-
-    // The JSON string is prefixed with the magic byte "2", meaning version 2 of the UID's JSON
-    String json = new String(plaintext, 1, plaintextSize - 1, UTF_8);
-    return objectMapper.readValue(json, HardwareInfo.class);
+    return Arrays.copyOf(aesEncryptedJson, plaintextSize);
   }
 
   private byte[] rsaDecrypt(byte[] encryptedData) throws IOException, InvalidCipherTextException {
