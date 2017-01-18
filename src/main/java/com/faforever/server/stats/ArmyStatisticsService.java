@@ -19,7 +19,14 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.ToIntFunction;
 
 import static com.faforever.server.statistics.ArmyStatistics.BrainType.AI;
@@ -79,7 +86,7 @@ public class ArmyStatisticsService {
     }
 
     if (numberOfHumans < 2) {
-      log.debug("Single player game '{}' reported by '{}', aborting stats processing", player);
+      log.debug("Single player game '{}' reported by '{}', aborting stats processing", game, player);
       return;
     }
 
@@ -146,6 +153,94 @@ public class ArmyStatisticsService {
     eventService.executeBatchUpdate(player, eventUpdates);
     achievementService.executeBatchUpdate(player, achievementUpdates)
       .thenAccept((playerAchievements) -> clientService.reportUpdatedAchievements(playerAchievements, player));
+  }
+
+  private void builtMercies(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_NO_MERCY, count, achievementUpdates);
+  }
+
+  private void builtFireBeetles(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_DEADLY_BUGS, count, achievementUpdates);
+  }
+
+  private void builtAtlantis(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_IT_AINT_A_CITY, count, achievementUpdates);
+  }
+
+  private void builtTempests(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_STORMY_SEA, count, achievementUpdates);
+  }
+
+  private void builtCzars(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_DEATH_FROM_ABOVE, count, achievementUpdates);
+  }
+
+  private void builtAhwassas(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_ASS_WASHER, count, achievementUpdates);
+  }
+
+  private void builtYthothas(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_ALIEN_INVASION, count, achievementUpdates);
+  }
+
+  private void builtFatboys(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_FATTER_IS_BETTER, count, achievementUpdates);
+  }
+
+  private void builtMonkeylords(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_ARACHNOLOGIST, count, achievementUpdates);
+  }
+
+  private void builtGalacticColossus(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_INCOMING_ROBOTS, count, achievementUpdates);
+  }
+
+  private void builtSoulRippers(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_FLYING_DEATH, count, achievementUpdates);
+  }
+
+  private void builtMegaliths(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_HOLY_CRAB, count, achievementUpdates);
+  }
+
+  private void builtTransports(int count, List<AchievementUpdate> achievementUpdates) {
+    increment(AchievementId.ACH_THE_TRANSPORTER, count, achievementUpdates);
+  }
+
+  private void builtSacus(int count, List<AchievementUpdate> achievementUpdates) {
+    setStepsAtLeast(AchievementId.ACH_WHO_NEEDS_SUPPORT, count, achievementUpdates);
+  }
+
+  private void builtAsfs(int count, List<AchievementUpdate> achievementUpdates) {
+    setStepsAtLeast(AchievementId.ACH_WHAT_A_SWARM, count, achievementUpdates);
+  }
+
+  private void unlock(AchievementId achievementId, List<AchievementUpdate> achievementUpdates) {
+    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.UNLOCK, 0));
+  }
+
+  private void increment(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates) {
+    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.INCREMENT, steps));
+  }
+
+  private void setStepsAtLeast(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates) {
+    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, steps));
+  }
+
+  private void recordEvent(EventId eventId, int count, List<EventUpdate> eventUpdates) {
+    eventUpdates.add(new EventUpdate(eventId, count));
+  }
+
+  private int countBuiltUnits(Map<String, ArmyStatistics.UnitStats> unitStats, Unit... units) {
+    return count(unitStats, ArmyStatistics.UnitStats::getBuilt, units);
+  }
+
+  private int count(Map<String, ArmyStatistics.UnitStats> unitStats, ToIntFunction<ArmyStatistics.UnitStats> function, Unit... units) {
+    return unitStats.keySet().stream()
+      .filter(unitId -> Arrays.stream(units).anyMatch(u -> u.getUnitId().equals(unitId)))
+      .map(unitStats::get)
+      .mapToInt(function)
+      .sum();
   }
 
   @VisibleForTesting
@@ -255,14 +350,6 @@ public class ArmyStatisticsService {
     increment(AchievementId.ACH_DONT_MESS_WITH_ME, killedAcus / acusPerPlayer, achievementUpdates);
   }
 
-  private void builtMercies(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_NO_MERCY, count, achievementUpdates);
-  }
-
-  private void builtFireBeetles(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_DEADLY_BUGS, count, achievementUpdates);
-  }
-
   @VisibleForTesting
   void builtSalvations(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
     if (survived && count > 0) {
@@ -284,14 +371,6 @@ public class ArmyStatisticsService {
     }
   }
 
-  private void builtAtlantis(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_IT_AINT_A_CITY, count, achievementUpdates);
-  }
-
-  private void builtTempests(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_STORMY_SEA, count, achievementUpdates);
-  }
-
   @VisibleForTesting
   void builtScathis(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
     if (survived && count > 0) {
@@ -304,50 +383,6 @@ public class ArmyStatisticsService {
     if (survived && count > 0) {
       unlock(AchievementId.ACH_I_HAVE_A_CANON, achievementUpdates);
     }
-  }
-
-  private void builtCzars(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_DEATH_FROM_ABOVE, count, achievementUpdates);
-  }
-
-  private void builtAhwassas(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_ASS_WASHER, count, achievementUpdates);
-  }
-
-  private void builtYthothas(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_ALIEN_INVASION, count, achievementUpdates);
-  }
-
-  private void builtFatboys(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_FATTER_IS_BETTER, count, achievementUpdates);
-  }
-
-  private void builtMonkeylords(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_ARACHNOLOGIST, count, achievementUpdates);
-  }
-
-  private void builtGalacticColossus(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_INCOMING_ROBOTS, count, achievementUpdates);
-  }
-
-  private void builtSoulRippers(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_FLYING_DEATH, count, achievementUpdates);
-  }
-
-  private void builtMegaliths(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_HOLY_CRAB, count, achievementUpdates);
-  }
-
-  private void builtTransports(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_THE_TRANSPORTER, count, achievementUpdates);
-  }
-
-  private void builtSacus(int count, List<AchievementUpdate> achievementUpdates) {
-    setStepsAtLeast(AchievementId.ACH_WHO_NEEDS_SUPPORT, count, achievementUpdates);
-  }
-
-  private void builtAsfs(int count, List<AchievementUpdate> achievementUpdates) {
-    setStepsAtLeast(AchievementId.ACH_WHAT_A_SWARM, count, achievementUpdates);
   }
 
   @VisibleForTesting
@@ -363,34 +398,6 @@ public class ArmyStatisticsService {
       unlock(AchievementId.ACH_TOP_SCORE, achievementUpdates);
       increment(AchievementId.ACH_UNBEATABLE, 1, achievementUpdates);
     }
-  }
-
-  private void unlock(AchievementId achievementId, List<AchievementUpdate> achievementUpdates) {
-    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.UNLOCK, 0));
-  }
-
-  private void increment(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates) {
-    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.INCREMENT, steps));
-  }
-
-  private void setStepsAtLeast(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates) {
-    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, steps));
-  }
-
-  private void recordEvent(EventId eventId, int count, List<EventUpdate> eventUpdates) {
-    eventUpdates.add(new EventUpdate(eventId, count));
-  }
-
-  private int countBuiltUnits(Map<String, ArmyStatistics.UnitStats> unitStats, Unit... units) {
-    return count(unitStats, ArmyStatistics.UnitStats::getBuilt, units);
-  }
-
-  private int count(Map<String, ArmyStatistics.UnitStats> unitStats, ToIntFunction<ArmyStatistics.UnitStats> function, Unit... units) {
-    return unitStats.keySet().stream()
-      .filter(unitId -> Arrays.stream(units).anyMatch(u -> u.getUnitId().equals(unitId)))
-      .map(unitStats::get)
-      .mapToInt(function)
-      .sum();
   }
 }
 
