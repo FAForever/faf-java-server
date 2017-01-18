@@ -4,6 +4,6 @@ import com.faforever.server.response.ServerResponse;
 import lombok.Data;
 
 @Data
-public class JoinGameResponse implements ServerResponse {
+public class ConnectToHostResponse implements ServerResponse {
   private final int hostId;
 }

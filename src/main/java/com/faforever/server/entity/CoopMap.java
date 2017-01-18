@@ -1,9 +1,16 @@
 package com.faforever.server.entity;
 
+import com.faforever.server.coop.CoopMissionType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "coop_map")
@@ -17,7 +24,8 @@ public class CoopMap {
   private int id;
 
   @Column(name = "type")
-  private byte type;
+  @Enumerated(EnumType.ORDINAL)
+  private CoopMissionType type;
 
   @Column(name = "name")
   private String name;

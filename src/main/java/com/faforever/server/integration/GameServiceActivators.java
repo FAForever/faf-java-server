@@ -9,7 +9,8 @@ import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
 
-import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+
 
 @MessageEndpoint
 public class GameServiceActivators {
@@ -33,7 +34,7 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.UPDATE_GAME_STATE_REQUEST)
   public void updateGameState(GameStateReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.updateGameState(report.getGameState(), clientConnection.getUserDetails().getPlayer());
+    gameService.updatePlayerGameState(report.getState(), clientConnection.getUserDetails().getPlayer());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.GAME_OPTION_REQUEST)

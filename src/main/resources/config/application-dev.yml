@@ -20,3 +20,13 @@ security:
       clientSecret: banana
       accessTokenUri: ${API_OAUTH2_ACCESS_TOKEN_URI:http://localhost:8080/oauth/token}
       userAuthorizationUri: ${API_OAUTH2_AUTHORIZATION_URI:http://localhost:8080/oauth/authorize}
+
+faf-server:
+  uid:
+    enabled: true
+    private-key: MIGsAgEAMA0GCSqGSIb3DQEBAQUABIGXMIGUAgEAAhwOCYK+a8WeokqSHqKhGLVMzfUF2tZdoeaW5DQnAgMBAAECHAH3aR5+AJBJkgLIUeYZfDKJBJGpb4iz/7mcuTECDj9GSDulHRiO//X1vSDvAg44ythldPwOVNJjzMcwSQIOE6UDahkyNly3VSqtRFsCDgC5rnvVO6bfNHSr19tpAg4UouL3z6gxb03hUN0FDg==
+
+
+
+
+

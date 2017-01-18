@@ -1,5 +1,14 @@
 faf-server:
-  version: #faf-server.version#
+  version:
+  true-skill:
+    initial-mean: 1500
+    initial-standard-deviation: 500
+    beta: 240
+    dynamic-factor: 10
+    draw-probability: 0.1
+  uid:
+    link-to-steam-url: http://app.faforever.com/faf/steam.php
+
 
 spring:
   application:

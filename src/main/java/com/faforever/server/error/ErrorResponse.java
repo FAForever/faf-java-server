@@ -7,4 +7,5 @@ import lombok.Data;
 public class ErrorResponse implements ServerResponse {
 
   private final ErrorCode errorCode;
+  private final Object[] args;
 }

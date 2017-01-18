@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -23,8 +24,8 @@ public class PlayerService {
     playersById.put(player.getId(), player);
   }
 
-  public Player getPlayer(int id) {
-    return playersById.get(id);
+  public Optional<Player> getPlayer(int id) {
+    return Optional.ofNullable(playersById.get(id));
   }
 
   public Collection<Player> getPlayers() {

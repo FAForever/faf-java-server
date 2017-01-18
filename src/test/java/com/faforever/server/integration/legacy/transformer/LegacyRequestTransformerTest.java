@@ -1,11 +1,24 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
-import com.faforever.server.game.*;
+import com.faforever.server.game.AiOptionReport;
+import com.faforever.server.game.ArmyOutcomeReport;
+import com.faforever.server.game.ArmyScoreReport;
+import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.GameAccess;
+import com.faforever.server.game.GameModsCountReport;
+import com.faforever.server.game.GameModsReport;
+import com.faforever.server.game.GameOptionReport;
+import com.faforever.server.game.GameVisibility;
+import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.Outcome;
+import com.faforever.server.game.PlayerGameState;
+import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.security.LoginMessage;
 import com.faforever.server.social.AddFoeMessage;
 import com.faforever.server.social.AddFriendMessage;
 import com.faforever.server.statistics.ArmyStatisticsReport;
@@ -156,7 +169,7 @@ public class LegacyRequestTransformerTest {
     ));
 
     assertThat(gameStateReport, is(notNullValue()));
-    assertThat(gameStateReport.getGameState(), is(GameState.LOBBY));
+    assertThat(gameStateReport.getState(), is(PlayerGameState.LOBBY));
   }
 
   @Test

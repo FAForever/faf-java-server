@@ -4,7 +4,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
@@ -27,16 +33,16 @@ public class GamePlayerStats {
   private boolean ai;
 
   @Column(name = "faction")
-  private byte faction;
+  private int faction;
 
   @Column(name = "color")
-  private byte color;
+  private int color;
 
   @Column(name = "team")
-  private byte team;
+  private int team;
 
   @Column(name = "place")
-  private byte place;
+  private int place;
 
   @Column(name = "mean")
   private Double mean;
@@ -51,7 +57,7 @@ public class GamePlayerStats {
   private Double afterDeviation;
 
   @Column(name = "score")
-  private byte score;
+  private int score;
 
   @Column(name = "scoreTime")
   private Timestamp scoreTime;

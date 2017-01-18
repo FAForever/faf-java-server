@@ -1,13 +1,14 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.coop.CoopService;
 import com.faforever.server.coop.CoopMissionCompletedReport;
+import com.faforever.server.coop.CoopService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
 
-import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+
 
 @MessageEndpoint
 public class CoopServiceActivators {

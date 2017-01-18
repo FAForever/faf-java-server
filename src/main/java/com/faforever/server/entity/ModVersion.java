@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 public class ModVersion {
+
   @Id
   @Column(name = "id")
   @GeneratedValue

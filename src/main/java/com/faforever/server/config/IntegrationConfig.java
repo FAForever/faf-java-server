@@ -3,16 +3,27 @@ package com.faforever.server.config;
 import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.error.RequestException;
-import com.faforever.server.game.*;
+import com.faforever.server.game.AiOptionReport;
+import com.faforever.server.game.ArmyOutcomeReport;
+import com.faforever.server.game.ArmyScoreReport;
+import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.DesyncReport;
+import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.GameModsCountReport;
+import com.faforever.server.game.GameModsReport;
+import com.faforever.server.game.GameOptionReport;
+import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.PlayerOptionReport;
+import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.security.LoginMessage;
 import com.faforever.server.social.AddFriendMessage;
 import com.faforever.server.social.SocialRemoveMessage;
 import com.faforever.server.statistics.ArmyStatisticsReport;
@@ -39,7 +50,9 @@ import org.springframework.messaging.MessageHandlingException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.faforever.server.client.ClientConnection.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.BROADCAST;
+import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.PROTOCOL;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
@@ -71,7 +84,23 @@ public class IntegrationConfig {
   public IntegrationFlow outboundFlow() {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_OUTBOUND)
-      .route(outboundRouter())
+      .route(singleRecipientOutboundRouter())
+      .get();
+  }
+
+  /**
+   * Reads messages from the broadcast channel, enriches them with a "broadcast" header and routes it to all adapter
+   * channels.
+   */
+  @Bean
+  public IntegrationFlow broadcastFlow() {
+    return IntegrationFlows
+      .from(ChannelNames.CLIENT_OUTBOUND_BROADCAST)
+      .enrichHeaders(ImmutableMap.of(BROADCAST, true))
+      .routeToRecipients(recipientListRouterSpec -> recipientListRouterSpec
+        .recipient(ChannelNames.LEGACY_OUTBOUND)
+      )
+      .route(singleRecipientOutboundRouter())
       .get();
   }
 
@@ -97,7 +126,7 @@ public class IntegrationConfig {
   /**
    * Routes response messages to the appropriate outbound adapter (currently, only legacy adapter is supported).
    */
-  private AbstractMessageRouter outboundRouter() {
+  private AbstractMessageRouter singleRecipientOutboundRouter() {
     return new AbstractMappingMessageRouter() {
       @Override
       protected List<Object> getChannelKeys(Message<?> message) {
@@ -165,7 +194,7 @@ public class IntegrationConfig {
         Message<?> failedMessage = messageHandlingException.getFailedMessage();
         RequestException cause = (RequestException) messageHandlingException.getCause();
 
-        MessageBuilder<ErrorResponse> builder = MessageBuilder.withPayload(new ErrorResponse(cause.getErrorCode()))
+        MessageBuilder<ErrorResponse> builder = MessageBuilder.withPayload(new ErrorResponse(cause.getErrorCode(), cause.getArgs()))
           .copyHeaders(message.getHeaders());
         builder.setHeader(CLIENT_CONNECTION, failedMessage.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class));
         return builder.build();
@@ -180,7 +209,7 @@ public class IntegrationConfig {
   private Consumer<HeaderEnricherSpec> sessionHeaderEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
       String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
-      Protocol protocol = (Protocol) message.getHeaders().get("protocol");
+      Protocol protocol = (Protocol) message.getHeaders().get(PROTOCOL);
       return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol));
     });
   }

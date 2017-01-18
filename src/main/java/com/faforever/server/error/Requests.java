@@ -5,9 +5,9 @@ public final class Requests {
     // Private
   }
 
-  public static void verify(boolean expression, ErrorCode errorCode) {
+  public static void verify(boolean expression, ErrorCode errorCode, Object... args) {
     if (!expression) {
-      throw new RequestException(errorCode);
+      throw new RequestException(errorCode, args);
     }
   }
 }

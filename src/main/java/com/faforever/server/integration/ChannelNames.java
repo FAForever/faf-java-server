@@ -1,16 +1,27 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.client.ListCoopRequest;
+import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
-import com.faforever.server.game.*;
+import com.faforever.server.game.AiOptionReport;
+import com.faforever.server.game.ArmyOutcomeReport;
+import com.faforever.server.game.ArmyScoreReport;
+import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.GameModsCountReport;
+import com.faforever.server.game.GameModsReport;
+import com.faforever.server.game.GameOptionReport;
+import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.PlayerOptionReport;
+import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.response.ServerResponse;
-import com.faforever.server.security.LoginMessage;
 import com.faforever.server.social.AddFriendMessage;
 import com.faforever.server.social.SocialRemoveMessage;
 import com.faforever.server.statistics.ArmyStatisticsReport;
@@ -28,9 +39,16 @@ public class ChannelNames {
   public static final String LEGACY_LOGIN_REQUEST = "loginRequest";
 
   /**
-   * Channel for outbound client messages. The payload of messages in this channel is {@link ServerResponse}.
+   * Channel for single-receiver outbound client messages. The payload of messages in this channel is
+   * {@link ServerResponse}.
    */
   public static final String CLIENT_OUTBOUND = "clientOutbound";
+
+  /**
+   * Channel for broadcast outbound client messages. The payload of messages in this channel is
+   * {@link ServerResponse}.
+   */
+  public static final String CLIENT_OUTBOUND_BROADCAST = "clientOutboundBroadcast";
 
   /**
    * Channel for inbound client messages. The payload of messages in this channel is {@link ClientMessage}.
@@ -43,7 +61,7 @@ public class ChannelNames {
   public static final String LEGACY_SESSION_REQUEST = "sessionRequest";
 
   /**
-   * Channel for outbound legacy messages. The payload of messages in this channel is {@code Map<String, Serializable>}.
+   * Channel for outbound messages to be processed by the legacy adapter.
    */
   public static final String LEGACY_OUTBOUND = "legacyOutbound";
 
@@ -143,7 +161,12 @@ public class ChannelNames {
   public static final String ENFORCE_RATING_REQUEST = "enforceRatingRequest";
 
   /**
-   * Channel for Team {@link TeamKillReport}.
+   * Channel for {@link TeamKillReport}.
    */
   public static final String TEAM_KILL_REPORT = "teamKillReport";
+
+  /**
+   * Channel for {@link ListCoopRequest}
+   */
+  public static final String LEGACY_COOP_LIST = "listCoopRequest";
 }
