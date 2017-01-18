@@ -57,9 +57,9 @@ public class ClientService {
   /**
    * Tells the client to connect to a host. The game process must have been started before.
    */
-  public void connectToHost(Game game, @NotNull ConnectionAware connectionAware) {
-    log.debug("Telling '{}' to connect to '{}'", game.getHost());
-    send(new ConnectToHostResponse(game.getHost().getId()), connectionAware);
+  public void connectToHost(Game game, @NotNull Player player) {
+    log.debug("Telling '{}' to connect to '{}'", player, game.getHost());
+    send(new ConnectToHostResponse(game.getHost().getId()), player);
   }
 
   /**
