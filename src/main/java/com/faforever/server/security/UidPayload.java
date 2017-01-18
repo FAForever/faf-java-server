@@ -4,8 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-class HardwareInfo {
+class UidPayload {
+  private String session;
   private Machine machine;
+  private Desktop desktop;
+
+  @Data
+  public static class Desktop {
+    private int width;
+    private int height;
+  }
 
   @Data
   public static class Machine {
@@ -14,6 +22,9 @@ class HardwareInfo {
     private Disks disks;
     private Bios bios;
     private Processor processor;
+    private Motherboard motherboard;
+    private Model model;
+    private OperatingSystem os;
 
     @Data
     static class Memory {
@@ -31,15 +42,36 @@ class HardwareInfo {
     @Data
     static class Bios {
       private String manufacturer;
+      private String version;
+      private String date;
+      private String serial;
+      private String description;
       @JsonProperty("smbbversion")
       private String smbbVersion;
-      private String serial;
     }
 
     @Data
     static class Processor {
       private String name;
       private String id;
+    }
+
+    @Data
+    static class Motherboard {
+      private String vendor;
+      private String name;
+    }
+
+    @Data
+    static class Model {
+      private String name;
+      private String manufacturer;
+    }
+
+    @Data
+    static class OperatingSystem {
+      private String version;
+      private String type;
     }
   }
 }

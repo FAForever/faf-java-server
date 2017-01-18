@@ -1,7 +1,7 @@
 package com.faforever.server.api;
 
 import com.faforever.server.api.dto.UpdatedAchievement;
-import com.faforever.server.config.FafServerProperties;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.stats.achievements.AchievementUpdate;
 import com.faforever.server.stats.event.EventUpdate;
 import org.springframework.security.oauth2.client.OAuth2RestOperations;
@@ -18,11 +18,11 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 public class ApiAccessor {
 
   private final OAuth2RestOperations restOperations;
-  private final FafServerProperties fafServerProperties;
+  private final ServerProperties serverProperties;
 
-  public ApiAccessor(OAuth2RestOperations restOperations, FafServerProperties fafServerProperties) {
+  public ApiAccessor(OAuth2RestOperations restOperations, ServerProperties serverProperties) {
     this.restOperations = restOperations;
-    this.fafServerProperties = fafServerProperties;
+    this.serverProperties = serverProperties;
   }
 
   public CompletionStage<List<UpdatedAchievement>> updateAchievements(List<AchievementUpdate> achievementUpdates) {
@@ -34,6 +34,6 @@ public class ApiAccessor {
   }
 
   private String url(String route) {
-    return fafServerProperties.getApiBaseUrl() + route;
+    return serverProperties.getApiBaseUrl() + route;
   }
 }

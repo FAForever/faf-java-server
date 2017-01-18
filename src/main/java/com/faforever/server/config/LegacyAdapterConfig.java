@@ -41,13 +41,13 @@ import static com.faforever.server.integration.MessageHeaders.PROTOCOL;
 @Configuration
 public class LegacyAdapterConfig {
 
-  private final FafServerProperties fafServerProperties;
+  private final ServerProperties serverProperties;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final ClientConnectionManager clientConnectionManager;
 
   @Inject
-  public LegacyAdapterConfig(FafServerProperties fafServerProperties, ApplicationEventPublisher applicationEventPublisher, ClientConnectionManager clientConnectionManager) {
-    this.fafServerProperties = fafServerProperties;
+  public LegacyAdapterConfig(ServerProperties serverProperties, ApplicationEventPublisher applicationEventPublisher, ClientConnectionManager clientConnectionManager) {
+    this.serverProperties = serverProperties;
     this.applicationEventPublisher = applicationEventPublisher;
     this.clientConnectionManager = clientConnectionManager;
   }
@@ -84,7 +84,7 @@ public class LegacyAdapterConfig {
     serializer.setMaxMessageSize(100 * 1024);
     serializer.setApplicationEventPublisher(applicationEventPublisher);
 
-    TcpNioServerConnectionFactory tcpNioServerConnectionFactory = new TcpNioServerConnectionFactory(fafServerProperties.getPort());
+    TcpNioServerConnectionFactory tcpNioServerConnectionFactory = new TcpNioServerConnectionFactory(serverProperties.getPort());
     tcpNioServerConnectionFactory.setDeserializer(serializer);
     tcpNioServerConnectionFactory.setSerializer(serializer);
     tcpNioServerConnectionFactory.getMapper().setApplySequence(true);

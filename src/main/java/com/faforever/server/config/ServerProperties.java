@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
 @ConfigurationProperties(prefix = "faf-server", ignoreUnknownFields = false)
-public class FafServerProperties {
+public class ServerProperties {
 
   private int port = 8001;
   private String version = "dev";
@@ -26,7 +26,11 @@ public class FafServerProperties {
   public static class Uid {
     private boolean enabled;
     /**
-     * Base64-DER-encoded private key.
+     * PKCS#8 private key without decoration and newlines. Use the following command to convert from PKCS#1:
+     * <p>
+     * <code>openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in pkcs1.key -out pkcs8.key</code>
+     * </p>
+     * Note that the key currently has to be a 244 bit key.
      */
     private String privateKey;
     private String linkToSteamUrl;

@@ -1,13 +1,22 @@
 package com.faforever.server.rating;
 
-import com.faforever.server.config.FafServerProperties;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.GamePlayerStats;
-import jskills.*;
+import jskills.GameInfo;
+import jskills.IPlayer;
+import jskills.Player;
+import jskills.Rating;
+import jskills.Team;
+import jskills.TrueSkillCalculator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -18,8 +27,8 @@ public class RatingService {
 
   private final GameInfo gameInfo;
 
-  public RatingService(FafServerProperties fafServerProperties) {
-    FafServerProperties.TrueSkill params = fafServerProperties.getTrueSkill();
+  public RatingService(ServerProperties serverProperties) {
+    ServerProperties.TrueSkill params = serverProperties.getTrueSkill();
     gameInfo = new GameInfo(
       params.getInitialMean(),
       params.getInitialStandardDeviation(),

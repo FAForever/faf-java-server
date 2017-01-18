@@ -1,6 +1,6 @@
 package com.faforever.server.security;
 
-import com.faforever.server.config.FafServerProperties;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.HardwareInformation;
 import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
@@ -53,7 +53,7 @@ public class UniqueIdService {
   private AsymmetricKeyParameter privateKey;
 
   @Inject
-  public UniqueIdService(FafServerProperties properties, ObjectMapper objectMapper, HardwareInformationRepository hardwareInformationRepository) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+  public UniqueIdService(ServerProperties properties, ObjectMapper objectMapper, HardwareInformationRepository hardwareInformationRepository) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
     this.objectMapper = objectMapper;
     this.enabled = properties.getUid().isEnabled();
     this.linkToSteamUrl = properties.getUid().getLinkToSteamUrl();
@@ -81,32 +81,32 @@ public class UniqueIdService {
       return;
     }
 
-    HardwareInfo hardwareInfo = noCatch(() -> extractHardwareInfo(uid));
+    UidPayload uidPayload = noCatch(() -> extractPayload(uid));
     String hash = Hashing.md5().hashString(
-      hardwareInfo.getMachine().getUuid()
-        + hardwareInfo.getMachine().getMemory().getSerial0()
-        + hardwareInfo.getMachine().getDisks().getControllerId()
-        + hardwareInfo.getMachine().getBios().getManufacturer()
-        + hardwareInfo.getMachine().getProcessor().getName()
-        + hardwareInfo.getMachine().getProcessor().getId()
-        + hardwareInfo.getMachine().getBios().getSmbbVersion()
-        + hardwareInfo.getMachine().getBios().getSerial()
-        + hardwareInfo.getMachine().getDisks().getVSerial()
+      uidPayload.getMachine().getUuid()
+        + uidPayload.getMachine().getMemory().getSerial0()
+        + uidPayload.getMachine().getDisks().getControllerId()
+        + uidPayload.getMachine().getBios().getManufacturer()
+        + uidPayload.getMachine().getProcessor().getName()
+        + uidPayload.getMachine().getProcessor().getId()
+        + uidPayload.getMachine().getBios().getSmbbVersion()
+        + uidPayload.getMachine().getBios().getSerial()
+        + uidPayload.getMachine().getDisks().getVSerial()
       , UTF_8
     ).toString();
 
     HardwareInformation information = hardwareInformationRepository.findOneByHash(hash)
       .orElseGet(() -> hardwareInformationRepository.save(new HardwareInformation(0,
         hash,
-        hardwareInfo.getMachine().getUuid(),
-        hardwareInfo.getMachine().getMemory().getSerial0(),
-        hardwareInfo.getMachine().getDisks().getControllerId(),
-        hardwareInfo.getMachine().getBios().getManufacturer(),
-        hardwareInfo.getMachine().getProcessor().getName(),
-        hardwareInfo.getMachine().getProcessor().getId(),
-        hardwareInfo.getMachine().getBios().getSmbbVersion(),
-        hardwareInfo.getMachine().getBios().getSerial(),
-        hardwareInfo.getMachine().getDisks().getVSerial(),
+        uidPayload.getMachine().getUuid(),
+        uidPayload.getMachine().getMemory().getSerial0(),
+        uidPayload.getMachine().getDisks().getControllerId(),
+        uidPayload.getMachine().getBios().getManufacturer(),
+        uidPayload.getMachine().getProcessor().getName(),
+        uidPayload.getMachine().getProcessor().getId(),
+        uidPayload.getMachine().getBios().getSmbbVersion(),
+        uidPayload.getMachine().getBios().getSerial(),
+        uidPayload.getMachine().getDisks().getVSerial(),
         Sets.newHashSet(player)
       )));
 
@@ -124,11 +124,13 @@ public class UniqueIdService {
     log.debug("Player '{}' passed unique ID check", player);
   }
 
-  private HardwareInfo extractHardwareInfo(String uid) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException, InvalidAlgorithmParameterException, InvalidCipherTextException {
+  private UidPayload extractPayload(String uid) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException, InvalidAlgorithmParameterException, InvalidCipherTextException {
     Decoder b64Decoder = Base64.getDecoder();
 
     byte[] bytes = b64Decoder.decode(uid.getBytes(UTF_8));
 
+    // Because someone thought manual padding would be necessary
+    int trailLength = bytes[0];
     byte[] initVector = b64Decoder.decode(Arrays.copyOfRange(bytes, 1, 25));
     byte[] aesEncryptedJson = b64Decoder.decode(Arrays.copyOfRange(bytes, 25, bytes.length - 40));
     byte[] rsaEncryptedAesKey = b64Decoder.decode(Arrays.copyOfRange(bytes, bytes.length - 40, bytes.length));
@@ -140,8 +142,8 @@ public class UniqueIdService {
     byte[] plaintext = aesDecrypt(initVector, aesEncryptedJson, aesKey);
 
     // The JSON string is prefixed with the magic byte "2", meaning version 2 of the UID's JSON
-    String json = new String(plaintext, 1, plaintext.length - 1, UTF_8);
-    return objectMapper.readValue(json, HardwareInfo.class);
+    String json = new String(plaintext, 1, plaintext.length - (1 + trailLength), UTF_8);
+    return objectMapper.readValue(json, UidPayload.class);
   }
 
   private byte[] aesDecrypt(byte[] initVector, byte[] aesEncryptedJson, byte[] aesKey) throws InvalidCipherTextException {
