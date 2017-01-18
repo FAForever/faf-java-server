@@ -365,7 +365,7 @@ public class GameService {
   }
 
   private void removePlayer(Game game, Player player) {
-    player.setCurrentGame(game);
+    player.setCurrentGame(null);
     game.getActivePlayers().remove(player.getId(), player);
   }
 
