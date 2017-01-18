@@ -30,7 +30,7 @@ public class ServerProperties {
      * <p>
      * <code>openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in pkcs1.key -out pkcs8.key</code>
      * </p>
-     * Note that the key currently has to be a 244 bit key.
+     * Note that the key currently has to be a 224 bit key.
      */
     private String privateKey;
     private String linkToSteamUrl;
