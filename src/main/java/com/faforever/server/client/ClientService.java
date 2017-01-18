@@ -50,7 +50,7 @@ public class ClientService {
   }
 
   public void startGameProcess(Game game, Player player) {
-    log.debug("Telling '{}' to start game progress for game '{}'", game.getHost());
+    log.debug("Telling '{}' to start game progress for game '{}'", game.getHost(), game);
     send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), getCommandLineArgs(player)), player);
   }
 
