@@ -1,44 +1,21 @@
 package com.faforever.server.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
 @Table(name = "ladder1v1_rating")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-public class Ladder1v1Rating {
-
-  @Id
-  @Column(name = "id")
-  private int id;
-
-  @Column(name = "mean")
-  private Double mean;
-
-  @Column(name = "deviation")
-  private Double deviation;
-
-  @Column(name = "numGames")
-  private short numGames;
+public class Ladder1v1Rating extends Rating {
 
   @Column(name = "winGames")
   private short winGames;
-
-  @Column(name = "is_active")
-  private boolean isActive;
-
-  @OneToOne
-  @JoinColumn(name = "id", updatable = false, insertable = false)
-  @JsonIgnore
-  private Player player;
 
 }

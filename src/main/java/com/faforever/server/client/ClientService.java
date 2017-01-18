@@ -136,7 +136,7 @@ public class ClientService {
    */
   @Deprecated
   private List<String> getCommandLineArgs(Player player) {
-    short numGames = Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse((short) 0);
+    int numGames = Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0);
     return Arrays.asList("/numgames", String.valueOf(numGames));
   }
 

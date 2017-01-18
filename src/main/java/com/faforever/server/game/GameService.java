@@ -15,6 +15,7 @@ import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.rating.RatingService;
+import com.faforever.server.rating.RatingType;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.google.common.annotations.VisibleForTesting;
@@ -392,6 +393,8 @@ public class GameService {
 
     game.setState(GameState.CLOSED);
     updateRatingsIfValid(game);
+
+    gameRepository.save(game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
@@ -399,7 +402,8 @@ public class GameService {
     if (game.getRankiness() != Rankiness.RANKED) {
       return;
     }
-    ratingService.updateRatings(game.getPlayerStats(), NO_TEAM_ID);
+    RatingType ratingType = modService.isLadder1v1(game.getFeaturedMod()) ? RatingType.LADDER_1V1 : RatingType.GLOBAL;
+    ratingService.updateRatings(game.getPlayerStats(), NO_TEAM_ID, ratingType);
   }
 
   private void onGameLaunching(Player reporter, Game game) {

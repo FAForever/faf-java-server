@@ -15,11 +15,11 @@ public class ServerProperties {
 
   @Data
   public static class TrueSkill {
-    private double initialMean;
-    private double initialStandardDeviation;
-    private double beta;
-    private double dynamicFactor;
-    private double drawProbability;
+    private int initialMean = 1500;
+    private int initialStandardDeviation = 500;
+    private int beta = 240;
+    private int dynamicFactor = 10;
+    private double drawProbability = 0.1;
   }
 
   @Data

@@ -23,7 +23,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Getter
 @Setter
-@ToString(callSuper = true, of = {"currentGame", "gameState"})
+@ToString(callSuper = true)
 public class Player extends Login implements ConnectionAware {
 
   @OneToOne(mappedBy = "player")
