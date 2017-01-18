@@ -164,7 +164,7 @@ public class GameService {
     }
     Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
-    log.trace("Updating game option for game '{}': '{}' = '{}'", game.getId(), key, value);
+    log.trace("Updating game option for game '{}': '{}' = '{}'", game, key, value);
     game.getOptions().put(key, value);
     if (VictoryCondition.GAME_OPTION_NAME.equals(key)) {
       game.setVictoryCondition(VictoryCondition.fromString((String) value));
