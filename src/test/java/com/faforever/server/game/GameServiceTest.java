@@ -35,7 +35,10 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -307,6 +310,44 @@ public class GameServiceTest {
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
     assertThat(game.getState(), is(GameState.CLOSED));
+  }
+
+  @Test
+  public void onGameEndedDoesntSaveGameIfGameDidntStart() throws Exception {
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.CLOSED));
+
+    verify(gameRepository, never()).save(any(Game.class));
+  }
+
+  @Test
+  public void onGameEndedDoesntProcessArmyStatsIfGameDidntStart() throws Exception {
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.CLOSED));
+
+    verifyZeroInteractions(armyStatisticsService);
+  }
+
+  @Test
+  public void onGameEndedSavesGameIfGameStarted() throws Exception {
+    game.setState(GameState.OPEN);
+    game.setState(GameState.PLAYING);
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.CLOSED));
+
+    verify(gameRepository).save(game);
+  }
+
+  @Test
+  public void onGameEndedProcessesStatsIfGameStarted() throws Exception {
+    game.setState(GameState.OPEN);
+    game.setState(GameState.PLAYING);
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.CLOSED));
+
+    verify(armyStatisticsService).process(any(), eq(game), any());
   }
 
   @Test

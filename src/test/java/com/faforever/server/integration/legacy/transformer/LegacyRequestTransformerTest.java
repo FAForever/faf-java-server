@@ -3,10 +3,12 @@ package com.faforever.server.integration.legacy.transformer;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
+import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
@@ -17,16 +19,19 @@ import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
+import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.social.AddFoeMessage;
-import com.faforever.server.social.AddFriendMessage;
+import com.faforever.server.social.AddFoeRequest;
+import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.statistics.ArmyStatisticsReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -35,6 +40,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
@@ -43,6 +49,9 @@ import static org.junit.Assert.assertThat;
 // TODO more testing needed
 public class LegacyRequestTransformerTest {
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   private LegacyRequestTransformer instance;
 
@@ -97,24 +106,24 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void transformAddFriend() throws Exception {
-    AddFriendMessage addFriendMessage = (AddFriendMessage) instance.transform(ImmutableMap.of(
+    AddFriendRequest addFriendRequest = (AddFriendRequest) instance.transform(ImmutableMap.of(
       "command", "social_add",
       "friend", 123.0 // Because JSON deserializes untyped integer values to Double
     ));
 
-    assertThat(addFriendMessage, is(notNullValue()));
-    assertThat(addFriendMessage.getPlayerId(), is(123));
+    assertThat(addFriendRequest, is(notNullValue()));
+    assertThat(addFriendRequest.getPlayerId(), is(123));
   }
 
   @Test
   public void transformAddFoe() throws Exception {
-    AddFoeMessage addFoeMessage = (AddFoeMessage) instance.transform(ImmutableMap.of(
+    AddFoeRequest addFoeRequest = (AddFoeRequest) instance.transform(ImmutableMap.of(
       "command", "social_add",
       "foe", 123.0 // Because JSON deserializes untyped integer values to Double
     ));
 
-    assertThat(addFoeMessage, is(notNullValue()));
-    assertThat(addFoeMessage.getPlayerId(), is(123));
+    assertThat(addFoeRequest, is(notNullValue()));
+    assertThat(addFoeRequest.getPlayerId(), is(123));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -279,5 +288,47 @@ public class LegacyRequestTransformerTest {
     assertThat(aiOptionReport.getAiName(), is("QAI"));
     assertThat(aiOptionReport.getKey(), is("Faction"));
     assertThat(aiOptionReport.getValue(), is(3));
+  }
+
+  @Test
+  public void teamKillReport() throws Exception {
+    TeamKillReport teamKillReport = (TeamKillReport) instance.transform(ImmutableMap.of(
+      "command", "TeamkillReport",
+      "args", Arrays.asList(1, "JUnit", 2, "TestNG")
+    ));
+
+    assertThat(teamKillReport.getVictimId(), is(1));
+    assertThat(teamKillReport.getVictimName(), is("JUnit"));
+    assertThat(teamKillReport.getKillerId(), is(2));
+    assertThat(teamKillReport.getKillerName(), is("TestNG"));
+  }
+
+  @Test
+  public void aiOption() throws Exception {
+    AiOptionReport report = (AiOptionReport) instance.transform(ImmutableMap.of(
+      "command", "AIOption",
+      "args", Arrays.asList("QAI", "Team", 1)
+    ));
+
+    assertThat(report.getAiName(), is("QAI"));
+    assertThat(report.getKey(), is("Team"));
+    assertThat(report.getValue(), is(1));
+  }
+
+  @Test
+  public void createAccountThrowsException() throws Exception {
+    expectedException.expect(requestExceptionWithCode(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED));
+    instance.transform(ImmutableMap.of(
+      "command", "create_account"
+    ));
+  }
+
+  @Test
+  public void desync() throws Exception {
+    DesyncReport desyncReport = (DesyncReport) instance.transform(ImmutableMap.of(
+      "command", "Desync"
+    ));
+
+    assertThat(desyncReport, is(notNullValue()));
   }
 }

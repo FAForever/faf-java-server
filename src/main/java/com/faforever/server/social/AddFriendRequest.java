@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Deprecated
 @Data
-public class AddFriendMessage implements ClientMessage {
+public class AddFriendRequest implements ClientMessage {
   private final int playerId;
 }

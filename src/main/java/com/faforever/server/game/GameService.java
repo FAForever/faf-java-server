@@ -386,15 +386,17 @@ public class GameService {
 
   private void onGameEnded(Game game) {
     log.debug("Game ended: {}", game);
-    game.getPlayerStats().forEach(stats -> {
-      Player player = stats.getPlayer();
-      armyStatisticsService.process(player, game, game.getArmyStatistics());
-    });
+    if (game.getState() == GameState.PLAYING) {
+      game.getPlayerStats().forEach(stats -> {
+        Player player = stats.getPlayer();
+        armyStatisticsService.process(player, game, game.getArmyStatistics());
+      });
+      updateRatingsIfValid(game);
+      gameRepository.save(game);
+    }
 
+    gamesById.remove(game.getId());
     game.setState(GameState.CLOSED);
-    updateRatingsIfValid(game);
-
-    gameRepository.save(game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 

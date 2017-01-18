@@ -4,10 +4,10 @@ import com.faforever.server.request.ClientMessage;
 import lombok.Data;
 
 /**
- * @deprecated adding foes should directly be requested from the API, not from the server.
+ * @deprecated removing foes should directly be requested from the API, not from the server.
  */
 @Deprecated
 @Data
-public class AddFoeMessage implements ClientMessage {
+public class RemoveFoeRequest implements ClientMessage {
   private final int playerId;
 }
