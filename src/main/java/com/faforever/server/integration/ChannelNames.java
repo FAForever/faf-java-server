@@ -22,8 +22,10 @@ import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.response.ServerResponse;
-import com.faforever.server.social.AddFriendMessage;
-import com.faforever.server.social.SocialRemoveMessage;
+import com.faforever.server.social.AddFoeRequest;
+import com.faforever.server.social.AddFriendRequest;
+import com.faforever.server.social.RemoveFoeRequest;
+import com.faforever.server.social.RemoveFriendRequest;
 import com.faforever.server.statistics.ArmyStatisticsReport;
 
 public class ChannelNames {
@@ -71,14 +73,24 @@ public class ChannelNames {
   public static final String LEGACY_AVATAR_REQUEST = "avatarRequest";
 
   /**
-   * Channel for {@link AddFriendMessage}.
+   * Channel for {@link AddFriendRequest}.
    */
   public static final String LEGACY_ADD_FRIEND_REQUEST = "addFriendRequest";
 
   /**
-   * Channel for {@link SocialRemoveMessage}.
+   * Channel for {@link RemoveFriendRequest}.
    */
   public static final String LEGACY_REMOVE_FRIEND_REQUEST = "removeFriendRequest";
+
+  /**
+   * Channel for {@link AddFoeRequest}.
+   */
+  public static final String LEGACY_ADD_FOE_REQUEST = "addFoeRequest";
+
+  /**
+   * Channel for {@link RemoveFoeRequest}.
+   */
+  public static final String LEGACY_REMOVE_FOE_REQUEST = "removeFoeRequest";
 
   /**
    * Channel for {@link HostGameRequest}.

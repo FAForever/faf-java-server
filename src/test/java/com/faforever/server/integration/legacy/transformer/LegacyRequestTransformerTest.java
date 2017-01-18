@@ -22,8 +22,8 @@ import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.social.AddFoeMessage;
-import com.faforever.server.social.AddFriendMessage;
+import com.faforever.server.social.AddFoeRequest;
+import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.statistics.ArmyStatisticsReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -106,24 +106,24 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void transformAddFriend() throws Exception {
-    AddFriendMessage addFriendMessage = (AddFriendMessage) instance.transform(ImmutableMap.of(
+    AddFriendRequest addFriendRequest = (AddFriendRequest) instance.transform(ImmutableMap.of(
       "command", "social_add",
       "friend", 123.0 // Because JSON deserializes untyped integer values to Double
     ));
 
-    assertThat(addFriendMessage, is(notNullValue()));
-    assertThat(addFriendMessage.getPlayerId(), is(123));
+    assertThat(addFriendRequest, is(notNullValue()));
+    assertThat(addFriendRequest.getPlayerId(), is(123));
   }
 
   @Test
   public void transformAddFoe() throws Exception {
-    AddFoeMessage addFoeMessage = (AddFoeMessage) instance.transform(ImmutableMap.of(
+    AddFoeRequest addFoeRequest = (AddFoeRequest) instance.transform(ImmutableMap.of(
       "command", "social_add",
       "foe", 123.0 // Because JSON deserializes untyped integer values to Double
     ));
 
-    assertThat(addFoeMessage, is(notNullValue()));
-    assertThat(addFoeMessage.getPlayerId(), is(123));
+    assertThat(addFoeRequest, is(notNullValue()));
+    assertThat(addFoeRequest.getPlayerId(), is(123));
   }
 
   @Test(expected = IllegalArgumentException.class)

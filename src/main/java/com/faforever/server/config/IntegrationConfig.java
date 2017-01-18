@@ -24,8 +24,8 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.social.AddFriendMessage;
-import com.faforever.server.social.SocialRemoveMessage;
+import com.faforever.server.social.AddFriendRequest;
+import com.faforever.server.social.RemoveFriendRequest;
 import com.faforever.server.statistics.ArmyStatisticsReport;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.context.annotation.Bean;
@@ -164,8 +164,8 @@ public class IntegrationConfig {
     payloadTypeRouter.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
     payloadTypeRouter.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
     payloadTypeRouter.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);
-    payloadTypeRouter.setChannelMapping(AddFriendMessage.class.getName(), ChannelNames.LEGACY_ADD_FRIEND_REQUEST);
-    payloadTypeRouter.setChannelMapping(SocialRemoveMessage.class.getName(), ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST);
+    payloadTypeRouter.setChannelMapping(AddFriendRequest.class.getName(), ChannelNames.LEGACY_ADD_FRIEND_REQUEST);
+    payloadTypeRouter.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST);
 
     return payloadTypeRouter;
   }

@@ -34,9 +34,10 @@ import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchmakerMessage;
 import com.faforever.server.request.ClientMessage;
-import com.faforever.server.social.AddFoeMessage;
-import com.faforever.server.social.AddFriendMessage;
-import com.faforever.server.social.SocialRemoveMessage;
+import com.faforever.server.social.AddFoeRequest;
+import com.faforever.server.social.AddFriendRequest;
+import com.faforever.server.social.RemoveFoeRequest;
+import com.faforever.server.social.RemoveFriendRequest;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.statistics.ArmyStatisticsReport;
 import com.fasterxml.jackson.core.JsonParser;
@@ -87,14 +88,19 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case SOCIAL_ADD:
         if (source.containsKey("friend")) {
-          return new AddFriendMessage(((Double) source.get("friend")).intValue());
+          return new AddFriendRequest(((Double) source.get("friend")).intValue());
         } else if (source.containsKey("foe")) {
-          return new AddFoeMessage(((Double) source.get("foe")).intValue());
+          return new AddFoeRequest(((Double) source.get("foe")).intValue());
         }
         throw new IllegalArgumentException("Invalid social_add message: " + source);
 
       case SOCIAL_REMOVE:
-        return new SocialRemoveMessage();
+        if (source.containsKey("friend")) {
+          return new RemoveFriendRequest(((Double) source.get("friend")).intValue());
+        } else if (source.containsKey("foe")) {
+          return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
+        }
+        throw new IllegalArgumentException("Invalid social_remove message: " + source);
 
       case LOGIN:
         return new LoginMessage(
