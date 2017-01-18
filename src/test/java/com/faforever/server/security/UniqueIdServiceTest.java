@@ -76,10 +76,7 @@ public class UniqueIdServiceTest {
     "      \"vendor\": \"Gigabyte Technology Co., Ltd.\",\n" +
     "      \"name\": \"Z68XP-UD4\"\n" +
     "    },\n" +
-    "    \"model\": {\n" +
-    "      \"name\": \"Z68XP-UD4\",\n" +
-    "      \"manufacturer\": \"Gigabyte Technology Co., Ltd.\"\n" +
-    "    },\n" +
+    "    \"model\": \"Z68XP-UD4\",\n" +
     "    \"processor\": {\n" +
     "      \"name\": \"Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz\",\n" +
     "      \"id\": \"BFEBFBFF000306A7\"\n" +

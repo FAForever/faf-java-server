@@ -6,7 +6,6 @@ import com.faforever.server.game.PlayerGameState;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Entity;
@@ -23,7 +22,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Getter
 @Setter
-@ToString(callSuper = true)
 public class Player extends Login implements ConnectionAware {
 
   @OneToOne(mappedBy = "player")

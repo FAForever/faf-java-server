@@ -142,7 +142,7 @@ public class UniqueIdService {
     byte[] plaintext = aesDecrypt(initVector, aesEncryptedJson, aesKey);
 
     // The JSON string is prefixed with the magic byte "2", meaning version 2 of the UID's JSON
-    String json = new String(plaintext, 1, plaintext.length - (1 + trailLength), UTF_8);
+    String json = new String(plaintext, 1, plaintext.length - trailLength, UTF_8);
     return objectMapper.readValue(json, UidPayload.class);
   }
 
