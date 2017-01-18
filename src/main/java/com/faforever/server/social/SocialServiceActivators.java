@@ -30,12 +30,12 @@ public class SocialServiceActivators {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_ADD_FOE_REQUEST)
-  public void addFoe(AddFoeRequest request, ClientConnection clientConnection) {
+  public void addFoe(AddFoeRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     socialService.addFoe(clientConnection.getUserDetails().getPlayer(), request.getPlayerId());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_REMOVE_FOE_REQUEST)
-  public void removeFoe(RemoveFoeRequest request, ClientConnection clientConnection) {
+  public void removeFoe(RemoveFoeRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     socialService.removeFoe(clientConnection.getUserDetails().getPlayer(), request.getPlayerId());
   }
 }
