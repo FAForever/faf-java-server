@@ -23,7 +23,7 @@ class UidPayload {
     private Bios bios;
     private Processor processor;
     private Motherboard motherboard;
-    private Model model;
+    private String model;
     private OperatingSystem os;
 
     @Data
@@ -60,12 +60,6 @@ class UidPayload {
     static class Motherboard {
       private String vendor;
       private String name;
-    }
-
-    @Data
-    static class Model {
-      private String name;
-      private String manufacturer;
     }
 
     @Data
