@@ -103,11 +103,11 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
           (String) source.get("unique_id"));
 
       case GAME_MATCH_MAKING:
-        // FIXME implement
+        // FIXME implement?
         return new MatchmakerMessage();
 
       case AVATAR:
-        // FIXME implement
+        // FIXME implement?
         return new AvatarMessage();
 
       case GAME_STATE:
@@ -170,8 +170,13 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case TEAMKILL_REPORT:
         args = getArgs(source);
-        // FIXME implement
-        return new TeamKillReport(null, 0, "", 0, "");
+        return new TeamKillReport(
+          Duration.ofSeconds((int) args.get(0)),
+          (int) args.get(0),
+          (String) args.get(1),
+          (int) args.get(2),
+          (String) args.get(3)
+        );
 
       case AI_OPTION:
         args = getArgs(source);

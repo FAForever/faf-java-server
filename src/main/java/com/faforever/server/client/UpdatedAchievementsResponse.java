@@ -11,5 +11,5 @@ import java.util.List;
  */
 @Data
 public class UpdatedAchievementsResponse implements ServerResponse {
-  private final List<UpdatedAchievement> playerAchievements;
+  private final List<UpdatedAchievement> updatedAchievements;
 }

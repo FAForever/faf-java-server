@@ -173,8 +173,9 @@ public class Game {
     return Collections.unmodifiableList(armyStatistics);
   }
 
-  public void setState(GameState state) {
+  public Game setState(GameState state) {
     GameState.verifyTransition(this.state, state);
     this.state = state;
+    return this;
   }
 }
