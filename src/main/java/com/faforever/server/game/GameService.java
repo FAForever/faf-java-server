@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -45,21 +46,22 @@ import java.util.stream.Collectors;
 @Service
 public class GameService {
 
+  static final String OPTION_FOG_OF_WAR = "FogOfWar";
+  static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
+  static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
+  static final String OPTION_NO_RUSH = "NoRushOption";
+  static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
+  static final String OPTION_SLOT = "Slot";
+  static final String OPTION_SLOTS = "Slots";
+  static final String OPTION_SCENARIO_FILE = "ScenarioFile";
+  static final String OPTION_TITLE = "Title";
+  static final String OPTION_TEAM = "Team";
+  static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
+  static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
   /**
    * ID of the team that stands for "no team" according to the game.
    */
   private static final byte NO_TEAM_ID = 1;
-  private static final String OPTION_FOG_OF_WAR = "FogOfWar";
-  private static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
-  private static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
-  private static final String OPTION_NO_RUSH = "NoRushOption";
-  private static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
-  private static final String OPTION_SLOTS = "Slots";
-  private static final String OPTION_SCENARIO_FILE = "ScenarioFile";
-  private static final String OPTION_TITLE = "Title";
-  private static final String OPTION_TEAM = "Team";
-  private static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
-  private static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
   private final GameRepository gameRepository;
   private final AtomicInteger nextGameId;
   private final ClientService clientService;
@@ -184,6 +186,10 @@ public class GameService {
     }
     Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
+    if (game.getPlayerStats().stream().noneMatch(gamePlayerStats -> gamePlayerStats.getPlayer().getId() == playerId)) {
+      log.warn("Player '{}' reported options for unknown player '{}' in game '{}'", host, playerId);
+    }
+
     log.trace("Updating option for player '{}' in game '{}': '{}' = '{}'", playerId, game.getId(), key, value);
     game.getPlayerOptions().computeIfAbsent(playerId, id -> new HashMap<>()).put(key, value);
 
@@ -216,14 +222,29 @@ public class GameService {
   }
 
   /**
-   * A poor man's solution to clear slots in case of "bugged" game states. Since there is no scenario - in a non-buggy
-   * server software - where this can happen this method does nothing but log the action.
-   *
-   * @deprecated "clearSlots" should be removed from the game, so this method can be removed as well
+   * Removes all player or AI options that are associated with the specified slot.
    */
-  @Deprecated
   public void clearSlot(Game game, int slotId) {
-    log.trace("Ignoring clearSlot for game '{}' and slot ID '{}'", game, slotId);
+    log.trace("Clearing slot '{}' of game '{}'", game, slotId);
+
+    game.getPlayerOptions().entrySet().stream()
+      .filter(entry -> Objects.equals(entry.getValue().get(OPTION_SLOT), slotId))
+      .map(Entry::getKey)
+      .collect(Collectors.toList())
+      .forEach(playerId -> {
+        log.trace("Removing options for player '{}' in game '{}'", playerId, game);
+        game.getPlayerOptions().remove(playerId);
+      });
+
+    game.getAiOptions().entrySet().stream()
+      .filter(entry -> Objects.equals(entry.getValue().get(OPTION_SLOT), slotId))
+      .map(Entry::getKey)
+      .collect(Collectors.toList())
+      .forEach(aiName -> {
+        log.trace("Removing options for AI '{}' in game '{}'", aiName, game);
+        game.getAiOptions().remove(aiName);
+      });
+
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -370,7 +391,6 @@ public class GameService {
     });
 
     game.setState(GameState.CLOSED);
-    updateGameRankiness(game);
     updateRatingsIfValid(game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
@@ -446,6 +466,23 @@ public class GameService {
     clientService.submitDirty(game, minDelay, maxDelay, Game::getId, GameResponse::new);
   }
 
+  private boolean isFreeForAll(Game game) {
+    if (game.getPlayerStats().size() < 3) {
+      return false;
+    }
+    Set<Integer> teams = new HashSet<>();
+    for (GamePlayerStats stats : game.getPlayerStats()) {
+      int team = stats.getTeam();
+      if (team != NO_TEAM_ID) {
+        if (teams.contains(team)) {
+          return false;
+        }
+        teams.add(team);
+      }
+    }
+    return true;
+  }
+
   /**
    * Checks the game settings and determines whether the game is ranked. If the game is unranked, its "rankiness"
    * will be updated
@@ -453,11 +490,11 @@ public class GameService {
   @VisibleForTesting
   void updateGameRankiness(Game game) {
     if (game.getRankiness() != Rankiness.RANKED) {
-      return;
+      throw new IllegalStateException("Rankiness has already been set");
     }
     if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
       game.setRankiness(Rankiness.BAD_MOD);
-    } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && modService.isCoop(game.getFeaturedMod())) {
+    } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && !modService.isCoop(game.getFeaturedMod())) {
       game.setRankiness(Rankiness.WRONG_VICTORY_CONDITION);
     } else if (isFreeForAll(game)) {
       game.setRankiness(Rankiness.FREE_FOR_ALL);
@@ -473,7 +510,7 @@ public class GameService {
       game.setRankiness(Rankiness.NO_RUSH_ENABLED);
     } else if ((int) game.getOptions().get(OPTION_RESTRICTED_CATEGORIES) != 0) {
       game.setRankiness(Rankiness.BAD_UNIT_RESTRICTIONS);
-    } else if (game.getMap() == null || game.getMap().isRanked()) {
+    } else if (game.getMap() == null || !game.getMap().isRanked()) {
       game.setRankiness(Rankiness.BAD_MAP);
     } else if (game.getDesyncCounter().intValue() > game.getPlayerStats().size()) {
       game.setRankiness(Rankiness.TOO_MANY_DESYNCS);
@@ -488,7 +525,7 @@ public class GameService {
 
   @VisibleForTesting
   boolean areTeamsEven(Game game) {
-    Map<Byte, Long> playersPerTeam = game.getPlayerStats().stream()
+    Map<Integer, Long> playersPerTeam = game.getPlayerStats().stream()
       .map(GamePlayerStats::getTeam)
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
@@ -500,23 +537,5 @@ public class GameService {
     }
     // All teams must have the same amount of players
     return playersPerTeam.values().stream().distinct().count() == 1;
-  }
-
-  @VisibleForTesting
-  boolean isFreeForAll(Game game) {
-    if (game.getPlayerStats().size() < 3) {
-      return false;
-    }
-    Set<Integer> teams = new HashSet<>();
-    for (GamePlayerStats stats : game.getPlayerStats()) {
-      int team = (int) stats.getTeam();
-      if (team != NO_TEAM_ID) {
-        if (teams.contains(team)) {
-          return false;
-        }
-        teams.add(team);
-      }
-    }
-    return true;
   }
 }
