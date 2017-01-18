@@ -14,3 +14,9 @@ security:
       clientSecret: ${API_OAUTH2_CLIENT_SECRET}
       accessTokenUri: ${API_OAUTH2_ACCESS_TOKEN_URI:https://japi.faforever.com/oauth/token}
       userAuthorizationUri: ${API_OAUTH2_AUTHORIZATION_URI:https://japi.faforever.com/oauth/authorize}
+
+faf-server:
+  uid:
+    enabled: true
+    private-key: ${UID_PRIVATE_KEY}
+    link-to-steam-url: ${STEAM_LINK_URL:http://app.faforever.com/faf/steam.php}

@@ -164,7 +164,7 @@ public class GameService {
     }
     Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
-    log.trace("Updating game option for game '{}': '{}' = '{}'", game.getId(), key, value);
+    log.trace("Updating game option for game '{}': '{}' = '{}'", game, key, value);
     game.getOptions().put(key, value);
     if (VictoryCondition.GAME_OPTION_NAME.equals(key)) {
       game.setVictoryCondition(VictoryCondition.fromString((String) value));
@@ -188,7 +188,7 @@ public class GameService {
     Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
     if (game.getPlayerStats().stream().noneMatch(gamePlayerStats -> gamePlayerStats.getPlayer().getId() == playerId)) {
-      log.warn("Player '{}' reported options for unknown player '{}' in game '{}'", host, playerId);
+      log.warn("Player '{}' reported options for unknown player '{}' in game '{}'", host, playerId, game);
     }
 
     log.trace("Updating option for player '{}' in game '{}': '{}' = '{}'", playerId, game.getId(), key, value);
@@ -258,7 +258,7 @@ public class GameService {
       return;
     }
     int desyncCount = player.getCurrentGame().getDesyncCounter().incrementAndGet();
-    log.debug("Player '{}' increased desync count to '{}' for game: {}", desyncCount, player.getCurrentGame());
+    log.debug("Player '{}' increased desync count to '{}' for game: {}", player, desyncCount, player.getCurrentGame());
   }
 
   /**
@@ -365,7 +365,7 @@ public class GameService {
   }
 
   private void removePlayer(Game game, Player player) {
-    player.setCurrentGame(game);
+    player.setCurrentGame(null);
     game.getActivePlayers().remove(player.getId(), player);
   }
 
@@ -448,7 +448,7 @@ public class GameService {
 
   private void connectPeers(Player player, Player otherPlayer) {
     if (player == otherPlayer) {
-      log.warn("Player '{}' should not be told to connect to himself");
+      log.warn("Player '{}' should not be told to connect to himself", player);
       return;
     }
     clientService.connectToPlayer(player, player);

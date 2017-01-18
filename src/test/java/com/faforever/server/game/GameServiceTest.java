@@ -310,6 +310,9 @@ public class GameServiceTest {
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
     assertThat(game.getState(), is(GameState.CLOSED));
+
+    assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player2.getCurrentGame(), is(nullValue()));
   }
 
   @Test
@@ -318,6 +321,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository, never()).save(any(Game.class));
+    assertThat(player1.getCurrentGame(), is(nullValue()));
   }
 
   @Test
@@ -326,6 +330,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verifyZeroInteractions(armyStatisticsService);
+    assertThat(player1.getCurrentGame(), is(nullValue()));
   }
 
   @Test
@@ -337,6 +342,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
+    assertThat(player1.getCurrentGame(), is(nullValue()));
   }
 
   @Test
@@ -348,6 +354,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(armyStatisticsService).process(any(), eq(game), any());
+    assertThat(player1.getCurrentGame(), is(nullValue()));
   }
 
   @Test

@@ -23,8 +23,7 @@ security:
 
 faf-server:
   uid:
-    enabled: true
-    private-key: MIGsAgEAMA0GCSqGSIb3DQEBAQUABIGXMIGUAgEAAhwOCYK+a8WeokqSHqKhGLVMzfUF2tZdoeaW5DQnAgMBAAECHAH3aR5+AJBJkgLIUeYZfDKJBJGpb4iz/7mcuTECDj9GSDulHRiO//X1vSDvAg44ythldPwOVNJjzMcwSQIOE6UDahkyNly3VSqtRFsCDgC5rnvVO6bfNHSr19tpAg4UouL3z6gxb03hUN0FDg==
+    enabled: false
 
 
 
