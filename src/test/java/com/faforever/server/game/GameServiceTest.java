@@ -22,10 +22,16 @@ import com.faforever.server.stats.ArmyStatisticsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +41,9 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -159,6 +167,12 @@ public class GameServiceTest {
     instance.updateGameOption(player1, "GameSpeed", "normal");
 
     assertThat(game.getOptions().get("GameSpeed"), is("normal"));
+  }
+
+  @Test
+  public void updateGameOptionNotInGameIgnored() throws Exception {
+    instance.updateGameOption(player2, "GameSpeed", "normal");
+    verifyZeroInteractions(clientService);
   }
 
   @Test
@@ -369,6 +383,35 @@ public class GameServiceTest {
   }
 
   @Test
+  public void onGameLaunching() throws Exception {
+    game.setState(GameState.OPEN);
+    player1.setGameState(PlayerGameState.LOBBY);
+    assertThat(game.getStartTime(), is(nullValue()));
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    assertThat(game.getState(), is(GameState.PLAYING));
+    assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now()))));
+    assertThat(game.getStartTime(), is(greaterThan(Timestamp.from(Instant.now().minusSeconds(10)))));
+
+    verify(gameRepository).save(game);
+    verify(clientService).submitDirty(any(Game.class), any(), any(), any(), any());
+  }
+
+  @Test
+  public void onGameLaunchingSentByNonHostIsIgnored() throws Exception {
+    player2.setCurrentGame(game);
+    player2.setGameState(PlayerGameState.LOBBY);
+    game.setState(GameState.OPEN);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player2);
+
+    assertThat(game.getState(), is(GameState.OPEN));
+    verifyZeroInteractions(clientService);
+    verify(gameRepository, never()).save(game);
+  }
+
+  @Test
   public void updateGameRankinessUnrankedMod() throws Exception {
     game.getSimMods().add("1-2-3-4");
     when(modService.isModRanked("1-2-3-4")).thenReturn(false);
@@ -561,6 +604,25 @@ public class GameServiceTest {
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(false));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void onAuthenticationSuccess() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
+    authentication.setDetails(player2.setClientConnection(clientConnection));
+
+    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+
+    ArgumentCaptor<Collection<Game>> captor = ArgumentCaptor.forClass((Class) Collection.class);
+    verify(clientService).sendGameList(captor.capture(), eq(player2));
+    Collection<Game> games = captor.getValue();
+
+    assertThat(games, hasItem(instance.getGame(NEXT_GAME_ID).get()));
   }
 
   private void addPlayer(Game game, Player player, int team) {
