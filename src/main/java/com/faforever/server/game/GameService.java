@@ -1,5 +1,6 @@
 package com.faforever.server.game;
 
+import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.ArmyOutcome;
@@ -80,7 +81,7 @@ public class GameService {
     this.modService = modService;
     this.ratingService = ratingService;
     this.armyStatisticsService = armyStatisticsService;
-    nextGameId = new AtomicInteger();
+    nextGameId = new AtomicInteger(1);
     gamesById = new ConcurrentHashMap<>();
   }
 
@@ -130,14 +131,14 @@ public class GameService {
   }
 
   public void updatePlayerGameState(PlayerGameState newState, Player player) {
-    Requests.verify(player.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
+    Game game = player.getCurrentGame();
+    Requests.verify(game != null, ErrorCode.NOT_IN_A_GAME);
 
-    log.debug("Player '{}' updated his game state from '{}' to '{}'", player, player.getGameState(), newState);
+    log.debug("Player '{}' updated his game state from '{}' to '{}' (game: '{}')", player, player.getGameState(), newState, game);
     player.setGameState(newState);
 
     // FIXME figure out how leaving/closing a game is detected and clean up player options and stats
 
-    Game game = player.getCurrentGame();
     switch (newState) {
       case LOBBY:
         onLobbyEntered(player, game);
@@ -344,6 +345,15 @@ public class GameService {
     clientService.sendGameList(getActiveGames(), (ConnectionAware) event.getAuthentication().getDetails());
   }
 
+  @EventListener
+  public void onClientDisconnect(ClientDisconnectedEvent event) {
+    Optional.ofNullable(event.getClientConnection().getUserDetails()).ifPresent(userDetails -> {
+      Player player = userDetails.getPlayer();
+      log.debug("Removing player '{}' who went offline", userDetails.getPlayer());
+      Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removeFromActivePlayers(game, player));
+    });
+  }
+
   private void addPlayer(Game game, Player player) {
     GamePlayerStats gamePlayerStats = new GamePlayerStats();
     Optional.ofNullable(player.getGlobalRating()).ifPresent(globalRating -> {
@@ -364,9 +374,14 @@ public class GameService {
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
-  private void removePlayer(Game game, Player player) {
+  private void removeFromActivePlayers(Game game, Player player) {
     player.setCurrentGame(null);
+    player.setGameState(PlayerGameState.NONE);
     game.getActivePlayers().remove(player.getId(), player);
+
+    if (game.getActivePlayers().isEmpty()) {
+      onGameEnded(game);
+    }
   }
 
   private void onPlayerGameEnded(Player reporter, Game game) {
@@ -377,11 +392,7 @@ public class GameService {
     }
 
     log.debug("Player '{}' left game: {}", reporter, game);
-    removePlayer(game, reporter);
-
-    if (game.getActivePlayers().isEmpty()) {
-      onGameEnded(game);
-    }
+    removeFromActivePlayers(game, reporter);
   }
 
   private void onGameEnded(Game game) {

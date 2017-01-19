@@ -1,5 +1,6 @@
 package com.faforever.server.game;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.util.Assert;
 
 import java.util.Arrays;
@@ -11,11 +12,11 @@ import java.util.Map;
  * The state of a running instance of Forged Alliance.
  */
 public enum PlayerGameState {
-  UNKNOWN(null),
-  IDLE("Idle", UNKNOWN),
-  LOBBY("Lobby", UNKNOWN, IDLE),
+  NONE(null),
+  IDLE("Idle", NONE),
+  LOBBY("Lobby", NONE, IDLE),
   LAUNCHING("Launching", LOBBY),
-  ENDED("Ended", UNKNOWN, IDLE, LAUNCHING, LOBBY);
+  ENDED("Ended", NONE, IDLE, LAUNCHING, LOBBY);
 
   private static final Map<String, PlayerGameState> fromString;
 
@@ -37,6 +38,10 @@ public enum PlayerGameState {
     this.transitionsFrom = Arrays.asList(transitionsFrom);
   }
 
+  public String getString() {
+    return string;
+  }
+
   public static PlayerGameState fromString(String string) {
     return fromString.get(string);
   }
@@ -45,11 +50,7 @@ public enum PlayerGameState {
    * Checks whether a player's game is allowed to transition from an old state into a new state. If not, an
    * {@link IllegalStateException} is thrown.
    */
-  public static void verifyTransition(PlayerGameState oldState, PlayerGameState newState) {
-    Assert.state(newState.transitionsFrom.contains(oldState), "Can't transition from " + oldState + " to " + newState);
-  }
-
-  public String getString() {
-    return string;
+  public static void verifyTransition(@NotNull PlayerGameState oldState, @NotNull PlayerGameState newState) {
+    Assert.state(newState == NONE || newState.transitionsFrom.contains(oldState), "Can't transition from " + oldState + " to " + newState);
   }
 }

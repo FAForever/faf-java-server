@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.dsl.HeaderEnricherSpec;
@@ -22,6 +23,7 @@ import org.springframework.integration.dsl.support.Transformers;
 import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
 import org.springframework.integration.ip.tcp.TcpSendingMessageHandler;
+import org.springframework.integration.ip.tcp.connection.TcpConnectionCloseEvent;
 import org.springframework.integration.ip.tcp.connection.TcpNioServerConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayLengthHeaderSerializer;
 import org.springframework.integration.splitter.AbstractMessageSplitter;
@@ -121,6 +123,13 @@ public class LegacyAdapterConfig {
       .enrichHeaders(connectionIdEnricher())
       .handle(tcpSendingMessageHandler())
       .get();
+  }
+
+  @EventListener
+  public void connectionCloseEvent(TcpConnectionCloseEvent event) {
+    if (tcpServerConnectionFactory().getComponentName().equals(tcpServerConnectionFactory().getComponentName())) {
+      clientConnectionManager.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
+    }
   }
 
   /**

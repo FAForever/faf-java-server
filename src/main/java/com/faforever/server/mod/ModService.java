@@ -45,10 +45,11 @@ public class ModService {
     ladder1v1FeaturedMod = featuredModRepository.findOneByTechnicalName(LADDER_1V1_MOD_NAME).orElse(null);
 
     if (coopFeaturedMod == null) {
-      log.warn("No mod named '{}' was found in the database", COOP_MOD_NAME);
+      throw new IllegalStateException("No mod named '" + COOP_MOD_NAME + "' was found in the database. Note that '"
+        + LADDER_1V1_MOD_NAME + "' needs to exist as well.");
     }
     if (ladder1v1FeaturedMod == null) {
-      log.warn("No mod named '{}' was found in the database", LADDER_1V1_MOD_NAME);
+      throw new IllegalStateException("No mod named '" + LADDER_1V1_MOD_NAME + "' was found in the database.");
     }
   }
 

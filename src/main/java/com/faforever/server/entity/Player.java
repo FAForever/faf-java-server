@@ -42,7 +42,7 @@ public class Player extends Login implements ConnectionAware {
   private Game currentGame;
 
   @Transient
-  private PlayerGameState gameState = PlayerGameState.UNKNOWN;
+  private PlayerGameState gameState = PlayerGameState.NONE;
 
   @Transient
   private ClientConnection clientConnection;
@@ -51,5 +51,4 @@ public class Player extends Login implements ConnectionAware {
     PlayerGameState.verifyTransition(this.gameState, gameState);
     this.gameState = gameState;
   }
-
 }
