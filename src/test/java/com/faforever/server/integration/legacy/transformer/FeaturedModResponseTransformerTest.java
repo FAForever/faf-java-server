@@ -1,6 +1,5 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.mod.FeaturedModResponse;
 import org.junit.Test;
 
@@ -13,13 +12,9 @@ import static org.junit.Assert.assertThat;
 public class FeaturedModResponseTransformerTest {
   @Test
   public void transform() throws Exception {
-    FeaturedMod featuredMod = new FeaturedMod();
-    featuredMod.setTechnicalName("test");
-    featuredMod.setDisplayName("Test mod");
-    featuredMod.setDescription("This is a test mod");
-    featuredMod.setDisplayOrder(3);
-
-    Map<String, Serializable> result = FeaturedModResponseTransformer.INSTANCE.transform(new FeaturedModResponse(featuredMod));
+    Map<String, Serializable> result = FeaturedModResponseTransformer.INSTANCE.transform(new FeaturedModResponse(
+      "test", "Test mod", "This is a test mod", 3
+    ));
 
     assertThat(result.get("command"), is("mod_info"));
     assertThat(result.get("publish"), is(1));

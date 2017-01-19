@@ -1,6 +1,5 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameResponse;
@@ -18,25 +17,24 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
 
   @Override
   public Map<String, Serializable> transform(GameResponse source) {
-    Game game = source.getGame();
     return ImmutableMap.<String, Serializable>builder()
       .put("command", "game_info")
-      .put("visibility", game.getGameVisibility().getString())
-      .put("password_protected", game.getPassword() != null)
-      .put("uid", game.getId())
-      .put("title", game.getTitle())
-      .put("state", clientGameState(game.getState()))
-      .put("featured_mod", game.getFeaturedMod().getTechnicalName())
+      .put("visibility", source.getGameVisibility().getString())
+      .put("password_protected", source.getPassword() != null)
+      .put("uid", source.getId())
+      .put("title", source.getTitle())
+      .put("state", clientGameState(source.getState()))
+      .put("featured_mod", source.getFeaturedModTechnicalName())
+      .put("sim_mods", source.getSimMods().toArray())
+      .put("mapname", source.getTechnicalMapName())
+      .put("map_file_path", String.format("maps/%s.zip", source.getTechnicalMapName()))
+      .put("host", source.getHostUsername())
+      .put("num_players", source.getPlayers().size())
+      .put("max_players", source.getMaxPlayers())
+      .put("launched_at", source.getStartTime() != null ? source.getStartTime().toEpochMilli() / 1000d : 0d)
+      .put("teams", teams(source))
       // FIXME implement this nightmare
       .put("featured_mod_versions", ImmutableMap.of())
-      .put("sim_mods", game.getSimMods().toArray())
-      .put("mapname", game.getMapName())
-      .put("map_file_path", String.format("maps/%s.zip", game.getMapName()))
-      .put("host", game.getHost().getLogin())
-      .put("num_players", game.getPlayerStats().size())
-      .put("max_players", game.getMaxPlayers())
-      .put("launched_at", game.getStartTime() != null ? game.getStartTime().toInstant().toEpochMilli() / 1000f : 0f)
-      .put("teams", teams(game))
       .build();
   }
 
@@ -55,13 +53,11 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
     }
   }
 
-  private HashMap<String, List<String>> teams(Game game) {
+  private HashMap<String, List<String>> teams(GameResponse game) {
     HashMap<String, List<String>> playerNamesByTeamId = new HashMap<>();
-    game.getPlayerStats().forEach(gamePlayerStats ->
-      playerNamesByTeamId.computeIfAbsent(
-        String.valueOf(gamePlayerStats.getTeam()),
-        s -> new ArrayList<>()
-      ).add(gamePlayerStats.getPlayer().getLogin())
+    game.getPlayers().forEach(player ->
+      playerNamesByTeamId.computeIfAbsent(String.valueOf(player.getTeam()),
+        s -> new ArrayList<>()).add(player.getName())
     );
     return playerNamesByTeamId;
   }

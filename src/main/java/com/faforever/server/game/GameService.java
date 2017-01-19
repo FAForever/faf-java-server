@@ -30,7 +30,6 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,7 +95,7 @@ public class GameService {
    * Creates a new, transient game with the specified options and tells the client to start the game process. The
    * player's current game is set to the new game.
    */
-  public void createGame(String title, byte modId, String mapname, String password, GameVisibility visibility, Player player) {
+  public void createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     int gameId = this.nextGameId.getAndIncrement();
@@ -343,7 +342,10 @@ public class GameService {
 
   @EventListener
   public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-    clientService.sendGameList(getActiveGames(), (ConnectionAware) event.getAuthentication().getDetails());
+    clientService.sendGameList(
+      gamesById.values().stream().map(this::toResponse).collect(Collectors.toList()),
+      (ConnectionAware) event.getAuthentication().getDetails()
+    );
   }
 
   @EventListener
@@ -466,13 +468,6 @@ public class GameService {
     clientService.connectToPlayer(player, player);
   }
 
-  /**
-   * Returns a list of games which haven't finished yet.
-   */
-  private Collection<Game> getActiveGames() {
-    return Collections.unmodifiableCollection(gamesById.values());
-  }
-
   private Optional<Integer> findArmy(int armyId, Game game) {
     return game.getPlayerOptions().values().stream()
       .map(options -> (int) options.get("Army"))
@@ -481,7 +476,26 @@ public class GameService {
   }
 
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {
-    clientService.submitDirty(game, minDelay, maxDelay, Game::getId, GameResponse::new);
+    clientService.sendDelayed(toResponse(game), minDelay, maxDelay, GameResponse::getId);
+  }
+
+  private GameResponse toResponse(Game game) {
+    return new GameResponse(
+      game.getId(),
+      game.getTitle(),
+      game.getGameVisibility(),
+      game.getPassword(),
+      game.getState(),
+      game.getFeaturedMod().getTechnicalName(),
+      game.getSimMods(),
+      game.getMapName(),
+      game.getHost().getLogin(),
+      game.getPlayerStats().stream()
+        .map(stats -> new GameResponse.Player(stats.getTeam(), stats.getPlayer().getLogin()))
+        .collect(Collectors.toList()),
+      game.getMaxPlayers(),
+      Optional.ofNullable(game.getStartTime()).map(Timestamp::toInstant).orElse(null)
+    );
   }
 
   private boolean isFreeForAll(Game game) {

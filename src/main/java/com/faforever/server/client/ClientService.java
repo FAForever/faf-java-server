@@ -3,11 +3,12 @@ package com.faforever.server.client;
 import com.faforever.server.api.dto.UpdatedAchievement;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
+import com.faforever.server.entity.AvatarAssociation;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Player;
-import com.faforever.server.game.DirtyObject;
+import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.ClientGateway;
@@ -16,6 +17,8 @@ import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.response.ServerResponse;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UserDetailsResponse;
+import com.faforever.server.security.UserDetailsResponse.Player.Avatar;
+import com.faforever.server.security.UserDetailsResponse.Player.Rating;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,7 +44,7 @@ public class ClientService {
 
   private final ClientGateway clientGateway;
   private final CoopService coopService;
-  private final Map<Object, DirtyObject<?>> dirtyObjects;
+  private final Map<Object, DelayedResponse<?>> dirtyObjects;
 
   public ClientService(ClientGateway clientGateway, CoopService coopService) {
     this.clientGateway = clientGateway;
@@ -77,13 +80,41 @@ public class ClientService {
     send(new HostGameResponse(game.getMapName()), connectionAware);
   }
 
-  public void reportUpdatedAchievements(List<UpdatedAchievement> playerAchievements,
-                                        @NotNull ConnectionAware connectionAware) {
-    send(new UpdatedAchievementsResponse(playerAchievements), connectionAware);
+  public void reportUpdatedAchievements(List<UpdatedAchievement> playerAchievements, @NotNull ConnectionAware connectionAware) {
+    send(new UpdatedAchievementsResponse(playerAchievements.stream()
+        .map(item -> new UpdatedAchievementsResponse.UpdatedAchievement(item.getCurrentSteps(), item.getState(), item.isNewlyUnlocked()))
+        .collect(Collectors.toList())),
+      connectionAware);
   }
 
   public void sendUserDetails(FafUserDetails userDetails, @NotNull ConnectionAware connectionAware) {
-    clientGateway.send(new UserDetailsResponse(userDetails), connectionAware.getClientConnection());
+    Player player = userDetails.getPlayer();
+
+    Optional<Avatar> avatar = player.getAvailableAvatars().stream()
+      .filter(AvatarAssociation::isSelected)
+      .findFirst()
+      .map(association -> {
+        com.faforever.server.entity.Avatar avatarEntity = association.getAvatar();
+        return new Avatar(avatarEntity.getUrl(), avatarEntity.getTooltip());
+      });
+
+    Optional<Rating> globalRating = Optional.ofNullable(player.getGlobalRating())
+      .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
+    Optional<Rating> ladder1v1Rating = Optional.ofNullable(player.getLadder1v1Rating())
+      .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
+
+    send(new UserDetailsResponse(
+        player.getId(),
+        userDetails.getUsername(),
+        player.getCountry(),
+        new UserDetailsResponse.Player(
+          globalRating.orElse(null),
+          ladder1v1Rating.orElse(null),
+          player.getGlobalRating().getNumGames(),
+          avatar.orElse(null)
+        )
+      ),
+      connectionAware);
   }
 
   /**
@@ -91,16 +122,18 @@ public class ClientService {
    */
   @Deprecated
   public void sendModList(List<FeaturedMod> modList, @NotNull ConnectionAware connectionAware) {
-    modList.forEach(mod -> clientGateway.send(new FeaturedModResponse(mod), connectionAware.getClientConnection()));
+    modList.forEach(mod -> send(new FeaturedModResponse(
+      mod.getTechnicalName(), mod.getDisplayName(), mod.getDescription(), mod.getDisplayOrder()
+    ), connectionAware));
   }
 
-  public void sendGameList(Collection<Game> games, ConnectionAware connectionAware) {
-    games.forEach(game -> clientGateway.send(new GameResponse(game), connectionAware.getClientConnection()));
+  public void sendGameList(Collection<GameResponse> games, ConnectionAware connectionAware) {
+    games.forEach(game -> send(game, connectionAware));
   }
 
   /**
-   * Submits a dirty object that needs to be send to the client. Dirty objects can be hold back for a while in order to
-   * avoid message flooding if the object is updated frequently in a short amount of time.
+   * Sends a response that needs to be send to the client at some point in the future. Responses can be hold back for
+   * a while in order to avoid message flooding if the object is updated frequently in a short amount of time.
    *
    * @param object the object to be sent.
    * @param minDelay the minimum time to wait since the object has been updated.
@@ -109,15 +142,12 @@ public class ClientService {
    * updates.
    * @param idFunction the function to use to calculate the object's ID, so that subsequent calls can be associated
    * with previous submissions of the same object.
-   * @param responseCreator the function to use to create the {@link ServerResponse} which is used to send the object
-   * to the client.
    * @param <T> the type of the submitted object
    */
-  public <T> void submitDirty(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction,
-                              Function<T, ServerResponse> responseCreator) {
+  public <T extends ServerResponse> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
     synchronized (dirtyObjects) {
       dirtyObjects.computeIfAbsent(idFunction.apply(object),
-        o -> new DirtyObject<>(object, minDelay, maxDelay, responseCreator)).onUpdated();
+        o -> new DelayedResponse<>(object, minDelay, maxDelay)).onUpdated();
     }
   }
 
@@ -153,24 +183,26 @@ public class ClientService {
     synchronized (dirtyObjects) {
       List<Object> objectIds = dirtyObjects.entrySet().stream()
         .filter(entry -> {
-          DirtyObject<?> dirtyObject = entry.getValue();
+          DelayedResponse<?> delayedResponse = entry.getValue();
           Instant now = Instant.now();
 
-          return now.isAfter(dirtyObject.getUpdateTime().plus(dirtyObject.getMinDelay()))
-            || now.isAfter(dirtyObject.getCreateTime().plus(dirtyObject.getMaxDelay()));
+          return now.isAfter(delayedResponse.getUpdateTime().plus(delayedResponse.getMinDelay()))
+            || now.isAfter(delayedResponse.getCreateTime().plus(delayedResponse.getMaxDelay()));
         })
         .map(Map.Entry::getKey)
         .collect(Collectors.toList());
 
       int size = objectIds.size();
-      if (size > 0) {
-        log.trace("Sending '{}' dirty objects", size);
-        objectIds.forEach(id -> {
-          DirtyObject<?> dirtyObject = dirtyObjects.get(id);
-          clientGateway.broadcast(dirtyObject.createResponse());
-          dirtyObjects.remove(id);
-        });
+      if (size < 1) {
+        return;
       }
+
+      log.trace("Sending '{}' delayed responses", size);
+      objectIds.forEach(id -> {
+        DelayedResponse<?> delayedResponse = dirtyObjects.get(id);
+        clientGateway.broadcast(delayedResponse.getResponse());
+        dirtyObjects.remove(id);
+      });
     }
   }
 }

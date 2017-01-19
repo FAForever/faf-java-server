@@ -85,7 +85,7 @@ public class ModService {
     return ladder1v1FeaturedMod != null && ladder1v1FeaturedMod.equals(featuredMod);
   }
 
-  public Optional<FeaturedMod> getFeaturedMod(byte modId) {
+  public Optional<FeaturedMod> getFeaturedMod(int modId) {
     return Optional.ofNullable(featuredModRepository.findOne(modId));
   }
 }

@@ -29,5 +29,5 @@ public class AvatarAssociation {
 
   @ManyToOne
   @JoinColumn(name = "idAvatar", referencedColumnName = "id", nullable = false)
-  private Avatar avatarByIdAvatar;
+  private Avatar avatar;
 }

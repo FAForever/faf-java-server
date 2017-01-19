@@ -61,7 +61,7 @@ public class GameServiceTest {
   private static final String PLAYER_NAME_1 = "player1";
   private static final String PLAYER_NAME_2 = "player2";
   private static final String MAP_NAME = "SCMP_001";
-  private static final byte FAF_MOD_ID = 1;
+  private static final int FAF_MOD_ID = 1;
   private static final int NEXT_GAME_ID = 1;
 
   private GameService instance;
@@ -91,6 +91,7 @@ public class GameServiceTest {
     game = new Game();
     game.setId(1);
     game.setMap(map);
+    game.setFeaturedMod(new FeaturedMod());
     game.setVictoryCondition(VictoryCondition.DEMORALIZATION);
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
@@ -391,11 +392,11 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     assertThat(game.getState(), is(GameState.PLAYING));
-    assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now()))));
+    assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now().plusSeconds(1)))));
     assertThat(game.getStartTime(), is(greaterThan(Timestamp.from(Instant.now().minusSeconds(10)))));
 
     verify(gameRepository).save(game);
-    verify(clientService).submitDirty(any(Game.class), any(), any(), any(), any());
+    verify(clientService).sendDelayed(any(GameResponse.class), any(), any(), any());
   }
 
   @Test
@@ -618,11 +619,12 @@ public class GameServiceTest {
 
     instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
 
-    ArgumentCaptor<Collection<Game>> captor = ArgumentCaptor.forClass((Class) Collection.class);
+    ArgumentCaptor<Collection<GameResponse>> captor = ArgumentCaptor.forClass((Class) Collection.class);
     verify(clientService).sendGameList(captor.capture(), eq(player2));
-    Collection<Game> games = captor.getValue();
+    Collection<GameResponse> games = captor.getValue();
 
-    assertThat(games, hasItem(instance.getGame(NEXT_GAME_ID).get()));
+    assertThat(games, hasSize(1));
+    assertThat(games.iterator().next().getTitle(), is("Test game"));
   }
 
   private void addPlayer(Game game, Player player, int team) {

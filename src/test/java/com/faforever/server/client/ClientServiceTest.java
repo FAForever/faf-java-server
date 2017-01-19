@@ -3,8 +3,12 @@ package com.faforever.server.client;
 import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievement;
 import com.faforever.server.coop.CoopService;
+import com.faforever.server.entity.Avatar;
+import com.faforever.server.entity.AvatarAssociation;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
+import com.faforever.server.entity.GlobalRating;
+import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.game.HostGameResponse;
@@ -132,8 +136,24 @@ public class ClientServiceTest {
 
   @Test
   public void sendUserDetails() throws Exception {
-    Player player = new Player().setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16));
-    User user = (User) new User().setPassword("").setLogin("JUnit");
+    Avatar avatar = new Avatar().setUrl("http://example.com").setTooltip("Tooltip");
+    Player player = (Player) new Player()
+      .setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16))
+      .setGlobalRating((GlobalRating) new GlobalRating().setNumGames(12).setMean(1100d).setDeviation(100d))
+      .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(900d).setDeviation(50d))
+      .setCountry("CH")
+      .setId(5);
+    player.setAvailableAvatars(Collections.singletonList(
+      new AvatarAssociation().setAvatar(avatar).setPlayer(player).setSelected(true)
+    ));
+
+    User user = (User) new User()
+      .setPlayer(player)
+      .setPassword("")
+      .setLogin("JUnit")
+      .setCountry(player.getCountry())
+      .setId(player.getId());
+
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
     instance.sendUserDetails(fafUserDetails, player);
@@ -141,6 +161,16 @@ public class ClientServiceTest {
     ArgumentCaptor<UserDetailsResponse> captor = ArgumentCaptor.forClass(UserDetailsResponse.class);
     verify(clientGateway).send(captor.capture(), any());
 
-    assertThat(captor.getValue().getUserDetails(), is(fafUserDetails));
+    UserDetailsResponse response = captor.getValue();
+    assertThat(response.getUserId(), is(5));
+    assertThat(response.getUsername(), is("JUnit"));
+    assertThat(response.getPlayer().getAvatar().getTooltip(), is("Tooltip"));
+    assertThat(response.getPlayer().getAvatar().getUrl(), is("http://example.com"));
+    assertThat(response.getPlayer().getGlobalRating().getMean(), is(1100d));
+    assertThat(response.getPlayer().getGlobalRating().getDeviation(), is(100d));
+    assertThat(response.getPlayer().getLadder1v1Rating().getMean(), is(900d));
+    assertThat(response.getPlayer().getLadder1v1Rating().getDeviation(), is(50d));
+    assertThat(response.getPlayer().getNumberOfGames(), is(12));
+    assertThat(response.getCountry(), is("CH"));
   }
 }
