@@ -35,7 +35,7 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
       .put("host", game.getHost().getLogin())
       .put("num_players", game.getPlayerStats().size())
       .put("max_players", game.getMaxPlayers())
-      .put("launched_at", game.getLaunchedAt() != null ? game.getLaunchedAt().toEpochMilli() / 1000f : 0f)
+      .put("launched_at", game.getStartTime() != null ? game.getStartTime().toInstant().toEpochMilli() / 1000f : 0f)
       .put("teams", teams(game))
       .build();
   }

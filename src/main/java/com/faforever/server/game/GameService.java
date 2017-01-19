@@ -26,6 +26,7 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -426,7 +427,7 @@ public class GameService {
       return;
     }
     game.setState(GameState.PLAYING);
-    game.setLaunchedAt(Instant.now());
+    game.setStartTime(Timestamp.from(Instant.now()));
     updateGameRankiness(game);
     gameRepository.save(game);
     log.debug("Game launched: {}", game);
@@ -434,7 +435,7 @@ public class GameService {
   }
 
   private Duration duration(Game game) {
-    return Duration.between(game.getLaunchedAt(), Instant.now());
+    return Duration.between(game.getStartTime().toInstant(), Instant.now());
   }
 
   /**
