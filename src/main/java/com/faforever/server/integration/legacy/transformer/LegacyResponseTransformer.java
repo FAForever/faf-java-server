@@ -28,7 +28,7 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerRespo
     transformers = ImmutableMap.<Class<? extends ServerResponse>, GenericTransformer<? extends ServerResponse, Map<String, Serializable>>>builder()
       .put(StartGameProcessResponse.class, LaunchGameResponseTransformer.INSTANCE)
       .put(SessionResponse.class, SessionResponseTransformer.INSTANCE)
-      .put(UserDetailsResponse.class, LoginResponseTransformer.INSTANCE)
+      .put(UserDetailsResponse.class, UserDetailsResponseTransformer.INSTANCE)
       .put(ErrorResponse.class, ErrorResponseTransformer.INSTANCE)
       .put(HostGameResponse.class, HostGameResponseTransformer.INSTANCE)
       .put(ConnectToPlayerResponse.class, ConnectToPlayerResponseTransformer.INSTANCE)

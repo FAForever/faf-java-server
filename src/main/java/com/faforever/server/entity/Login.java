@@ -12,6 +12,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -45,5 +46,8 @@ public abstract class Login {
 
   @OneToOne(mappedBy = "player")
   private UniqueIdExempt uniqueIdExempt;
+
+  @Transient
+  private String country;
 
 }
