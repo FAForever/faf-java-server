@@ -1,5 +1,9 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.avatar.AddAvatarAdminRequest;
+import com.faforever.server.avatar.GetAvatarsAdminRequest;
+import com.faforever.server.avatar.RemoveAvatarAdminRequest;
+import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
@@ -9,6 +13,7 @@ import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
+import com.faforever.server.game.DisconnectFromGameRequest;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
@@ -24,6 +29,8 @@ import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.social.AddFoeRequest;
 import com.faforever.server.social.AddFriendRequest;
+import com.faforever.server.social.RemoveFoeRequest;
+import com.faforever.server.social.RemoveFriendRequest;
 import com.faforever.server.statistics.ArmyStatisticsReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -126,6 +133,39 @@ public class LegacyRequestTransformerTest {
     assertThat(addFoeRequest.getPlayerId(), is(123));
   }
 
+  @Test
+  public void transformRemoveFriend() throws Exception {
+    RemoveFriendRequest request = (RemoveFriendRequest) instance.transform(ImmutableMap.of(
+      "command", "social_remove",
+      "friend", 123.0 // Because JSON deserializes untyped integer values to Double
+    ));
+
+    assertThat(request, is(notNullValue()));
+    assertThat(request.getPlayerId(), is(123));
+  }
+
+  @Test
+  public void transformRemoveFoe() throws Exception {
+    RemoveFoeRequest request = (RemoveFoeRequest) instance.transform(ImmutableMap.of(
+      "command", "social_remove",
+      "foe", 123.0 // Because JSON deserializes untyped integer values to Double
+    ));
+
+    assertThat(request, is(notNullValue()));
+    assertThat(request.getPlayerId(), is(123));
+  }
+
+  @Test
+  public void unknownSocialRemove() throws Exception {
+    RemoveFoeRequest request = (RemoveFoeRequest) instance.transform(ImmutableMap.of(
+      "command", "social_remove",
+      "foe", 123.0 // Because JSON deserializes untyped integer values to Double
+    ));
+
+    assertThat(request, is(notNullValue()));
+    assertThat(request.getPlayerId(), is(123));
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void invalidSocialAdd() throws Exception {
     instance.transform(ImmutableMap.of("command", "social_add"));
@@ -150,7 +190,7 @@ public class LegacyRequestTransformerTest {
   public void transformGameResultToArmyScoreReport() throws Exception {
     ArmyScoreReport armyScoreReport = (ArmyScoreReport) instance.transform(ImmutableMap.of(
       "command", "GameResult",
-      "args", Arrays.asList(1, "score 10")
+      "args", Arrays.asList(1d, "score 10")
     ));
 
     assertThat(armyScoreReport, is(notNullValue()));
@@ -162,7 +202,7 @@ public class LegacyRequestTransformerTest {
   public void transformGameResultToArmyOutcomeReport() throws Exception {
     ArmyOutcomeReport armyOutcomeReport = (ArmyOutcomeReport) instance.transform(ImmutableMap.of(
       "command", "GameResult",
-      "args", Arrays.asList(1, "victory")
+      "args", Arrays.asList(1d, "victory")
     ));
 
     assertThat(armyOutcomeReport, is(notNullValue()));
@@ -208,7 +248,7 @@ public class LegacyRequestTransformerTest {
   public void transformGameModsActivated() throws Exception {
     GameModsCountReport gameModsCountReport = (GameModsCountReport) instance.transform(ImmutableMap.of(
       "command", "GameMods",
-      "args", Arrays.asList("activated", 0)
+      "args", Arrays.asList("activated", 0d)
     ));
 
     assertThat(gameModsCountReport, is(notNullValue()));
@@ -219,7 +259,7 @@ public class LegacyRequestTransformerTest {
   public void transformPlayerOption() throws Exception {
     PlayerOptionReport playerOptionReport = (PlayerOptionReport) instance.transform(ImmutableMap.of(
       "command", "PlayerOption",
-      "args", Arrays.asList("1", "Faction", 3)
+      "args", Arrays.asList("1", "Faction", 3d)
     ));
 
     assertThat(playerOptionReport, is(notNullValue()));
@@ -232,7 +272,7 @@ public class LegacyRequestTransformerTest {
   public void transformClearSlot() throws Exception {
     ClearSlotRequest clearSlotRequest = (ClearSlotRequest) instance.transform(ImmutableMap.of(
       "command", "ClearSlot",
-      "args", Collections.singletonList(1)
+      "args", Collections.singletonList(1d)
     ));
 
     assertThat(clearSlotRequest, is(notNullValue()));
@@ -243,7 +283,7 @@ public class LegacyRequestTransformerTest {
   public void transformOperationComplete() throws Exception {
     CoopMissionCompletedReport coopMissionCompletedReport = (CoopMissionCompletedReport) instance.transform(ImmutableMap.of(
       "command", "OperationComplete",
-      "args", Arrays.asList(1, 0, 1440)
+      "args", Arrays.asList(1d, 0d, 1440d)
     ));
 
     assertThat(coopMissionCompletedReport, is(notNullValue()));
@@ -281,7 +321,7 @@ public class LegacyRequestTransformerTest {
   public void transformAiOption() throws Exception {
     AiOptionReport aiOptionReport = (AiOptionReport) instance.transform(ImmutableMap.of(
       "command", "AIOption",
-      "args", Arrays.asList("QAI", "Faction", 3)
+      "args", Arrays.asList("QAI", "Faction", 3d)
     ));
 
     assertThat(aiOptionReport, is(notNullValue()));
@@ -294,7 +334,7 @@ public class LegacyRequestTransformerTest {
   public void teamKillReport() throws Exception {
     TeamKillReport teamKillReport = (TeamKillReport) instance.transform(ImmutableMap.of(
       "command", "TeamkillReport",
-      "args", Arrays.asList(1, "JUnit", 2, "TestNG")
+      "args", Arrays.asList(1d, "JUnit", 2d, "TestNG")
     ));
 
     assertThat(teamKillReport.getVictimId(), is(1));
@@ -307,7 +347,7 @@ public class LegacyRequestTransformerTest {
   public void aiOption() throws Exception {
     AiOptionReport report = (AiOptionReport) instance.transform(ImmutableMap.of(
       "command", "AIOption",
-      "args", Arrays.asList("QAI", "Team", 1)
+      "args", Arrays.asList("QAI", "Team", 1d)
     ));
 
     assertThat(report.getAiName(), is("QAI"));
@@ -325,10 +365,77 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void desync() throws Exception {
-    DesyncReport desyncReport = (DesyncReport) instance.transform(ImmutableMap.of(
+    DesyncReport report = (DesyncReport) instance.transform(ImmutableMap.of(
       "command", "Desync"
     ));
 
-    assertThat(desyncReport, is(notNullValue()));
+    assertThat(report, is(notNullValue()));
+  }
+
+  @Test
+  public void closeFa() throws Exception {
+    DisconnectFromGameRequest request = (DisconnectFromGameRequest) instance.transform(ImmutableMap.of(
+      "command", "admin",
+      "action", "closeFA",
+      "user_id", 1d
+    ));
+
+    assertThat(request.getPlayerId(), is(1));
+  }
+
+  @Test
+  public void requestAvatars() throws Exception {
+    GetAvatarsAdminRequest request = (GetAvatarsAdminRequest) instance.transform(ImmutableMap.of(
+      "command", "admin",
+      "action", "requestavatars"
+    ));
+
+    assertThat(request, is(notNullValue()));
+  }
+
+  @Test
+  public void removeAvatar() throws Exception {
+    RemoveAvatarAdminRequest request = (RemoveAvatarAdminRequest) instance.transform(ImmutableMap.of(
+      "command", "admin",
+      "action", "remove_avatar",
+      "iduser", 3d,
+      "idavatar", 5d
+    ));
+
+    assertThat(request.getPlayerId(), is(3));
+    assertThat(request.getAvatarId(), is(5));
+  }
+
+  @Test
+  public void addAvatar() throws Exception {
+    AddAvatarAdminRequest request = (AddAvatarAdminRequest) instance.transform(ImmutableMap.of(
+      "command", "admin",
+      "action", "add_avatar",
+      "iduser", 3d,
+      "idavatar", 5d
+    ));
+
+    assertThat(request.getPlayerId(), is(3));
+    assertThat(request.getAvatarId(), is(5));
+  }
+
+  @Test
+  public void broadcastRequest() throws Exception {
+    BroadcastRequest request = (BroadcastRequest) instance.transform(ImmutableMap.of(
+      "command", "admin",
+      "action", "broadcast",
+      "message", "Hello world"
+    ));
+
+    assertThat(request.getMessage(), is("Hello world"));
+  }
+
+  @Test
+  public void unknownAdminAction() throws Exception {
+    expectedException.expect(requestExceptionWithCode(ErrorCode.UNKNOWN_MESSAGE));
+    instance.transform(ImmutableMap.of(
+      "command", "admin",
+      "action", "something"
+    ));
   }
 }
