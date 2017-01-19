@@ -15,6 +15,7 @@ import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.response.StartGameProcessResponse;
+import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UserDetailsResponse;
 import org.junit.Before;
@@ -24,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +35,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,19 +49,18 @@ public class ClientServiceTest {
   private CoopService coopService;
 
   private ClientConnection clientConnection;
+  private Player player;
 
   @Before
   public void setUp() throws Exception {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    player = new Player().setClientConnection(clientConnection);
 
     instance = new ClientService(clientGateway, coopService);
   }
 
   @Test
   public void connectToPlayer() throws Exception {
-    Player player = new Player();
-    player.setClientConnection(clientConnection);
-
     Player peer = new Player();
     peer.setId(2);
     peer.setLogin("test");
@@ -75,9 +77,6 @@ public class ClientServiceTest {
 
   @Test
   public void connectToHost() throws Exception {
-    Player player = new Player();
-    player.setClientConnection(clientConnection);
-
     Player host = new Player();
     host.setId(1);
 
@@ -96,7 +95,6 @@ public class ClientServiceTest {
   @Test
   public void startGameProcess() throws Exception {
     Game game = new Game().setId(1).setFeaturedMod(new FeaturedMod());
-    Player player = new Player().setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16));
 
     instance.startGameProcess(game, player);
 
@@ -109,7 +107,6 @@ public class ClientServiceTest {
   @Test
   public void hostGame() throws Exception {
     Game game = new Game().setId(1).setMapName("SCMP_001");
-    Player player = new Player().setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16));
 
     instance.hostGame(game, player);
 
@@ -121,7 +118,6 @@ public class ClientServiceTest {
 
   @Test
   public void reportUpdatedAchievements() throws Exception {
-    Player player = new Player().setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16));
     List<UpdatedAchievement> list = Collections.singletonList(new UpdatedAchievement(true, AchievementState.UNLOCKED));
 
     instance.reportUpdatedAchievements(list, player);
@@ -137,15 +133,14 @@ public class ClientServiceTest {
   @Test
   public void sendUserDetails() throws Exception {
     Avatar avatar = new Avatar().setUrl("http://example.com").setTooltip("Tooltip");
-    Player player = (Player) new Player()
-      .setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16))
+    player
+      .setAvailableAvatars(Collections.singletonList(
+        new AvatarAssociation().setAvatar(avatar).setPlayer(player).setSelected(true)
+      ))
       .setGlobalRating((GlobalRating) new GlobalRating().setNumGames(12).setMean(1100d).setDeviation(100d))
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(900d).setDeviation(50d))
       .setCountry("CH")
       .setId(5);
-    player.setAvailableAvatars(Collections.singletonList(
-      new AvatarAssociation().setAvatar(avatar).setPlayer(player).setSelected(true)
-    ));
 
     User user = (User) new User()
       .setPlayer(player)
@@ -172,5 +167,27 @@ public class ClientServiceTest {
     assertThat(response.getPlayer().getLadder1v1Rating().getDeviation(), is(50d));
     assertThat(response.getPlayer().getNumberOfGames(), is(12));
     assertThat(response.getCountry(), is("CH"));
+  }
+
+  @Test
+  public void sendModList() throws Exception {
+    instance.sendModList(Collections.singletonList(
+      new FeaturedMod().setDisplayName("Mod").setTechnicalName("mod").setDisplayOrder(4).setDescription("Description")
+    ), player);
+
+    ArgumentCaptor<FeaturedModResponse> captor = ArgumentCaptor.forClass(FeaturedModResponse.class);
+    verify(clientGateway).send(captor.capture(), eq(clientConnection));
+    FeaturedModResponse response = captor.getValue();
+
+    assertThat(response.getDisplayName(), is("Mod"));
+    assertThat(response.getTechnicalName(), is("mod"));
+    assertThat(response.getDisplayOrder(), is(4));
+    assertThat(response.getDescription(), is("Description"));
+  }
+
+  @Test
+  public void sendModListSendsMultiple() throws Exception {
+    instance.sendModList(Arrays.asList(new FeaturedMod(), new FeaturedMod()), player);
+    verify(clientGateway, times(2)).send(any(FeaturedModResponse.class), eq(clientConnection));
   }
 }
