@@ -156,19 +156,21 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void unknownSocialRemove() throws Exception {
-    RemoveFoeRequest request = (RemoveFoeRequest) instance.transform(ImmutableMap.of(
+  public void invalidSocialRemove() throws Exception {
+    expectedException.expect(requestExceptionWithCode(ErrorCode.UNKNOWN_MESSAGE));
+    instance.transform(ImmutableMap.of(
       "command", "social_remove",
-      "foe", 123.0 // Because JSON deserializes untyped integer values to Double
+      "foo", "bar" // Because JSON deserializes untyped integer values to Double
     ));
-
-    assertThat(request, is(notNullValue()));
-    assertThat(request.getPlayerId(), is(123));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void invalidSocialAdd() throws Exception {
-    instance.transform(ImmutableMap.of("command", "social_add"));
+    expectedException.expect(requestExceptionWithCode(ErrorCode.UNKNOWN_MESSAGE));
+    instance.transform(ImmutableMap.of(
+      "command", "social_add",
+      "foo", "bar"
+    ));
   }
 
   @Test

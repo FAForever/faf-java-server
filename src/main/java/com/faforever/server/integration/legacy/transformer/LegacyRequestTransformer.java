@@ -109,7 +109,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
           (String) source.get("unique_id"));
 
       case GAME_MATCH_MAKING:
-        // FIXME implement?
+        // FIXME implement
         return new MatchmakerMessage();
 
       case AVATAR:
