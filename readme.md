@@ -8,6 +8,11 @@ legacy protocol while at the same time allowing new protocols to be added and su
 As the underlying (legacy) database schema isn't based on best education and diligence either, some data types,
 structures, concepts and/or field names may be questionable, too, even though efforts are made to abstract it with a
 clean layer as well (work in progress)
+
+master|develop
+:------------: | :-------------:
+[![Build Status](https://travis-ci.org/micheljung/faf-java-server.svg?branch=master)](https://travis-ci.org/micheljung/faf-java-server) | [![Build Status](https://travis-ci.org/micheljung/faf-java-server.svg?branch=develop)](https://travis-ci.org/micheljung/faf-java-server)
+[![Coveralls Status](https://img.shields.io/coveralls/micheljung/faf-java-server/master.svg)](https://coveralls.io/github/micheljung/faf-java-server) | [![Coveralls Status](https://img.shields.io/coveralls/micheljung/faf-java-server/develop.svg)](https://coveralls.io/github/micheljung/faf-java-server)
  
 ## How to run
 
