@@ -190,4 +190,13 @@ public class ClientServiceTest {
     instance.sendModList(Arrays.asList(new FeaturedMod(), new FeaturedMod()), player);
     verify(clientGateway, times(2)).send(any(FeaturedModResponse.class), eq(clientConnection));
   }
+
+  @Test
+  public void disconnectPlayerSendsToAllPlayersInGame() throws Exception {
+    List<Player> recipients = Arrays.asList(player, new Player(), new Player(), new Player());
+
+    instance.disconnectPlayer(12, recipients);
+
+    verify(clientGateway, times(4)).send(any(DisconnectPlayerResponse.class), any());
+  }
 }

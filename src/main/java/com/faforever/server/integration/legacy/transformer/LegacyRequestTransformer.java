@@ -17,7 +17,7 @@ import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
-import com.faforever.server.game.DisconnectFromGameRequest;
+import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
@@ -202,7 +202,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case ADMIN:
         switch ((String) source.get("action")) {
           case "closeFA":
-            return new DisconnectFromGameRequest(((Double) source.get("user_id")).intValue());
+            return new DisconnectPeerRequest(((Double) source.get("user_id")).intValue());
           case "closeLobby":
             return new DisconnectClientRequest(((Double) source.get("user_id")).intValue());
           case "requestavatars":

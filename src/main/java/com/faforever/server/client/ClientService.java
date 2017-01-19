@@ -162,6 +162,14 @@ public class ClientService {
   }
 
   /**
+   * Tells the client to drop connection to the player with the specified ID.
+   */
+  public void disconnectPlayer(int playerId, Collection<? extends ConnectionAware> receivers) {
+    receivers.forEach(connectionAware ->
+      clientGateway.send(new DisconnectPlayerResponse(playerId), connectionAware.getClientConnection()));
+  }
+
+  /**
    * @deprecated passing command line args to the client is a bad (legacy) idea.
    */
   @Deprecated

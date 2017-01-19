@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
@@ -15,6 +16,7 @@ import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.statistics.ArmyStatistics;
@@ -34,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -47,6 +50,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -78,6 +82,8 @@ public class GameServiceTest {
   private ArmyStatisticsService armyStatisticsService;
   @Mock
   private RatingService ratingService;
+  @Mock
+  private PlayerService playerService;
 
   private Player player1;
   private Player player2;
@@ -115,8 +121,9 @@ public class GameServiceTest {
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
+    when(playerService.getPlayer(anyInt())).thenReturn(Optional.empty());
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, ratingService, armyStatisticsService);
+    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, armyStatisticsService);
     instance.postConstruct();
   }
 
@@ -625,6 +632,50 @@ public class GameServiceTest {
 
     assertThat(games, hasSize(1));
     assertThat(games.iterator().next().getTitle(), is("Test game"));
+  }
+
+  /**
+   * Tests whether all but the affected player are informed to drop someone.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void disconnectFromGame() throws Exception {
+    Player player4 = new Player();
+    Player player3 = (Player) new Player()
+      .setCurrentGame(game)
+      .setId(3);
+
+    Map<Integer, Player> activePlayers = game.getActivePlayers();
+    activePlayers.put(1, player1);
+    activePlayers.put(2, player2);
+    activePlayers.put(3, player3);
+    activePlayers.put(4, player4);
+
+    when(playerService.getPlayer(3)).thenReturn(Optional.of(player3));
+
+    instance.disconnectFromGame(new User(), 3);
+
+    ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
+    verify(clientService).disconnectPlayer(eq(3), captor.capture());
+    List<ConnectionAware> recipients = captor.getValue();
+
+    assertThat(recipients, hasSize(3));
+    assertThat(recipients, hasItems(
+      player1, player2, player4
+    ));
+  }
+
+  @Test
+  public void disconnectFromGameIgnoredWhenPlayerUnknown() throws Exception {
+    instance.disconnectFromGame(new User(), 412312);
+    verifyZeroInteractions(clientService);
+  }
+
+  @Test
+  public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
+    when(playerService.getPlayer(3)).thenReturn(Optional.of(new Player()));
+    instance.disconnectFromGame(new User(), 3);
+    verifyZeroInteractions(clientService);
   }
 
   private void addPlayer(Game game, Player player, int team) {

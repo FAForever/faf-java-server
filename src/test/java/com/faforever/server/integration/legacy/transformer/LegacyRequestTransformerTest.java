@@ -13,7 +13,7 @@ import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
-import com.faforever.server.game.DisconnectFromGameRequest;
+import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
@@ -376,7 +376,7 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void closeFa() throws Exception {
-    DisconnectFromGameRequest request = (DisconnectFromGameRequest) instance.transform(ImmutableMap.of(
+    DisconnectPeerRequest request = (DisconnectPeerRequest) instance.transform(ImmutableMap.of(
       "command", "admin",
       "action", "closeFA",
       "user_id", 1d

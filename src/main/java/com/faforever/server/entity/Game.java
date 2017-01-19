@@ -57,6 +57,9 @@ public class Game {
   @Transient
   private final List<ArmyStatistics> armyStatistics;
 
+  /**
+   * Returns the list of players who are actively playing the game at the time of the request.
+   */
   @Transient
   private final Map<Integer, Player> activePlayers;
 

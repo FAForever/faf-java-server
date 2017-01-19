@@ -7,6 +7,6 @@ import lombok.Data;
  * Requests the disconnection of a player from his/her current game.
  */
 @Data
-public class DisconnectFromGameRequest implements ClientMessage {
+public class DisconnectPeerRequest implements ClientMessage {
   private final int playerId;
 }

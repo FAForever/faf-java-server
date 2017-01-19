@@ -56,4 +56,9 @@ public class Player extends Login implements ConnectionAware {
     PlayerGameState.verifyTransition(this.gameState, gameState);
     this.gameState = gameState;
   }
+
+  @Override
+  public String toString() {
+    return "Player(" + getId() + ", " + getLogin() + ")";
+  }
 }

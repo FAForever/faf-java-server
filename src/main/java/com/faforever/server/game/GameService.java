@@ -10,11 +10,13 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Rankiness;
+import com.faforever.server.entity.User;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.rating.RatingType;
 import com.faforever.server.statistics.ArmyStatistics;
@@ -30,6 +32,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,15 +73,18 @@ public class GameService {
   private final Map<Integer, Game> gamesById;
   private final MapService mapService;
   private final ModService modService;
+  private final PlayerService playerService;
   private final RatingService ratingService;
   private ArmyStatisticsService armyStatisticsService;
 
   public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
-                     ModService modService, RatingService ratingService, ArmyStatisticsService armyStatisticsService) {
+                     ModService modService, PlayerService playerService, RatingService ratingService,
+                     ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
     this.mapService = mapService;
     this.modService = modService;
+    this.playerService = playerService;
     this.ratingService = ratingService;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
@@ -355,6 +361,30 @@ public class GameService {
       log.debug("Removing player '{}' who went offline", userDetails.getPlayer());
       Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removeFromActivePlayers(game, player));
     });
+  }
+
+  /**
+   * Tells all peers of the player with the specified ID to drop their connections to him/her.
+   */
+  public void disconnectFromGame(User user, int playerId) {
+    Optional<Player> optional = playerService.getPlayer(playerId);
+    if (!optional.isPresent()) {
+      log.warn("User '{}' tried to disconnect unknown player '{}' from game", user, playerId);
+      return;
+    }
+    Player player = optional.get();
+    Game game = player.getCurrentGame();
+    if (game == null) {
+      log.warn("User '{}' tried to disconnect player '{}' from game, but no game is associated", user, player);
+      return;
+    }
+
+    Collection<? extends ConnectionAware> receivers = game.getActivePlayers().values().stream()
+      .filter(item -> item.getId() != playerId)
+      .collect(Collectors.toList());
+
+    clientService.disconnectPlayer(playerId, receivers);
+    log.info("User '{}' disconnected player '{}' from game '{}'", user, player, game);
   }
 
   private void addPlayer(Game game, Player player) {

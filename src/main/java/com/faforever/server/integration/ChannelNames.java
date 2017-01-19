@@ -11,7 +11,7 @@ import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
-import com.faforever.server.game.DisconnectFromGameRequest;
+import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
@@ -184,7 +184,7 @@ public class ChannelNames {
   public static final String LEGACY_COOP_LIST = "listCoopRequest";
 
   /**
-   * Channel for {@link DisconnectFromGameRequest}
+   * Channel for {@link DisconnectPeerRequest}
    */
-  public static final String CLOSE_GAME_REQUEST = "closeGameRequest";
+  public static final String DISCONNECT_PEER_REQUEST = "disconnectPeerRequest";
 }
