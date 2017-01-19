@@ -1,5 +1,7 @@
 package com.faforever.server.game;
 
+import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
@@ -8,10 +10,13 @@ import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Rankiness;
+import com.faforever.server.entity.User;
 import com.faforever.server.entity.VictoryCondition;
+import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.rating.RatingService;
+import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import org.junit.Before;
@@ -312,7 +317,9 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(player2.getCurrentGame(), is(nullValue()));
+    assertThat(player2.getGameState(), is(PlayerGameState.NONE));
   }
 
   @Test
@@ -322,6 +329,7 @@ public class GameServiceTest {
 
     verify(gameRepository, never()).save(any(Game.class));
     assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
 
   @Test
@@ -331,6 +339,7 @@ public class GameServiceTest {
 
     verifyZeroInteractions(armyStatisticsService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
 
   @Test
@@ -343,6 +352,7 @@ public class GameServiceTest {
 
     verify(gameRepository).save(game);
     assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
 
   @Test
@@ -355,6 +365,7 @@ public class GameServiceTest {
 
     verify(armyStatisticsService).process(any(), eq(game), any());
     assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
 
   @Test
@@ -528,6 +539,28 @@ public class GameServiceTest {
   public void updateGameRankinessAlreadySetThrowsException() throws Exception {
     game.setRankiness(Rankiness.UNKNOWN_RESULT);
     instance.updateGameRankiness(game);
+  }
+
+  @Test
+  public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+    assertThat(player1.getCurrentGame(), is(notNullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+    assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(true));
+
+    User user = new User();
+    user.setPassword("pw");
+    user.setLogin("JUnit");
+    user.setPlayer(player1);
+
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16)
+      .setUserDetails(new FafUserDetails(user));
+    instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
+
+    assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+    assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(false));
   }
 
   private void addPlayer(Game game, Player player, int team) {
