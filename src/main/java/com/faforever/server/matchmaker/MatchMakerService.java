@@ -15,6 +15,7 @@ import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.google.common.collect.ImmutableMap;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +27,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -92,14 +95,12 @@ public class MatchMakerService {
   @Scheduled(fixedDelay = 3000)
   public void processQueue() {
     synchronized (searchesByQueueName) {
-      log.trace("Processing '{}' queues", searchesByQueueName.size());
       searchesByQueueName.entrySet().forEach(entry -> {
         String queueName = entry.getKey();
         Queue<MatchMakerSearch> queue = entry.getValue();
 
         log.trace("Processing queue '{}'", queueName);
         queue.stream()
-          .limit((queue.size() + 1) / 2)
           .map(this::findMatch)
           .filter(Optional::isPresent)
           .collect(Collectors.toList())
@@ -133,17 +134,23 @@ public class MatchMakerService {
       .setMean(properties.getTrueSkill().getInitialStandardDeviation())
       .setDeviation(properties.getTrueSkill().getInitialStandardDeviation());
 
+    Set<MatchMakerSearch> alreadyChecked = new HashSet<>();
+    alreadyChecked.add(leftSearch);
+
     String queueName = leftSearch.queueName;
     synchronized (searchesByQueueName) {
       return searchesByQueueName.get(queueName).stream()
-        .filter(otherSearch -> !otherSearch.equals(leftSearch))
-        .map(rightSearch -> new Match(
-          leftSearch,
-          rightSearch,
-          ratingService.calculateQuality(
-            Optional.ofNullable(leftSearch.player.getLadder1v1Rating()).orElse(defaultRating),
-            Optional.ofNullable(rightSearch.player.getLadder1v1Rating()).orElse(defaultRating)
-          )))
+        .filter(otherSearch -> !alreadyChecked.contains(otherSearch))
+        .map(rightSearch -> {
+          alreadyChecked.add(rightSearch);
+          return new Match(
+            leftSearch,
+            rightSearch,
+            ratingService.calculateQuality(
+              Optional.ofNullable(leftSearch.player.getLadder1v1Rating()).orElse(defaultRating),
+              Optional.ofNullable(rightSearch.player.getLadder1v1Rating()).orElse(defaultRating)
+            ));
+        })
         .filter(this::passesMinimumQuality)
         .max(Comparator.comparingDouble(value -> value.quality));
     }
@@ -223,6 +230,7 @@ public class MatchMakerService {
    */
   @RequiredArgsConstructor
   @ToString
+  @EqualsAndHashCode(of = {"queueName", "rightPlayer"})
   private static class PotentialMatch {
     private final Player rightPlayer;
     private final String queueName;
@@ -234,6 +242,7 @@ public class MatchMakerService {
    */
   @RequiredArgsConstructor
   @ToString
+  @EqualsAndHashCode(of = {"leftSearch", "rightSearch"})
   private static class Match {
     private final MatchMakerSearch leftSearch;
     private final MatchMakerSearch rightSearch;
@@ -245,6 +254,7 @@ public class MatchMakerService {
    */
   @RequiredArgsConstructor
   @ToString
+  @EqualsAndHashCode(of = {"queueName", "player"})
   private static class MatchMakerSearch {
     private final Instant createdTime;
     private final Player player;

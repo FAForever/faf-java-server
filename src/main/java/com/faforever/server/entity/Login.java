@@ -19,7 +19,7 @@ import javax.persistence.Transient;
 @ToString(includeFieldNames = false, of = {"id", "login"})
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = {"id", "login"})
 public abstract class Login {
 
   @Id
