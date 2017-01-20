@@ -8,12 +8,14 @@ import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Player;
+import com.faforever.server.entity.User;
 import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.response.ServerResponse;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UserDetailsResponse;
@@ -21,6 +23,7 @@ import com.faforever.server.security.UserDetailsResponse.Player.Avatar;
 import com.faforever.server.security.UserDetailsResponse.Player.Rating;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -44,11 +47,15 @@ public class ClientService {
 
   private final ClientGateway clientGateway;
   private final CoopService coopService;
+  private final PlayerService playerService;
+  private final ApplicationEventPublisher eventPublisher;
   private final Map<Object, DelayedResponse<?>> dirtyObjects;
 
-  public ClientService(ClientGateway clientGateway, CoopService coopService) {
+  public ClientService(ClientGateway clientGateway, CoopService coopService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
     this.clientGateway = clientGateway;
     this.coopService = coopService;
+    this.playerService = playerService;
+    this.eventPublisher = eventPublisher;
     dirtyObjects = new HashMap<>();
   }
 
@@ -212,5 +219,20 @@ public class ClientService {
         dirtyObjects.remove(id);
       });
     }
+  }
+
+  /**
+   * Fires a {@link CloseConnectionEvent} in order to disconnect the client of the user with the specified ID.
+   */
+  void disconnectClient(User requester, int userId) {
+    // TODO actually there should be a user service, returning a User
+    Optional<Player> optional = playerService.getPlayer(userId);
+    if (!optional.isPresent()) {
+      log.warn("User '{}' requested disconnection of unknown user '{}'", requester, userId);
+      return;
+    }
+    Player player = optional.get();
+    eventPublisher.publishEvent(new CloseConnectionEvent(this, player.getClientConnection()));
+    log.info("User '{}' closed connection of user '{}'", requester, player);
   }
 }

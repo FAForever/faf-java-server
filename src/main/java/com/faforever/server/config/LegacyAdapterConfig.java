@@ -2,6 +2,7 @@ package com.faforever.server.config;
 
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.CloseConnectionEvent;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.MessageHeaders;
 import com.faforever.server.integration.Protocol;
@@ -35,6 +36,7 @@ import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
@@ -126,9 +128,16 @@ public class LegacyAdapterConfig {
   }
 
   @EventListener
-  public void connectionCloseEvent(TcpConnectionCloseEvent event) {
-    if (tcpServerConnectionFactory().getComponentName().equals(tcpServerConnectionFactory().getComponentName())) {
+  public void onConnectionClosed(TcpConnectionCloseEvent event) {
+    if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
       clientConnectionManager.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
+    }
+  }
+
+  @EventListener
+  public void onCloseConnection(CloseConnectionEvent event) {
+    if (event.getClientConnection().getProtocol() == Protocol.LEGACY_UTF_16) {
+      tcpServerConnectionFactory().closeConnection(event.getClientConnection().getId());
     }
   }
 

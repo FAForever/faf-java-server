@@ -1,6 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
@@ -187,4 +188,9 @@ public class ChannelNames {
    * Channel for {@link DisconnectPeerRequest}
    */
   public static final String DISCONNECT_PEER_REQUEST = "disconnectPeerRequest";
+
+  /**
+   * Channel for {@link DisconnectClientRequest}.
+   */
+  public static final String DISCONNECT_CLIENT_REQUEST = "disconnectClientRequest";
 }

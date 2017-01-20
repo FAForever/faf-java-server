@@ -3,6 +3,7 @@ package com.faforever.server.config;
 import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
@@ -163,6 +164,7 @@ public class IntegrationConfig {
     payloadTypeRouter.setChannelMapping(EnforceRatingRequest.class.getName(), ChannelNames.ENFORCE_RATING_REQUEST);
     payloadTypeRouter.setChannelMapping(TeamKillReport.class.getName(), ChannelNames.TEAM_KILL_REPORT);
     payloadTypeRouter.setChannelMapping(DisconnectPeerRequest.class.getName(), ChannelNames.DISCONNECT_PEER_REQUEST);
+    payloadTypeRouter.setChannelMapping(DisconnectClientRequest.class.getName(), ChannelNames.DISCONNECT_CLIENT_REQUEST);
     payloadTypeRouter.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
     payloadTypeRouter.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
     payloadTypeRouter.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);

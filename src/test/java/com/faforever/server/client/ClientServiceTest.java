@@ -16,6 +16,7 @@ import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UserDetailsResponse;
 import org.junit.Before;
@@ -24,10 +25,12 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -37,6 +40,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClientServiceTest {
@@ -47,6 +51,10 @@ public class ClientServiceTest {
   private ClientGateway clientGateway;
   @Mock
   private CoopService coopService;
+  @Mock
+  private PlayerService playerService;
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -56,7 +64,7 @@ public class ClientServiceTest {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
     player = new Player().setClientConnection(clientConnection);
 
-    instance = new ClientService(clientGateway, coopService);
+    instance = new ClientService(clientGateway, coopService, playerService, eventPublisher);
   }
 
   @Test
@@ -198,5 +206,21 @@ public class ClientServiceTest {
     instance.disconnectPlayer(12, recipients);
 
     verify(clientGateway, times(4)).send(any(DisconnectPlayerResponse.class), any());
+  }
+
+  @Test
+  public void disconnectClient() throws Exception {
+    ClientConnection clientConnection12 = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    Player player12 = new Player()
+      .setClientConnection(clientConnection12);
+    when(playerService.getPlayer(12)).thenReturn(Optional.of(player12));
+
+    instance.disconnectClient(new User(), 12);
+
+    ArgumentCaptor<CloseConnectionEvent> captor = ArgumentCaptor.forClass(CloseConnectionEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
+    CloseConnectionEvent value = captor.getValue();
+
+    assertThat(value.getClientConnection(), is(clientConnection12));
   }
 }
