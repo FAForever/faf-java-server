@@ -39,6 +39,8 @@ logging:
     com.zaxxer.hikari: warn
     org.hibernate: warn
     org.eclipse.jetty: warn
+    com.faforever.server.config.IntegrationConfig: info
+    com.faforever.server.config.LegacyAdapterConfig: info
 
 security:
   oauth2:
