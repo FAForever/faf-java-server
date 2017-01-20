@@ -1,5 +1,6 @@
 package com.faforever.server.matchmaker;
 
+import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.FeaturedMod;
@@ -21,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -143,6 +145,17 @@ public class MatchMakerService {
         .collect(Collectors.toList())
         .forEach(search -> pool.remove(search.player));
     }
+  }
+
+  @EventListener
+  public void onClientDisconnect(ClientDisconnectedEvent event) {
+    Optional.ofNullable(event.getClientConnection().getUserDetails()).ifPresent(userDetails -> {
+      Player player = userDetails.getPlayer();
+      log.debug("Removing player '{}', who went offline, from all pools", userDetails.getPlayer());
+      synchronized (searchesByPoolName) {
+        searchesByPoolName.values().forEach(pool -> pool.remove(player));
+      }
+    });
   }
 
   private Map<Player, MatchMakerSearch> getPool(String poolName) {

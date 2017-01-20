@@ -1,5 +1,7 @@
 package com.faforever.server.matchmaker;
 
+import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.FeaturedMod;
@@ -8,14 +10,17 @@ import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.MatchMakerBanDetails;
 import com.faforever.server.entity.Player;
+import com.faforever.server.entity.User;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
+import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
+import com.faforever.server.security.FafUserDetails;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -189,6 +194,27 @@ public class MatchMakerServiceTest {
 
     instance.cancelSearch(QUEUE_NAME, player2);
     assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(0));
+  }
+
+  @Test
+  public void onClientDisconnect() throws Exception {
+    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
+    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
+
+    instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
+    instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
+
+    assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(2));
+
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16)
+      .setUserDetails(new FafUserDetails((User) new User()
+        .setPlayer(player1)
+        .setPassword("p")
+        .setLogin(player1.getLogin())));
+
+    instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
+
+    assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(1));
   }
 
   // TODO test updating queue
