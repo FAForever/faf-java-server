@@ -483,10 +483,6 @@ public class GameService {
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
-  private Duration duration(Game game) {
-    return Duration.between(game.getStartTime().toInstant(), Instant.now());
-  }
-
   /**
    * <p>Called when a player's game entered {@link PlayerGameState#LOBBY}. If the player is host, the state of the {@link Game}
    * instance will be updated and the player is requested to "host" a game (open a port so others can connect).

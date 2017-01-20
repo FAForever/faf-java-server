@@ -21,13 +21,10 @@ public class RatingServiceTest {
   private static final int NO_TEAM_ID = 1;
 
   private RatingService instance;
-  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
-    serverProperties = new ServerProperties();
-
-    instance = new RatingService(serverProperties);
+    instance = new RatingService(new ServerProperties());
   }
 
   @Test
