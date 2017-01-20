@@ -28,6 +28,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
@@ -107,7 +109,7 @@ public class MatchMakerServiceTest {
     when(modService.isLadder1v1(featuredMod)).thenReturn(true);
 
     instance.submitSearch(new Player(), Faction.CYBRAN, QUEUE_NAME);
-    instance.processQueue();
+    instance.processPool();
 
     verifyZeroInteractions(gameService);
   }
@@ -118,13 +120,13 @@ public class MatchMakerServiceTest {
    */
   @Test
   public void submitSearchTwoFreshPlayersDontMatchImmediately() throws Exception {
-    Player player1 = (Player) new Player().setLogin("Player 1");
-    Player player2 = (Player) new Player().setLogin("Player 2");
+    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
+    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
 
     properties.getMatchMaker().setAcceptableQualityWaitTime(10);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
-    instance.processQueue();
+    instance.processPool();
 
     verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), any());
@@ -135,13 +137,13 @@ public class MatchMakerServiceTest {
    */
   @Test
   public void submitSearchTwoFreshPlayersMatch() throws Exception {
-    Player player1 = (Player) new Player().setLogin("Player 1");
-    Player player2 = (Player) new Player().setLogin("Player 2");
+    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
+    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
 
     properties.getMatchMaker().setAcceptableQualityWaitTime(0);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
-    instance.processQueue();
+    instance.processPool();
 
     verify(gameService).createGame("Player 1 vs. Player 2", 1, "SCMP_001", null, GameVisibility.PRIVATE, player1);
     verify(gameService).joinGame(0, player2);
@@ -154,16 +156,40 @@ public class MatchMakerServiceTest {
   public void submitSearchTwoPlayersDontMatchIfRatingsTooFarApart() throws Exception {
     Player player1 = (Player) new Player()
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(300d).setDeviation(50d))
-      .setLogin("Player 1");
+      .setLogin("Player 1")
+      .setId(1);
     Player player2 = (Player) new Player()
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(1300d).setDeviation(50d))
-      .setLogin("Player 2");
+      .setLogin("Player 2")
+      .setId(2);
 
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
-    instance.processQueue();
+    instance.processPool();
 
     verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), any());
   }
+
+  @Test
+  public void cancelSearch() throws Exception {
+    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
+    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
+
+    instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
+    instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
+
+    assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(2));
+
+    instance.cancelSearch(QUEUE_NAME, player1);
+    assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(1));
+
+    instance.cancelSearch(QUEUE_NAME, player1);
+    assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(1));
+
+    instance.cancelSearch(QUEUE_NAME, player2);
+    assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(0));
+  }
+
+  // TODO test updating queue
 }

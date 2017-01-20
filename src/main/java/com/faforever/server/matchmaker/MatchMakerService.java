@@ -14,7 +14,9 @@ import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
@@ -28,10 +30,8 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,12 +49,12 @@ public class MatchMakerService {
   private final ModService modService;
   private final ServerProperties properties;
   private final RatingService ratingService;
-  private final Map<String, Queue<MatchMakerSearch>> searchesByQueueName;
+  private final Map<String, Map<Player, MatchMakerSearch>> searchesByPoolName;
   private final GameService gameService;
   private final MapService mapService;
   private final PlayerService playerService;
   private final ClientService clientService;
-  private final Map<String, FeaturedMod> modByQueueName;
+  private final Map<String, FeaturedMod> modByPoolName;
 
   public MatchMakerService(ModService modService, ServerProperties properties, RatingService ratingService, ClientService clientService, GameService gameService, MapService mapService, PlayerService playerService) {
     this.modService = modService;
@@ -64,43 +64,51 @@ public class MatchMakerService {
     this.gameService = gameService;
     this.mapService = mapService;
     this.playerService = playerService;
-    modByQueueName = new HashMap<>();
-    searchesByQueueName = new HashMap<>();
+    modByPoolName = new HashMap<>();
+    searchesByPoolName = new HashMap<>();
   }
 
   @PostConstruct
   public void postConstruct() {
-    modByQueueName.put("ladder1v1", modService.getLadder1v1());
-    // Before adding additional queues here, be advised that this class currently uses ladder1v1Rating
+    modByPoolName.put("ladder1v1", modService.getLadder1v1());
+    // Before adding additional pools here, be advised that this class currently uses ladder1v1Rating
   }
 
   /**
-   * Submits a new search to the matchmaker, thus marking a player available for matchmaking.
+   * Submits a new search to the matchmaker, thus marking a player available for matchmaking. Any other searches by the
+   * same player for the same pool will be updated.
    *
    * @param faction the faction the player will play once the game starts
    */
-  public void submitSearch(Player player, Faction faction, String queueName) {
+  public void submitSearch(Player player, Faction faction, String poolName) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
     Requests.verify(isNotBanned(player), ErrorCode.BANNED_FROM_MATCH_MAKER);
-    Requests.verify(modByQueueName.get(queueName) != null, ErrorCode.MATCHMAKER_1V1_ONLY);
+    Requests.verify(modByPoolName.get(poolName) != null, ErrorCode.MATCHMAKER_1V1_ONLY);
 
-    MatchMakerSearch search = new MatchMakerSearch(Instant.now(), player, faction, queueName);
-    synchronized (searchesByQueueName) {
-      log.debug("Adding player '{}' to queue '{}'", search.player, search.queueName);
-      searchesByQueueName.computeIfAbsent(queueName, s -> new LinkedList<>()).add(search);
+    Map<Player, MatchMakerSearch> pool = searchesByPoolName.computeIfAbsent(poolName, s -> new HashMap<>());
+
+    synchronized (searchesByPoolName) {
+      MatchMakerSearch search = searchesByPoolName.get(poolName).get(player);
+      if (search != null) {
+        log.debug("Updating search of player player '{}'", search.player, search.poolName);
+        search.faction = faction;
+      } else {
+        log.debug("Adding player '{}' to pool '{}'", player, poolName);
+        pool.put(player, new MatchMakerSearch(Instant.now(), player, poolName, faction));
+      }
       notifyPlayers(search, DESIRED_MIN_GAME_QUALITY);
     }
   }
 
   @Scheduled(fixedDelay = 3000)
-  public void processQueue() {
-    synchronized (searchesByQueueName) {
-      searchesByQueueName.entrySet().forEach(entry -> {
-        String queueName = entry.getKey();
-        Queue<MatchMakerSearch> queue = entry.getValue();
+  public void processPool() {
+    synchronized (searchesByPoolName) {
+      searchesByPoolName.entrySet().forEach(entry -> {
+        String poolName = entry.getKey();
+        Map<Player, MatchMakerSearch> pool = entry.getValue();
 
-        log.trace("Processing queue '{}'", queueName);
-        queue.stream()
+        log.trace("Processing pool '{}'", poolName);
+        pool.values().stream()
           .map(this::findMatch)
           .filter(Optional::isPresent)
           .collect(Collectors.toList())
@@ -113,13 +121,27 @@ public class MatchMakerService {
             Player rightPlayer = rightSearch.player;
 
             log.debug("Player '{}' was matched against '{}' with game quality '{}'", leftPlayer, rightPlayer, match.quality);
-            queue.remove(leftSearch);
-            queue.remove(rightSearch);
+            pool.remove(leftSearch.player);
+            pool.remove(rightSearch.player);
 
-            int modId = modByQueueName.get(leftSearch.queueName).getId();
+            int modId = modByPoolName.get(leftSearch.poolName).getId();
             startGame(modId, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
           });
       });
+    }
+  }
+
+  /**
+   * Removes the specified player from the specified pool.
+   */
+  public void cancelSearch(String poolName, Player player) {
+    synchronized (searchesByPoolName) {
+      log.debug("Removing searches from pool '{}' for player '{}'", poolName, player);
+      Map<Player, MatchMakerSearch> pool = searchesByPoolName.get(poolName);
+      pool.values().stream()
+        .filter(search -> search.player.equals(player))
+        .collect(Collectors.toList())
+        .forEach(search -> pool.remove(search.player));
     }
   }
 
@@ -137,9 +159,9 @@ public class MatchMakerService {
     Set<MatchMakerSearch> alreadyChecked = new HashSet<>();
     alreadyChecked.add(leftSearch);
 
-    String queueName = leftSearch.queueName;
-    synchronized (searchesByQueueName) {
-      return searchesByQueueName.get(queueName).stream()
+    String poolName = leftSearch.poolName;
+    synchronized (searchesByPoolName) {
+      return searchesByPoolName.get(poolName).values().stream()
         .filter(otherSearch -> !alreadyChecked.contains(otherSearch))
         .map(rightSearch -> {
           alreadyChecked.add(rightSearch);
@@ -164,11 +186,11 @@ public class MatchMakerService {
     playerService.getPlayers().parallelStream()
       .map(rightPlayer -> new PotentialMatch(
         rightPlayer,
-        search.queueName,
+        search.poolName,
         ratingService.calculateQuality(search.player.getLadder1v1Rating(), rightPlayer.getLadder1v1Rating())
       ))
       .filter(match -> match.quality > minQuality)
-      .forEach(match -> clientService.sendMatchmakerNotification(match.queueName, match.rightPlayer));
+      .forEach(match -> clientService.sendMatchmakerNotification(match.poolName, match.rightPlayer));
   }
 
   /**
@@ -230,10 +252,10 @@ public class MatchMakerService {
    */
   @RequiredArgsConstructor
   @ToString
-  @EqualsAndHashCode(of = {"queueName", "rightPlayer"})
+  @EqualsAndHashCode(of = {"poolName", "rightPlayer"})
   private static class PotentialMatch {
     private final Player rightPlayer;
-    private final String queueName;
+    private final String poolName;
     private final double quality;
   }
 
@@ -252,13 +274,18 @@ public class MatchMakerService {
   /**
    * Represents a search submitted by a player. Two matching searches can result in a {@link Match}.
    */
-  @RequiredArgsConstructor
+  @AllArgsConstructor
   @ToString
-  @EqualsAndHashCode(of = {"queueName", "player"})
+  @EqualsAndHashCode(of = {"poolName", "player"})
   private static class MatchMakerSearch {
     private final Instant createdTime;
     private final Player player;
-    private final Faction faction;
-    private final String queueName;
+    private final String poolName;
+    private Faction faction;
+  }
+
+  @VisibleForTesting
+  Map<String, Map<Player, MatchMakerSearch>> getSearchPools() {
+    return searchesByPoolName;
   }
 }

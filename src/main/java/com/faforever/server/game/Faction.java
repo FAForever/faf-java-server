@@ -1,13 +1,14 @@
 package com.faforever.server.game;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public enum Faction {
-  // Order is crucial, and because LUA indices are 1-based, the first value here is "DUMMY".
-  DUMMY(null), AEON("aeon"), CYBRAN("cybran"), UEF("uef"), SERAPHIM("seraphim"), NOMAD("nomad");
+  // Order is crucial
+  AEON("aeon"), CYBRAN("cybran"), UEF("uef"), SERAPHIM("seraphim"), NOMAD("nomad");
 
   private static final Map<String, Faction> fromString;
 
@@ -29,7 +30,12 @@ public enum Faction {
    */
   @JsonValue
   public int toFaValue() {
-    return ordinal();
+    return ordinal() + 1;
+  }
+
+  @JsonCreator
+  public static Faction fromFaValue(int value) {
+    return Faction.values()[value - 1];
   }
 
   public static Faction fromString(String string) {

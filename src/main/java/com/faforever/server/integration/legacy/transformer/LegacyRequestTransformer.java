@@ -33,6 +33,7 @@ import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.legacy.LegacyClientMessageType;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.social.AddFoeRequest;
@@ -222,7 +223,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   private ClientMessage handleMatchMaking(Map<String, Object> source) {
     switch ((String) source.get("state")) {
       case "stop":
-        // FIXME implement
+        return new MatchMakerCancelRequest("ladder1v1");
       default:
         return new MatchMakerSearchRequest(Faction.fromString((String) source.get("faction")), "ladder1v1");
     }

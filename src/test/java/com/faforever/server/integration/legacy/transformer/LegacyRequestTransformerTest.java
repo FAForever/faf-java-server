@@ -15,6 +15,7 @@ import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
@@ -27,6 +28,8 @@ import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.matchmaker.MatchMakerCancelRequest;
+import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.social.AddFoeRequest;
 import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.social.RemoveFoeRequest;
@@ -439,5 +442,29 @@ public class LegacyRequestTransformerTest {
       "command", "admin",
       "action", "something"
     ));
+  }
+
+  @Test
+  public void searchMatchMaking() throws Exception {
+    MatchMakerSearchRequest result = (MatchMakerSearchRequest) instance.transform(ImmutableMap.of(
+      "command", "game_matchmaking",
+      "mod", "ladder1v1",
+      "faction", "seraphim",
+      "state", "start"
+    ));
+
+    assertThat(result.getQueueName(), is("ladder1v1"));
+    assertThat(result.getFaction(), is(Faction.SERAPHIM));
+  }
+
+  @Test
+  public void stopMatchMaking() throws Exception {
+    MatchMakerCancelRequest result = (MatchMakerCancelRequest) instance.transform(ImmutableMap.of(
+      "command", "game_matchmaking",
+      "mod", "ladder1v1",
+      "state", "stop"
+    ));
+
+    assertThat(result.getQueueName(), is("ladder1v1"));
   }
 }

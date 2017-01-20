@@ -22,6 +22,7 @@ import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.request.ClientMessage;
 import com.faforever.server.response.ServerResponse;
@@ -188,7 +189,12 @@ public class ChannelNames {
   /**
    * Channel for {@link MatchMakerSearchRequest}.
    */
-  public static final String MATCH_MAKER_MESSAGE = "matchMakerMessage";
+  public static final String MATCH_MAKER_SEARCH_REQUEST = "matchMakerSearchRequest";
+
+  /**
+   * Channel for {@link MatchMakerCancelRequest}.
+   */
+  public static final String MATCH_MAKER_CANCEL_REQUEST = "matchMakerCancelRequest";
 
   /**
    * Channel for {@link DisconnectPeerRequest}

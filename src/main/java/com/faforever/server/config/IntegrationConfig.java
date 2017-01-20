@@ -26,6 +26,7 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.social.RemoveFriendRequest;
@@ -166,7 +167,8 @@ public class IntegrationConfig {
     payloadTypeRouter.setChannelMapping(TeamKillReport.class.getName(), ChannelNames.TEAM_KILL_REPORT);
     payloadTypeRouter.setChannelMapping(DisconnectPeerRequest.class.getName(), ChannelNames.DISCONNECT_PEER_REQUEST);
     payloadTypeRouter.setChannelMapping(DisconnectClientRequest.class.getName(), ChannelNames.DISCONNECT_CLIENT_REQUEST);
-    payloadTypeRouter.setChannelMapping(MatchMakerSearchRequest.class.getName(), ChannelNames.MATCH_MAKER_MESSAGE);
+    payloadTypeRouter.setChannelMapping(MatchMakerSearchRequest.class.getName(), ChannelNames.MATCH_MAKER_SEARCH_REQUEST);
+    payloadTypeRouter.setChannelMapping(MatchMakerCancelRequest.class.getName(), ChannelNames.MATCH_MAKER_CANCEL_REQUEST);
     payloadTypeRouter.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
     payloadTypeRouter.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
     payloadTypeRouter.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);

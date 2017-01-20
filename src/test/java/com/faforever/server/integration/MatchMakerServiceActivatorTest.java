@@ -4,6 +4,7 @@ import com.faforever.server.client.ClientConnection;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.game.Faction;
+import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.matchmaker.MatchMakerService;
 import com.faforever.server.security.FafUserDetails;
@@ -40,5 +41,11 @@ public class MatchMakerServiceActivatorTest {
   public void startSearch() throws Exception {
     instance.startSearch(new MatchMakerSearchRequest(Faction.CYBRAN, "ladder1v1"), clientConnection);
     verify(matchmakerService).submitSearch(player, Faction.CYBRAN, "ladder1v1");
+  }
+
+  @Test
+  public void cancelSearch() throws Exception {
+    instance.cancelSearch(new MatchMakerCancelRequest("ladder1v1"), clientConnection);
+    verify(matchmakerService).cancelSearch("ladder1v1", player);
   }
 }
