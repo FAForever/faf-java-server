@@ -5,7 +5,7 @@ import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.avatar.GetAvatarsAdminRequest;
 import com.faforever.server.avatar.RemoveAvatarAdminRequest;
 import com.faforever.server.client.BroadcastRequest;
-import com.faforever.server.client.CloseClientRequest;
+import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
@@ -16,8 +16,8 @@ import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
-import com.faforever.server.game.CloseGameRequest;
 import com.faforever.server.game.DesyncReport;
+import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
@@ -92,7 +92,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         } else if (source.containsKey("foe")) {
           return new AddFoeRequest(((Double) source.get("foe")).intValue());
         }
-        throw new IllegalArgumentException("Invalid social_add message: " + source);
+        Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
 
       case SOCIAL_REMOVE:
         if (source.containsKey("friend")) {
@@ -100,7 +100,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         } else if (source.containsKey("foe")) {
           return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
         }
-        throw new IllegalArgumentException("Invalid social_remove message: " + source);
+        Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
 
       case LOGIN:
         return new LoginMessage(
@@ -109,7 +109,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
           (String) source.get("unique_id"));
 
       case GAME_MATCH_MAKING:
-        // FIXME implement?
+        // FIXME implement
         return new MatchmakerMessage();
 
       case AVATAR:
@@ -125,11 +125,11 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case PLAYER_OPTION:
         args = getArgs(source);
-        return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), args.get(2));
+        return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), ((Double) args.get(2)).intValue());
 
       case CLEAR_SLOT:
         args = getArgs(source);
-        return new ClearSlotRequest((int) args.get(0));
+        return new ClearSlotRequest(((Double) args.get(0)).intValue());
 
       case DESYNC:
         return new DesyncReport();
@@ -138,7 +138,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         args = getArgs(source);
         switch ((String) args.get(0)) {
           case "activated":
-            return new GameModsCountReport((int) args.get(1));
+            return new GameModsCountReport(((Double) args.get(1)).intValue());
           case "uids":
             return new GameModsReport(Arrays.asList(((String) args.get(1)).split(" ")));
         }
@@ -146,7 +146,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case GAME_RESULT:
         args = getArgs(source);
-        int armyId = (int) args.get(0);
+        int armyId = ((Double) args.get(0)).intValue();
         String[] results = ((String) args.get(1)).split(" ");
 
         if ("score".equals(results[0])) {
@@ -158,7 +158,11 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case OPERATION_COMPLETE:
         args = getArgs(source);
-        return new CoopMissionCompletedReport((int) args.get(0) == 1, (int) args.get(1) == 1, Duration.ofSeconds((Integer) args.get(2)));
+        return new CoopMissionCompletedReport(
+          ((Double) args.get(0)).intValue() == 1,
+          ((Double) args.get(1)).intValue() == 1,
+          Duration.ofSeconds(((Double) args.get(2)).intValue())
+        );
 
       case JSON_STATS:
         return noCatch(() -> {
@@ -177,16 +181,16 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case TEAMKILL_REPORT:
         args = getArgs(source);
         return new TeamKillReport(
-          Duration.ofSeconds((int) args.get(0)),
-          (int) args.get(0),
+          Duration.ofSeconds(((Double) args.get(0)).intValue()),
+          ((Double) args.get(0)).intValue(),
           (String) args.get(1),
-          (int) args.get(2),
+          ((Double) args.get(2)).intValue(),
           (String) args.get(3)
         );
 
       case AI_OPTION:
         args = getArgs(source);
-        return new AiOptionReport((String) args.get(0), (String) args.get(1), args.get(2));
+        return new AiOptionReport((String) args.get(0), (String) args.get(1), ((Double) args.get(2)).intValue());
 
       case INITIATE_TEST:
         log.warn("Ignoring " + messageType);
@@ -198,17 +202,19 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case ADMIN:
         switch ((String) source.get("action")) {
           case "closeFA":
-            return new CloseGameRequest((Integer) source.get("user_id"));
+            return new DisconnectPeerRequest(((Double) source.get("user_id")).intValue());
           case "closeLobby":
-            return new CloseClientRequest((Integer) source.get("user_id"));
+            return new DisconnectClientRequest(((Double) source.get("user_id")).intValue());
           case "requestavatars":
             return new GetAvatarsAdminRequest();
           case "remove_avatar":
-            return new RemoveAvatarAdminRequest((int) source.get("idavatar"), (int) source.get("iduser"));
+            return new RemoveAvatarAdminRequest(((Double) source.get("idavatar")).intValue(), ((Double) source.get("iduser")).intValue());
           case "add_avatar":
-            return new AddAvatarAdminRequest((int) source.get("idavatar"), (int) source.get("iduser"));
+            return new AddAvatarAdminRequest(((Double) source.get("idavatar")).intValue(), ((Double) source.get("iduser")).intValue());
           case "broadcast":
             return new BroadcastRequest((String) source.get("message"));
+          default:
+            Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
         }
 
       default:

@@ -45,7 +45,6 @@ public class LegacyServicesActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
   public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-
     try {
       UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword());
       token.setDetails((ConnectionAware) () -> clientConnection);

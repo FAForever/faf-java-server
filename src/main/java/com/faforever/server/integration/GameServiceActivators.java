@@ -1,7 +1,18 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.game.*;
+import com.faforever.server.game.AiOptionReport;
+import com.faforever.server.game.ArmyOutcomeReport;
+import com.faforever.server.game.ArmyScoreReport;
+import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.DesyncReport;
+import com.faforever.server.game.DisconnectPeerRequest;
+import com.faforever.server.game.GameModsCountReport;
+import com.faforever.server.game.GameModsReport;
+import com.faforever.server.game.GameOptionReport;
+import com.faforever.server.game.GameService;
+import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.statistics.ArmyStatisticsReport;
@@ -90,6 +101,11 @@ public class GameServiceActivators {
   @ServiceActivator(inputChannel = ChannelNames.ENFORCE_RATING_REQUEST)
   public void enforceRating(@Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     gameService.enforceRating(clientConnection.getUserDetails().getPlayer());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.DISCONNECT_PEER_REQUEST)
+  public void disconnectFromGame(DisconnectPeerRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.disconnectFromGame(clientConnection.getUserDetails().getUser(), request.getPlayerId());
   }
 
   private byte resolveMod(String mod) {

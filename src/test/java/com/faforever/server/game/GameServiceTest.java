@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
@@ -15,6 +16,7 @@ import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.statistics.ArmyStatistics;
@@ -22,12 +24,19 @@ import com.faforever.server.stats.ArmyStatisticsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -35,10 +44,13 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -53,7 +65,7 @@ public class GameServiceTest {
   private static final String PLAYER_NAME_1 = "player1";
   private static final String PLAYER_NAME_2 = "player2";
   private static final String MAP_NAME = "SCMP_001";
-  private static final byte FAF_MOD_ID = 1;
+  private static final int FAF_MOD_ID = 1;
   private static final int NEXT_GAME_ID = 1;
 
   private GameService instance;
@@ -70,6 +82,8 @@ public class GameServiceTest {
   private ArmyStatisticsService armyStatisticsService;
   @Mock
   private RatingService ratingService;
+  @Mock
+  private PlayerService playerService;
 
   private Player player1;
   private Player player2;
@@ -83,6 +97,7 @@ public class GameServiceTest {
     game = new Game();
     game.setId(1);
     game.setMap(map);
+    game.setFeaturedMod(new FeaturedMod());
     game.setVictoryCondition(VictoryCondition.DEMORALIZATION);
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
@@ -106,8 +121,9 @@ public class GameServiceTest {
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
+    when(playerService.getPlayer(anyInt())).thenReturn(Optional.empty());
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, ratingService, armyStatisticsService);
+    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, armyStatisticsService);
     instance.postConstruct();
   }
 
@@ -159,6 +175,12 @@ public class GameServiceTest {
     instance.updateGameOption(player1, "GameSpeed", "normal");
 
     assertThat(game.getOptions().get("GameSpeed"), is("normal"));
+  }
+
+  @Test
+  public void updateGameOptionNotInGameIgnored() throws Exception {
+    instance.updateGameOption(player2, "GameSpeed", "normal");
+    verifyZeroInteractions(clientService);
   }
 
   @Test
@@ -369,6 +391,35 @@ public class GameServiceTest {
   }
 
   @Test
+  public void onGameLaunching() throws Exception {
+    game.setState(GameState.OPEN);
+    player1.setGameState(PlayerGameState.LOBBY);
+    assertThat(game.getStartTime(), is(nullValue()));
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    assertThat(game.getState(), is(GameState.PLAYING));
+    assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now().plusSeconds(1)))));
+    assertThat(game.getStartTime(), is(greaterThan(Timestamp.from(Instant.now().minusSeconds(10)))));
+
+    verify(gameRepository).save(game);
+    verify(clientService).sendDelayed(any(GameResponse.class), any(), any(), any());
+  }
+
+  @Test
+  public void onGameLaunchingSentByNonHostIsIgnored() throws Exception {
+    player2.setCurrentGame(game);
+    player2.setGameState(PlayerGameState.LOBBY);
+    game.setState(GameState.OPEN);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player2);
+
+    assertThat(game.getState(), is(GameState.OPEN));
+    verifyZeroInteractions(clientService);
+    verify(gameRepository, never()).save(game);
+  }
+
+  @Test
   public void updateGameRankinessUnrankedMod() throws Exception {
     game.getSimMods().add("1-2-3-4");
     when(modService.isModRanked("1-2-3-4")).thenReturn(false);
@@ -561,6 +612,70 @@ public class GameServiceTest {
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(false));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void onAuthenticationSuccess() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
+    authentication.setDetails(player2.setClientConnection(clientConnection));
+
+    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+
+    ArgumentCaptor<Collection<GameResponse>> captor = ArgumentCaptor.forClass((Class) Collection.class);
+    verify(clientService).sendGameList(captor.capture(), eq(player2));
+    Collection<GameResponse> games = captor.getValue();
+
+    assertThat(games, hasSize(1));
+    assertThat(games.iterator().next().getTitle(), is("Test game"));
+  }
+
+  /**
+   * Tests whether all but the affected player are informed to drop someone.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void disconnectFromGame() throws Exception {
+    Player player4 = new Player();
+    Player player3 = (Player) new Player()
+      .setCurrentGame(game)
+      .setId(3);
+
+    Map<Integer, Player> activePlayers = game.getActivePlayers();
+    activePlayers.put(1, player1);
+    activePlayers.put(2, player2);
+    activePlayers.put(3, player3);
+    activePlayers.put(4, player4);
+
+    when(playerService.getPlayer(3)).thenReturn(Optional.of(player3));
+
+    instance.disconnectFromGame(new User(), 3);
+
+    ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
+    verify(clientService).disconnectPlayer(eq(3), captor.capture());
+    List<ConnectionAware> recipients = captor.getValue();
+
+    assertThat(recipients, hasSize(3));
+    assertThat(recipients, hasItems(
+      player1, player2, player4
+    ));
+  }
+
+  @Test
+  public void disconnectFromGameIgnoredWhenPlayerUnknown() throws Exception {
+    instance.disconnectFromGame(new User(), 412312);
+    verifyZeroInteractions(clientService);
+  }
+
+  @Test
+  public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
+    when(playerService.getPlayer(3)).thenReturn(Optional.of(new Player()));
+    instance.disconnectFromGame(new User(), 3);
+    verifyZeroInteractions(clientService);
   }
 
   private void addPlayer(Game game, Player player, int team) {

@@ -5,7 +5,11 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "login")
@@ -22,4 +26,8 @@ public class User extends Login {
   @JoinColumn(name = "id", insertable = false, updatable = false)
   private Player player;
 
+  @Override
+  public String toString() {
+    return "User(" + getId() + ", " + getLogin() + ")";
+  }
 }

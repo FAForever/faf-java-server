@@ -12,7 +12,8 @@ public enum ErrorCode {
   CREATE_ACCOUNT_IS_DEPRECATED(105, "Unsupported operation", "Creating accounts is no longer supported. Please visit the website http://www.faforever.com instead."),
   HOST_ONLY_OPTION(106, "Invalid operation", "The option '{0}' can only be set by the host of the game"),
   UID_USED_BY_MULTIPLE_USERS(107, "Login denied", "Your computer is associated with too many FAF accounts.<br>To continue using them, you have to link them to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
-  UID_USED_BY_ANOTHER_USER(108, "Login denied", "Your computer is already associated with another FAF account.<br><br>To log in with a new account, you have to link it to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums.");
+  UID_USED_BY_ANOTHER_USER(108, "Login denied", "Your computer is already associated with another FAF account.<br><br>To log in with a new account, you have to link it to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
+  UNKNOWN_MESSAGE(109, "Unknown message", "The server received an unknown request from your client: {0}");
 
   private final int code;
   private final String title;

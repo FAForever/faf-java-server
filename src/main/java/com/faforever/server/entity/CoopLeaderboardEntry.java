@@ -3,11 +3,17 @@ package com.faforever.server.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.sql.Time;
 
 @Entity
-@Table(name = "coop_leaderboard", schema = "faf_lobby", catalog = "")
+@Table(name = "coop_leaderboard")
 @Data
 @NoArgsConstructor
 public class CoopLeaderboardEntry {
@@ -22,7 +28,7 @@ public class CoopLeaderboardEntry {
   private CoopMap mission;
 
   @Column(name = "gameuid")
-  private long gameuid;
+  private long gameId;
 
   @Column(name = "secondary")
   private boolean secondary;
@@ -31,5 +37,5 @@ public class CoopLeaderboardEntry {
   private Time time;
 
   @Column(name = "player_count")
-  private Byte playerCount;
+  private int playerCount;
 }

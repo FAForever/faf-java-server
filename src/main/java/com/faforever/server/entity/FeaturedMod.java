@@ -3,7 +3,11 @@ package com.faforever.server.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "game_featuredMods")
@@ -14,7 +18,7 @@ public class FeaturedMod {
   @Id
   @Column(name = "id")
   @GeneratedValue
-  private byte id;
+  private int id;
 
   @Column(name = "gamemod")
   private String technicalName;
@@ -29,7 +33,7 @@ public class FeaturedMod {
   private boolean publish;
 
   @Column(name = "order")
-  private short displayOrder;
+  private int displayOrder;
 
   @Column(name = "git_url")
   private String gitUrl;

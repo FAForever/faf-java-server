@@ -10,11 +10,13 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Rankiness;
+import com.faforever.server.entity.User;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.rating.RatingType;
 import com.faforever.server.statistics.ArmyStatistics;
@@ -26,6 +28,7 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -70,15 +73,18 @@ public class GameService {
   private final Map<Integer, Game> gamesById;
   private final MapService mapService;
   private final ModService modService;
+  private final PlayerService playerService;
   private final RatingService ratingService;
   private ArmyStatisticsService armyStatisticsService;
 
   public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
-                     ModService modService, RatingService ratingService, ArmyStatisticsService armyStatisticsService) {
+                     ModService modService, PlayerService playerService, RatingService ratingService,
+                     ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
     this.mapService = mapService;
     this.modService = modService;
+    this.playerService = playerService;
     this.ratingService = ratingService;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
@@ -95,7 +101,7 @@ public class GameService {
    * Creates a new, transient game with the specified options and tells the client to start the game process. The
    * player's current game is set to the new game.
    */
-  public void createGame(String title, byte modId, String mapname, String password, GameVisibility visibility, Player player) {
+  public void createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     int gameId = this.nextGameId.getAndIncrement();
@@ -342,7 +348,10 @@ public class GameService {
 
   @EventListener
   public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-    clientService.sendGameList(getActiveGames(), (ConnectionAware) event.getAuthentication().getDetails());
+    clientService.sendGameList(
+      gamesById.values().stream().map(this::toResponse).collect(Collectors.toList()),
+      (ConnectionAware) event.getAuthentication().getDetails()
+    );
   }
 
   @EventListener
@@ -352,6 +361,30 @@ public class GameService {
       log.debug("Removing player '{}' who went offline", userDetails.getPlayer());
       Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removeFromActivePlayers(game, player));
     });
+  }
+
+  /**
+   * Tells all peers of the player with the specified ID to drop their connections to him/her.
+   */
+  public void disconnectFromGame(User user, int playerId) {
+    Optional<Player> optional = playerService.getPlayer(playerId);
+    if (!optional.isPresent()) {
+      log.warn("User '{}' tried to disconnect unknown player '{}' from game", user, playerId);
+      return;
+    }
+    Player player = optional.get();
+    Game game = player.getCurrentGame();
+    if (game == null) {
+      log.warn("User '{}' tried to disconnect player '{}' from game, but no game is associated", user, player);
+      return;
+    }
+
+    Collection<? extends ConnectionAware> receivers = game.getActivePlayers().values().stream()
+      .filter(item -> item.getId() != playerId)
+      .collect(Collectors.toList());
+
+    clientService.disconnectPlayer(playerId, receivers);
+    log.info("User '{}' disconnected player '{}' from game '{}'", user, player, game);
   }
 
   private void addPlayer(Game game, Player player) {
@@ -426,7 +459,7 @@ public class GameService {
       return;
     }
     game.setState(GameState.PLAYING);
-    game.setLaunchedAt(Instant.now());
+    game.setStartTime(Timestamp.from(Instant.now()));
     updateGameRankiness(game);
     gameRepository.save(game);
     log.debug("Game launched: {}", game);
@@ -434,7 +467,7 @@ public class GameService {
   }
 
   private Duration duration(Game game) {
-    return Duration.between(game.getLaunchedAt(), Instant.now());
+    return Duration.between(game.getStartTime().toInstant(), Instant.now());
   }
 
   /**
@@ -465,13 +498,6 @@ public class GameService {
     clientService.connectToPlayer(player, player);
   }
 
-  /**
-   * Returns a list of games which haven't finished yet.
-   */
-  private Collection<Game> getActiveGames() {
-    return Collections.unmodifiableCollection(gamesById.values());
-  }
-
   private Optional<Integer> findArmy(int armyId, Game game) {
     return game.getPlayerOptions().values().stream()
       .map(options -> (int) options.get("Army"))
@@ -480,7 +506,26 @@ public class GameService {
   }
 
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {
-    clientService.submitDirty(game, minDelay, maxDelay, Game::getId, GameResponse::new);
+    clientService.sendDelayed(toResponse(game), minDelay, maxDelay, GameResponse::getId);
+  }
+
+  private GameResponse toResponse(Game game) {
+    return new GameResponse(
+      game.getId(),
+      game.getTitle(),
+      game.getGameVisibility(),
+      game.getPassword(),
+      game.getState(),
+      game.getFeaturedMod().getTechnicalName(),
+      game.getSimMods(),
+      game.getMapName(),
+      game.getHost().getLogin(),
+      game.getPlayerStats().stream()
+        .map(stats -> new GameResponse.Player(stats.getTeam(), stats.getPlayer().getLogin()))
+        .collect(Collectors.toList()),
+      game.getMaxPlayers(),
+      Optional.ofNullable(game.getStartTime()).map(Timestamp::toInstant).orElse(null)
+    );
   }
 
   private boolean isFreeForAll(Game game) {

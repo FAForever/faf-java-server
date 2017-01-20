@@ -4,7 +4,6 @@ import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.game.PlayerGameState;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +14,11 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "login")
-@RequiredArgsConstructor
 @Getter
 @Setter
 public class Player extends Login implements ConnectionAware {
@@ -38,6 +37,12 @@ public class Player extends Login implements ConnectionAware {
     inverseJoinColumns = @JoinColumn(name = "uniqueid_hash", referencedColumnName = "id"))
   private Set<HardwareInformation> hardwareInformations;
 
+  @ManyToMany
+  @JoinTable(name = "avatars",
+    joinColumns = @JoinColumn(name = "idUser", referencedColumnName = "id"),
+    inverseJoinColumns = @JoinColumn(name = "idAvatar", referencedColumnName = "id"))
+  private List<AvatarAssociation> availableAvatars;
+
   @Transient
   private Game currentGame;
 
@@ -50,5 +55,10 @@ public class Player extends Login implements ConnectionAware {
   public void setGameState(PlayerGameState gameState) {
     PlayerGameState.verifyTransition(this.gameState, gameState);
     this.gameState = gameState;
+  }
+
+  @Override
+  public String toString() {
+    return "Player(" + getId() + ", " + getLogin() + ")";
   }
 }

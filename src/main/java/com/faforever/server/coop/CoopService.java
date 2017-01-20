@@ -36,10 +36,9 @@ public class CoopService {
     Optional<CoopMap> optional = coopMapRepository.findOneByFilenameLikeIgnoreCase(game.getMapName());
     if (optional.isPresent()) {
       CoopLeaderboardEntry coopLeaderboardEntry = new CoopLeaderboardEntry();
-      coopLeaderboardEntry.setGameuid(game.getId());
+      coopLeaderboardEntry.setGameId(game.getId());
       coopLeaderboardEntry.setMission(optional.get());
-      // Nobody cares?
-      // coopLeaderboardEntry.setPlayerCount();
+      coopLeaderboardEntry.setPlayerCount(game.getPlayerStats().size());
       coopLeaderboardEntry.setSecondary(secondaryTargets);
       coopLeaderboardEntry.setTime(new Time(duration.toMillis()));
 

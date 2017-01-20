@@ -1,6 +1,7 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.client.ConnectToPlayerResponse;
+import com.faforever.server.client.DisconnectPlayerResponse;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.error.ErrorResponse;
@@ -28,13 +29,14 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerRespo
     transformers = ImmutableMap.<Class<? extends ServerResponse>, GenericTransformer<? extends ServerResponse, Map<String, Serializable>>>builder()
       .put(StartGameProcessResponse.class, LaunchGameResponseTransformer.INSTANCE)
       .put(SessionResponse.class, SessionResponseTransformer.INSTANCE)
-      .put(UserDetailsResponse.class, LoginResponseTransformer.INSTANCE)
+      .put(UserDetailsResponse.class, UserDetailsResponseTransformer.INSTANCE)
       .put(ErrorResponse.class, ErrorResponseTransformer.INSTANCE)
       .put(HostGameResponse.class, HostGameResponseTransformer.INSTANCE)
       .put(ConnectToPlayerResponse.class, ConnectToPlayerResponseTransformer.INSTANCE)
       .put(FeaturedModResponse.class, FeaturedModResponseTransformer.INSTANCE)
       .put(GameResponse.class, GameResponseTransformer.INSTANCE)
       .put(CoopMissionResponse.class, CoopMissionsResponseTransformer.INSTANCE)
+      .put(DisconnectPlayerResponse.class, DisconnectPeerResponseTransformer.INSTANCE)
       .build();
   }
 

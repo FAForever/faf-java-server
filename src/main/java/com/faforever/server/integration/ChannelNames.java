@@ -1,6 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
@@ -11,6 +12,7 @@ import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
+import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
@@ -181,4 +183,14 @@ public class ChannelNames {
    * Channel for {@link ListCoopRequest}
    */
   public static final String LEGACY_COOP_LIST = "listCoopRequest";
+
+  /**
+   * Channel for {@link DisconnectPeerRequest}
+   */
+  public static final String DISCONNECT_PEER_REQUEST = "disconnectPeerRequest";
+
+  /**
+   * Channel for {@link DisconnectClientRequest}.
+   */
+  public static final String DISCONNECT_CLIENT_REQUEST = "disconnectClientRequest";
 }

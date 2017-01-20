@@ -18,7 +18,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,6 +57,9 @@ public class Game {
   @Transient
   private final List<ArmyStatistics> armyStatistics;
 
+  /**
+   * Returns the list of players who are actively playing the game at the time of the request.
+   */
   @Transient
   private final Map<Integer, Player> activePlayers;
 
@@ -132,9 +134,6 @@ public class Game {
 
   @Transient
   private GameVisibility gameVisibility;
-
-  @Transient
-  private Instant launchedAt;
 
   @Transient
   private boolean mutuallyAgreedDraw;

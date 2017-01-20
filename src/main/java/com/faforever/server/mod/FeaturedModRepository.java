@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface FeaturedModRepository extends JpaRepository<FeaturedMod, Byte> {
+public interface FeaturedModRepository extends JpaRepository<FeaturedMod, Integer> {
   Optional<FeaturedMod> findOneByTechnicalName(String technicalName);
 }
