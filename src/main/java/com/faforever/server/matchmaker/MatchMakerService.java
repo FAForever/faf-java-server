@@ -85,10 +85,10 @@ public class MatchMakerService {
     Requests.verify(isNotBanned(player), ErrorCode.BANNED_FROM_MATCH_MAKER);
     Requests.verify(modByPoolName.get(poolName) != null, ErrorCode.MATCHMAKER_1V1_ONLY);
 
-    Map<Player, MatchMakerSearch> pool = searchesByPoolName.computeIfAbsent(poolName, s -> new HashMap<>());
+    Map<Player, MatchMakerSearch> pool = getPool(poolName);
 
     synchronized (searchesByPoolName) {
-      MatchMakerSearch search = searchesByPoolName.get(poolName).get(player);
+      MatchMakerSearch search = getPool(poolName).get(player);
       if (search != null) {
         log.debug("Updating search of player player '{}'", search.player, search.poolName);
         search.faction = faction;
@@ -137,12 +137,16 @@ public class MatchMakerService {
   public void cancelSearch(String poolName, Player player) {
     synchronized (searchesByPoolName) {
       log.debug("Removing searches from pool '{}' for player '{}'", poolName, player);
-      Map<Player, MatchMakerSearch> pool = searchesByPoolName.get(poolName);
+      Map<Player, MatchMakerSearch> pool = getPool(poolName);
       pool.values().stream()
         .filter(search -> search.player.equals(player))
         .collect(Collectors.toList())
         .forEach(search -> pool.remove(search.player));
     }
+  }
+
+  private Map<Player, MatchMakerSearch> getPool(String poolName) {
+    return searchesByPoolName.computeIfAbsent(poolName, s -> new HashMap<>());
   }
 
   /**
@@ -161,7 +165,7 @@ public class MatchMakerService {
 
     String poolName = leftSearch.poolName;
     synchronized (searchesByPoolName) {
-      return searchesByPoolName.get(poolName).values().stream()
+      return getPool(poolName).values().stream()
         .filter(otherSearch -> !alreadyChecked.contains(otherSearch))
         .map(rightSearch -> {
           alreadyChecked.add(rightSearch);
