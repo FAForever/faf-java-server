@@ -178,25 +178,8 @@ public class ClientService {
       clientGateway.send(new DisconnectPlayerResponse(playerId), connectionAware.getClientConnection()));
   }
 
-  /**
-   * @deprecated passing command line args to the client is a bad (legacy) idea.
-   */
-  @Deprecated
-  private List<String> getCommandLineArgs(Player player) {
-    int numGames = Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0);
-    return Arrays.asList("/numgames", String.valueOf(numGames));
-  }
-
-  private void send(ServerResponse serverResponse, @NotNull ConnectionAware connectionAware) {
-    ClientConnection clientConnection = connectionAware.getClientConnection();
-    if (clientConnection == null) {
-      throw new IllegalStateException("No connection available: " + connectionAware);
-    }
-    clientGateway.send(serverResponse, clientConnection);
-  }
-
   @Scheduled(fixedDelay = 1000)
-  private void sendDirtyObjects() {
+  public void sendDirtyObjects() {
     synchronized (dirtyObjects) {
       List<Object> objectIds = dirtyObjects.entrySet().stream()
         .filter(entry -> {
@@ -221,6 +204,23 @@ public class ClientService {
         dirtyObjects.remove(id);
       });
     }
+  }
+
+  /**
+   * @deprecated passing command line args to the client is a bad (legacy) idea.
+   */
+  @Deprecated
+  private List<String> getCommandLineArgs(Player player) {
+    int numGames = Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0);
+    return Arrays.asList("/numgames", String.valueOf(numGames));
+  }
+
+  private void send(ServerResponse serverResponse, @NotNull ConnectionAware connectionAware) {
+    ClientConnection clientConnection = connectionAware.getClientConnection();
+    if (clientConnection == null) {
+      throw new IllegalStateException("No connection available: " + connectionAware);
+    }
+    clientGateway.send(serverResponse, clientConnection);
   }
 
   /**
