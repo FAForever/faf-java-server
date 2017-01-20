@@ -16,6 +16,7 @@ import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.google.common.collect.ImmutableMap;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -221,6 +222,7 @@ public class MatchMakerService {
    * quality is high enough, the affected player will be notified.
    */
   @RequiredArgsConstructor
+  @ToString
   private static class PotentialMatch {
     private final Player rightPlayer;
     private final String queueName;
@@ -231,6 +233,7 @@ public class MatchMakerService {
    * Represents a match of two searches. A {@code Match} is only created if a minimum quality is met.
    */
   @RequiredArgsConstructor
+  @ToString
   private static class Match {
     private final MatchMakerSearch leftSearch;
     private final MatchMakerSearch rightSearch;
@@ -241,6 +244,7 @@ public class MatchMakerService {
    * Represents a search submitted by a player. Two matching searches can result in a {@link Match}.
    */
   @RequiredArgsConstructor
+  @ToString
   private static class MatchMakerSearch {
     private final Instant createdTime;
     private final Player player;

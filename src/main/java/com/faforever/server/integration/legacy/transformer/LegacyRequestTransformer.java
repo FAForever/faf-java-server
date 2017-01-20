@@ -114,7 +114,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
           case "stop":
             // FIXME implement
           default:
-            return new MatchMakerSearchRequest(Faction.valueOf((String) source.get("faction")), "ladder1v1");
+            return new MatchMakerSearchRequest(Faction.fromString((String) source.get("faction")), "ladder1v1");
         }
 
       case AVATAR:

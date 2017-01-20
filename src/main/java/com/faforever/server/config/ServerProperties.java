@@ -2,13 +2,11 @@ package com.faforever.server.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.jmx.export.annotation.ManagedResource;
 
 import java.time.Duration;
 
 @Data
 @ConfigurationProperties(prefix = "faf-server", ignoreUnknownFields = false)
-@ManagedResource
 public class ServerProperties {
 
   private int port = 8001;
