@@ -27,7 +27,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -95,7 +94,6 @@ public class ClientService {
       connectionAware);
   }
 
-  @Transactional
   public void sendUserDetails(FafUserDetails userDetails, @NotNull ConnectionAware connectionAware) {
     Player player = userDetails.getPlayer();
 
@@ -119,7 +117,7 @@ public class ClientService {
         new UserDetailsResponse.Player(
           globalRating.orElse(null),
           ladder1v1Rating.orElse(null),
-          player.getGlobalRating().getNumGames(),
+          Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0),
           avatar.orElse(null)
         )
       ),

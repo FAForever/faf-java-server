@@ -171,7 +171,7 @@ public class GameService {
     }
     Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
-    log.trace("Updating game option for game '{}': '{}' = '{}'", game, key, value);
+    log.trace("Updating option for game '{}': '{}' = '{}'", game, key, value);
     game.getOptions().put(key, value);
     if (VictoryCondition.GAME_OPTION_NAME.equals(key)) {
       game.setVictoryCondition(VictoryCondition.fromString((String) value));
@@ -233,7 +233,7 @@ public class GameService {
    * Removes all player or AI options that are associated with the specified slot.
    */
   public void clearSlot(Game game, int slotId) {
-    log.trace("Clearing slot '{}' of game '{}'", game, slotId);
+    log.trace("Clearing slot '{}' of game '{}'", slotId, game);
 
     game.getPlayerOptions().entrySet().stream()
       .filter(entry -> Objects.equals(entry.getValue().get(OPTION_SLOT), slotId))

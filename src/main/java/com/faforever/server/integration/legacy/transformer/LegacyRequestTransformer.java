@@ -125,11 +125,11 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case PLAYER_OPTION:
         args = getArgs(source);
-        return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), ((Double) args.get(2)).intValue());
+        return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), args.get(2));
 
       case CLEAR_SLOT:
         args = getArgs(source);
-        return new ClearSlotRequest(((Double) args.get(0)).intValue());
+        return new ClearSlotRequest((int) args.get(0));
 
       case DESYNC:
         return new DesyncReport();
@@ -190,7 +190,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
       case AI_OPTION:
         args = getArgs(source);
-        return new AiOptionReport((String) args.get(0), (String) args.get(1), ((Double) args.get(2)).intValue());
+        return new AiOptionReport((String) args.get(0), (String) args.get(1), args.get(2));
 
       case INITIATE_TEST:
         log.warn("Ignoring " + messageType);

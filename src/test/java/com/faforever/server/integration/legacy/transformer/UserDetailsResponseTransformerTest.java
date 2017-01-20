@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class UserDetailsResponseTransformerTest {
@@ -47,5 +48,81 @@ public class UserDetailsResponseTransformerTest {
 
     assertThat(me.get("country"), is("CH"));
     assertThat(me.get("clan"), is(""));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void transformHandleAvatarNull() throws Exception {
+    Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
+      1,
+      "JUnit",
+      "CH",
+      new UserDetailsResponse.Player(
+        new Rating(1200d, 200d),
+        new Rating(900d, 100d),
+        12,
+        null
+      )
+    ));
+
+    Map<String, Object> me = (Map<String, Object>) result.get("me");
+    assertThat(me.get("avatar"), is(nullValue()));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void transformHandleGlobalRatingNull() throws Exception {
+    Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
+      1,
+      "JUnit",
+      "CH",
+      new UserDetailsResponse.Player(
+        null,
+        new Rating(900d, 100d),
+        12,
+        new Avatar("http://example.com", "Tooltip")
+      )
+    ));
+
+    Map<String, Object> me = (Map<String, Object>) result.get("me");
+    assertThat(me.get("global_rating"), is(new double[2]));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void transformHandleLadder1v1RatingNull() throws Exception {
+    Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
+      1,
+      "JUnit",
+      "CH",
+      new UserDetailsResponse.Player(
+        new Rating(900d, 100d),
+        null,
+        12,
+        new Avatar("http://example.com", "Tooltip")
+      )
+    ));
+
+    Map<String, Object> me = (Map<String, Object>) result.get("me");
+    assertThat(me.get("ladder_rating"), is(new double[2]));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void transformHandleCountryNull() throws Exception {
+    Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
+      1,
+      "JUnit",
+      null,
+      new UserDetailsResponse.Player(
+        new Rating(1200d, 200d),
+        new Rating(900d, 100d),
+        12,
+        null
+      )
+    ));
+
+    Map<String, Object> me = (Map<String, Object>) result.get("me");
+    assertThat(me.get("country"), is(""));
   }
 }
