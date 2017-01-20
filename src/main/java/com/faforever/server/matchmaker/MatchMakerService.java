@@ -107,7 +107,7 @@ public class MatchMakerService {
         String poolName = entry.getKey();
         Map<Player, MatchMakerSearch> pool = entry.getValue();
 
-        log.trace("Processing pool '{}'", poolName);
+        log.trace("Processing pool '{}' entries in pool '{}'", pool.size(), poolName);
         pool.values().stream()
           .map(this::findMatch)
           .filter(Optional::isPresent)
