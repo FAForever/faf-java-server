@@ -37,6 +37,9 @@ public class Player extends Login implements ConnectionAware {
     inverseJoinColumns = @JoinColumn(name = "uniqueid_hash", referencedColumnName = "id"))
   private Set<HardwareInformation> hardwareInformations;
 
+  @OneToOne(mappedBy = "player")
+  private MatchMakerBanDetails matchMakerBanDetails;
+
   @ManyToMany
   @JoinTable(name = "avatars",
     joinColumns = @JoinColumn(name = "idUser", referencedColumnName = "id"),

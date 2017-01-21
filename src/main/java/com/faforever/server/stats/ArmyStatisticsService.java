@@ -8,7 +8,6 @@ import com.faforever.server.game.Faction;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.Unit;
 import com.faforever.server.mod.ModService;
-import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.achievements.AchievementId;
 import com.faforever.server.stats.achievements.AchievementService;
 import com.faforever.server.stats.achievements.AchievementUpdate;
@@ -29,8 +28,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.ToIntFunction;
 
-import static com.faforever.server.statistics.ArmyStatistics.BrainType.AI;
-import static com.faforever.server.statistics.ArmyStatistics.BrainType.HUMAN;
+import static com.faforever.server.stats.ArmyStatistics.BrainType.AI;
+import static com.faforever.server.stats.ArmyStatistics.BrainType.HUMAN;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
 @Slf4j

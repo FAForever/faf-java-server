@@ -31,6 +31,9 @@ spring:
     active: ${SERVER_PROFILE:dev}
   main:
     banner-mode: off
+  boot:
+    admin:
+      url: ${SPRING_BOOT_ADMIN_URL:http://faf-admin:8080}
 
 logging:
   level:
@@ -39,8 +42,14 @@ logging:
     com.zaxxer.hikari: warn
     org.hibernate: warn
     org.eclipse.jetty: warn
+    com.faforever.server.config.IntegrationConfig: info
+    com.faforever.server.config.LegacyAdapterConfig: info
 
 security:
   oauth2:
     client:
       clientAuthenticationScheme: header
+
+server:
+  port: ${WEB_PORT:8080}
+

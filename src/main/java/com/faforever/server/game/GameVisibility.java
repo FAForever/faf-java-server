@@ -5,7 +5,8 @@ import java.util.Map;
 
 public enum GameVisibility {
   PUBLIC("public"),
-  FRIENDS("friends");
+  FRIENDS("friends"),
+  PRIVATE("private");
 
   private static final Map<String, GameVisibility> fromString;
 
@@ -22,11 +23,11 @@ public enum GameVisibility {
     this.string = string;
   }
 
-  public static GameVisibility fromString(String string) {
-    return fromString.get(string);
-  }
-
   public String getString() {
     return string;
+  }
+
+  public static GameVisibility fromString(String string) {
+    return fromString.get(string);
   }
 }

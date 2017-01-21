@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.ArmyOutcome;
 import com.faforever.server.entity.ArmyScore;
 import com.faforever.server.entity.Game;
@@ -19,7 +20,7 @@ import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.rating.RatingType;
-import com.faforever.server.statistics.ArmyStatistics;
+import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.lang.ref.WeakReference;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -42,6 +44,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -49,24 +52,29 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+// TODO make the game report the game time and use this instead of the real time
 public class GameService {
 
-  static final String OPTION_FOG_OF_WAR = "FogOfWar";
-  static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
-  static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
-  static final String OPTION_NO_RUSH = "NoRushOption";
-  static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
-  static final String OPTION_SLOT = "Slot";
-  static final String OPTION_SLOTS = "Slots";
-  static final String OPTION_SCENARIO_FILE = "ScenarioFile";
-  static final String OPTION_TITLE = "Title";
-  static final String OPTION_TEAM = "Team";
-  static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
-  static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
   /**
    * ID of the team that stands for "no team" according to the game.
    */
-  private static final byte NO_TEAM_ID = 1;
+  public static final int NO_TEAM_ID = 1;
+  public static final String OPTION_FOG_OF_WAR = "FogOfWar";
+  public static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
+  public static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
+  public static final String OPTION_NO_RUSH = "NoRushOption";
+  public static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
+  public static final String OPTION_SLOT = "Slot";
+  public static final String OPTION_SLOTS = "Slots";
+  public static final String OPTION_SCENARIO_FILE = "ScenarioFile";
+  public static final String OPTION_TITLE = "Title";
+  public static final String OPTION_TEAM = "Team";
+  public static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
+  public static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
+  public static final String OPTION_START_SPOT = "StartSpot";
+  public static final String OPTION_FACTION = "Faction";
+  public static final String OPTION_COLOR = "Color";
+  public static final String OPTION_ARMY = "Army";
   private final GameRepository gameRepository;
   private final AtomicInteger nextGameId;
   private final ClientService clientService;
@@ -75,20 +83,24 @@ public class GameService {
   private final ModService modService;
   private final PlayerService playerService;
   private final RatingService ratingService;
+  private final ServerProperties properties;
   private ArmyStatisticsService armyStatisticsService;
+  private List<WeakReference<CompletableFuture<Game>>> gameFutures;
 
   public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
                      ModService modService, PlayerService playerService, RatingService ratingService,
-                     ArmyStatisticsService armyStatisticsService) {
+                     ServerProperties properties, ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
     this.mapService = mapService;
     this.modService = modService;
     this.playerService = playerService;
     this.ratingService = ratingService;
+    this.properties = properties;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
     gamesById = new ConcurrentHashMap<>();
+    gameFutures = Collections.synchronizedList(new ArrayList<>());
   }
 
   @PostConstruct
@@ -100,8 +112,12 @@ public class GameService {
   /**
    * Creates a new, transient game with the specified options and tells the client to start the game process. The
    * player's current game is set to the new game.
+   *
+   * @return a future that will be completed as soon as the player's game has been started and is ready to be joined.
+   * Be aware that there are various reasons for the game to never start (crash, disconnect, abort) so never wait
+   * without a timeout.
    */
-  public void createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
+  public CompletableFuture<Game> createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     int gameId = this.nextGameId.getAndIncrement();
@@ -120,6 +136,10 @@ public class GameService {
     addPlayer(game, player);
 
     clientService.startGameProcess(game, player);
+
+    CompletableFuture<Game> future = new CompletableFuture<>();
+    gameFutures.add(new WeakReference<>(future));
+    return future;
   }
 
   /**
@@ -171,7 +191,7 @@ public class GameService {
     }
     Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
 
-    log.trace("Updating game option for game '{}': '{}' = '{}'", game, key, value);
+    log.trace("Updating option for game '{}': '{}' = '{}'", game, key, value);
     game.getOptions().put(key, value);
     if (VictoryCondition.GAME_OPTION_NAME.equals(key)) {
       game.setVictoryCondition(VictoryCondition.fromString((String) value));
@@ -233,7 +253,7 @@ public class GameService {
    * Removes all player or AI options that are associated with the specified slot.
    */
   public void clearSlot(Game game, int slotId) {
-    log.trace("Clearing slot '{}' of game '{}'", game, slotId);
+    log.trace("Clearing slot '{}' of game '{}'", slotId, game);
 
     game.getPlayerOptions().entrySet().stream()
       .filter(entry -> Objects.equals(entry.getValue().get(OPTION_SLOT), slotId))
@@ -274,7 +294,8 @@ public class GameService {
   public void updateGameMods(Game game, List<String> modUids) {
     modService.getMods(modUids);
     // TODO lookup mod names
-    game.setSimMods(modUids);
+    game.getSimMods().clear();
+    game.getSimMods().addAll(modUids);
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -283,7 +304,7 @@ public class GameService {
       return;
     }
     log.trace("Clearing mod list for game '{}'", game);
-    game.setSimMods(Collections.emptyList());
+    game.getSimMods().clear();
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -430,17 +451,21 @@ public class GameService {
 
   private void onGameEnded(Game game) {
     log.debug("Game ended: {}", game);
+
+    // Games can also end before they even started
     if (game.getState() == GameState.PLAYING) {
       game.getPlayerStats().forEach(stats -> {
         Player player = stats.getPlayer();
         armyStatisticsService.process(player, game, game.getArmyStatistics());
       });
       updateRatingsIfValid(game);
+      updateGameRankiness(game);
       gameRepository.save(game);
     }
 
     gamesById.remove(game.getId());
     game.setState(GameState.CLOSED);
+
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
@@ -460,14 +485,9 @@ public class GameService {
     }
     game.setState(GameState.PLAYING);
     game.setStartTime(Timestamp.from(Instant.now()));
-    updateGameRankiness(game);
     gameRepository.save(game);
     log.debug("Game launched: {}", game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
-  }
-
-  private Duration duration(Game game) {
-    return Duration.between(game.getStartTime().toInstant(), Instant.now());
   }
 
   /**
@@ -483,6 +503,8 @@ public class GameService {
     if (Objects.equals(game.getHost(), player)) {
       game.setState(GameState.OPEN);
       clientService.hostGame(game, player);
+
+      // TODO send only to players allowed to see
       markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     } else {
       clientService.connectToHost(game, player);
@@ -552,8 +574,10 @@ public class GameService {
   @VisibleForTesting
   void updateGameRankiness(Game game) {
     if (game.getRankiness() != Rankiness.RANKED) {
-      throw new IllegalStateException("Rankiness has already been set");
+      throw new IllegalStateException("Rankiness has already been set to: " + game.getRankiness());
     }
+
+    int minSeconds = game.getPlayerStats().size() * properties.getGame().getRankedMinTimeMultiplicator();
     if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
       game.setRankiness(Rankiness.BAD_MOD);
     } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && !modService.isCoop(game.getFeaturedMod())) {
@@ -582,6 +606,8 @@ public class GameService {
       game.setRankiness(Rankiness.SINGLE_PLAYER);
     } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
       game.setRankiness(Rankiness.UNKNOWN_RESULT);
+    } else if (Duration.between(Instant.now(), game.getStartTime().toInstant()).getSeconds() < minSeconds) {
+      game.setRankiness(Rankiness.TOO_SHORT);
     }
   }
 

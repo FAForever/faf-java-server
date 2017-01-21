@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -44,6 +45,7 @@ public class LegacyServicesActivators {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
+  @Transactional(readOnly = true)
   public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     try {
       UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword());
@@ -59,7 +61,7 @@ public class LegacyServicesActivators {
 
       clientService.sendUserDetails(userDetails, clientConnection.getUserDetails().getPlayer());
     } catch (BadCredentialsException e) {
-      throw new RequestException(ErrorCode.INVALID_LOGIN);
+      throw new RequestException(ErrorCode.INVALID_LOGIN, e);
     }
   }
 

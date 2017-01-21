@@ -1,7 +1,3 @@
 <component name="CopyrightManager">
-  <settings>
-    <LanguageOptions name="JAVA">
-      <option name="fileTypeOverride" value="1" />
-    </LanguageOptions>
-  </settings>
+  <settings default="" />
 </component>

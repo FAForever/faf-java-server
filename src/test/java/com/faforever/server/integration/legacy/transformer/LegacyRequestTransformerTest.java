@@ -15,6 +15,7 @@ import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
@@ -27,11 +28,13 @@ import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
+import com.faforever.server.matchmaker.MatchMakerCancelRequest;
+import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.social.AddFoeRequest;
 import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.social.RemoveFoeRequest;
 import com.faforever.server.social.RemoveFriendRequest;
-import com.faforever.server.statistics.ArmyStatisticsReport;
+import com.faforever.server.stats.ArmyStatisticsReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
@@ -261,7 +264,7 @@ public class LegacyRequestTransformerTest {
   public void transformPlayerOption() throws Exception {
     PlayerOptionReport playerOptionReport = (PlayerOptionReport) instance.transform(ImmutableMap.of(
       "command", "PlayerOption",
-      "args", Arrays.asList("1", "Faction", 3d)
+      "args", Arrays.asList("1", "Faction", 3)
     ));
 
     assertThat(playerOptionReport, is(notNullValue()));
@@ -274,7 +277,7 @@ public class LegacyRequestTransformerTest {
   public void transformClearSlot() throws Exception {
     ClearSlotRequest clearSlotRequest = (ClearSlotRequest) instance.transform(ImmutableMap.of(
       "command", "ClearSlot",
-      "args", Collections.singletonList(1d)
+      "args", Collections.singletonList(1)
     ));
 
     assertThat(clearSlotRequest, is(notNullValue()));
@@ -323,7 +326,7 @@ public class LegacyRequestTransformerTest {
   public void transformAiOption() throws Exception {
     AiOptionReport aiOptionReport = (AiOptionReport) instance.transform(ImmutableMap.of(
       "command", "AIOption",
-      "args", Arrays.asList("QAI", "Faction", 3d)
+      "args", Arrays.asList("QAI", "Faction", 3)
     ));
 
     assertThat(aiOptionReport, is(notNullValue()));
@@ -349,7 +352,7 @@ public class LegacyRequestTransformerTest {
   public void aiOption() throws Exception {
     AiOptionReport report = (AiOptionReport) instance.transform(ImmutableMap.of(
       "command", "AIOption",
-      "args", Arrays.asList("QAI", "Team", 1d)
+      "args", Arrays.asList("QAI", "Team", 1)
     ));
 
     assertThat(report.getAiName(), is("QAI"));
@@ -439,5 +442,29 @@ public class LegacyRequestTransformerTest {
       "command", "admin",
       "action", "something"
     ));
+  }
+
+  @Test
+  public void searchMatchMaking() throws Exception {
+    MatchMakerSearchRequest result = (MatchMakerSearchRequest) instance.transform(ImmutableMap.of(
+      "command", "game_matchmaking",
+      "mod", "ladder1v1",
+      "faction", "seraphim",
+      "state", "start"
+    ));
+
+    assertThat(result.getQueueName(), is("ladder1v1"));
+    assertThat(result.getFaction(), is(Faction.SERAPHIM));
+  }
+
+  @Test
+  public void stopMatchMaking() throws Exception {
+    MatchMakerCancelRequest result = (MatchMakerCancelRequest) instance.transform(ImmutableMap.of(
+      "command", "game_matchmaking",
+      "mod", "ladder1v1",
+      "state", "stop"
+    ));
+
+    assertThat(result.getQueueName(), is("ladder1v1"));
   }
 }

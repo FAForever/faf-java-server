@@ -17,10 +17,11 @@ import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.util.io.pem.PemReader;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,7 +37,6 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashSet;
@@ -237,7 +237,7 @@ public class UniqueIdServiceTest {
    */
   private static String toUid(String string) throws IOException, NoSuchAlgorithmException, InvalidCipherTextException {
     // Step 1: Load public key
-    PublicKey publicKey = loadPublicKey();
+    AsymmetricKeyParameter publicKey = loadPublicKey();
 
     // Step 2: Generate 16 bytes initialization vector, encode base 64
     byte[] initVector = new byte[16];
@@ -248,7 +248,7 @@ public class UniqueIdServiceTest {
     KeyGenerator aesKeyGen = KeyGenerator.getInstance("AES");
     aesKeyGen.init(128);
     SecretKey aesKey = aesKeyGen.generateKey();
-    byte[] rsaEncryptedAesKey = rsaEncrypt(aesKey.getEncoded(), PublicKeyFactory.createKey(publicKey.getEncoded()));
+    byte[] rsaEncryptedAesKey = rsaEncrypt(aesKey.getEncoded(), publicKey);
     byte[] rsaEncryptedBsa64EncodedAesKey = Base64.getEncoder().encode(rsaEncryptedAesKey);
 
     // Step 4: AES-encrypt the json string, encode base 64
@@ -269,9 +269,9 @@ public class UniqueIdServiceTest {
     return Base64.getEncoder().encodeToString(messageBytes);
   }
 
-  private static PublicKey loadPublicKey() throws IOException {
-    try (PEMReader pemReader = new PEMReader(new StringReader("-----BEGIN PUBLIC KEY-----\n" + PUBLIC_KEY + "\n-----END PUBLIC KEY-----"))) {
-      return (PublicKey) pemReader.readObject();
+  private static AsymmetricKeyParameter loadPublicKey() throws IOException {
+    try (PemReader pemReader = new PemReader(new StringReader("-----BEGIN PUBLIC KEY-----\n" + PUBLIC_KEY + "\n-----END PUBLIC KEY-----"))) {
+      return PublicKeyFactory.createKey(pemReader.readPemObject().getContent());
     }
   }
 

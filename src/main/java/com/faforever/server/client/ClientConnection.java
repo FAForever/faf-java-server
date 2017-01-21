@@ -9,5 +9,6 @@ public class ClientConnection {
 
   private final String id;
   private final Protocol protocol;
+  private String userAgent;
   private FafUserDetails userDetails;
 }

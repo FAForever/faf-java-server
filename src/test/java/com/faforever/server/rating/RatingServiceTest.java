@@ -5,6 +5,7 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
+import com.faforever.server.entity.Rating;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,16 +17,14 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class RatingServiceTest {
+
   private static final int NO_TEAM_ID = 1;
 
   private RatingService instance;
-  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
-    serverProperties = new ServerProperties();
-
-    instance = new RatingService(serverProperties);
+    instance = new RatingService(new ServerProperties());
   }
 
   @Test
@@ -164,5 +163,15 @@ public class RatingServiceTest {
 
     assertThat(player1.getGlobalRating(), is(nullValue()));
     assertThat(player2.getGlobalRating(), is(nullValue()));
+  }
+
+  @Test
+  public void calculateQuality() throws Exception {
+    Rating left = new GlobalRating().setMean(1600d).setDeviation(30d);
+    Rating right = new GlobalRating().setMean(900d).setDeviation(160d);
+
+    double quality = instance.calculateQuality(left, right);
+
+    assertThat(quality, is(0.16000885216755253));
   }
 }

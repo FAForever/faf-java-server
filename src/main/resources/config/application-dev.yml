@@ -24,8 +24,3 @@ security:
 faf-server:
   uid:
     enabled: false
-
-
-
-
-

@@ -28,7 +28,7 @@ public class LaunchGameResponseTransformerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void transformOnlyAllowsTwoArgs() throws Exception {
-    Map<String, Serializable> result = LaunchGameResponseTransformer.INSTANCE.transform(new StartGameProcessResponse(
+    LaunchGameResponseTransformer.INSTANCE.transform(new StartGameProcessResponse(
       "faf",
       4,
       Arrays.asList("/numgames", "4", "/mean", "1500", "/deviation", "500")

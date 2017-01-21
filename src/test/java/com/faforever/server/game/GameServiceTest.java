@@ -4,6 +4,9 @@ import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.config.ServerProperties;
+import com.faforever.server.entity.ArmyOutcome;
+import com.faforever.server.entity.ArmyScore;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
@@ -19,7 +22,7 @@ import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.statistics.ArmyStatistics;
+import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,6 +91,7 @@ public class GameServiceTest {
   private Player player1;
   private Player player2;
   private Game game;
+  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
@@ -99,6 +103,7 @@ public class GameServiceTest {
     game.setMap(map);
     game.setFeaturedMod(new FeaturedMod());
     game.setVictoryCondition(VictoryCondition.DEMORALIZATION);
+    game.setStartTime(Timestamp.from(Instant.now().plusSeconds(999)));
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
     game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "Off");
@@ -115,6 +120,8 @@ public class GameServiceTest {
     player2.setId(2);
     player2.setLogin(PLAYER_NAME_2);
 
+    serverProperties = new ServerProperties();
+
     FeaturedMod fafFeaturedMod = new FeaturedMod();
     fafFeaturedMod.setId(FAF_MOD_ID);
 
@@ -123,7 +130,7 @@ public class GameServiceTest {
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getPlayer(anyInt())).thenReturn(Optional.empty());
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, armyStatisticsService);
+    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, serverProperties, armyStatisticsService);
     instance.postConstruct();
   }
 
@@ -393,8 +400,8 @@ public class GameServiceTest {
   @Test
   public void onGameLaunching() throws Exception {
     game.setState(GameState.OPEN);
+    game.setStartTime(null);
     player1.setGameState(PlayerGameState.LOBBY);
-    assertThat(game.getStartTime(), is(nullValue()));
 
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
@@ -584,6 +591,18 @@ public class GameServiceTest {
     instance.updateGameRankiness(game);
 
     assertThat(game.getRankiness(), is(Rankiness.UNKNOWN_RESULT));
+  }
+
+  @Test
+  public void updateGameRankinessTooShort() throws Exception {
+    addPlayer(game, player1, 1);
+    game.getReportedArmyScores().put(1, Collections.singletonList(new ArmyScore(1, 10)));
+    game.getReportedArmyOutcomes().put(1, Collections.singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
+    game.setStartTime(Timestamp.from(Instant.now()));
+
+    instance.updateGameRankiness(game);
+
+    assertThat(game.getRankiness(), is(Rankiness.TOO_SHORT));
   }
 
   @Test(expected = IllegalStateException.class)

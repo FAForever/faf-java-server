@@ -1,4 +1,4 @@
-package com.faforever.server.statistics;
+package com.faforever.server.stats;
 
 import com.faforever.server.game.Faction;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -19,6 +19,21 @@ public class ArmyStatistics {
   @JsonProperty("units")
   private CategoryStats categoryStats;
   private ResourceStats resources;
+
+  public enum BrainType {
+    AI("AI"), HUMAN("Human");
+
+    private final String string;
+
+    BrainType(String string) {
+      this.string = string;
+    }
+
+    @JsonValue
+    public String getString() {
+      return string;
+    }
+  }
 
   @Data
   @JsonIgnoreProperties({"currentcap", "currentunits"})
@@ -56,7 +71,6 @@ public class ArmyStatistics {
     private UnitStats structures;
   }
 
-
   @Data
   public static class UnitStats {
     private int built;
@@ -87,20 +101,5 @@ public class ArmyStatistics {
   public static class TotalRate {
     private float total;
     private float rate;
-  }
-
-  public enum BrainType {
-    AI("AI"), HUMAN("Human");
-
-    private final String string;
-
-    BrainType(String string) {
-      this.string = string;
-    }
-
-    @JsonValue
-    public String getString() {
-      return string;
-    }
   }
 }

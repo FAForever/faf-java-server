@@ -8,7 +8,6 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.mod.ModService;
-import com.faforever.server.statistics.ArmyStatistics;
 import com.faforever.server.stats.achievements.AchievementId;
 import com.faforever.server.stats.achievements.AchievementService;
 import com.faforever.server.stats.achievements.AchievementUpdate;
@@ -34,7 +33,10 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ArmyStatisticsServiceTest {
