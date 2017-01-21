@@ -140,7 +140,7 @@ public class MatchMakerService {
   public void onClientDisconnect(ClientDisconnectedEvent event) {
     Optional.ofNullable(event.getClientConnection().getUserDetails()).ifPresent(userDetails -> {
       Player player = userDetails.getPlayer();
-      log.debug("Removing player '{}', who went offline, from all pools", userDetails.getPlayer());
+      log.debug("Removing offline player '{}', from all pools", userDetails.getPlayer());
       synchronized (searchesByPoolName) {
         searchesByPoolName.values().forEach(pool -> pool.remove(player));
       }
