@@ -91,7 +91,6 @@ public class GameServiceTest {
   private Player player1;
   private Player player2;
   private Game game;
-  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
@@ -120,7 +119,7 @@ public class GameServiceTest {
     player2.setId(2);
     player2.setLogin(PLAYER_NAME_2);
 
-    serverProperties = new ServerProperties();
+    ServerProperties serverProperties = new ServerProperties();
 
     FeaturedMod fafFeaturedMod = new FeaturedMod();
     fafFeaturedMod.setId(FAF_MOD_ID);
