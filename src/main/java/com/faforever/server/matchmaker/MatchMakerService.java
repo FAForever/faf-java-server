@@ -58,7 +58,9 @@ public class MatchMakerService {
   private final ClientService clientService;
   private final Map<String, FeaturedMod> modByPoolName;
 
-  public MatchMakerService(ModService modService, ServerProperties properties, RatingService ratingService, ClientService clientService, GameService gameService, MapService mapService, PlayerService playerService) {
+  public MatchMakerService(ModService modService, ServerProperties properties, RatingService ratingService,
+                           ClientService clientService, GameService gameService, MapService mapService,
+                           PlayerService playerService) {
     this.modService = modService;
     this.properties = properties;
     this.ratingService = ratingService;
@@ -140,7 +142,7 @@ public class MatchMakerService {
   public void onClientDisconnect(ClientDisconnectedEvent event) {
     Optional.ofNullable(event.getClientConnection().getUserDetails()).ifPresent(userDetails -> {
       Player player = userDetails.getPlayer();
-      log.debug("Removing offline player '{}', from all pools", userDetails.getPlayer());
+      log.debug("Removing offline player '{}' from all pools", userDetails.getPlayer());
       synchronized (searchesByPoolName) {
         searchesByPoolName.values().forEach(pool -> pool.remove(player));
       }
@@ -263,7 +265,7 @@ public class MatchMakerService {
     double acceptableGameQuality = properties.getMatchMaker().getAcceptableGameQuality();
     long acceptableQualityWaitTime = Math.max(1, properties.getMatchMaker().getAcceptableQualityWaitTime());
 
-    long secondsPassed = Math.max(1, Duration.between(match.leftSearch.createdTime, Instant.now()).getSeconds());
+    long secondsPassed = Math.max(1, Duration.between(Instant.now(), match.leftSearch.createdTime).getSeconds());
 
     float reductionPercent = secondsPassed / acceptableQualityWaitTime;
     float reduction = (float) (reductionPercent * (desiredGameQuality - acceptableGameQuality));

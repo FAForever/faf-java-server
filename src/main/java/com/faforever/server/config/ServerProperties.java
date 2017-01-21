@@ -15,6 +15,15 @@ public class ServerProperties {
   private TrueSkill trueSkill = new TrueSkill();
   private Uid uid = new Uid();
   private MatchMaker matchMaker = new MatchMaker();
+  private Game game = new Game();
+
+  @Data
+  public static class Game {
+    /**
+     * How many seconds a game needs to run per participating player in order to be ranked.
+     */
+    private int rankedMinTimeMultiplicator = 60;
+  }
 
   @Data
   public static class TrueSkill {

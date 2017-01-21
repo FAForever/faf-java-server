@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.ArmyOutcome;
 import com.faforever.server.entity.ArmyScore;
 import com.faforever.server.entity.Game;
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+// TODO make the game report the game time and use this instead of the real time
 public class GameService {
 
   /**
@@ -81,18 +83,20 @@ public class GameService {
   private final ModService modService;
   private final PlayerService playerService;
   private final RatingService ratingService;
+  private final ServerProperties properties;
   private ArmyStatisticsService armyStatisticsService;
   private List<WeakReference<CompletableFuture<Game>>> gameFutures;
 
   public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
                      ModService modService, PlayerService playerService, RatingService ratingService,
-                     ArmyStatisticsService armyStatisticsService) {
+                     ServerProperties properties, ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
     this.mapService = mapService;
     this.modService = modService;
     this.playerService = playerService;
     this.ratingService = ratingService;
+    this.properties = properties;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
     gamesById = new ConcurrentHashMap<>();
@@ -447,17 +451,21 @@ public class GameService {
 
   private void onGameEnded(Game game) {
     log.debug("Game ended: {}", game);
+
+    // Games can also end before they even started
     if (game.getState() == GameState.PLAYING) {
       game.getPlayerStats().forEach(stats -> {
         Player player = stats.getPlayer();
         armyStatisticsService.process(player, game, game.getArmyStatistics());
       });
       updateRatingsIfValid(game);
+      updateGameRankiness(game);
       gameRepository.save(game);
     }
 
     gamesById.remove(game.getId());
     game.setState(GameState.CLOSED);
+
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
@@ -477,7 +485,6 @@ public class GameService {
     }
     game.setState(GameState.PLAYING);
     game.setStartTime(Timestamp.from(Instant.now()));
-    updateGameRankiness(game);
     gameRepository.save(game);
     log.debug("Game launched: {}", game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
@@ -567,8 +574,10 @@ public class GameService {
   @VisibleForTesting
   void updateGameRankiness(Game game) {
     if (game.getRankiness() != Rankiness.RANKED) {
-      throw new IllegalStateException("Rankiness has already been set");
+      throw new IllegalStateException("Rankiness has already been set to: " + game.getRankiness());
     }
+
+    int minSeconds = game.getPlayerStats().size() * properties.getGame().getRankedMinTimeMultiplicator();
     if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
       game.setRankiness(Rankiness.BAD_MOD);
     } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && !modService.isCoop(game.getFeaturedMod())) {
@@ -597,6 +606,8 @@ public class GameService {
       game.setRankiness(Rankiness.SINGLE_PLAYER);
     } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
       game.setRankiness(Rankiness.UNKNOWN_RESULT);
+    } else if (Duration.between(Instant.now(), game.getStartTime().toInstant()).getSeconds() < minSeconds) {
+      game.setRankiness(Rankiness.TOO_SHORT);
     }
   }
 
