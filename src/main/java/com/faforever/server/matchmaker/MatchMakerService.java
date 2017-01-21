@@ -33,7 +33,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -103,10 +102,23 @@ public class MatchMakerService {
     }
   }
 
+  /**
+   * Processes all pools and removes pools that are empty afterwards.
+   */
   @Scheduled(fixedDelay = 3000)
   public void processPools() {
     synchronized (searchesByPoolName) {
-      searchesByPoolName.entrySet().forEach(this::processPool);
+      searchesByPoolName.entrySet().stream()
+        .map(entry -> {
+          processPool(entry.getKey(), entry.getValue());
+          return entry;
+        })
+        .filter(entry -> entry.getValue().isEmpty())
+        .collect(Collectors.toList())
+        .forEach(entry -> {
+          log.debug("Removing empty pool '{}'", entry.getKey());
+          searchesByPoolName.remove(entry.getKey());
+        });
     }
   }
 
@@ -135,13 +147,10 @@ public class MatchMakerService {
     });
   }
 
-  private void processPool(Entry<String, Map<Player, MatchMakerSearch>> entry) {
-    String poolName = entry.getKey();
-    Map<Player, MatchMakerSearch> pool = entry.getValue();
-
+  private void processPool(String poolName, Map<Player, MatchMakerSearch> pool) {
     Set<MatchMakerSearch> processedSearches = new HashSet<>();
 
-    log.trace("Processing pool '{}' entries in pool '{}'", pool.size(), poolName);
+    log.trace("Processing '{}' entries of pool '{}'", pool.size(), poolName);
     pool.values().stream()
       .map((search) -> {
         processedSearches.add(search);
