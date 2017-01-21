@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -103,33 +104,9 @@ public class MatchMakerService {
   }
 
   @Scheduled(fixedDelay = 3000)
-  public void processPool() {
+  public void processPools() {
     synchronized (searchesByPoolName) {
-      searchesByPoolName.entrySet().forEach(entry -> {
-        String poolName = entry.getKey();
-        Map<Player, MatchMakerSearch> pool = entry.getValue();
-
-        log.trace("Processing pool '{}' entries in pool '{}'", pool.size(), poolName);
-        pool.values().stream()
-          .map(this::findMatch)
-          .filter(Optional::isPresent)
-          .collect(Collectors.toList())
-          .forEach(optional -> {
-            Match match = optional.get();
-            MatchMakerSearch leftSearch = match.leftSearch;
-            MatchMakerSearch rightSearch = match.rightSearch;
-
-            Player leftPlayer = leftSearch.player;
-            Player rightPlayer = rightSearch.player;
-
-            log.debug("Player '{}' was matched against '{}' with game quality '{}'", leftPlayer, rightPlayer, match.quality);
-            pool.remove(leftSearch.player);
-            pool.remove(rightSearch.player);
-
-            int modId = modByPoolName.get(leftSearch.poolName).getId();
-            startGame(modId, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
-          });
-      });
+      searchesByPoolName.entrySet().forEach(this::processPool);
     }
   }
 
@@ -158,6 +135,37 @@ public class MatchMakerService {
     });
   }
 
+  private void processPool(Entry<String, Map<Player, MatchMakerSearch>> entry) {
+    String poolName = entry.getKey();
+    Map<Player, MatchMakerSearch> pool = entry.getValue();
+
+    Set<MatchMakerSearch> processedSearches = new HashSet<>();
+
+    log.trace("Processing pool '{}' entries in pool '{}'", pool.size(), poolName);
+    pool.values().stream()
+      .map((search) -> {
+        processedSearches.add(search);
+        return findMatch(search, processedSearches);
+      })
+      .filter(Optional::isPresent)
+      .collect(Collectors.toList())
+      .forEach(optional -> {
+        Match match = optional.get();
+        MatchMakerSearch leftSearch = match.leftSearch;
+        MatchMakerSearch rightSearch = match.rightSearch;
+
+        Player leftPlayer = leftSearch.player;
+        Player rightPlayer = rightSearch.player;
+
+        log.debug("Player '{}' was matched against '{}' with game quality '{}'", leftPlayer, rightPlayer, match.quality);
+        pool.remove(leftSearch.player);
+        pool.remove(rightSearch.player);
+
+        int modId = modByPoolName.get(leftSearch.poolName).getId();
+        startGame(modId, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
+      });
+  }
+
   private Map<Player, MatchMakerSearch> getPool(String poolName) {
     return searchesByPoolName.computeIfAbsent(poolName, s -> new HashMap<>());
   }
@@ -166,15 +174,10 @@ public class MatchMakerService {
    * Tries to find the best match for a {@code search}. The minimum quality required for a match depends on the outcome
    * of {@link #passesMinimumQuality(Match)}.
    */
-  private Optional<Match> findMatch(MatchMakerSearch leftSearch) {
-    log.trace("Trying to find match for search '{}'", leftSearch);
-
+  private Optional<Match> findMatch(MatchMakerSearch leftSearch, Set<MatchMakerSearch> alreadyChecked) {
     Ladder1v1Rating defaultRating = (Ladder1v1Rating) new Ladder1v1Rating()
       .setMean(properties.getTrueSkill().getInitialStandardDeviation())
       .setDeviation(properties.getTrueSkill().getInitialStandardDeviation());
-
-    Set<MatchMakerSearch> alreadyChecked = new HashSet<>();
-    alreadyChecked.add(leftSearch);
 
     String poolName = leftSearch.poolName;
     synchronized (searchesByPoolName) {
@@ -256,7 +259,10 @@ public class MatchMakerService {
     float reductionPercent = secondsPassed / acceptableQualityWaitTime;
     float reduction = (float) (reductionPercent * (desiredGameQuality - acceptableGameQuality));
 
-    return match.quality > desiredGameQuality - reduction;
+    double requiredQuality = desiredGameQuality - reduction;
+    boolean passes = match.quality > requiredQuality;
+    log.trace("Calculated quality '{}' of required '{}' for match: {}", match);
+    return passes;
   }
 
   private boolean isNotBanned(Player player) {

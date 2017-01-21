@@ -114,7 +114,7 @@ public class MatchMakerServiceTest {
     when(modService.isLadder1v1(featuredMod)).thenReturn(true);
 
     instance.submitSearch(new Player(), Faction.CYBRAN, QUEUE_NAME);
-    instance.processPool();
+    instance.processPools();
 
     verifyZeroInteractions(gameService);
   }
@@ -131,7 +131,7 @@ public class MatchMakerServiceTest {
     properties.getMatchMaker().setAcceptableQualityWaitTime(10);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
-    instance.processPool();
+    instance.processPools();
 
     verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), any());
@@ -148,7 +148,7 @@ public class MatchMakerServiceTest {
     properties.getMatchMaker().setAcceptableQualityWaitTime(0);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
-    instance.processPool();
+    instance.processPools();
 
     verify(gameService).createGame("Player 1 vs. Player 2", 1, "SCMP_001", null, GameVisibility.PRIVATE, player1);
     verify(gameService).joinGame(0, player2);
@@ -170,7 +170,7 @@ public class MatchMakerServiceTest {
 
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
-    instance.processPool();
+    instance.processPools();
 
     verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), any());
