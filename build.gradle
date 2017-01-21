@@ -144,6 +144,7 @@ dependencies {
   compile("org.springframework.boot:spring-boot-devtools")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
 
+  compile("io.reactivex.rxjava2:rxjava:${rxJavaVersion}")
   compile("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
   compile("org.jolokia:jolokia-core:${jolokiaVersion}")
   compile("com.github.nsp:JSkills:${jSkillsVersion}")

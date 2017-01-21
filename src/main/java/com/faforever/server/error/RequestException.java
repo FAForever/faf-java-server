@@ -15,11 +15,19 @@ public class RequestException extends RuntimeException {
   private final Object[] args;
 
   public RequestException(ErrorCode errorCode) {
-    this(errorCode, NO_ARGS);
+    this(errorCode, NO_ARGS, null);
+  }
+
+  public RequestException(ErrorCode errorCode, Throwable cause) {
+    this(errorCode, NO_ARGS, cause);
   }
 
   public RequestException(ErrorCode errorCode, Object[] args) {
-    super(MessageFormat.format(errorCode.getTitle() + ": " + errorCode.getDetail(), args));
+    this(errorCode, args, null);
+  }
+
+  public RequestException(ErrorCode errorCode, Object[] args, Throwable cause) {
+    super(MessageFormat.format(errorCode.getTitle() + ": " + errorCode.getDetail(), args), cause);
     this.errorCode = errorCode;
     this.args = args;
   }

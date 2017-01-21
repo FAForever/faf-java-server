@@ -61,7 +61,7 @@ public class LegacyServicesActivators {
 
       clientService.sendUserDetails(userDetails, clientConnection.getUserDetails().getPlayer());
     } catch (BadCredentialsException e) {
-      throw new RequestException(ErrorCode.INVALID_LOGIN);
+      throw new RequestException(ErrorCode.INVALID_LOGIN, e);
     }
   }
 
