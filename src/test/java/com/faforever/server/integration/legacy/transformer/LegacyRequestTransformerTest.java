@@ -34,7 +34,7 @@ import com.faforever.server.social.AddFoeRequest;
 import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.social.RemoveFoeRequest;
 import com.faforever.server.social.RemoveFriendRequest;
-import com.faforever.server.statistics.ArmyStatisticsReport;
+import com.faforever.server.stats.ArmyStatisticsReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;

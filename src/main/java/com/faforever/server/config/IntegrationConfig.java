@@ -30,7 +30,7 @@ import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.social.RemoveFriendRequest;
-import com.faforever.server.statistics.ArmyStatisticsReport;
+import com.faforever.server.stats.ArmyStatisticsReport;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

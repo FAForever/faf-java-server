@@ -1,4 +1,4 @@
-package com.faforever.server.statistics;
+package com.faforever.server.stats;
 
 import com.faforever.server.request.ClientMessage;
 import lombok.Data;

@@ -1,7 +1,7 @@
 package com.faforever.server.entity;
 
 import com.faforever.server.game.GameVisibility;
-import com.faforever.server.statistics.ArmyStatistics;
+import com.faforever.server.stats.ArmyStatistics;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

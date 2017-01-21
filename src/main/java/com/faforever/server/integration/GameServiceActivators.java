@@ -15,7 +15,7 @@ import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
-import com.faforever.server.statistics.ArmyStatisticsReport;
+import com.faforever.server.stats.ArmyStatisticsReport;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;

@@ -19,7 +19,7 @@ import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.statistics.ArmyStatistics;
+import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import org.junit.Before;
 import org.junit.Test;
