@@ -10,15 +10,13 @@ import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.PlayerService;
-import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.security.UserDetailsResponse;
+import com.faforever.server.player.UserDetailsResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,10 +25,10 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -38,9 +36,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClientServiceTest {
@@ -61,10 +59,10 @@ public class ClientServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
 
-    instance = new ClientService(clientGateway, coopService, playerService, eventPublisher);
+    instance = new ClientService(clientGateway, coopService);
   }
 
   @Test
@@ -148,18 +146,10 @@ public class ClientServiceTest {
       .setGlobalRating((GlobalRating) new GlobalRating().setNumGames(12).setMean(1100d).setDeviation(100d))
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(900d).setDeviation(50d))
       .setCountry("CH")
+      .setLogin("JUnit")
       .setId(5);
 
-    User user = (User) new User()
-      .setPlayer(player)
-      .setPassword("")
-      .setLogin("JUnit")
-      .setCountry(player.getCountry())
-      .setId(player.getId());
-
-    FafUserDetails fafUserDetails = new FafUserDetails(user);
-
-    instance.sendUserDetails(fafUserDetails, player);
+    instance.sendPlayerDetails(player, player);
 
     ArgumentCaptor<UserDetailsResponse> captor = ArgumentCaptor.forClass(UserDetailsResponse.class);
     verify(clientGateway).send(captor.capture(), any());
@@ -209,18 +199,15 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void disconnectClient() throws Exception {
-    ClientConnection clientConnection12 = new ClientConnection("1", Protocol.LEGACY_UTF_16);
-    Player player12 = new Player()
-      .setClientConnection(clientConnection12);
-    when(playerService.getPlayer(12)).thenReturn(Optional.of(player12));
+  public void sendOnlinePlayerList() throws Exception {
+    List<UserDetailsResponse> players = Arrays.asList(
+      new UserDetailsResponse(1, "JUnit", "CH", null),
+      new UserDetailsResponse(2, "JUnit2", "CH", null)
+    );
+    ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
-    instance.disconnectClient(new User(), 12);
+    instance.sendOnlinePlayerList(players, connectionAware);
 
-    ArgumentCaptor<CloseConnectionEvent> captor = ArgumentCaptor.forClass(CloseConnectionEvent.class);
-    verify(eventPublisher).publishEvent(captor.capture());
-    CloseConnectionEvent value = captor.getValue();
-
-    assertThat(value.getClientConnection(), is(clientConnection12));
+    verify(clientGateway).send(players.get(0), clientConnection);
   }
 }

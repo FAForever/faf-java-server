@@ -8,7 +8,6 @@ import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
@@ -16,15 +15,12 @@ import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.matchmaker.MatchMakerResponse;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.PlayerService;
+import com.faforever.server.player.UserDetailsResponse;
+import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
+import com.faforever.server.player.UserDetailsResponse.Player.Rating;
 import com.faforever.server.response.ServerResponse;
-import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.security.UserDetailsResponse;
-import com.faforever.server.security.UserDetailsResponse.Player.Avatar;
-import com.faforever.server.security.UserDetailsResponse.Player.Rating;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -48,15 +44,11 @@ public class ClientService {
 
   private final ClientGateway clientGateway;
   private final CoopService coopService;
-  private final PlayerService playerService;
-  private final ApplicationEventPublisher eventPublisher;
   private final Map<Object, DelayedResponse<?>> dirtyObjects;
 
-  public ClientService(ClientGateway clientGateway, CoopService coopService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
+  public ClientService(ClientGateway clientGateway, CoopService coopService) {
     this.clientGateway = clientGateway;
     this.coopService = coopService;
-    this.playerService = playerService;
-    this.eventPublisher = eventPublisher;
     dirtyObjects = new HashMap<>();
   }
 
@@ -95,9 +87,7 @@ public class ClientService {
       connectionAware);
   }
 
-  public void sendUserDetails(FafUserDetails userDetails, @NotNull ConnectionAware connectionAware) {
-    Player player = userDetails.getPlayer();
-
+  public void sendPlayerDetails(Player player, @NotNull ConnectionAware connectionAware) {
     Optional<Avatar> avatar = player.getAvailableAvatars().stream()
       .filter(AvatarAssociation::isSelected)
       .findFirst()
@@ -113,7 +103,7 @@ public class ClientService {
 
     send(new UserDetailsResponse(
         player.getId(),
-        userDetails.getUsername(),
+        player.getLogin(),
         player.getCountry(),
         new UserDetailsResponse.Player(
           globalRating.orElse(null),
@@ -215,6 +205,13 @@ public class ClientService {
   }
 
   /**
+   * Sends a list of online players to the client.
+   */
+  public void sendOnlinePlayerList(Collection<UserDetailsResponse> players, ConnectionAware connectionAware) {
+    players.forEach(player -> send(player, connectionAware));
+  }
+
+  /**
    * @deprecated passing command line args to the client is a bad (legacy) idea.
    */
   @Deprecated
@@ -229,20 +226,5 @@ public class ClientService {
       throw new IllegalStateException("No connection available: " + connectionAware);
     }
     clientGateway.send(serverResponse, clientConnection);
-  }
-
-  /**
-   * Fires a {@link CloseConnectionEvent} in order to disconnect the client of the user with the specified ID.
-   */
-  void disconnectClient(User requester, int userId) {
-    // TODO actually there should be a user service, returning a User
-    Optional<Player> optional = playerService.getPlayer(userId);
-    if (!optional.isPresent()) {
-      log.warn("User '{}' requested disconnection of unknown user '{}'", requester, userId);
-      return;
-    }
-    Player player = optional.get();
-    eventPublisher.publishEvent(new CloseConnectionEvent(this, player.getClientConnection()));
-    log.info("User '{}' closed connection of user '{}'", requester, player);
   }
 }

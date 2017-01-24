@@ -33,6 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
+import java.net.InetAddress;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -56,6 +57,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -623,7 +625,7 @@ public class GameServiceTest {
     user.setLogin("JUnit");
     user.setPlayer(player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16)
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
       .setUserDetails(new FafUserDetails(user));
     instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
 
@@ -638,7 +640,7 @@ public class GameServiceTest {
     player1.setCurrentGame(null);
     instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
     authentication.setDetails(player2.setClientConnection(clientConnection));
 

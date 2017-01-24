@@ -14,6 +14,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.InetAddress;
+
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -31,7 +34,7 @@ public class MatchMakerServiceActivatorTest {
     player = new Player();
     player.setClientConnection(clientConnection);
 
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16)
+    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
       .setUserDetails(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")));
 
     instance = new MatchMakerServiceActivator(matchmakerService);

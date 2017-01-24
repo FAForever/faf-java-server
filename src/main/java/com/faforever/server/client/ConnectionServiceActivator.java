@@ -10,17 +10,17 @@ import javax.inject.Inject;
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 
 @MessageEndpoint
-public class ClientServiceActivators {
+public class ConnectionServiceActivator {
 
-  private final ClientService clientService;
+  private final ClientConnectionManager clientConnectionManager;
 
   @Inject
-  public ClientServiceActivators(ClientService clientService) {
-    this.clientService = clientService;
+  public ConnectionServiceActivator(ClientConnectionManager clientConnectionManager) {
+    this.clientConnectionManager = clientConnectionManager;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.DISCONNECT_CLIENT_REQUEST)
   public void disconnectClientRequest(DisconnectClientRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    clientService.disconnectClient(clientConnection.getUserDetails().getUser(), request.getUserId());
+    clientConnectionManager.disconnectClient(clientConnection.getUserDetails().getUser(), request.getUserId());
   }
 }

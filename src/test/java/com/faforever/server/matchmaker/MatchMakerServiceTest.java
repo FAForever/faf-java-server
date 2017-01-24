@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.InetAddress;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,6 +38,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -206,7 +208,7 @@ public class MatchMakerServiceTest {
 
     assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(2));
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16)
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
       .setUserDetails(new FafUserDetails((User) new User()
         .setPlayer(player1)
         .setPassword("p")

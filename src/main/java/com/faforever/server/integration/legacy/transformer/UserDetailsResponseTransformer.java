@@ -1,9 +1,9 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.security.UserDetailsResponse;
-import com.faforever.server.security.UserDetailsResponse.Player;
-import com.faforever.server.security.UserDetailsResponse.Player.Avatar;
-import com.faforever.server.security.UserDetailsResponse.Player.Rating;
+import com.faforever.server.player.UserDetailsResponse;
+import com.faforever.server.player.UserDetailsResponse.Player;
+import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
+import com.faforever.server.player.UserDetailsResponse.Player.Rating;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import org.springframework.integration.transformer.GenericTransformer;

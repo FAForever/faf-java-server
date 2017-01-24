@@ -12,6 +12,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.InetAddress;
+
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -25,7 +28,7 @@ public class GameServiceActivatorsTest {
 
   @Before
   public void setUp() throws Exception {
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     User user = (User) new User().setPlayer(new Player()).setPassword("password").setLogin("JUnit");
     clientConnection.setUserDetails(new FafUserDetails(user));
 

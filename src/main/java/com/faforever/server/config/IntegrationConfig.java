@@ -51,10 +51,12 @@ import org.springframework.integration.transformer.AbstractTransformer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
 
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 
 import static com.faforever.server.integration.MessageHeaders.BROADCAST;
+import static com.faforever.server.integration.MessageHeaders.CLIENT_ADDRESS;
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 import static com.faforever.server.integration.MessageHeaders.PROTOCOL;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
@@ -218,7 +220,8 @@ public class IntegrationConfig {
     return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
       String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
       Protocol protocol = (Protocol) message.getHeaders().get(PROTOCOL);
-      return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol));
+      InetAddress inetAddress = (InetAddress) message.getHeaders().get(CLIENT_ADDRESS);
+      return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol, inetAddress));
     });
   }
 }
