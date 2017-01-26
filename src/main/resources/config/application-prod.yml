@@ -6,6 +6,9 @@ spring:
     password: ${DATABASE_PASSWORD}
   jpa:
     show-sql: false
+  boot:
+    admin:
+      url: ${SPRING_BOOT_ADMIN_URL:http://faf-admin:8030}
 
 security:
   oauth2:

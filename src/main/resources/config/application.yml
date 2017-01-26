@@ -9,7 +9,6 @@ faf-server:
   uid:
     link-to-steam-url: http://app.faforever.com/faf/steam.php
 
-
 spring:
   application:
     name: FAF Java Server Prototype
@@ -31,9 +30,6 @@ spring:
     active: ${SERVER_PROFILE:dev}
   main:
     banner-mode: off
-  boot:
-    admin:
-      url: ${SPRING_BOOT_ADMIN_URL:http://faf-admin:8080}
 
 logging:
   level:
@@ -52,4 +48,3 @@ security:
 
 server:
   port: ${WEB_PORT:8080}
-
