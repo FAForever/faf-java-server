@@ -11,6 +11,8 @@ spring:
   boot:
     admin:
       url: ${SPRING_BOOT_ADMIN_URL:http://localhost:8030}
+      client:
+        enabled: ${SPRING_BOOT_ADMIN_ENABLED:false}
 
 logging:
   level:

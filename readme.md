@@ -55,6 +55,7 @@ DATABASE_PASSWORD=<password>
 DATABASE_NAME=<db_name>
 API_OAUTH2_CLIENT_ID=<client_id>
 API_OAUTH2_CLIENT_SECRET=<client_secret>
+UID_PRIVATE_KEY=<private_key>
 SERVER_PROFILE=prod
 ```
 
