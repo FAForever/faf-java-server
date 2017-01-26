@@ -8,6 +8,7 @@ import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
+import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 
 import java.net.InetAddress;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -44,6 +46,8 @@ public class LegacyServicesActivatorsTest {
   private ClientService clientService;
   @Mock
   private UniqueIdService uniqueIdService;
+  @Mock
+  private GeoIpService geoIpService;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -53,6 +57,8 @@ public class LegacyServicesActivatorsTest {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player();
     player.setClientConnection(clientConnection);
+
+    when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.empty());
 
     instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService);
   }
