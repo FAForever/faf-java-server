@@ -9,8 +9,8 @@ import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
+import com.faforever.server.player.UserDetailsResponse;
 import com.faforever.server.response.ServerResponse;
-import com.faforever.server.security.UserDetailsResponse;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
 

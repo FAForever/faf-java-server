@@ -18,9 +18,8 @@ apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
 
-
 group = 'micheljung'
-version = '0.9.0'
+version = '0.9.1'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -72,6 +71,8 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 applicationName = rootProject.name
 applicationDistribution.exclude("**/spring-boot-devtools*.jar")
+applicationDefaultJvmArgs = ["-Xmx128m"]
+
 docker {
   if (project.hasProperty('dockerHost')) {
     url = dockerHost

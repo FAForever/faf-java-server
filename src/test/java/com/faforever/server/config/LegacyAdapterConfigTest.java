@@ -14,6 +14,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.ip.tcp.connection.TcpConnection;
 import org.springframework.integration.ip.tcp.connection.TcpConnectionCloseEvent;
 
+import java.net.InetAddress;
+
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +49,7 @@ public class LegacyAdapterConfigTest {
 
   @Test
   public void onCloseConnection() throws Exception {
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     instance.onCloseConnection(new CloseConnectionEvent(this, clientConnection));
     // Not much to assert here
   }

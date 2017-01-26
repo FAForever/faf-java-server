@@ -123,6 +123,7 @@ public class LegacyAdapterConfig {
       .transform(stringToLegacyByteArrayTransformer())
       .split(broadcastSplitter())
       .enrichHeaders(connectionIdEnricher())
+      .enrichHeaders(ipAddressEnricher())
       .handle(tcpSendingMessageHandler())
       .get();
   }
@@ -181,5 +182,14 @@ public class LegacyAdapterConfig {
   private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.headerFunction(IpHeaders.CONNECTION_ID,
       message -> message.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class).getId());
+  }
+
+  /**
+   * Extracts the IP specific address from the message header and adds it as a generic
+   * {@link MessageHeaders#CLIENT_ADDRESS}.
+   */
+  private Consumer<HeaderEnricherSpec> ipAddressEnricher() {
+    return headerEnricherSpec -> headerEnricherSpec.headerFunction(MessageHeaders.CLIENT_ADDRESS,
+      message -> message.getHeaders().get(IpHeaders.IP_ADDRESS));
   }
 }

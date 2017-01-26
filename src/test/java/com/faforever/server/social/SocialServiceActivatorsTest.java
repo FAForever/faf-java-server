@@ -11,6 +11,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.net.InetAddress;
+
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -27,7 +30,7 @@ public class SocialServiceActivatorsTest {
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
 
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16);
+    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     clientConnection.setUserDetails(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")));
 
     instance = new SocialServiceActivators(socialService);

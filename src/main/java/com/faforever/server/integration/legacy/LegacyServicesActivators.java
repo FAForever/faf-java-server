@@ -6,6 +6,7 @@ import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionResponse;
+import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.integration.ChannelNames;
@@ -55,11 +56,12 @@ public class LegacyServicesActivators {
       FafUserDetails userDetails = (FafUserDetails) authentication.getPrincipal();
 
       clientConnection.setUserDetails(userDetails);
-      userDetails.getPlayer().setClientConnection(clientConnection);
+      Player player = userDetails.getPlayer();
+      player.setClientConnection(clientConnection);
 
-      uniqueIdService.verify(userDetails.getPlayer(), loginRequest.getUniqueId());
+      uniqueIdService.verify(player, loginRequest.getUniqueId());
 
-      clientService.sendUserDetails(userDetails, clientConnection.getUserDetails().getPlayer());
+      clientService.sendPlayerDetails(player, clientConnection.getUserDetails().getPlayer());
     } catch (BadCredentialsException e) {
       throw new RequestException(ErrorCode.INVALID_LOGIN, e);
     }

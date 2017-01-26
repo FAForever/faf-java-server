@@ -1,4 +1,4 @@
-package com.faforever.server.security;
+package com.faforever.server.player;
 
 import com.faforever.server.response.ServerResponse;
 import lombok.Data;

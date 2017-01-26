@@ -2,12 +2,17 @@ spring:
   jackson:
       serialization.indent_output: true
   datasource:
-    url: jdbc:mysql://${DATABASE_ADDRESS:localhost}/${DATABASE_NAME:faf_test}?useSSL=false
+    url: jdbc:mysql://${DATABASE_ADDRESS:localhost}/${DATABASE_NAME:faf}?useSSL=false
     name: faf-db
     username: ${DATABASE_USERNAME:root}
     password: ${DATABASE_PASSWORD:banana}
   jpa:
     show-sql: true
+  boot:
+    admin:
+      url: ${SPRING_BOOT_ADMIN_URL:http://localhost:8030}
+      client:
+        enabled: ${SPRING_BOOT_ADMIN_ENABLED:false}
 
 logging:
   level:

@@ -16,6 +16,12 @@ public class ServerProperties {
   private Uid uid = new Uid();
   private MatchMaker matchMaker = new MatchMaker();
   private Game game = new Game();
+  private GeoIp geoIp = new GeoIp();
+
+  @Data
+  public static class GeoIp {
+    private String databaseUrl = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz";
+  }
 
   @Data
   public static class Game {
