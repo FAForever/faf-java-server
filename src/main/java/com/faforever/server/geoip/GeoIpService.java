@@ -1,6 +1,7 @@
 package com.faforever.server.geoip;
 
 import com.faforever.server.config.ServerProperties;
+import com.faforever.server.config.ServerProperties.GeoIp;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.DatabaseReader.Builder;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
@@ -20,7 +21,6 @@ import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 
 import static com.github.nocatch.NoCatch.noCatch;
-import static java.nio.file.Files.delete;
 
 @Service
 @Slf4j
@@ -29,24 +29,32 @@ public class GeoIpService {
   private final ServerProperties properties;
   private final Object DATABASE_LOCK = new Object();
   private DatabaseReader databaseReader;
-  private Path geoIpFile;
 
   public GeoIpService(ServerProperties properties) throws IOException {
     this.properties = properties;
   }
 
   @PostConstruct
+  public void postConstruct() throws IOException {
+    if (Files.notExists(properties.getGeoIp().getDatabaseFile())) {
+      updateDatabaseFile();
+    }
+  }
+
   @Scheduled(cron = "0 0 * * * WED")
-  public void reloadDatabase() throws IOException {
-    Optional.ofNullable(geoIpFile).ifPresent(path -> noCatch(() -> delete(path)));
-    geoIpFile = Files.createTempFile("geoip", ".tmp");
+  public void updateDatabaseFile() throws IOException {
+    GeoIp geoIp = properties.getGeoIp();
+    Path geoIpFile = geoIp.getDatabaseFile();
+    String databaseUrl = geoIp.getDatabaseUrl();
+    log.debug("Downloading GeoIp database from '{}' to '{}'", databaseUrl, geoIpFile.toAbsolutePath());
 
     synchronized (DATABASE_LOCK) {
-      String databaseUrl = properties.getGeoIp().getDatabaseUrl();
       URL url = new URL(databaseUrl);
       try (InputStream inputStream = new BufferedInputStream(new GZIPInputStream(url.openStream()))) {
-        databaseReader = new Builder(inputStream).build();
+        Files.createDirectories(geoIpFile.getParent());
+        Files.copy(inputStream, geoIpFile);
       }
+      databaseReader = new Builder(geoIpFile.toFile()).build();
     }
   }
 

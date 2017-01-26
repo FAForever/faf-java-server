@@ -29,3 +29,5 @@ security:
 faf-server:
   uid:
     enabled: false
+  geo-ip:
+    database-file: build/cache/geoIp.mmdb
