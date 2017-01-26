@@ -8,7 +8,7 @@ spring:
     show-sql: false
   boot:
     admin:
-      url: ${SPRING_BOOT_ADMIN_URL:http://faf-admin:8030}
+      url: ${SPRING_BOOT_ADMIN_URL:http://faf-spring-boot-admin:8030}
 
 security:
   oauth2:
