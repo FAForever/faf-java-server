@@ -19,7 +19,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
 
 group = 'FAForever'
-version = '0.9.3'
+version = '0.9.4'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
