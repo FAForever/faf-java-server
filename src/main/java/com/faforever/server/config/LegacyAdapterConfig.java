@@ -105,6 +105,7 @@ public class LegacyAdapterConfig {
       .transform(legacyByteArrayToStringTransformer())
       .transform(Transformers.fromJson(HashMap.class))
       .transform(new LegacyRequestTransformer(objectMapper))
+      .enrichHeaders(ipAddressEnricher())
       .enrichHeaders(ImmutableMap.of(PROTOCOL, Protocol.LEGACY_UTF_16))
       .channel(ChannelNames.CLIENT_INBOUND)
       .get();
@@ -123,7 +124,6 @@ public class LegacyAdapterConfig {
       .transform(stringToLegacyByteArrayTransformer())
       .split(broadcastSplitter())
       .enrichHeaders(connectionIdEnricher())
-      .enrichHeaders(ipAddressEnricher())
       .handle(tcpSendingMessageHandler())
       .get();
   }

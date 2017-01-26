@@ -50,6 +50,7 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.AbstractTransformer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
+import org.springframework.util.Assert;
 
 import java.net.InetAddress;
 import java.util.Collections;
@@ -59,6 +60,8 @@ import static com.faforever.server.integration.MessageHeaders.BROADCAST;
 import static com.faforever.server.integration.MessageHeaders.CLIENT_ADDRESS;
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 import static com.faforever.server.integration.MessageHeaders.PROTOCOL;
+import static com.github.nocatch.NoCatch.noCatch;
+import static java.net.InetAddress.getByName;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
@@ -220,7 +223,10 @@ public class IntegrationConfig {
     return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
       String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
       Protocol protocol = (Protocol) message.getHeaders().get(PROTOCOL);
-      InetAddress inetAddress = (InetAddress) message.getHeaders().get(CLIENT_ADDRESS);
+      InetAddress inetAddress = noCatch(() -> getByName((String) message.getHeaders().get(CLIENT_ADDRESS)));
+
+      Assert.state(inetAddress != null, "Message header '" + CLIENT_ADDRESS + "' has not been set");
+
       return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol, inetAddress));
     });
   }

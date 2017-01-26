@@ -61,7 +61,7 @@ public class LegacyServicesActivators {
       clientConnection.setUserDetails(userDetails);
       Player player = userDetails.getPlayer();
       player.setClientConnection(clientConnection);
-      player.setCountry(geoIpService.lookupCountry(clientConnection.getInetAddress()));
+      geoIpService.lookupCountryCode(clientConnection.getClientAddress()).ifPresent(player::setCountry);
 
       uniqueIdService.verify(player, loginRequest.getUniqueId());
 
