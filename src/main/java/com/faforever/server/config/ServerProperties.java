@@ -23,7 +23,7 @@ public class ServerProperties {
   @Data
   public static class GeoIp {
     private String databaseUrl = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz";
-    private Path databaseCacheFile = Paths.get("cache");
+    private Path databaseFile = Paths.get("cache/geoIp.mmdb");
   }
 
   @Data
