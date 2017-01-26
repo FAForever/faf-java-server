@@ -35,7 +35,7 @@ public class PlayerServiceTest {
   @Before
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
-    instance = new PlayerService(clientService, geoIpService);
+    instance = new PlayerService(clientService);
   }
 
   @Test

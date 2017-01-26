@@ -54,7 +54,7 @@ public class LegacyServicesActivatorsTest {
     player = new Player();
     player.setClientConnection(clientConnection);
 
-    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService);
+    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService);
   }
 
   @Test
