@@ -3,6 +3,8 @@ package com.faforever.server.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 
 @Data
@@ -21,6 +23,7 @@ public class ServerProperties {
   @Data
   public static class GeoIp {
     private String databaseUrl = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz";
+    private Path databaseCacheFile = Paths.get("cache");
   }
 
   @Data

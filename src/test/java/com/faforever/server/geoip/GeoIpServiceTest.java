@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.InetAddress;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -24,7 +25,7 @@ public class GeoIpServiceTest {
 
   @Test
   public void lookupCountry() throws Exception {
-    String country = instance.lookupCountry(InetAddress.getByName("192.203.230.10"));
-    assertThat(country, is("US"));
+    Optional<String> country = instance.lookupCountryCode(InetAddress.getByName("192.203.230.10"));
+    assertThat(country.get(), is("US"));
   }
 }

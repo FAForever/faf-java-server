@@ -3,7 +3,6 @@ package com.faforever.server.player;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
-import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.security.FafUserDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -21,11 +20,9 @@ public class PlayerService {
 
   private final Map<Integer, Player> playersById;
   private final ClientService clientService;
-  private final GeoIpService geoIpService;
 
-  public PlayerService(ClientService clientService, GeoIpService geoIpService) {
+  public PlayerService(ClientService clientService) {
     this.clientService = clientService;
-    this.geoIpService = geoIpService;
     playersById = new ConcurrentHashMap<>();
   }
 
@@ -35,11 +32,9 @@ public class PlayerService {
     Player player = fafUserDetails.getPlayer();
 
     playersById.put(player.getId(), player);
-
-    String country = geoIpService.lookupCountry(player.getClientConnection().getInetAddress());
-    player.setCountry(country);
-
-    playersById.values().forEach(otherPlayer -> clientService.sendPlayerDetails(otherPlayer, player));
+    playersById.values().stream()
+      .filter(otherPlayer -> otherPlayer != player && otherPlayer.getClientConnection() != null)
+      .forEach(otherPlayer -> clientService.sendPlayerDetails(otherPlayer, player));
   }
 
   @EventListener
