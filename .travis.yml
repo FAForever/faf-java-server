@@ -14,8 +14,8 @@ before_install:
   - ~/jpm/bin/jpm install com.codacy:codacy-coverage-reporter:assembly
 
 install:
-  - git clone -b feature/docker-improvement --single-branch https://github.com/FAForever/db.git
-  - pushd db && ./setup_db.sh && popd
+  - git clone https://github.com/FAForever/faf-stack.git
+  - docker-compose -f faf-stack/docker-compose.yml up -d faf-db
 
 script:
   - chmod +x gradlew && ./gradlew build --info
