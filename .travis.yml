@@ -9,6 +9,9 @@ git:
 
 before_install:
   - sudo /etc/init.d/mysql stop
+  - curl -sL https://github.com/jpm4j/jpm4j.installers/raw/master/dist/biz.aQute.jpm.run.jar >jpm4j.jar
+  - java -jar jpm4j.jar -u init
+  - ~/jpm/bin/jpm install com.codacy:codacy-coverage-reporter:assembly
 
 install:
   - git clone -b feature/docker-improvement --single-branch https://github.com/FAForever/db.git
@@ -22,6 +25,7 @@ after_success:
   - if [ "${TRAVIS_BRANCH}" == "master" ]; then
       ./gradlew pushDockerImage;
     fi
+  - ~/jpm/bin/codacy-coverage-reporter -l Java -r build/reports/jacoco/test/jacocoTestReport.xml
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
