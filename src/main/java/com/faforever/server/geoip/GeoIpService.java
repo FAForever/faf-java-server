@@ -8,6 +8,7 @@ import com.maxmind.geoip2.exception.AddressNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedInputStream;
@@ -36,9 +37,11 @@ public class GeoIpService {
 
   @PostConstruct
   public void postConstruct() throws IOException {
-    if (Files.notExists(properties.getGeoIp().getDatabaseFile())) {
+    Path databaseFile = properties.getGeoIp().getDatabaseFile();
+    if (Files.notExists(databaseFile)) {
       updateDatabaseFile();
     }
+    readDatabase(databaseFile);
   }
 
   @Scheduled(cron = "0 0 * * * WED")
@@ -54,11 +57,12 @@ public class GeoIpService {
         Files.createDirectories(geoIpFile.getParent());
         Files.copy(inputStream, geoIpFile);
       }
-      databaseReader = new Builder(geoIpFile.toFile()).build();
+      readDatabase(geoIpFile);
     }
   }
 
   public Optional<String> lookupCountryCode(InetAddress inetAddress) {
+    Assert.state(databaseReader != null, "Database has not been initialized");
     return noCatch(() -> {
       try {
         return Optional.of(databaseReader.country(inetAddress).getCountry().getIsoCode());
@@ -67,5 +71,9 @@ public class GeoIpService {
         return Optional.empty();
       }
     });
+  }
+
+  private void readDatabase(Path geoIpFile) throws IOException {
+    databaseReader = new Builder(geoIpFile.toFile()).build();
   }
 }
