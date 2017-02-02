@@ -24,6 +24,9 @@ public class User extends Login {
   @JoinColumn(name = "id", insertable = false, updatable = false)
   private Player player;
 
+  @OneToOne(mappedBy = "user")
+  private UserGroup userGroup;
+
   @Override
   public String toString() {
     return "User(" + getId() + ", " + getLogin() + ")";
