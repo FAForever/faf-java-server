@@ -14,12 +14,14 @@ import static org.junit.Assert.assertThat;
 
 public class UserDetailsResponseTransformerTest {
 
+  private static final String TEST_USERNAME = "JUnit";
+
   @Test
   @SuppressWarnings("unchecked")
   public void transformFull() throws Exception {
     Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
       1,
-      "JUnit",
+      TEST_USERNAME,
       "CH",
       new UserDetailsResponse.Player(
         new Rating(1200d, 200d),
@@ -31,12 +33,12 @@ public class UserDetailsResponseTransformerTest {
 
     assertThat(result.get("command"), is("welcome"));
     assertThat(result.get("id"), is(1));
-    assertThat(result.get("login"), is("JUnit"));
+    assertThat(result.get("login"), is(TEST_USERNAME));
 
     Map<String, Object> me = (Map<String, Object>) result.get("me");
     assertThat(me.get("id"), is(1));
-    assertThat(me.get("login"), is("JUnit"));
-    assertThat(me.get("login"), is("JUnit"));
+    assertThat(me.get("login"), is(TEST_USERNAME));
+    assertThat(me.get("login"), is(TEST_USERNAME));
 
     assertThat(me.get("global_rating"), is(new double[]{1200, 200}));
     assertThat(me.get("ladder_rating"), is(new double[]{900, 100}));
@@ -55,7 +57,7 @@ public class UserDetailsResponseTransformerTest {
   public void transformHandleAvatarNull() throws Exception {
     Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
       1,
-      "JUnit",
+      TEST_USERNAME,
       "CH",
       new UserDetailsResponse.Player(
         new Rating(1200d, 200d),
@@ -74,7 +76,7 @@ public class UserDetailsResponseTransformerTest {
   public void transformHandleGlobalRatingNull() throws Exception {
     Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
       1,
-      "JUnit",
+      TEST_USERNAME,
       "CH",
       new UserDetailsResponse.Player(
         null,
@@ -93,7 +95,7 @@ public class UserDetailsResponseTransformerTest {
   public void transformHandleLadder1v1RatingNull() throws Exception {
     Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
       1,
-      "JUnit",
+      TEST_USERNAME,
       "CH",
       new UserDetailsResponse.Player(
         new Rating(900d, 100d),
@@ -112,7 +114,7 @@ public class UserDetailsResponseTransformerTest {
   public void transformHandleCountryNull() throws Exception {
     Map<String, Serializable> result = UserDetailsResponseTransformer.INSTANCE.transform(new UserDetailsResponse(
       1,
-      "JUnit",
+      TEST_USERNAME,
       null,
       new UserDetailsResponse.Player(
         new Rating(1200d, 200d),

@@ -121,11 +121,13 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return null;
       case CREATE_ACCOUNT:
         Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
+        break;
       case ADMIN:
         return handleAdminAction(source);
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
+    throw new ProgrammingError("This should never be reached.");
   }
 
   @NotNull
@@ -150,8 +152,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new BroadcastRequest((String) source.get("message"));
       default:
         Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
+        return null;
     }
-    return null;
   }
 
   private ClientMessage handleAiOption(Map<String, Object> source) {
@@ -216,8 +218,9 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new GameModsCountReport(((Double) args.get(1)).intValue());
       case "uids":
         return new GameModsReport(Arrays.asList(((String) args.get(1)).split(" ")));
+      default:
+        throw new IllegalArgumentException("Unknown GameMods argument: " + args.get(0));
     }
-    throw new IllegalArgumentException("Unknown GameMods argument: " + args.get(0));
   }
 
   private ClientMessage handleMatchMaking(Map<String, Object> source) {

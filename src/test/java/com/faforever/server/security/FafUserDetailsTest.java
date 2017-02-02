@@ -4,7 +4,6 @@ import com.faforever.server.entity.BanDetails;
 import com.faforever.server.entity.User;
 import com.faforever.server.entity.UserGroup;
 import org.hamcrest.CoreMatchers;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -17,17 +16,16 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 public class FafUserDetailsTest {
-  @Before
-  public void setUp() throws Exception {
 
-  }
+  private static final String TEST_PASSWORD = "pwd";
+  private static final String TEST_USERNAME = "login";
 
   @Test
   public void userWithGroup1IsAdmin() throws Exception {
     User user = (User) new User()
       .setUserGroup(new UserGroup().setGroup(1))
-      .setPassword("pwd")
-      .setLogin("login");
+      .setPassword(TEST_PASSWORD)
+      .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
@@ -41,8 +39,8 @@ public class FafUserDetailsTest {
   public void userWithoutGroupIsNotAdmin() throws Exception {
     User user = (User) new User()
       .setUserGroup(null)
-      .setPassword("pwd")
-      .setLogin("login");
+      .setPassword(TEST_PASSWORD)
+      .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
@@ -54,8 +52,8 @@ public class FafUserDetailsTest {
   public void userWithoutGroup1IsNotAdmin() throws Exception {
     User user = (User) new User()
       .setUserGroup(new UserGroup().setGroup(2))
-      .setPassword("pwd")
-      .setLogin("login");
+      .setPassword(TEST_PASSWORD)
+      .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
@@ -66,9 +64,9 @@ public class FafUserDetailsTest {
   @Test
   public void userWithoutBanDetailsIsNonLocked() throws Exception {
     User user = (User) new User()
-      .setPassword("pwd")
+      .setPassword(TEST_PASSWORD)
       .setBanDetails(null)
-      .setLogin("login");
+      .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
@@ -78,9 +76,9 @@ public class FafUserDetailsTest {
   @Test
   public void userWithValidBanDetailsIsLocked() throws Exception {
     User user = (User) new User()
-      .setPassword("pwd")
+      .setPassword(TEST_PASSWORD)
       .setBanDetails(new BanDetails().setExpiresAt(Timestamp.from(Instant.now().plus(1, ChronoUnit.HOURS))))
-      .setLogin("login");
+      .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
@@ -90,9 +88,9 @@ public class FafUserDetailsTest {
   @Test
   public void userWithExpiredBanDetailsIsNonLocked() throws Exception {
     User user = (User) new User()
-      .setPassword("pwd")
+      .setPassword(TEST_PASSWORD)
       .setBanDetails(new BanDetails().setExpiresAt(Timestamp.from(Instant.now().minusSeconds(1))))
-      .setLogin("login");
+      .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 

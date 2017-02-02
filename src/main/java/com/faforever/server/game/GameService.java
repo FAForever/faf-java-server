@@ -14,6 +14,7 @@ import com.faforever.server.entity.Rankiness;
 import com.faforever.server.entity.User;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
+import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.error.Requests;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
@@ -175,6 +176,8 @@ public class GameService {
       case ENDED:
         onPlayerGameEnded(player, game);
         break;
+      default:
+        throw new ProgrammingError("Uncovered state: " + newState);
     }
   }
 
@@ -513,7 +516,7 @@ public class GameService {
   }
 
   private void connectPeers(Player player, Player otherPlayer) {
-    if (player == otherPlayer) {
+    if (player.equals(otherPlayer)) {
       log.warn("Player '{}' should not be told to connect to himself", player);
       return;
     }

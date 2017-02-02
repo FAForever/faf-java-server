@@ -72,6 +72,11 @@ public class GameServiceTest {
   private static final String MAP_NAME = "SCMP_001";
   private static final int FAF_MOD_ID = 1;
   private static final int NEXT_GAME_ID = 1;
+  private static final String QAI = "QAI";
+  private static final String AIX = "AIX";
+  private static final String OPTION_FACTION = "Faction";
+  private static final String OPTION_SLOT = "Slot";
+  private static final String OPTION_ARMY = "Army";
 
   private GameService instance;
 
@@ -195,55 +200,55 @@ public class GameServiceTest {
   public void updatePlayerOption() throws Exception {
     assertThat(game.getPlayerOptions().containsKey(player1.getId()), is(false));
 
-    instance.updatePlayerOption(player1, player1.getId(), "Faction", 1);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_FACTION, 1);
 
-    assertThat(game.getPlayerOptions().get(player1.getId()).get("Faction"), is(1));
+    assertThat(game.getPlayerOptions().get(player1.getId()).get(OPTION_FACTION), is(1));
   }
 
   @Test
   public void updateAiOption() throws Exception {
-    assertThat(game.getAiOptions().containsKey("QAI"), is(false));
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
 
-    instance.updateAiOption(player1, "QAI", "Faction", 2);
+    instance.updateAiOption(player1, QAI, OPTION_FACTION, 2);
 
-    assertThat(game.getAiOptions().get("QAI").get("Faction"), is(2));
+    assertThat(game.getAiOptions().get(QAI).get(OPTION_FACTION), is(2));
   }
 
   @Test
   public void clearSlot() throws Exception {
-    instance.updateAiOption(player1, "QAI", "Faction", 1);
-    instance.updateAiOption(player1, "QAI", "Slot", 1);
-    instance.updateAiOption(player1, "AIX", "Faction", 2);
-    instance.updateAiOption(player1, "AIX", "Slot", 2);
+    instance.updateAiOption(player1, QAI, OPTION_FACTION, 1);
+    instance.updateAiOption(player1, QAI, OPTION_SLOT, 1);
+    instance.updateAiOption(player1, AIX, OPTION_FACTION, 2);
+    instance.updateAiOption(player1, AIX, OPTION_SLOT, 2);
 
-    instance.updatePlayerOption(player1, 1, "Slot", 3);
-    instance.updatePlayerOption(player1, 1, "Faction", 3);
-    instance.updatePlayerOption(player1, 2, "Slot", 4);
-    instance.updatePlayerOption(player1, 2, "Faction", 4);
+    instance.updatePlayerOption(player1, 1, OPTION_SLOT, 3);
+    instance.updatePlayerOption(player1, 1, OPTION_FACTION, 3);
+    instance.updatePlayerOption(player1, 2, OPTION_SLOT, 4);
+    instance.updatePlayerOption(player1, 2, OPTION_FACTION, 4);
 
     instance.clearSlot(game, 1);
     assertThat(game.getPlayerOptions().containsKey(1), is(true));
     assertThat(game.getPlayerOptions().containsKey(2), is(true));
-    assertThat(game.getAiOptions().containsKey("QAI"), is(false));
-    assertThat(game.getAiOptions().containsKey("AIX"), is(true));
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
+    assertThat(game.getAiOptions().containsKey(AIX), is(true));
 
     instance.clearSlot(game, 4);
     assertThat(game.getPlayerOptions().containsKey(1), is(true));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
-    assertThat(game.getAiOptions().containsKey("QAI"), is(false));
-    assertThat(game.getAiOptions().containsKey("AIX"), is(true));
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
+    assertThat(game.getAiOptions().containsKey(AIX), is(true));
 
     instance.clearSlot(game, 3);
     assertThat(game.getPlayerOptions().containsKey(1), is(false));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
-    assertThat(game.getAiOptions().containsKey("QAI"), is(false));
-    assertThat(game.getAiOptions().containsKey("AIX"), is(true));
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
+    assertThat(game.getAiOptions().containsKey(AIX), is(true));
 
     instance.clearSlot(game, 2);
     assertThat(game.getPlayerOptions().containsKey(1), is(false));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
-    assertThat(game.getAiOptions().containsKey("QAI"), is(false));
-    assertThat(game.getAiOptions().containsKey("AIX"), is(false));
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
+    assertThat(game.getAiOptions().containsKey(AIX), is(false));
   }
 
   @Test
@@ -283,8 +288,8 @@ public class GameServiceTest {
   @Test
   public void reportArmyScore() throws Exception {
     player2.setCurrentGame(game);
-    instance.updatePlayerOption(player1, player1.getId(), "Army", 1);
-    instance.updatePlayerOption(player1, player2.getId(), "Army", 2);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
 
     instance.reportArmyScore(player1, 1, 10);
     instance.reportArmyScore(player1, 2, -1);
@@ -299,8 +304,8 @@ public class GameServiceTest {
   @Test
   public void reportArmyOutcome() throws Exception {
     player2.setCurrentGame(game);
-    instance.updatePlayerOption(player1, player1.getId(), "Army", 1);
-    instance.updatePlayerOption(player1, player2.getId(), "Army", 2);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
 
     instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
     instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);

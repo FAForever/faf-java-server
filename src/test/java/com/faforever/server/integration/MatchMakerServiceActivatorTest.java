@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MatchMakerServiceActivatorTest {
+  private static final String LADDER_1V1 = "ladder1v1";
   private MatchMakerServiceActivator instance;
 
   @Mock
@@ -42,13 +43,13 @@ public class MatchMakerServiceActivatorTest {
 
   @Test
   public void startSearch() throws Exception {
-    instance.startSearch(new MatchMakerSearchRequest(Faction.CYBRAN, "ladder1v1"), clientConnection);
-    verify(matchmakerService).submitSearch(player, Faction.CYBRAN, "ladder1v1");
+    instance.startSearch(new MatchMakerSearchRequest(Faction.CYBRAN, LADDER_1V1), clientConnection);
+    verify(matchmakerService).submitSearch(player, Faction.CYBRAN, LADDER_1V1);
   }
 
   @Test
   public void cancelSearch() throws Exception {
-    instance.cancelSearch(new MatchMakerCancelRequest("ladder1v1"), clientConnection);
-    verify(matchmakerService).cancelSearch("ladder1v1", player);
+    instance.cancelSearch(new MatchMakerCancelRequest(LADDER_1V1), clientConnection);
+    verify(matchmakerService).cancelSearch(LADDER_1V1, player);
   }
 }

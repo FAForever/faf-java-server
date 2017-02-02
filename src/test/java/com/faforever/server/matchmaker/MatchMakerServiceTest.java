@@ -48,6 +48,8 @@ import static org.mockito.Mockito.when;
 public class MatchMakerServiceTest {
 
   private static final String QUEUE_NAME = "ladder1v1";
+  private static final String LOGIN_PLAYER_1 = "Player 1";
+  private static final String LOGIN_PLAYER_2 = "Player 2";
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   private MatchMakerService instance;
@@ -127,8 +129,8 @@ public class MatchMakerServiceTest {
    */
   @Test
   public void submitSearchTwoFreshPlayersDontMatchImmediately() throws Exception {
-    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
-    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
+    Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
+    Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
     properties.getMatchMaker().setAcceptableQualityWaitTime(10);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
@@ -144,15 +146,16 @@ public class MatchMakerServiceTest {
    */
   @Test
   public void submitSearchTwoFreshPlayersMatch() throws Exception {
-    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
-    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
+    Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
+    Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
     properties.getMatchMaker().setAcceptableQualityWaitTime(0);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService).createGame("Player 1 vs. Player 2", 1, "SCMP_001", null, GameVisibility.PRIVATE, player1);
+    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, 1, "SCMP_001",
+      null, GameVisibility.PRIVATE, player1);
     verify(gameService).joinGame(0, player2);
   }
 
@@ -163,11 +166,11 @@ public class MatchMakerServiceTest {
   public void submitSearchTwoPlayersDontMatchIfRatingsTooFarApart() throws Exception {
     Player player1 = (Player) new Player()
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(300d).setDeviation(50d))
-      .setLogin("Player 1")
+      .setLogin(LOGIN_PLAYER_1)
       .setId(1);
     Player player2 = (Player) new Player()
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(1300d).setDeviation(50d))
-      .setLogin("Player 2")
+      .setLogin(LOGIN_PLAYER_2)
       .setId(2);
 
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
@@ -180,8 +183,8 @@ public class MatchMakerServiceTest {
 
   @Test
   public void cancelSearch() throws Exception {
-    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
-    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
+    Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
+    Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
@@ -200,8 +203,8 @@ public class MatchMakerServiceTest {
 
   @Test
   public void onClientDisconnect() throws Exception {
-    Player player1 = (Player) new Player().setLogin("Player 1").setId(1);
-    Player player2 = (Player) new Player().setLogin("Player 2").setId(2);
+    Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
+    Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
