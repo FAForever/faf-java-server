@@ -9,6 +9,10 @@ git:
 
 before_install:
   - sudo /etc/init.d/mysql stop
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.10.0/docker-compose-`uname -s`-`uname -m` > /tmp/docker-compose
+  - chmod +x /tmp/docker-compose
+  - sudo mv /tmp/docker-compose /usr/local/bin
   - curl -sL https://github.com/jpm4j/jpm4j.installers/raw/master/dist/biz.aQute.jpm.run.jar >jpm4j.jar
   - java -jar jpm4j.jar -u init
   - ~/jpm/bin/jpm install com.codacy:codacy-coverage-reporter:assembly
