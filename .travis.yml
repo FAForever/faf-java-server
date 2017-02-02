@@ -41,3 +41,4 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+    - /home/travis/build/FAForever/faf-java-server/build/cache/
