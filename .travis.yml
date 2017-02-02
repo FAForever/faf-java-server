@@ -29,7 +29,9 @@ after_success:
   - if [ "${TRAVIS_BRANCH}" == "master" ]; then
       ./gradlew pushDockerImage;
     fi
-  - ~/jpm/bin/codacy-coverage-reporter -l Java -r build/reports/jacoco/test/jacocoTestReport.xml
+  - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
+      ~/jpm/bin/codacy-coverage-reporter -l Java -r build/reports/jacoco/test/jacocoTestReport.xml;
+    fi
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
