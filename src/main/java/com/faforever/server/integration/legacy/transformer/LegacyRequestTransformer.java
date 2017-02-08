@@ -228,7 +228,14 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "stop":
         return new MatchMakerCancelRequest("ladder1v1");
       default:
-        return new MatchMakerSearchRequest(Faction.fromString((String) source.get("faction")), "ladder1v1");
+        Object untypedFaction = source.get("faction");
+        Faction faction;
+        if (untypedFaction instanceof Number) {
+          faction = Faction.fromFaValue(((Number) untypedFaction).intValue());
+        } else {
+          faction = Faction.fromString((String) untypedFaction);
+        }
+        return new MatchMakerSearchRequest(faction, "ladder1v1");
     }
   }
 

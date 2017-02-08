@@ -451,11 +451,24 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void searchMatchMaking() throws Exception {
+  public void searchMatchMakingFactionString() throws Exception {
     MatchMakerSearchRequest result = (MatchMakerSearchRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "game_matchmaking",
       "mod", "ladder1v1",
       "faction", "seraphim",
+      "state", "start"
+    ));
+
+    assertThat(result.getQueueName(), is("ladder1v1"));
+    assertThat(result.getFaction(), is(Faction.SERAPHIM));
+  }
+
+  @Test
+  public void searchMatchMakingFactionInteger() throws Exception {
+    MatchMakerSearchRequest result = (MatchMakerSearchRequest) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "game_matchmaking",
+      "mod", "ladder1v1",
+      "faction", Faction.SERAPHIM.toFaValue(),
       "state", "start"
     ));
 
