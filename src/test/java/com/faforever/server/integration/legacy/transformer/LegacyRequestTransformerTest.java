@@ -87,6 +87,8 @@ public class LegacyRequestTransformerTest {
       .put("version", 1337.0) // Because JSON deserializes integer values to Double
       .put("password", TEST_PASSWORD)
       .put("visibility", "public")
+      .put("minRating", 1000.0) // Because JSON deserializes integer values to Double
+      .put("maxRating", 1500.0) // Because JSON deserializes integer values to Double
       .build()
     );
 
@@ -98,6 +100,8 @@ public class LegacyRequestTransformerTest {
     assertThat(hostGameRequest.getVersion(), is(1337));
     assertThat(hostGameRequest.getPassword(), is(TEST_PASSWORD));
     assertThat(hostGameRequest.getVisibility(), is(GameVisibility.PUBLIC));
+    assertThat(hostGameRequest.getMinRating(), is(1000));
+    assertThat(hostGameRequest.getMaxRating(), is(1500));
   }
 
   @Test

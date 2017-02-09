@@ -274,7 +274,10 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       GameAccess.fromString((String) source.get("access")),
       source.get("version") == null ? null : ((Double) source.get("version")).intValue(),
       (String) source.get("password"),
-      GameVisibility.fromString((String) source.get("visibility")));
+      GameVisibility.fromString((String) source.get("visibility")),
+      source.get("minRating") == null ? null : ((Double) source.get("minRating")).intValue(),
+      source.get("maxRating") == null ? null : ((Double) source.get("maxRating")).intValue()
+    );
   }
 
   @SuppressWarnings("unchecked")
