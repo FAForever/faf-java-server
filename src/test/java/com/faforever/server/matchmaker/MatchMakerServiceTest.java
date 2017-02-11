@@ -77,7 +77,7 @@ public class MatchMakerServiceTest {
     when(modService.getLadder1v1()).thenReturn(ladder1v1Mod);
     when(modService.isLadder1v1(ladder1v1Mod)).thenReturn(true);
     when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("SCMP_001"));
-    when(gameService.createGame(any(), anyInt(), any(), any(), any(), any())).thenReturn(CompletableFuture.completedFuture(new Game()));
+    when(gameService.createGame(any(), anyInt(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(CompletableFuture.completedFuture(new Game()));
 
     ratingService = new RatingService(properties);
     instance = new MatchMakerService(modService, properties, ratingService, clientService, gameService, mapService, playerService);
@@ -137,7 +137,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), any());
+    verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), anyInt(), anyInt(), any());
     verify(gameService, never()).joinGame(anyInt(), any());
   }
 
@@ -155,7 +155,7 @@ public class MatchMakerServiceTest {
     instance.processPools();
 
     verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, 1, "SCMP_001",
-      null, GameVisibility.PRIVATE, player1);
+      null, GameVisibility.PRIVATE, null, null, player1);
     verify(gameService).joinGame(0, player2);
   }
 
@@ -177,7 +177,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), any());
+    verify(gameService, never()).createGame(any(), anyInt(), any(), any(), any(), anyInt(), anyInt(), any());
     verify(gameService, never()).joinGame(anyInt(), any());
   }
 

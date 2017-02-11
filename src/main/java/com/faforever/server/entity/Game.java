@@ -74,6 +74,11 @@ public class Game {
   private final Map<String, Map<String, Object>> aiOptions;
   @Transient
   private final List<String> simMods;
+  @Transient
+  private Integer minRating;
+  @Transient
+  private Integer maxRating;
+
   @Id
   @Column(name = "id")
   private int id;

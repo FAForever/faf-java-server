@@ -77,6 +77,8 @@ public class GameServiceTest {
   private static final String OPTION_FACTION = "Faction";
   private static final String OPTION_SLOT = "Slot";
   private static final String OPTION_ARMY = "Army";
+  private static final int GAME_MIN_RATING = 1000;
+  private static final int GAME_MAX_RATING = 1500;
 
   private GameService instance;
 
@@ -143,7 +145,7 @@ public class GameServiceTest {
   @Test
   public void createGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, player1);
+    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
     Optional<Game> optional = instance.getGame(NEXT_GAME_ID);
     assertThat(optional.isPresent(), is(true));
@@ -158,13 +160,15 @@ public class GameServiceTest {
     assertThat(game.getPassword(), is("secret"));
     assertThat(game.getState(), is(GameState.INITIALIZING));
     assertThat(game.getGameVisibility(), is(GameVisibility.PUBLIC));
+    assertThat(game.getMinRating(), is(GAME_MIN_RATING));
+    assertThat(game.getMaxRating(), is(GAME_MAX_RATING));
     assertThat(player1.getCurrentGame(), is(game));
   }
 
   @Test
   public void joinGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.joinGame(NEXT_GAME_ID, player2);
 
@@ -335,7 +339,7 @@ public class GameServiceTest {
   @Test
   public void endGameIfNoPlayerConnected() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, player1);
+    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
@@ -620,7 +624,7 @@ public class GameServiceTest {
   @Test
   public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     assertThat(player1.getCurrentGame(), is(notNullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(true));
@@ -643,7 +647,7 @@ public class GameServiceTest {
   @SuppressWarnings("unchecked")
   public void onAuthenticationSuccess() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, player1);
+    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");

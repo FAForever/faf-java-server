@@ -235,6 +235,8 @@ public class MatchMakerService {
       mapService.getRandomLadderMap().getFilename(),
       null,
       GameVisibility.PRIVATE,
+      null,
+      null,
       host
     ).thenAccept(game -> {
       Map<Integer, Map<String, Object>> playerOptions = game.getPlayerOptions();
