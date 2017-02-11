@@ -118,7 +118,9 @@ public class GameService {
    * Be aware that there are various reasons for the game to never start (crash, disconnect, abort) so never wait
    * without a timeout.
    */
-  public CompletableFuture<Game> createGame(String title, int modId, String mapname, String password, GameVisibility visibility, Player player) {
+  public CompletableFuture<Game> createGame(String title, int modId, String mapname,
+                                            String password, GameVisibility visibility,
+                                            Integer minRating, Integer maxRating, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     int gameId = this.nextGameId.getAndIncrement();
@@ -130,6 +132,8 @@ public class GameService {
     game.setMapName(mapname);
     game.setPassword(password);
     game.setGameVisibility(visibility);
+    game.setMinRating(minRating);
+    game.setMaxRating(maxRating);
 
     log.debug("Player '{}' creates game '{}'", player, game);
 
