@@ -25,7 +25,7 @@ In order to run this software, you need to set up a [FAF database](https://githu
 In order to run the application from source code:
 
 1. Clone the repository
-1. Import the project into IntelliJ
+1. Import the project into IntelliJ. For some reason, IntelliJ deletes launch configurations after import. Please revert such deleted files first (Version Control (Alt+F9) -> Local Changes)
 1. Configure your JDK 8 if you haven't already
 1. Make sure you have the _IntelliJ Lombok plugin_ installed
 1. Launch `FafServerApplication`
