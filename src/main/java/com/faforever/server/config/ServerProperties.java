@@ -46,6 +46,11 @@ public class ServerProperties {
      * How many seconds a game needs to run per participating player in order to be ranked.
      */
     private int rankedMinTimeMultiplicator = 60;
+    /**
+     * How many seconds a game may be in state {@link com.faforever.server.entity.GameState#INITIALIZING} before it's
+     * being terminated.
+     */
+    private int staleGameTimeoutSeconds = 45;
   }
 
   @Data

@@ -16,6 +16,8 @@ faf-server:
     client-secret: ${API_CLIENT_SECRET}
     access-token-uri: ${API_ACCESS_TOKEN_URI}
     max-page-size: 10000
+  game:
+    stale-game-timeout-seconds: ${STALE_GAME_TIMEOUT_SECONDS:45}
 
 spring:
   application:

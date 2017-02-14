@@ -33,6 +33,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
@@ -43,6 +44,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -108,6 +110,8 @@ public class GameServiceTest {
   private PlayerService playerService;
   @Mock
   private EntityManager entityManager;
+  @Mock
+  private TaskScheduler taskScheduler;
 
   private Player player1;
   private Player player2;
@@ -154,14 +158,15 @@ public class GameServiceTest {
     serverProperties = new ServerProperties();
     serverProperties.getGame().setRankedMinTimeMultiplicator(-1);
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, serverProperties, entityManager, armyStatisticsService);
+    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService,
+      taskScheduler, serverProperties, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
   }
 
   @Test
   public void createGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
 
     Optional<Game> optional = instance.getActiveGame(NEXT_GAME_ID);
     assertThat(optional.isPresent(), is(true));
@@ -425,7 +430,7 @@ public class GameServiceTest {
   @Test
   public void endGameIfNoPlayerConnected() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
@@ -848,7 +853,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionWasNeverInGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     launchGame();
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -861,7 +866,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionOpenGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -887,7 +892,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionPlayingGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -905,6 +910,41 @@ public class GameServiceTest {
 
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
+  }
+
+  @Test
+  public void staleGameEnder() throws Exception {
+    player1.setCurrentGame(null);
+    doAnswer(invocation -> {
+      invocation.getArgumentAt(0, Runnable.class).run();
+      return null;
+    }).when(taskScheduler).schedule(any(Runnable.class), any(Date.class));
+
+    createDefaultGame();
+
+    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(false));
+
+    ArgumentCaptor<GameResponse> captor = ArgumentCaptor.forClass(GameResponse.class);
+    verify(clientService, atLeastOnce()).sendDelayed(captor.capture(), any(), any(), any());
+    assertThat(captor.getValue().getState(), is(GameState.CLOSED));
+  }
+
+  @Test
+  public void staleGameEnderDoesntEndGameIfStarted() throws Exception {
+    player1.setCurrentGame(null);
+    createDefaultGame();
+
+    ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+    verify(taskScheduler).schedule(runnableCaptor.capture(), any(Date.class));
+
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    runnableCaptor.getValue().run();
+
+    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(true));
+  }
+
+  private void createDefaultGame() {
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
   }
 
   private void launchGame() {

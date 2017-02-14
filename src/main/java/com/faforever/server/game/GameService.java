@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.util.Pair;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ import org.springframework.util.Assert;
 
 import javax.persistence.EntityManager;
 import java.lang.ref.WeakReference;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -102,6 +104,7 @@ public class GameService {
   private final ModService modService;
   private final PlayerService playerService;
   private final RatingService ratingService;
+  private final TaskScheduler taskScheduler;
   private final ServerProperties properties;
   /**
    * Since Spring Data JPA assumes that entities with IDs != 0 (or != null) are already stored in the database, we can't
@@ -113,16 +116,17 @@ public class GameService {
   private ArmyStatisticsService armyStatisticsService;
   private List<WeakReference<CompletableFuture<Game>>> gameFutures;
 
-  public GameService(GameRepository gameRepository, ClientService clientService,
-                     MapService mapService, ModService modService, PlayerService playerService,
-                     RatingService ratingService, ServerProperties properties,
-                     EntityManager entityManager, ArmyStatisticsService armyStatisticsService) {
+  public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
+                     ModService modService, PlayerService playerService, RatingService ratingService,
+                     TaskScheduler taskScheduler, ServerProperties properties, EntityManager entityManager,
+                     ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
     this.mapService = mapService;
     this.modService = modService;
     this.playerService = playerService;
     this.ratingService = ratingService;
+    this.taskScheduler = taskScheduler;
     this.properties = properties;
     this.entityManager = entityManager;
     this.armyStatisticsService = armyStatisticsService;
@@ -170,6 +174,8 @@ public class GameService {
 
     clientService.startGameProcess(game, player);
     player.setGameBeingJoined(game);
+
+    scheduleStaleGameEnder(game);
 
     CompletableFuture<Game> future = new CompletableFuture<>();
     gameFutures.add(new WeakReference<>(future));
@@ -488,6 +494,18 @@ public class GameService {
   }
 
   /**
+   * Schedules a task that ends a game if it's in {@link GameState#INITIALIZING} for too long. This happens if a game
+   * is requested by a host, but the player's game process crashes before it can enter {@link GameState#OPEN}.
+   */
+  private void scheduleStaleGameEnder(Game game) {
+    taskScheduler.schedule(() -> {
+      if (game.getState() == GameState.INITIALIZING) {
+        onGameEnded(game);
+      }
+    }, Date.from(Instant.now().plusSeconds(properties.getGame().getStaleGameTimeoutSeconds())));
+  }
+
+  /**
    * Checks whether every connected player reported scores for all armies (player and AI). If so, the game is set to
    * {@link GameState#CLOSED}.
    */
@@ -561,7 +579,7 @@ public class GameService {
     log.debug("Game ended: {}", game);
 
     try {
-      // Games can also end before they even started. Only process stats when did.
+      // Games can also end before they even started.
       if (game.getState() == GameState.PLAYING) {
         game.getPlayerStats().values().forEach(stats -> {
           Player player = stats.getPlayer();

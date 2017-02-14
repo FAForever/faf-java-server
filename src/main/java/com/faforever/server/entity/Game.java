@@ -131,7 +131,7 @@ public class Game {
   private Map<Integer, GamePlayerStats> playerStats;
 
   @Transient
-  private GameState state = GameState.INITIALIZING;
+  private GameState state;
 
   @Transient
   private String password;
@@ -161,6 +161,7 @@ public class Game {
   }
 
   public Game() {
+    state = GameState.INITIALIZING;
     playerOptions = new HashMap<>();
     options = new HashMap<>();
     aiOptions = new HashMap<>();
