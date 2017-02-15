@@ -18,6 +18,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 
@@ -55,7 +56,7 @@ public class GeoIpService {
       URL url = new URL(databaseUrl);
       try (InputStream inputStream = new BufferedInputStream(new GZIPInputStream(url.openStream()))) {
         Files.createDirectories(geoIpFile.getParent());
-        Files.copy(inputStream, geoIpFile);
+        Files.copy(inputStream, geoIpFile, StandardCopyOption.REPLACE_EXISTING);
       }
       readDatabase(geoIpFile);
     }
