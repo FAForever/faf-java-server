@@ -44,7 +44,7 @@ public class GeoIpService {
     readDatabase(databaseFile);
   }
 
-  @Scheduled(cron = "0 0 * * * WED")
+  @Scheduled(cron = "0 0 0 * * WED")
   public void updateDatabaseFile() throws IOException {
     GeoIp geoIp = properties.getGeoIp();
     Path geoIpFile = geoIp.getDatabaseFile();
