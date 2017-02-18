@@ -557,7 +557,9 @@ public class GameService {
         .map(stats -> new GameResponse.Player(stats.getTeam(), stats.getPlayer().getLogin()))
         .collect(Collectors.toList()),
       game.getMaxPlayers(),
-      Optional.ofNullable(game.getStartTime()).map(Timestamp::toInstant).orElse(null)
+      Optional.ofNullable(game.getStartTime()).map(Timestamp::toInstant).orElse(null),
+      game.getMinRating(),
+      game.getMaxRating()
     );
   }
 
