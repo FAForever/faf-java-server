@@ -101,7 +101,6 @@ based server.
 | Requires very little set up for developers to get started | Requires quite some work for developers to get started, especially on Windows systems (you have to set up a virtual machine) |
 | Was built from scratch so it's free from any "legacy bugs" that are unknown or difficult to figure out. | Is a refactoring of a terrible code base so that there are many "left overs", and has given us bugs nobody has yet figured out why they happen. |
 | Can be managed while it is running (e.g. configuration values can be changed, or commands can be executed) using a web interface. | Can not be managed once it's running, but needs to be restarted every time. |
-| Requires the GeoIP 
 | Produces very clear, well readable and helpful logs. | Produces a lot of unreadable, messy or even useless log messages. |
 | Follows [Clean Code](https://dzone.com/articles/clean-code-principles?edition=154263&utm_source=Weekly%20Digest&utm_medium=email&utm_campaign=wd%202017-01-11) principles to assure high quality and maintainability. | Was built by "[Hackers](https://danielmiessler.com/study/programmer_hacker_developer/#gs.vEWu9K4)" with no greater design in mind, with focus on "getting the job done". |
 | Is actively maintained by me, and soon some others. | Hasn't had a committed maintainer for over a year. |
@@ -110,12 +109,31 @@ based server.
 
 The following issues that exist in the Python server are not present in this Java server:
 
-* FAForever/server#115 Include session details in message logging for {Lobby,Game}Connection
-* FAForever/server#116 Not all online players are reported
-* FAForever/server#142 Server misreporting gameInfo to clients
-* FAForever/server#193 Explicit dependency versions
-* FAForever/server#195 Coop Leaderboards
-* FAForever/server#213 Coop Leaderboards
-* FAForever/server#224 Player reported as "in game" even though they're not
-* FAForever/server#225 Players in lobby are not always detected properly
-* FAForever/server#253 Player stats sometimes not stored
+* [FAForever/server#115](https://github.com/FAForever/server/issues/115) Include session details in message logging for {Lobby,Game}Connection
+* [FAForever/server#116](https://github.com/FAForever/server/issues/116) Not all online players are reported
+* [FAForever/server#142](https://github.com/FAForever/server/issues/142) Server misreporting gameInfo to clients
+* [FAForever/server#193](https://github.com/FAForever/server/issues/193) Explicit dependency versions
+* [FAForever/server#195](https://github.com/FAForever/server/issues/195) Coop Leaderboards
+* [FAForever/server#213](https://github.com/FAForever/server/issues/213) Coop Leaderboards
+* [FAForever/server#224](https://github.com/FAForever/server/issues/224) Player reported as "in game" even though they're not
+* [FAForever/server#225](https://github.com/FAForever/server/issues/225) Players in lobby are not always detected properly
+* [FAForever/server#253](https://github.com/FAForever/server/issues/253) Player stats sometimes not stored
+
+## Unimplemented features
+
+The following features of the Python server have not yet been implemented in this Java server:
+
+* Updating achievements
+* Accepting "mutually agreed draw"
+* Timeout unstarted games
+* Keep the user's IRC password in sync
+* Broadcast message on shutdown
+* Tell the client to join chat channels
+
+## Additional features
+
+This Java server provides the following additional features over the Python server:
+
+* Management and monitoring using a web interface
+* Automatic, weekly update of the GeoIP file (used to display the country flags in the client)
+* Specify min/max rating for games
