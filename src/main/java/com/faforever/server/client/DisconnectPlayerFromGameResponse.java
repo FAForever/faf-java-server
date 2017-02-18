@@ -4,6 +4,6 @@ import com.faforever.server.common.ServerMessage;
 import lombok.Data;
 
 @Data
-public class DisconnectPlayerResponse implements ServerMessage {
+public class DisconnectPlayerFromGameResponse implements ServerMessage {
   private final int playerId;
 }

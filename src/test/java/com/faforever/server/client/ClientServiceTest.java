@@ -196,9 +196,9 @@ public class ClientServiceTest {
   public void disconnectPlayerSendsToAllPlayersInGame() throws Exception {
     List<Player> recipients = Arrays.asList(player, new Player(), new Player(), new Player());
 
-    instance.disconnectPlayer(12, recipients);
+    instance.disconnectPlayerFromGame(12, recipients);
 
-    verify(clientGateway, times(4)).send(any(DisconnectPlayerResponse.class), any());
+    verify(clientGateway, times(4)).send(any(DisconnectPlayerFromGameResponse.class), any());
   }
 
   @Test

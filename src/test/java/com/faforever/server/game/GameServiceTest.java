@@ -786,7 +786,7 @@ public class GameServiceTest {
     instance.disconnectPlayerFromGame(new User(), 3);
 
     ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
-    verify(clientService).disconnectPlayer(eq(3), captor.capture());
+    verify(clientService).disconnectPlayerFromGame(eq(3), captor.capture());
     List<ConnectionAware> recipients = captor.getValue();
 
     assertThat(recipients, hasSize(3));
