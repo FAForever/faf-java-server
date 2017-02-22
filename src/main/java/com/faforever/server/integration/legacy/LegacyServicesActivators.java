@@ -12,6 +12,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.ChannelNames;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
 import org.springframework.integration.annotation.MessageEndpoint;
@@ -35,15 +36,16 @@ public class LegacyServicesActivators {
   private final ClientService clientService;
   private final UniqueIdService uniqueIdService;
   private final GeoIpService geoIpService;
+  private final PlayerService playerService;
   private final ChatService chatService;
 
   @Inject
-  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
-                                  UniqueIdService uniqueIdService, GeoIpService geoIpService, ChatService chatService) {
+  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService, UniqueIdService uniqueIdService, GeoIpService geoIpService, PlayerService playerService, ChatService chatService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
     this.geoIpService = geoIpService;
+    this.playerService = playerService;
     this.chatService = chatService;
   }
 
@@ -55,6 +57,10 @@ public class LegacyServicesActivators {
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
   @Transactional
   public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    if (playerService.isPlayerOnline(loginRequest.getLogin())) {
+      throw new RequestException(ErrorCode.USER_ALREADY_CONNECTED);
+    }
+
     try {
       UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword());
       token.setDetails((ConnectionAware) () -> clientConnection);
