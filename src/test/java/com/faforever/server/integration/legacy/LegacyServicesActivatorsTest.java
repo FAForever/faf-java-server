@@ -1,5 +1,6 @@
 package com.faforever.server.integration.legacy;
 
+import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
@@ -48,6 +49,8 @@ public class LegacyServicesActivatorsTest {
   private UniqueIdService uniqueIdService;
   @Mock
   private GeoIpService geoIpService;
+  @Mock
+  private ChatService chatService;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -60,7 +63,7 @@ public class LegacyServicesActivatorsTest {
 
     when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.empty());
 
-    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService);
+    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService, chatService);
   }
 
   @Test
