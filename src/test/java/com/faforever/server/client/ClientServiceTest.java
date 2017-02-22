@@ -2,6 +2,7 @@ package com.faforever.server.client;
 
 import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.Avatar;
 import com.faforever.server.entity.AvatarAssociation;
@@ -15,7 +16,6 @@ import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.PlayerService;
 import com.faforever.server.player.UserDetailsResponse;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +23,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
 import java.util.Arrays;
@@ -50,9 +49,7 @@ public class ClientServiceTest {
   @Mock
   private CoopService coopService;
   @Mock
-  private PlayerService playerService;
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
+  private ServerProperties serverProperties;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -62,7 +59,7 @@ public class ClientServiceTest {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
 
-    instance = new ClientService(clientGateway, coopService);
+    instance = new ClientService(clientGateway, coopService, serverProperties);
   }
 
   @Test

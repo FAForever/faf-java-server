@@ -1,6 +1,8 @@
 package com.faforever.server.client;
 
+import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.AvatarAssociation;
@@ -21,6 +23,7 @@ import com.faforever.server.player.UserDetailsResponse.Player.Rating;
 import com.faforever.server.response.ServerResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -45,10 +48,12 @@ public class ClientService {
   private final ClientGateway clientGateway;
   private final CoopService coopService;
   private final Map<Object, DelayedResponse<?>> dirtyObjects;
+  private final ServerProperties serverProperties;
 
-  public ClientService(ClientGateway clientGateway, CoopService coopService) {
+  public ClientService(ClientGateway clientGateway, CoopService coopService, ServerProperties serverProperties) {
     this.clientGateway = clientGateway;
     this.coopService = coopService;
+    this.serverProperties = serverProperties;
     dirtyObjects = new HashMap<>();
   }
 
@@ -160,7 +165,7 @@ public class ClientService {
   }
 
   /**
-   * Tells the client to drop connection to the player with the specified ID.
+   * Tells the client to drop game connection to the player with the specified ID.
    */
   public void disconnectPlayer(int playerId, Collection<? extends ConnectionAware> receivers) {
     receivers.forEach(connectionAware ->
@@ -209,6 +214,15 @@ public class ClientService {
    */
   public void sendOnlinePlayerList(Collection<UserDetailsResponse> players, ConnectionAware connectionAware) {
     players.forEach(player -> send(player, connectionAware));
+  }
+
+  @EventListener
+  private void onServerShutdown(ApplicationShutdownEvent event) {
+    try {
+      clientGateway.broadcast(new InfoResponse(serverProperties.getShutdown().getMessage()));
+    } catch (Exception e) {
+      log.warn("Could not broadcast shutdown to clients.", e);
+    }
   }
 
   /**
