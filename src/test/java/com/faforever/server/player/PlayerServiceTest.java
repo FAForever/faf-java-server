@@ -32,29 +32,44 @@ public class PlayerServiceTest {
   @Before
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
+    player.setLogin("JUnit");
     instance = new PlayerService(clientService);
   }
 
   @Test
   public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
-    User user = new User();
-    user.setPassword("pw");
-    user.setLogin("JUnit");
-    user.setCountry("CH");
-    user.setPlayer(player);
+    FafUserDetails fafUserDetails = createFafUserDetails();
 
-    player.setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class)));
-
-    FafUserDetails fafUserDetails = new FafUserDetails(user);
     instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(new TestingAuthenticationToken(fafUserDetails, "pw")));
     assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(true));
 
     InetAddress inetAddress = mock(InetAddress.class);
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress)
-      .setUserDetails(new FafUserDetails(user));
+      .setUserDetails(new FafUserDetails(fafUserDetails.getUser()));
 
     instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
 
     assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(false));
+  }
+
+  @Test
+  public void isPlayerOnline() {
+    FafUserDetails fafUserDetails = createFafUserDetails();
+
+    assertThat(instance.isPlayerOnline(fafUserDetails.getUser().getPlayer().getLogin()), is(false));
+    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(new TestingAuthenticationToken(fafUserDetails, "pw")));
+    assertThat(instance.isPlayerOnline(fafUserDetails.getUser().getPlayer().getLogin()), is(true));
+  }
+
+  private FafUserDetails createFafUserDetails() {
+    User user = new User();
+    user.setPassword("pw");
+    user.setLogin(player.getLogin());
+    user.setCountry("CH");
+    user.setPlayer(player);
+
+    player.setClientConnection(new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class)));
+
+    return new FafUserDetails(user);
   }
 }

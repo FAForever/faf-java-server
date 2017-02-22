@@ -10,6 +10,7 @@ import com.faforever.server.client.SessionResponse;
 import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
+import com.faforever.server.error.Requests;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.player.PlayerService;
@@ -57,9 +58,7 @@ public class LegacyServicesActivators {
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
   @Transactional
   public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    if (playerService.isPlayerOnline(loginRequest.getLogin())) {
-      throw new RequestException(ErrorCode.USER_ALREADY_CONNECTED);
-    }
+    Requests.verify(!playerService.isPlayerOnline(loginRequest.getLogin()), ErrorCode.USER_ALREADY_CONNECTED);
 
     try {
       UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword());
