@@ -10,8 +10,8 @@ import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.Player;
-import com.faforever.server.entity.Rankiness;
 import com.faforever.server.entity.User;
+import com.faforever.server.entity.Validity;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
@@ -179,6 +179,10 @@ public class GameService {
         break;
       case ENDED:
         onPlayerGameEnded(player, game);
+        break;
+      case IDLE:
+        // This should be handled by the client and never reach the server
+        log.warn("Received state '{}' from player '{}' for game '{}'", newState, player, game);
         break;
       default:
         throw new ProgrammingError("Uncovered state: " + newState);
@@ -465,8 +469,8 @@ public class GameService {
         Player player = stats.getPlayer();
         armyStatisticsService.process(player, game, game.getArmyStatistics());
       });
+      updateGameValidity(game);
       updateRatingsIfValid(game);
-      updateGameRankiness(game);
       gameRepository.save(game);
     }
 
@@ -477,7 +481,7 @@ public class GameService {
   }
 
   private void updateRatingsIfValid(Game game) {
-    if (game.getRankiness() != Rankiness.RANKED) {
+    if (game.getValidity() != Validity.RANKED) {
       return;
     }
     RatingType ratingType = modService.isLadder1v1(game.getFeaturedMod()) ? RatingType.LADDER_1V1 : RatingType.GLOBAL;
@@ -579,42 +583,42 @@ public class GameService {
    * will be updated
    */
   @VisibleForTesting
-  void updateGameRankiness(Game game) {
-    if (game.getRankiness() != Rankiness.RANKED) {
-      throw new IllegalStateException("Rankiness has already been set to: " + game.getRankiness());
+  void updateGameValidity(Game game) {
+    if (game.getValidity() != Validity.RANKED) {
+      throw new IllegalStateException("Rankiness has already been set to: " + game.getValidity());
     }
 
     int minSeconds = game.getPlayerStats().size() * properties.getGame().getRankedMinTimeMultiplicator();
     if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
-      game.setRankiness(Rankiness.BAD_MOD);
+      game.setValidity(Validity.BAD_MOD);
     } else if (game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && !modService.isCoop(game.getFeaturedMod())) {
-      game.setRankiness(Rankiness.WRONG_VICTORY_CONDITION);
+      game.setValidity(Validity.WRONG_VICTORY_CONDITION);
     } else if (isFreeForAll(game)) {
-      game.setRankiness(Rankiness.FREE_FOR_ALL);
+      game.setValidity(Validity.FREE_FOR_ALL);
     } else if (!areTeamsEven(game)) {
-      game.setRankiness(Rankiness.UNEVEN_TEAMS);
+      game.setValidity(Validity.UNEVEN_TEAMS);
     } else if (!"explored".equals(game.getOptions().get(OPTION_FOG_OF_WAR))) {
-      game.setRankiness(Rankiness.NO_FOG_OF_WAR);
+      game.setValidity(Validity.NO_FOG_OF_WAR);
     } else if (!"false".equals(game.getOptions().get(OPTION_CHEATS_ENABLED))) {
-      game.setRankiness(Rankiness.CHEATS_ENABLED);
+      game.setValidity(Validity.CHEATS_ENABLED);
     } else if (!"Off".equals(game.getOptions().get(OPTION_PREBUILT_UNITS))) {
-      game.setRankiness(Rankiness.PREBUILT_ENABLED);
+      game.setValidity(Validity.PREBUILT_ENABLED);
     } else if (!"Off".equals(game.getOptions().get(OPTION_NO_RUSH))) {
-      game.setRankiness(Rankiness.NO_RUSH_ENABLED);
-    } else if ((int) game.getOptions().get(OPTION_RESTRICTED_CATEGORIES) != 0) {
-      game.setRankiness(Rankiness.BAD_UNIT_RESTRICTIONS);
+      game.setValidity(Validity.NO_RUSH_ENABLED);
+    } else if (game.getOptions().containsKey(OPTION_RESTRICTED_CATEGORIES) && (int) game.getOptions().get(OPTION_RESTRICTED_CATEGORIES) != 0) {
+      game.setValidity(Validity.BAD_UNIT_RESTRICTIONS);
     } else if (game.getMap() == null || !game.getMap().isRanked()) {
-      game.setRankiness(Rankiness.BAD_MAP);
+      game.setValidity(Validity.BAD_MAP);
     } else if (game.getDesyncCounter().intValue() > game.getPlayerStats().size()) {
-      game.setRankiness(Rankiness.TOO_MANY_DESYNCS);
+      game.setValidity(Validity.TOO_MANY_DESYNCS);
     } else if (game.isMutuallyAgreedDraw()) {
-      game.setRankiness(Rankiness.MUTUAL_DRAW);
+      game.setValidity(Validity.MUTUAL_DRAW);
     } else if (game.getPlayerStats().size() < 2) {
-      game.setRankiness(Rankiness.SINGLE_PLAYER);
+      game.setValidity(Validity.SINGLE_PLAYER);
     } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
-      game.setRankiness(Rankiness.UNKNOWN_RESULT);
+      game.setValidity(Validity.UNKNOWN_RESULT);
     } else if (Duration.between(Instant.now(), game.getStartTime().toInstant()).getSeconds() < minSeconds) {
-      game.setRankiness(Rankiness.TOO_SHORT);
+      game.setValidity(Validity.TOO_SHORT);
     }
   }
 

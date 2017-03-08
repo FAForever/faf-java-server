@@ -85,7 +85,6 @@ public class Game {
   @Column(name = "startTime")
   private Timestamp startTime;
   @Column(name = "gameType")
-  @Enumerated(EnumType.ORDINAL)
   private VictoryCondition victoryCondition;
   /**
    * Foreign key to "featured mod", but since there's no constraint in the database yet, hope for the best.
@@ -103,7 +102,7 @@ public class Game {
   private String title;
   @Column(name = "validity")
   @Enumerated(EnumType.ORDINAL)
-  private Rankiness rankiness;
+  private Validity validity;
   @OneToMany(mappedBy = "game")
   private List<GamePlayerStats> playerStats;
   @Transient
@@ -143,7 +142,7 @@ public class Game {
     simMods = new ArrayList<>();
     activePlayers = new HashMap<>();
     desyncCounter = new AtomicInteger();
-    rankiness = Rankiness.RANKED;
+    validity = Validity.RANKED;
     gameVisibility = GameVisibility.PUBLIC;
   }
 

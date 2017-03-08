@@ -1,5 +1,7 @@
 package com.faforever.server.entity;
 
+import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,5 +33,19 @@ public enum VictoryCondition {
    */
   public static VictoryCondition fromString(String string) {
     return fromString.get(string);
+  }
+
+  @Converter(autoApply = true)
+  public static class VictoryConditionConverter implements AttributeConverter<VictoryCondition, String> {
+
+    @Override
+    public String convertToDatabaseColumn(VictoryCondition attribute) {
+      return String.valueOf(attribute.ordinal());
+    }
+
+    @Override
+    public VictoryCondition convertToEntityAttribute(String dbData) {
+      return values()[Integer.parseInt(dbData)];
+    }
   }
 }

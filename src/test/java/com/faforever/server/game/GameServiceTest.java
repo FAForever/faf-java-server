@@ -13,8 +13,8 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.Player;
-import com.faforever.server.entity.Rankiness;
 import com.faforever.server.entity.User;
+import com.faforever.server.entity.Validity;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
@@ -441,18 +441,18 @@ public class GameServiceTest {
     game.getSimMods().add("1-2-3-4");
     when(modService.isModRanked("1-2-3-4")).thenReturn(false);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.BAD_MOD));
+    assertThat(game.getValidity(), is(Validity.BAD_MOD));
   }
 
   @Test
   public void updateGameRankinessUnrankedMap() throws Exception {
     game.getMap().setRanked(false);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.BAD_MAP));
+    assertThat(game.getValidity(), is(Validity.BAD_MAP));
   }
 
   @Test
@@ -460,9 +460,9 @@ public class GameServiceTest {
     game.setVictoryCondition(VictoryCondition.DOMINATION);
     when(modService.isCoop(any())).thenReturn(false);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.WRONG_VICTORY_CONDITION));
+    assertThat(game.getValidity(), is(Validity.WRONG_VICTORY_CONDITION));
   }
 
   @Test
@@ -470,9 +470,9 @@ public class GameServiceTest {
     game.setVictoryCondition(VictoryCondition.ERADICATION);
     when(modService.isCoop(any())).thenReturn(false);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.WRONG_VICTORY_CONDITION));
+    assertThat(game.getValidity(), is(Validity.WRONG_VICTORY_CONDITION));
   }
 
   @Test
@@ -480,17 +480,17 @@ public class GameServiceTest {
     game.setVictoryCondition(VictoryCondition.SANDBOX);
     when(modService.isCoop(any())).thenReturn(false);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.WRONG_VICTORY_CONDITION));
+    assertThat(game.getValidity(), is(Validity.WRONG_VICTORY_CONDITION));
   }
 
   @Test
   public void updateGameRankinessUnitRestriction() throws Exception {
     game.getOptions().put(GameService.OPTION_RESTRICTED_CATEGORIES, 1);
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.BAD_UNIT_RESTRICTIONS));
+    assertThat(game.getValidity(), is(Validity.BAD_UNIT_RESTRICTIONS));
   }
 
   @Test
@@ -498,9 +498,9 @@ public class GameServiceTest {
     addPlayer(game, player2, 3);
     addPlayer(game, new Player(), 4);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.FREE_FOR_ALL));
+    assertThat(game.getValidity(), is(Validity.FREE_FOR_ALL));
   }
 
   @Test
@@ -508,9 +508,9 @@ public class GameServiceTest {
     addPlayer(game, player2, 2);
     addPlayer(game, new Player(), 3);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.UNEVEN_TEAMS));
+    assertThat(game.getValidity(), is(Validity.UNEVEN_TEAMS));
   }
 
   @Test
@@ -529,78 +529,78 @@ public class GameServiceTest {
     game.getReportedArmyScores().put(3, Collections.emptyList());
     game.getReportedArmyScores().put(4, Collections.emptyList());
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.RANKED));
+    assertThat(game.getValidity(), is(Validity.RANKED));
   }
 
   @Test
   public void updateGameRankinessNoFogOfWar() throws Exception {
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "foo");
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.NO_FOG_OF_WAR));
+    assertThat(game.getValidity(), is(Validity.NO_FOG_OF_WAR));
   }
 
   @Test
   public void updateGameRankinessCheatsEnabled() throws Exception {
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "true");
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.CHEATS_ENABLED));
+    assertThat(game.getValidity(), is(Validity.CHEATS_ENABLED));
   }
 
   @Test
   public void updateGameRankinessPrebuiltEnabled() throws Exception {
     game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "On");
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.PREBUILT_ENABLED));
+    assertThat(game.getValidity(), is(Validity.PREBUILT_ENABLED));
   }
 
   @Test
   public void updateGameRankinessNoRushEnabled() throws Exception {
     game.getOptions().put(GameService.OPTION_NO_RUSH, "On");
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.NO_RUSH_ENABLED));
+    assertThat(game.getValidity(), is(Validity.NO_RUSH_ENABLED));
   }
 
   @Test
   public void updateGameRankinessTooManyDesyncs() throws Exception {
     game.getDesyncCounter().set(5);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.TOO_MANY_DESYNCS));
+    assertThat(game.getValidity(), is(Validity.TOO_MANY_DESYNCS));
   }
 
   @Test
   public void updateGameRankinessMutualDraw() throws Exception {
     game.setMutuallyAgreedDraw(true);
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.MUTUAL_DRAW));
+    assertThat(game.getValidity(), is(Validity.MUTUAL_DRAW));
   }
 
   @Test
   public void updateGameRankinessSinglePlayer() throws Exception {
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.SINGLE_PLAYER));
+    assertThat(game.getValidity(), is(Validity.SINGLE_PLAYER));
   }
 
   @Test
   public void updateGameRankinessUnknownResult() throws Exception {
     addPlayer(game, player2, 3);
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.UNKNOWN_RESULT));
+    assertThat(game.getValidity(), is(Validity.UNKNOWN_RESULT));
   }
 
   @Test
@@ -610,15 +610,15 @@ public class GameServiceTest {
     game.getReportedArmyOutcomes().put(1, Collections.singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
     game.setStartTime(Timestamp.from(Instant.now()));
 
-    instance.updateGameRankiness(game);
+    instance.updateGameValidity(game);
 
-    assertThat(game.getRankiness(), is(Rankiness.TOO_SHORT));
+    assertThat(game.getValidity(), is(Validity.TOO_SHORT));
   }
 
   @Test(expected = IllegalStateException.class)
   public void updateGameRankinessAlreadySetThrowsException() throws Exception {
-    game.setRankiness(Rankiness.UNKNOWN_RESULT);
-    instance.updateGameRankiness(game);
+    game.setValidity(Validity.UNKNOWN_RESULT);
+    instance.updateGameValidity(game);
   }
 
   @Test

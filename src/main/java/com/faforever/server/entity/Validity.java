@@ -3,7 +3,7 @@ package com.faforever.server.entity;
 /**
  * Defines whether a game is ranked or - if not - why it isn't ranked.
  */
-public enum Rankiness {
+public enum Validity {
   // Order sensitive
   RANKED,
   TOO_MANY_DESYNCS,

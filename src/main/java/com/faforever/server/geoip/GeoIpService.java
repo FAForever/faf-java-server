@@ -68,7 +68,7 @@ public class GeoIpService {
       try {
         return Optional.of(databaseReader.country(inetAddress).getCountry().getIsoCode());
       } catch (AddressNotFoundException e) {
-        log.warn("Address lookup failed", e);
+        log.warn("No entry for address: {}", inetAddress);
         return Optional.empty();
       }
     });
