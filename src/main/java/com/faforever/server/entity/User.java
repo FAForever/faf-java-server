@@ -13,8 +13,8 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "login")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class User extends Login {
 
   @Column(name = "password")
@@ -29,6 +29,6 @@ public class User extends Login {
 
   @Override
   public String toString() {
-    return "User(" + getId() + ", " + getLogin() + ")";
+    return "User(" + player.getId() + ", " + getLogin() + ")";
   }
 }

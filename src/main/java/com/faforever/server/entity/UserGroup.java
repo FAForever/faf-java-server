@@ -1,6 +1,7 @@
 package com.faforever.server.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Basic;
@@ -15,17 +16,18 @@ import javax.persistence.Table;
 @Table(name = "lobby_admin")
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class UserGroup {
 
   @Id
   @Column(name = "user_id")
-  private int id;
+  private Integer id;
 
   @OneToOne
   @JoinColumn(name = "user_id", updatable = false, insertable = false)
   private User user;
 
   @Basic
-  @Column(name = "group")
+  @Column(name = "\"group\"")
   private int group;
 }

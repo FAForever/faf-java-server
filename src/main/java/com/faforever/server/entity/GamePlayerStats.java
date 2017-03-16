@@ -1,12 +1,15 @@
 package com.faforever.server.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -18,11 +21,13 @@ import java.sql.Timestamp;
 @Immutable
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+@Cacheable
 public class GamePlayerStats {
 
   @Id
   @Column(name = "id")
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
   @ManyToOne
@@ -42,13 +47,13 @@ public class GamePlayerStats {
   private int team;
 
   @Column(name = "place")
-  private int place;
+  private int startSpot;
 
   @Column(name = "mean")
-  private Double mean;
+  private double mean;
 
   @Column(name = "deviation")
-  private Double deviation;
+  private double deviation;
 
   @Column(name = "after_mean")
   private Double afterMean;
@@ -65,4 +70,9 @@ public class GamePlayerStats {
   @ManyToOne
   @JoinColumn(name = "gameId")
   private Game game;
+
+  public GamePlayerStats(Game game, Player player) {
+    this.game = game;
+    this.player = player;
+  }
 }

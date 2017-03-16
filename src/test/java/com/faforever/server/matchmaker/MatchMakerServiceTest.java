@@ -148,6 +148,8 @@ public class MatchMakerServiceTest {
   public void submitSearchTwoFreshPlayersMatch() throws Exception {
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
+    when(gameService.createGame(any(), anyInt(), any(), any(), any(), any(), any(), any()))
+      .thenReturn(CompletableFuture.completedFuture(new Game(1)));
 
     properties.getMatchMaker().setAcceptableQualityWaitTime(0);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
@@ -156,7 +158,7 @@ public class MatchMakerServiceTest {
 
     verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, 1, "SCMP_001",
       null, GameVisibility.PRIVATE, null, null, player1);
-    verify(gameService).joinGame(0, player2);
+    verify(gameService).joinGame(1, player2);
   }
 
   /**

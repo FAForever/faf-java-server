@@ -8,11 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +40,9 @@ public class ModService {
     this.clientService = clientService;
   }
 
-  @PostConstruct
-  public void postConstruct() {
+  @EventListener
+  @Transactional(readOnly = true)
+  public void onApplicationEvent(ContextRefreshedEvent event) {
     coopFeaturedMod = featuredModRepository.findOneByTechnicalName(COOP_MOD_NAME).orElse(null);
     ladder1v1FeaturedMod = featuredModRepository.findOneByTechnicalName(LADDER_1V1_MOD_NAME).orElse(null);
 

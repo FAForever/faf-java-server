@@ -67,7 +67,7 @@ public class UniqueIdService {
 
   public void verify(Player player, String uid) {
     if (!enabled) {
-      log.debug("Skipping unique ID check for player player '{}' because it is disabled", player);
+      log.debug("Skipping unique ID check for player '{}' because it is disabled", player);
       return;
     }
 

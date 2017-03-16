@@ -1,5 +1,6 @@
 package com.faforever.server.entity;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Immutable;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.Immutable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -17,12 +19,13 @@ import java.util.Collection;
 @Getter
 @Setter
 @Immutable
+@EqualsAndHashCode(of = "id")
 public class Avatar {
 
   @Id
   @Column(name = "id")
-  @GeneratedValue
-  private int id;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
   @Column(name = "url")
   private String url;
@@ -30,7 +33,7 @@ public class Avatar {
   @Column(name = "tooltip")
   private String tooltip;
 
-  @OneToMany(mappedBy = "player")
+  @OneToMany(mappedBy = "avatar")
   private Collection<AvatarAssociation> owners;
 
 }

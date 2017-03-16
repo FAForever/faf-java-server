@@ -11,6 +11,7 @@ import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
+import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
@@ -33,6 +34,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
+import javax.persistence.EntityManager;
 import java.net.InetAddress;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -57,6 +59,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -71,7 +74,7 @@ public class GameServiceTest {
   private static final String PLAYER_NAME_2 = "player2";
   private static final String MAP_NAME = "SCMP_001";
   private static final int FAF_MOD_ID = 1;
-  private static final int NEXT_GAME_ID = 1;
+  private static final int NEXT_GAME_ID = 2;
   private static final String QAI = "QAI";
   private static final String AIX = "AIX";
   private static final String OPTION_FACTION = "Faction";
@@ -96,6 +99,8 @@ public class GameServiceTest {
   private RatingService ratingService;
   @Mock
   private PlayerService playerService;
+  @Mock
+  private EntityManager entityManager;
 
   private Player player1;
   private Player player2;
@@ -106,12 +111,12 @@ public class GameServiceTest {
     MapVersion map = new MapVersion();
     map.setRanked(true);
 
-    game = new Game();
-    game.setId(1);
-    game.setMap(map);
-    game.setFeaturedMod(new FeaturedMod());
-    game.setVictoryCondition(VictoryCondition.DEMORALIZATION);
-    game.setStartTime(Timestamp.from(Instant.now().plusSeconds(999)));
+    game = new Game()
+      .setId(1)
+      .setMap(map)
+      .setFeaturedMod(new FeaturedMod())
+      .setVictoryCondition(VictoryCondition.DEMORALIZATION)
+      .setStartTime(Timestamp.from(Instant.now().plusSeconds(999)));
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
     game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "Off");
@@ -133,13 +138,15 @@ public class GameServiceTest {
     FeaturedMod fafFeaturedMod = new FeaturedMod();
     fafFeaturedMod.setId(FAF_MOD_ID);
 
-    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
+    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID - 1));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getPlayer(anyInt())).thenReturn(Optional.empty());
+    doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
+      .when(ratingService).initGlobalRating(any());
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, serverProperties, armyStatisticsService);
-    instance.postConstruct();
+    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, serverProperties, entityManager, armyStatisticsService);
+    instance.onApplicationEvent(null);
   }
 
   @Test
@@ -147,7 +154,7 @@ public class GameServiceTest {
     player1.setCurrentGame(null);
     instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
-    Optional<Game> optional = instance.getGame(NEXT_GAME_ID);
+    Optional<Game> optional = instance.getActiveGame(NEXT_GAME_ID);
     assertThat(optional.isPresent(), is(true));
     Game game = optional.get();
 
@@ -172,7 +179,7 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.joinGame(NEXT_GAME_ID, player2);
 
-    Game game = instance.getGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("Game not found"));
+    Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("Game not found"));
 
     verify(clientService).startGameProcess(game, player1);
     assertThat(player1.getCurrentGame(), is(game));
@@ -363,7 +370,7 @@ public class GameServiceTest {
     instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
-    Game game = instance.getGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
+    Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
     assertThat(game.getState(), is(GameState.OPEN));
 
     instance.joinGame(NEXT_GAME_ID, player2);
@@ -440,7 +447,7 @@ public class GameServiceTest {
     assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now().plusSeconds(1)))));
     assertThat(game.getStartTime(), is(greaterThan(Timestamp.from(Instant.now().minusSeconds(10)))));
 
-    verify(gameRepository).save(game);
+    verify(entityManager).persist(game);
     verify(clientService).sendDelayed(any(GameResponse.class), any(), any(), any());
   }
 
@@ -648,7 +655,7 @@ public class GameServiceTest {
     instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     assertThat(player1.getCurrentGame(), is(notNullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
-    assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(true));
+    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(true));
 
     User user = new User();
     user.setPassword("pw");
@@ -661,7 +668,7 @@ public class GameServiceTest {
 
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
-    assertThat(instance.getGame(NEXT_GAME_ID).isPresent(), is(false));
+    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(false));
   }
 
   @Test

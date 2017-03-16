@@ -46,12 +46,8 @@ public class TeamKillServiceTest {
     Game game = new Game();
     game.setId(10);
 
-    Player player = new Player();
-    player.setCurrentGame(game);
-    player.setId(1);
-
-    Player killer = new Player();
-    player.setId(2);
+    Player player = (Player) new Player().setCurrentGame(game).setId(1);
+    Player killer = (Player) new Player().setId(2);
 
     when(playerService.getPlayer(player.getId())).thenReturn(Optional.of(player));
     when(playerService.getPlayer(killer.getId())).thenReturn(Optional.of(killer));
@@ -71,11 +67,8 @@ public class TeamKillServiceTest {
 
   @Test
   public void reportTeamKillWithoutGame() throws Exception {
-    Player player = new Player();
-    player.setId(1);
-
-    Player killer = new Player();
-    player.setId(2);
+    Player player = (Player) new Player().setId(1);
+    Player killer = (Player) new Player().setId(2);
 
     when(playerService.getPlayer(player.getId())).thenReturn(Optional.of(player));
     when(playerService.getPlayer(killer.getId())).thenReturn(Optional.of(killer));
@@ -102,11 +95,9 @@ public class TeamKillServiceTest {
     reporter.setCurrentGame(new Game());
     reporter.setId(1);
 
-    Player killer = new Player();
-    killer.setId(2);
+    Player killer = (Player) new Player().setId(2);
 
-    Player victim = new Player();
-    killer.setId(2);
+    Player victim = (Player) new Player().setId(2);
 
     when(playerService.getPlayer(killer.getId())).thenReturn(Optional.of(killer));
 

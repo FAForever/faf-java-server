@@ -1,11 +1,13 @@
 package com.faforever.server.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -13,12 +15,13 @@ import javax.persistence.Table;
 @Table(name = "game_featuredMods")
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class FeaturedMod {
 
   @Id
   @Column(name = "id")
-  @GeneratedValue
-  private int id;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
   @Column(name = "gamemod")
   private String technicalName;
@@ -32,7 +35,7 @@ public class FeaturedMod {
   @Column(name = "publish")
   private boolean publish;
 
-  @Column(name = "order")
+  @Column(name = "\"order\"")
   private int displayOrder;
 
   @Column(name = "git_url")

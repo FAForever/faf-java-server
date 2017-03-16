@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,6 +89,16 @@ public class RatingService {
       });
   }
 
+  public void initGlobalRating(com.faforever.server.entity.Player player) {
+    Assert.state(player.getGlobalRating() == null, "Global rating has already been set for player: " + player);
+    player.setGlobalRating(new GlobalRating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
+  }
+
+  public void initLadder1v1Rating(com.faforever.server.entity.Player player) {
+    Assert.state(player.getLadder1v1Rating() == null, "Ladder1v1 rating has already been set for player: " + player);
+    player.setLadder1v1Rating(new Ladder1v1Rating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
+  }
+
   private Map<Integer, ScoredTeam> teamsById(List<GamePlayerStats> playerStats, int noTeamId) {
     int highestTeamId = playerStats.stream()
       .map(GamePlayerStats::getTeam)
@@ -96,7 +107,7 @@ public class RatingService {
     Map<Integer, ScoredTeam> teamsById = new HashMap<>();
     for (GamePlayerStats playerStat : playerStats) {
       IPlayer player = new Player<>(playerStat.getPlayer().getId());
-      jskills.Rating rating = toJSkillRating(playerStat);
+      jskills.Rating rating = new jskills.Rating(playerStat.getMean(), playerStat.getDeviation());
 
       int teamId = playerStat.getTeam();
       if (teamId == noTeamId) {
@@ -107,13 +118,6 @@ public class RatingService {
       teamsById.get(teamId).getScore().updateAndGet(score -> score + playerStat.getScore());
     }
     return teamsById;
-  }
-
-  private jskills.Rating toJSkillRating(GamePlayerStats playerStat) {
-    if (playerStat.getMean() == null || playerStat.getDeviation() == null) {
-      return gameInfo.getDefaultRating();
-    }
-    return new jskills.Rating(playerStat.getMean(), playerStat.getDeviation());
   }
 
   /**

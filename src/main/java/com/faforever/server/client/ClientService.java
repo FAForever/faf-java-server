@@ -47,7 +47,7 @@ public class ClientService {
 
   private final ClientGateway clientGateway;
   private final CoopService coopService;
-  private final Map<Object, DelayedResponse<?>> dirtyObjects;
+  private final Map<Object, DelayedResponse> dirtyObjects;
   private final ServerProperties serverProperties;
 
   public ClientService(ClientGateway clientGateway, CoopService coopService, ServerProperties serverProperties) {
@@ -152,10 +152,12 @@ public class ClientService {
    * with previous submissions of the same object.
    * @param <T> the type of the submitted object
    */
+  @SuppressWarnings("unchecked")
   public <T extends ServerResponse> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
+    log.trace("Received object to send delayed: {}", object);
     synchronized (dirtyObjects) {
-      dirtyObjects.computeIfAbsent(idFunction.apply(object),
-        o -> new DelayedResponse<>(object, minDelay, maxDelay)).onUpdated();
+      dirtyObjects.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
+        .onUpdated(object);
     }
   }
 
@@ -191,12 +193,11 @@ public class ClientService {
         .map(Map.Entry::getKey)
         .collect(Collectors.toList());
 
-      int size = objectIds.size();
-      if (size < 1) {
+      if (objectIds.isEmpty()) {
         return;
       }
 
-      log.trace("Sending '{}' delayed responses", size);
+      log.trace("Sending '{}' delayed responses", objectIds.size());
       objectIds.forEach(id -> {
         DelayedResponse<?> delayedResponse = dirtyObjects.get(id);
         clientGateway.broadcast(delayedResponse.getResponse());

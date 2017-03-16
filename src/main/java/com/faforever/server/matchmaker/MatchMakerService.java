@@ -154,6 +154,7 @@ public class MatchMakerService {
 
     log.trace("Processing '{}' entries of pool '{}'", pool.size(), poolName);
     pool.values().stream()
+      .sorted(Comparator.comparingInt(search -> search.player.getId()))
       .map((search) -> {
         processedSearches.add(search);
         return findMatch(search, processedSearches);

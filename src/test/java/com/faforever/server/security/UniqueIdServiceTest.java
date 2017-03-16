@@ -295,8 +295,6 @@ public class UniqueIdServiceTest {
 
   @NotNull
   private static Player newPlayer(int id) {
-    Player player = new Player();
-    player.setId(id);
-    return player;
+    return (Player) new Player().setId(id);
   }
 }

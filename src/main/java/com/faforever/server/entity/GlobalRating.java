@@ -11,5 +11,7 @@ import javax.persistence.Table;
 @Data
 @NoArgsConstructor
 public class GlobalRating extends Rating {
-
+  public GlobalRating(Player player, double mean, double deviation) {
+    super(player.getId(), 0, true, mean, deviation, player);
+  }
 }

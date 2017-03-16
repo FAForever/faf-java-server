@@ -7,32 +7,28 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * Hold a response as well as information about when the it was created or updated. This
- * information can be used to determine whether or not a response should be processed.
+ * Hold a response as well as information about when the it was created or updated. This information can be used to
+ * determine whether or not a response should be processed.
  */
 @Getter
 public class DelayedResponse<T extends ServerResponse> {
 
   /**
-   * The response object.
-   */
-  private final T response;
-
-  /**
    * The instant when this instance of {@link DelayedResponse} was created.
    */
   private final Instant createTime;
-
   /**
    * Minimum time to wait since the last {@code updateTime} before the object is allowed to be sent.
    */
   private final Duration minDelay;
-
   /**
    * Maximum time to wait since {@code createTime} until the object has to be sent.
    */
   private final Duration maxDelay;
-
+  /**
+   * The response object.
+   */
+  private T response;
   /**
    * The instant when this {@link DelayedResponse} was updated.
    */
@@ -46,7 +42,8 @@ public class DelayedResponse<T extends ServerResponse> {
     updateTime = createTime;
   }
 
-  public void onUpdated() {
+  public void onUpdated(T object) {
     updateTime = Instant.now();
+    this.response = (T) object;
   }
 }
