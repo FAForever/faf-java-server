@@ -155,7 +155,10 @@ dependencies {
   compile("org.flywaydb:flyway-core:${flywayVersion}")
   compile("javax.inject:javax.inject:${javaxInjectVersion}")
   compile("org.projectlombok:lombok:${lombokVersion}")
-  compile("com.maxmind.geoip2:geoip2:${geoip2Version}")
+
+  compile("com.maxmind.geoip2:geoip2:${geoip2Version}"){
+    exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+  }
   compile("com.zaxxer:HikariCP:${hikariCpVersion}") {
     exclude(module: 'tools')
   }
