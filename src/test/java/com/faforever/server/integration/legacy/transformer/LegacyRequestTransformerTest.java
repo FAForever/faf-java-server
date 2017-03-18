@@ -205,7 +205,7 @@ public class LegacyRequestTransformerTest {
   public void transformGameResultToArmyScoreReport() throws Exception {
     ArmyScoreReport armyScoreReport = (ArmyScoreReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameResult",
-      KEY_ARGS, Arrays.asList(1d, "score 10")
+      KEY_ARGS, Arrays.asList(1, "score 10")
     ));
 
     assertThat(armyScoreReport, is(notNullValue()));
@@ -217,7 +217,7 @@ public class LegacyRequestTransformerTest {
   public void transformGameResultToArmyOutcomeReport() throws Exception {
     ArmyOutcomeReport armyOutcomeReport = (ArmyOutcomeReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameResult",
-      KEY_ARGS, Arrays.asList(1d, "victory")
+      KEY_ARGS, Arrays.asList(1, "victory")
     ));
 
     assertThat(armyOutcomeReport, is(notNullValue()));

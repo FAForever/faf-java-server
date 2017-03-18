@@ -306,6 +306,27 @@ public class GameServiceTest {
   }
 
   @Test
+  public void reportArmyScoreAiScore() throws Exception {
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updateAiOption(player1, "QAI", OPTION_ARMY, 2);
+
+    instance.reportArmyScore(player1, 1, 10);
+    instance.reportArmyScore(player1, 2, -1);
+
+    assertThat(game.getReportedArmyScores().values(), hasSize(1));
+    assertThat(game.getReportedArmyScores().get(player1.getId()), hasSize(2));
+  }
+
+  @Test
+  public void reportArmyScoreNotInGame() throws Exception {
+    assertThat(player2.getCurrentGame(), is(nullValue()));
+
+    instance.reportArmyScore(player2, 1, 10);
+
+    assertThat(game.getReportedArmyScores().values(), is(empty()));
+  }
+
+  @Test
   public void reportArmyOutcome() throws Exception {
     player2.setCurrentGame(game);
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);

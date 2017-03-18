@@ -4,6 +4,7 @@ import com.faforever.server.client.ConnectToPlayerResponse;
 import com.faforever.server.client.DisconnectPlayerResponse;
 import com.faforever.server.client.InfoResponse;
 import com.faforever.server.client.SessionResponse;
+import com.faforever.server.client.UpdatedAchievementsResponse;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.game.GameResponse;
@@ -39,6 +40,7 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerRespo
       .put(GameResponse.class, GameResponseTransformer.INSTANCE)
       .put(CoopMissionResponse.class, CoopMissionsResponseTransformer.INSTANCE)
       .put(DisconnectPlayerResponse.class, DisconnectPeerResponseTransformer.INSTANCE)
+      .put(UpdatedAchievementsResponse.class, UpdatedAchievementsTransformer.INSTANCE)
       .build();
   }
 

@@ -1,7 +1,7 @@
 package com.faforever.server.stats.achievements;
 
 import com.faforever.server.api.ApiAccessor;
-import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.entity.Player;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ public class AchievementService {
     this.apiAccessor = apiAccessor;
   }
 
-  public CompletionStage<List<UpdatedAchievement>> executeBatchUpdate(Player player, List<AchievementUpdate> achievementUpdates) {
+  public CompletionStage<List<UpdatedAchievementResponse>> executeBatchUpdate(Player player, List<AchievementUpdate> achievementUpdates) {
     log.debug("Updating '{}' achievements for player '{}'", achievementUpdates.size(), player);
     return apiAccessor.updateAchievements(achievementUpdates);
   }

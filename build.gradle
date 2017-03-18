@@ -137,12 +137,13 @@ dependencies {
   compile("org.springframework.boot:spring-boot-starter-integration")
   compile("org.springframework.boot:spring-boot-starter-security")
   compile("org.springframework.boot:spring-boot-starter-jetty")
+  compile("org.springframework.boot:spring-boot-devtools")
   compile("org.springframework.security:spring-security-messaging")
+  compile("org.springframework.security:spring-security-jwt:${springSecurityJwtVersion}")
   compile("org.springframework.security.oauth:spring-security-oauth2")
   compile("org.springframework:spring-context-support")
   compile("org.springframework.integration:spring-integration-ip")
   compile("org.springframework.integration:spring-integration-security")
-  compile("org.springframework.boot:spring-boot-devtools")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
 
   compile("io.reactivex.rxjava2:rxjava:${rxJavaVersion}")
@@ -155,6 +156,7 @@ dependencies {
   compile("org.flywaydb:flyway-core:${flywayVersion}")
   compile("javax.inject:javax.inject:${javaxInjectVersion}")
   compile("org.projectlombok:lombok:${lombokVersion}")
+  compile("com.github.jasminb:jsonapi-converter:${jsonApiConverterVersion}")
 
   compile("com.maxmind.geoip2:geoip2:${geoip2Version}"){
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'

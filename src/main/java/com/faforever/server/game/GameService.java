@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -332,7 +333,7 @@ public class GameService {
       return;
     }
 
-    log.debug("Player '{}' reported result for army '{}' in game '{}': {}", player, armyId, game, score);
+    log.debug("Player '{}' reported score for army '{}' in game '{}': {}", player, armyId, game, score);
     game.getReportedArmyScores().computeIfAbsent(player.getId(), playerId -> new ArrayList<>()).add(new ArmyScore(armyId, score));
   }
 
@@ -532,7 +533,8 @@ public class GameService {
   }
 
   private Optional<Integer> findArmy(int armyId, Game game) {
-    return game.getPlayerOptions().values().stream()
+    return Stream.concat(game.getPlayerOptions().values().stream(), game.getAiOptions().values().stream())
+      .filter(options -> options.containsKey("Army"))
       .map(options -> (int) options.get("Army"))
       .filter(id -> id == armyId)
       .findFirst();

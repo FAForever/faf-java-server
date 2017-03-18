@@ -1,7 +1,7 @@
 package com.faforever.server.client;
 
 import com.faforever.server.api.dto.AchievementState;
-import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.Avatar;
@@ -121,7 +121,7 @@ public class ClientServiceTest {
 
   @Test
   public void reportUpdatedAchievements() throws Exception {
-    List<UpdatedAchievement> list = Collections.singletonList(new UpdatedAchievement(true, AchievementState.UNLOCKED));
+    List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", true, AchievementState.UNLOCKED));
 
     instance.reportUpdatedAchievements(list, player);
 
@@ -129,7 +129,7 @@ public class ClientServiceTest {
     verify(clientGateway).send(captor.capture(), any());
 
     assertThat(captor.getValue().getUpdatedAchievements(), hasSize(1));
-    assertThat(captor.getValue().getUpdatedAchievements().get(0).getState(), is(AchievementState.UNLOCKED));
+    assertThat(captor.getValue().getUpdatedAchievements().get(0).getCurrentState(), is(AchievementState.UNLOCKED));
     assertThat(captor.getValue().getUpdatedAchievements().get(0).getCurrentSteps(), is(nullValue()));
   }
 

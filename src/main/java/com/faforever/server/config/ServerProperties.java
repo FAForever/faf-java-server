@@ -13,7 +13,7 @@ public class ServerProperties {
 
   private int port = 8001;
   private String version = "dev";
-  private String apiBaseUrl = "http://localhost:8080";
+  private Api api = new Api();
   private TrueSkill trueSkill = new TrueSkill();
   private Uid uid = new Uid();
   private MatchMaker matchMaker = new MatchMaker();
@@ -84,5 +84,14 @@ public class ServerProperties {
      */
     private String privateKey;
     private String linkToSteamUrl;
+  }
+
+  @Data
+  public static class Api {
+    private String baseUrl = "http://localhost:8080";
+    private int maxPageSize = 10_000;
+    private String clientId;
+    private String clientSecret;
+    private String accessTokenUri;
   }
 }

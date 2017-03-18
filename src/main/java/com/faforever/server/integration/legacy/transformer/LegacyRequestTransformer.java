@@ -199,7 +199,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   private ClientMessage handleGameResult(Map<String, Object> source) {
     List<Object> args;
     args = getArgs(source);
-    int armyId = ((Double) args.get(0)).intValue();
+    int armyId = (int) args.get(0);
     String[] results = ((String) args.get(1)).split(" ");
 
     if ("score".equals(results[0])) {

@@ -15,8 +15,9 @@ public class UpdatedAchievementsResponse implements ServerResponse {
 
   @Data
   public static class UpdatedAchievement {
+    private final String achievementId;
     private final Integer currentSteps;
-    private final AchievementState state;
+    private final AchievementState currentState;
     private final boolean newlyUnlocked;
   }
 }

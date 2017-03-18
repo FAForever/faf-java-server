@@ -10,14 +10,6 @@ spring:
     admin:
       url: ${SPRING_BOOT_ADMIN_URL:http://faf-spring-boot-admin:8030}
 
-security:
-  oauth2:
-    client:
-      clientId: ${API_OAUTH2_CLIENT_ID}
-      clientSecret: ${API_OAUTH2_CLIENT_SECRET}
-      accessTokenUri: ${API_OAUTH2_ACCESS_TOKEN_URI:https://japi.faforever.com/oauth/token}
-      userAuthorizationUri: ${API_OAUTH2_AUTHORIZATION_URI:https://japi.faforever.com/oauth/authorize}
-
 faf-server:
   uid:
     enabled: true

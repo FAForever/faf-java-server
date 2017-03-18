@@ -1,7 +1,7 @@
 package com.faforever.server.client;
 
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
-import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
@@ -85,9 +85,14 @@ public class ClientService {
     send(new HostGameResponse(game.getMapName()), connectionAware);
   }
 
-  public void reportUpdatedAchievements(List<UpdatedAchievement> playerAchievements, @NotNull ConnectionAware connectionAware) {
+  public void reportUpdatedAchievements(List<UpdatedAchievementResponse> playerAchievements, @NotNull ConnectionAware connectionAware) {
     send(new UpdatedAchievementsResponse(playerAchievements.stream()
-        .map(item -> new UpdatedAchievementsResponse.UpdatedAchievement(item.getCurrentSteps(), item.getState(), item.isNewlyUnlocked()))
+        .map(item -> new UpdatedAchievementsResponse.UpdatedAchievement(
+          item.getAchievementId(),
+          item.getCurrentSteps(),
+          item.getState(),
+          item.isNewlyUnlocked()
+        ))
         .collect(Collectors.toList())),
       connectionAware);
   }

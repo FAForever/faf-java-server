@@ -18,16 +18,13 @@ logging:
   level:
     com.faforever.server: trace
 
-security:
-  oauth2:
-    client:
-      clientId: faf-server
-      clientSecret: banana
-      accessTokenUri: ${API_OAUTH2_ACCESS_TOKEN_URI:http://localhost:8080/oauth/token}
-      userAuthorizationUri: ${API_OAUTH2_AUTHORIZATION_URI:http://localhost:8080/oauth/authorize}
-
 faf-server:
   uid:
     enabled: false
   geo-ip:
     database-file: build/cache/geoIp.mmdb
+  api:
+    base-url: ${API_BASE_URL:http://localhost:8010}
+    client-id: ${API_CLIENT_ID:faf-server}
+    client-secret: ${API_CLIENT_SECRET:banana}
+    access-token-uri: ${API_ACCESS_TOKEN_URI:http://localhost:8010/oauth/token}
