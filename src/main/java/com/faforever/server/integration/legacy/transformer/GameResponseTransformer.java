@@ -17,7 +17,7 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
 
   @Override
   public Map<String, Serializable> transform(GameResponse source) {
-    return ImmutableMap.<String, Serializable>builder()
+    final ImmutableMap.Builder<String, Serializable> response = ImmutableMap.<String, Serializable>builder()
       .put("command", "game_info")
       .put("visibility", source.getGameVisibility().getString())
       .put("password_protected", source.getPassword() != null)
@@ -34,8 +34,15 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
       .put("launched_at", source.getStartTime() != null ? source.getStartTime().toEpochMilli() / 1000d : 0d)
       .put("teams", teams(source))
       // FIXME implement this nightmare
-      .put("featured_mod_versions", ImmutableMap.of())
-      .build();
+      .put("featured_mod_versions", ImmutableMap.of());
+
+    if (source.getMinRating() != null) {
+      response.put("min_rating", source.getMinRating());
+    }
+    if (source.getMaxRating() != null) {
+      response.put("max_rating", source.getMaxRating());
+    }
+    return response.build();
   }
 
   private String clientGameState(GameState gameState) {

@@ -24,6 +24,8 @@ public class GameResponse implements ServerResponse {
   private final List<Player> players;
   private final int maxPlayers;
   private final Instant startTime;
+  private final Integer minRating;
+  private final Integer maxRating;
 
   @Data
   public static class Player {

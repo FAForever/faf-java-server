@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class GameResponseTransformerTest {
@@ -39,6 +40,8 @@ public class GameResponseTransformerTest {
     assertThat(result.get("max_players"), is(6));
     assertThat((double) result.get("launched_at"), is(Matchers.lessThan(Instant.now().plusSeconds(1).toEpochMilli() / 1000d)));
     assertThat((double) result.get("launched_at"), is(Matchers.greaterThan(Instant.now().minusSeconds(10).toEpochMilli() / 1000d)));
+    assertThat(result.get("min_rating"), is(1500));
+    assertThat(result.get("max_rating"), is(nullValue()));
     assertThat(result.get("teams"), is(ImmutableMap.of(
       "2", Arrays.asList("Player 1", "Player 2"),
       "3", Arrays.asList("Player 3", "Player 4")
@@ -95,7 +98,9 @@ public class GameResponseTransformerTest {
         new GameResponse.Player(3, "Player 4")
       ),
       6,
-      Instant.now()
+      Instant.now(),
+      1500,
+      null
     );
   }
 }
