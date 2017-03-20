@@ -78,7 +78,7 @@ This project uses:
 
 ## Architecture
 
-Open with [draw.io](https://www.draw.io/): https://drive.google.com/file/d/0B9_8tdXfnFw2MnJjZlJ0RDZlMGc/view?usp=sharing 
+[Architecture overview](https://www.draw.io/?lightbox=1&highlight=0000ff&edit=_blank&layers=1&nav=1&title=faf-server-eip-v3.xml#Uhttps%3A%2F%2Fdrive.google.com%2Fuc%3Fid%3D0B9_8tdXfnFw2MnJjZlJ0RDZlMGc%26export%3Ddownload)
 
 ## Learn
 
