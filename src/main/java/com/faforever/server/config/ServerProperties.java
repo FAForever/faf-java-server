@@ -19,6 +19,15 @@ public class ServerProperties {
   private MatchMaker matchMaker = new MatchMaker();
   private Game game = new Game();
   private GeoIp geoIp = new GeoIp();
+  private Shutdown shutdown = new Shutdown();
+
+  @Data
+  public static class Shutdown {
+    /**
+     * Message to broadcast to all users when the server is going to shut down.
+     */
+    private String message;
+  }
 
   @Data
   public static class GeoIp {
