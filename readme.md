@@ -31,40 +31,10 @@ In order to run the application from source code:
 1. Launch `FafServerApplication`
  
 ### From binary
- 
-In order to run the application from prebuilt binaries:
- 
-```
-docker run --name faf-server \
-  -e DATABASE_ADDRESS=localhost:3306 \
-  -e DATABASE_USERNAME=root \
-  -e DATABASE_PASSWORD=banana \
-  -e DATABASE_NAME=faf_lobby \
-  -e API_OAUTH2_CLIENT_ID=faf-server \
-  -e API_OAUTH2_CLIENT_SECRET=banana \
-  -e SERVER_PROFILE=dev \
-  -d micheljung/faf-server:0.0.1-SNAPSHOT
-```
 
-To run in production, you probably want to create an environment file (e.g. `env.list`):
+Given the number of required configuration values, it's easiest to run the server using `faf-stack`:
 
-```
-DATABASE_ADDRESS=<db_address>
-DATABASE_USERNAME=<username>
-DATABASE_PASSWORD=<password>
-DATABASE_NAME=<db_name>
-API_OAUTH2_CLIENT_ID=<client_id>
-API_OAUTH2_CLIENT_SECRET=<client_secret>
-UID_PRIVATE_KEY=<private_key>
-SERVER_PROFILE=prod
-```
-
-And run with:
-```
-docker run --name faf-server \
-  --env-file ./env.list \
-  -d micheljung/faf-server:0.0.1-SNAPSHOT
-```
+    docker-compose up -d faf-server
 
 ## Technology Stack
 
@@ -93,31 +63,35 @@ based server.
 | Java Server | Python Server |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Uses a very popular framework in order to: <p><ul><li>Reuse mature and stable technology instead of building "our own thing"</li><li>Reduce the amount of code to be written</li><li>Reduce possible of bugs and vulnerabilities</li><li>Be easily adjustable for future requirements</li></ul></p> | Doesn't use any framework, so that it: <p><ul><li>Reinvents the wheel</li><li>Requires much more code to be written</li><li>Is more error-prone</li><li>Doesn't adjust well for future requirements</li></ul></p> |
-| Uses a statically typed programming language which: <p><ul><li>Drastically reduces the amount of possible bugs</li><li>Allows to find many bugs before the software is even started</li><li>Makes it a lot easier for developers to find their way around</li></ul></p> | Uses a dynamically typed programming language which: <p><ul><li>Allows the developer to [do things that make no sense at all](https://semitwist.com/articles/article/view/why-i-hate-python-or-any-dynamic-language-really)</li><li>Makes it very difficult to impossible to automatically detect bugs, so you usually only find them when the software is running</li><li>Makes it much harder for developers to find their way around<li></ul></p> |
+| Uses a statically typed programming language which: <p><ul><li>Drastically reduces the amount of possible bugs</li><li>Allows to find many bugs before the software is even started</li><li>Makes it a lot easier for developers to find their way around</li></ul></p> | Uses a dynamically typed programming language which: <p><ul><li>Allows the developer to [do things that make no sense at all](https://semitwist.com/articles/article/view/why-i-hate-python-or-any-dynamic-language-really)</li><li>Makes it very difficult to impossible to automatically detect bugs, so you usually only find them when the software is running</li><li>Makes it much harder for (especially new) developers to find their way around</li></ul></p> |
 | Makes use of a very strong and mature ecosystem when it comes to libraries, documentation, build tools, developer tools and anything you need. | Lives in an ecosystem that is still quite immature, lacks good documentation and has [laughable build tools](https://pythonrants.wordpress.com/2013/12/06/why-i-hate-virtualenv-and-pip/). |
 | Is highly decoupled from the underlying communication protocol, so that additional protocols can be added easily and supported simultaneously. | Is strongly coupled to the underlying communication protocol so that it's difficult to add new protocols or support multiple protocols at once. Also the server's internal implementation can't be changed easily without breaking client compatibility. |
 | Makes use of many design patterns of modern Software development, making it easily understandable (for educated developers) and provides high flexibility | Uses almost no design patterns, making it more difficult to understand and less flexible. |
 | Runs on Windows, Linux and Mac | Can only be run on Linux based systems (In order to run it on Windows, developers have to set up a Linux virtual machine) |
-| Requires very little set up for developers to get started | Requires quite some work for developers to get started, especially on Windows systems (you have to set up a virtual machine) |
-| Was built from scratch so it's free from any "legacy bugs" that are unknown or difficult to figure out. | Is a refactoring of a terrible code base so that there are many "left overs", and has given us bugs nobody has yet figured out why they happen. |
-| Can be managed while it is running (e.g. configuration values can be changed, or commands can be executed) using a web interface. | Can not be managed once it's running, but needs to be restarted every time. |
-| Produces very clear, well readable and helpful logs. | Produces a lot of unreadable, messy or even useless log messages. |
+| Requires very little set up for developers to get started | Requires quite some work for developers to get started, especially on Windows systems (you have to set up a virtual machine and manually install various dependencies) |
+| Was built from scratch so it's free from any "legacy bugs" that are unknown or difficult to figure out. | Is a refactoring of a terrible code base so that there are many "left overs", and has given us ridiculous bugs nobody has yet figured out why they happen (see list of problems below). |
+| Can be managed while it is running (e.g. configuration values can be changed, or commands can be executed) using a web interface. | Can not be managed once it's running, instead it needs to be restarted for every change. |
+| Produces very clear, well readable and helpful logs. | Produces a lot of unreadable, messy and useless log messages. |
 | Follows [Clean Code](https://dzone.com/articles/clean-code-principles?edition=154263&utm_source=Weekly%20Digest&utm_medium=email&utm_campaign=wd%202017-01-11) principles to assure high quality and maintainability. | Was built by "[Hackers](https://danielmiessler.com/study/programmer_hacker_developer/#gs.vEWu9K4)" with no greater design in mind, with focus on "getting the job done". |
-| Is actively maintained by me, and soon some others. | Hasn't had a committed maintainer for over a year. |
+| Is actively maintained by me, and various other people are (interested in) contributing. | Hasn't had a committed maintainer for over a year, and nobody is willing take over. Many unfinished PRs are lying around as the original authors lost interest, and nobody is taking care. |
 
 ## Solved problems of the current server
 
-The following issues that exist in the Python server are not present in this Java server:
+The following issues that exist in the Python server are not present in this Java server. Even though they've only "recently" been reported, all these problems have been around for more than a year.
 
 * [FAForever/server#115](https://github.com/FAForever/server/issues/115) Include session details in message logging for {Lobby,Game}Connection
 * [FAForever/server#116](https://github.com/FAForever/server/issues/116) Not all online players are reported
+* [FAForever/server#162](https://github.com/FAForever/server/issues/162) Server sending game connection messages in the wrong order
+* [FAForever/server#166](https://github.com/FAForever/server/issues/166) Server bothers with whitespace in json messages
 * [FAForever/server#142](https://github.com/FAForever/server/issues/142) Server misreporting gameInfo to clients
 * [FAForever/server#193](https://github.com/FAForever/server/issues/193) Explicit dependency versions
-* [FAForever/server#195](https://github.com/FAForever/server/issues/195) Coop Leaderboards
-* [FAForever/server#213](https://github.com/FAForever/server/issues/213) Coop Leaderboards
+* [FAForever/server#195](https://github.com/FAForever/server/issues/195) Coop Leaderboards [not updating]
+* [FAForever/server#200](https://github.com/FAForever/server/issues/200) Ingame swords still display in aeolus
+* [FAForever/server#213](https://github.com/FAForever/server/issues/213) Games without game result will still count as rated
 * [FAForever/server#224](https://github.com/FAForever/server/issues/224) Player reported as "in game" even though they're not
 * [FAForever/server#225](https://github.com/FAForever/server/issues/225) Players in lobby are not always detected properly
 * [FAForever/server#253](https://github.com/FAForever/server/issues/253) Player stats sometimes not stored
+* [FAForever/server#276](https://github.com/FAForever/server/issues/276) 5-15 Zombie-games per day since server (re)start
 
 ## Unimplemented features
 
@@ -127,7 +101,6 @@ The following features of the Python server have not yet been implemented in thi
 * Accepting "mutually agreed draw"
 * Timeout unstarted games
 * Keep the user's IRC password in sync
-* Broadcast message on shutdown
 * Tell the client to join chat channels
 
 ## Additional features
@@ -136,4 +109,4 @@ This Java server provides the following additional features over the Python serv
 
 * Management and monitoring using a web interface
 * Automatic, weekly update of the GeoIP file (used to display the country flags in the client)
-* Specify min/max rating for games
+* Accept min/max rating for games
