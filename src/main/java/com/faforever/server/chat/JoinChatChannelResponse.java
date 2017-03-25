@@ -9,6 +9,6 @@ import java.util.Set;
  * Tells the client to join chat channels.
  */
 @Data
-public class JoinChatResponse implements ServerResponse {
+public class JoinChatChannelResponse implements ServerResponse {
   private final Set<String> channels;
 }

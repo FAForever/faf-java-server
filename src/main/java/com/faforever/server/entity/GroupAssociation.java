@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
@@ -17,7 +19,7 @@ import javax.persistence.Table;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class UserGroup {
+public class GroupAssociation {
 
   @Id
   @Column(name = "user_id")
@@ -29,5 +31,13 @@ public class UserGroup {
 
   @Basic
   @Column(name = "\"group\"")
-  private int group;
+  @Enumerated(EnumType.ORDINAL)
+  private Group group;
+
+  public enum Group {
+    // Order is crucial
+    INVALID,
+    ADMIN,
+    MODERATOR
+  }
 }

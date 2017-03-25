@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 
 @Data
 @ConfigurationProperties(prefix = "faf-server", ignoreUnknownFields = false)
@@ -20,6 +22,7 @@ public class ServerProperties {
   private Game game = new Game();
   private GeoIp geoIp = new GeoIp();
   private Shutdown shutdown = new Shutdown();
+  private Chat chat = new Chat();
 
   @Data
   public static class Shutdown {
@@ -93,5 +96,17 @@ public class ServerProperties {
     private String clientId;
     private String clientSecret;
     private String accessTokenUri;
+  }
+
+  @Data
+  public static class Chat {
+    /** List of channels the client is being told to join. */
+    private List<String> defaultChannels = Collections.singletonList("#aeolus");
+    /** List of channels administrators are being told to join. */
+    private List<String> adminChannels = Collections.singletonList("#admin");
+    /** List of channels moderators are being told to join. */
+    private List<String> moderatorChannels = Collections.singletonList("#moderators");
+    /** Format of clan channel names. Will be formatted with the clan's acronym. */
+    private String clanChannelFormat = "#%s_clan";
   }
 }

@@ -3,6 +3,7 @@ package com.faforever.server.security;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.BanDetails;
+import com.faforever.server.entity.GroupAssociation.Group;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import lombok.ToString;
@@ -44,7 +45,7 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
     ArrayList<GrantedAuthority> roles = new ArrayList<>();
     roles.add(new SimpleGrantedAuthority("ROLE_USER"));
 
-    if (user.getUserGroup() != null && user.getUserGroup().getGroup() == 1) {
+    if (user.getGroupAssociation() != null && user.getGroupAssociation().getGroup() == Group.ADMIN) {
       roles.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
 

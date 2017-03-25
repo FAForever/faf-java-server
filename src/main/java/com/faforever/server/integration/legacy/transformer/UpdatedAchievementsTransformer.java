@@ -26,5 +26,4 @@ public enum UpdatedAchievementsTransformer implements GenericTransformer<Updated
         .collect(Collectors.toCollection(ArrayList::new))
     );
   }
-
 }

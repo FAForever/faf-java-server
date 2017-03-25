@@ -1,8 +1,9 @@
 package com.faforever.server.security;
 
 import com.faforever.server.entity.BanDetails;
+import com.faforever.server.entity.GroupAssociation;
+import com.faforever.server.entity.GroupAssociation.Group;
 import com.faforever.server.entity.User;
-import com.faforever.server.entity.UserGroup;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,7 +24,7 @@ public class FafUserDetailsTest {
   @Test
   public void userWithGroup1IsAdmin() throws Exception {
     User user = (User) new User()
-      .setUserGroup(new UserGroup().setGroup(1))
+      .setGroupAssociation(new GroupAssociation().setGroup(Group.ADMIN))
       .setPassword(TEST_PASSWORD)
       .setLogin(TEST_USERNAME);
 
@@ -38,7 +39,7 @@ public class FafUserDetailsTest {
   @Test
   public void userWithoutGroupIsNotAdmin() throws Exception {
     User user = (User) new User()
-      .setUserGroup(null)
+      .setGroupAssociation(null)
       .setPassword(TEST_PASSWORD)
       .setLogin(TEST_USERNAME);
 
@@ -51,7 +52,7 @@ public class FafUserDetailsTest {
   @Test
   public void userWithoutGroup1IsNotAdmin() throws Exception {
     User user = (User) new User()
-      .setUserGroup(new UserGroup().setGroup(2))
+      .setGroupAssociation(new GroupAssociation().setGroup(Group.MODERATOR))
       .setPassword(TEST_PASSWORD)
       .setLogin(TEST_USERNAME);
 

@@ -2,6 +2,7 @@ package com.faforever.server.client;
 
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.chat.JoinChatChannelResponse;
 import com.faforever.server.common.ServerResponse;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -220,6 +222,13 @@ public class ClientService {
    */
   public void sendOnlinePlayerList(Collection<UserDetailsResponse> players, ConnectionAware connectionAware) {
     players.forEach(player -> send(player, connectionAware));
+  }
+
+  /**
+   * Sends a list of chat channels to join to the client.
+   */
+  public void sendChatChannels(Set<String> channelNames, ConnectionAware recipient) {
+    send(new JoinChatChannelResponse(channelNames), recipient);
   }
 
   @EventListener

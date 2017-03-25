@@ -25,7 +25,7 @@ public class User extends Login {
   private Player player;
 
   @OneToOne(mappedBy = "user")
-  private UserGroup userGroup;
+  private GroupAssociation groupAssociation;
 
   @Override
   public String toString() {
