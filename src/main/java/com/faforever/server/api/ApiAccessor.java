@@ -28,7 +28,7 @@ public class ApiAccessor {
     List<AchievementUpdateRequest> updates = achievementUpdates.stream()
       .map(AchievementUpdateRequest::fromInternal)
       .collect(Collectors.toList());
-    return patch("/playerAchievements", updates);
+    return patch("/achievements/update", updates);
   }
 
   @Async
