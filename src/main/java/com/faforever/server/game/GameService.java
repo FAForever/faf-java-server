@@ -464,21 +464,22 @@ public class GameService {
   private void onGameEnded(Game game) {
     log.debug("Game ended: {}", game);
 
-    // Games can also end before they even started
-    if (game.getState() == GameState.PLAYING) {
-      game.getPlayerStats().forEach(stats -> {
-        Player player = stats.getPlayer();
-        armyStatisticsService.process(player, game, game.getArmyStatistics());
-      });
-      updateGameValidity(game);
-      updateRatingsIfValid(game);
-      gameRepository.save(game);
+    try {
+      // Games can also end before they even started
+      if (game.getState() == GameState.PLAYING) {
+        game.getPlayerStats().forEach(stats -> {
+          Player player = stats.getPlayer();
+          armyStatisticsService.process(player, game, game.getArmyStatistics());
+        });
+        updateGameValidity(game);
+        updateRatingsIfValid(game);
+        gameRepository.save(game);
+      }
+    } finally {
+      gamesById.remove(game.getId());
+      game.setState(GameState.CLOSED);
+      markDirty(game, Duration.ZERO, Duration.ZERO);
     }
-
-    gamesById.remove(game.getId());
-    game.setState(GameState.CLOSED);
-
-    markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
   private void updateRatingsIfValid(Game game) {
