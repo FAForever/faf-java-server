@@ -2,6 +2,7 @@ package com.faforever.server.client;
 
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.common.ServerResponse;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
@@ -20,7 +21,6 @@ import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.UserDetailsResponse;
 import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
 import com.faforever.server.player.UserDetailsResponse.Player.Rating;
-import com.faforever.server.response.ServerResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;

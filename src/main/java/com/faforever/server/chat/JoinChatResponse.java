@@ -1,6 +1,6 @@
 package com.faforever.server.chat;
 
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerResponse;
 import lombok.Data;
 
 import java.util.Set;

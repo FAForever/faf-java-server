@@ -1,7 +1,7 @@
 package com.faforever.server.client;
 
 import com.faforever.server.api.dto.AchievementState;
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerResponse;
 import lombok.Data;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.faforever.server.player;
 
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerResponse;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

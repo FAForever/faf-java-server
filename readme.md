@@ -97,10 +97,8 @@ The following issues that exist in the Python server are not present in this Jav
 
 The following features of the Python server have not yet been implemented in this Java server:
 
-* Updating achievements
 * Accepting "mutually agreed draw"
 * Timeout unstarted games
-* Tell the client to join chat channels
 
 ## Additional features
 

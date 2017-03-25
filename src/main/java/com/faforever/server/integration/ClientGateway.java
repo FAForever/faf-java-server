@@ -1,7 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerResponse;
 import org.springframework.integration.annotation.Gateway;
 import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.messaging.handler.annotation.Header;

@@ -5,6 +5,7 @@ import com.faforever.server.client.DisconnectPlayerResponse;
 import com.faforever.server.client.InfoResponse;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.client.UpdatedAchievementsResponse;
+import com.faforever.server.common.ServerResponse;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.game.GameResponse;
@@ -12,7 +13,6 @@ import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.UserDetailsResponse;
-import com.faforever.server.response.ServerResponse;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
 
