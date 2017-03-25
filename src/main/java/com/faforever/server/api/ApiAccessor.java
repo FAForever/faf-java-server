@@ -4,25 +4,16 @@ import com.faforever.server.api.dto.AchievementUpdateRequest;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.stats.event.EventUpdate;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestOperations;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Service
 public class ApiAccessor {
-
-  private static final ParameterizedTypeReference<List<UpdatedAchievementResponse>> UPDATED_ACHIEVEMENT_RESPONSES_TYPE
-    = new ParameterizedTypeReference<List<UpdatedAchievementResponse>>() {
-  };
 
   private final ServerProperties serverProperties;
   private final RestOperations restOperations;
@@ -33,19 +24,18 @@ public class ApiAccessor {
     this.serverProperties = serverProperties;
   }
 
-  @Async
-  public CompletionStage<List<UpdatedAchievementResponse>> updateAchievements(List<com.faforever.server.stats.achievements.AchievementUpdate> achievementUpdates) {
+  public List<UpdatedAchievementResponse> updateAchievements(List<com.faforever.server.stats.achievements.AchievementUpdate> achievementUpdates) {
     List<AchievementUpdateRequest> updates = achievementUpdates.stream()
       .map(AchievementUpdateRequest::fromInternal)
       .collect(Collectors.toList());
-    return completedFuture(patch("/playerAchievements", updates));
+    return patch("/playerAchievements", updates);
   }
 
   @Async
-  public CompletableFuture<Void> updateEvents(List<EventUpdate> eventUpdates) {
+  public Void updateEvents(List<EventUpdate> eventUpdates) {
     // FIXME implement
 //    return completedFuture(restOperations.patchForObject(url("/playerEvents"), eventUpdates, Void.class));
-    return completedFuture(null);
+    return null;
   }
 
   @SuppressWarnings("unchecked")

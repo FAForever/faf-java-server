@@ -20,6 +20,6 @@ public class EventService {
 
   public CompletableFuture<Void> executeBatchUpdate(Player player, List<EventUpdate> eventUpdates) {
     log.debug("Updating '{}' events for player '{}'", eventUpdates.size(), player);
-    return apiAccessor.updateEvents(eventUpdates);
+    return CompletableFuture.completedFuture(apiAccessor.updateEvents(eventUpdates));
   }
 }
