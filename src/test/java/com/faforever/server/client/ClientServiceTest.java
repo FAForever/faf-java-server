@@ -12,6 +12,7 @@ import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.response.StartGameProcessResponse;
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -206,5 +208,18 @@ public class ClientServiceTest {
     instance.sendOnlinePlayerList(players, connectionAware);
 
     verify(clientGateway).send(players.get(0), clientConnection);
+    verify(clientGateway).send(players.get(1), clientConnection);
+  }
+
+  @Test
+  public void sendIceServers() throws Exception {
+    List<IceServerList> iceServers = Collections.singletonList(
+      new IceServerList(60, Instant.now(), Collections.emptyList())
+    );
+    ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
+
+    instance.sendIceServers(iceServers, connectionAware);
+
+    verify(clientGateway).send(new IceServersResponse(iceServers), clientConnection);
   }
 }

@@ -161,6 +161,7 @@ dependencies {
   compile("javax.inject:javax.inject:${javaxInjectVersion}")
   compile("org.projectlombok:lombok:${lombokVersion}")
   compile("com.github.jasminb:jsonapi-converter:${jsonApiConverterVersion}")
+  compile("com.twilio.sdk:twilio:${twilioVersion}")
 
   compile("com.maxmind.geoip2:geoip2:${geoip2Version}"){
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'

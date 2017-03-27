@@ -15,6 +15,7 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.matchmaker.MatchMakerResponse;
@@ -221,6 +222,8 @@ public class ClientService {
    * Sends a list of online players to the client.
    */
   public void sendOnlinePlayerList(Collection<UserDetailsResponse> players, ConnectionAware connectionAware) {
+    // FIXME this method isn't called from anywhere yet.
+    // TODO send a list of players instead?
     players.forEach(player -> send(player, connectionAware));
   }
 
@@ -228,7 +231,15 @@ public class ClientService {
    * Sends a list of chat channels to join to the client.
    */
   public void sendChatChannels(Set<String> channelNames, ConnectionAware recipient) {
+    // TODO write test
     send(new JoinChatChannelResponse(channelNames), recipient);
+  }
+
+  /**
+   * Sends a list of ICE servers to the client.
+   */
+  public void sendIceServers(List<IceServerList> iceServers, ConnectionAware recipient) {
+    send(new IceServersResponse(iceServers), recipient);
   }
 
   @EventListener
