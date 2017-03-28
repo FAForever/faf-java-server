@@ -14,17 +14,19 @@ spring:
       client:
         enabled: ${SPRING_BOOT_ADMIN_ENABLED:false}
 
-logging:
-  level:
-    com.faforever.server: trace
-
 faf-server:
   uid:
-    enabled: false
+    enabled: ${UID_ENABLED:false}
   geo-ip:
-    database-file: build/cache/geoIp.mmdb
+    database-file: ${GEO_IP_DB_FILE:build/cache/geoIp.mmdb}
   api:
     base-url: ${API_BASE_URL:http://localhost:8010}
     client-id: ${API_CLIENT_ID:faf-server}
     client-secret: ${API_CLIENT_SECRET:banana}
     access-token-uri: ${API_ACCESS_TOKEN_URI:http://localhost:8010/oauth/token}
+  jwt:
+    secret: ${JWT_SECRET:banana}
+
+logging:
+  level:
+    com.faforever.server: trace

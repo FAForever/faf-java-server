@@ -23,6 +23,8 @@ public class ServerProperties {
   private GeoIp geoIp = new GeoIp();
   private Shutdown shutdown = new Shutdown();
   private Chat chat = new Chat();
+  private Ice ice = new Ice();
+  private Jwt jwt = new Jwt();
 
   @Data
   public static class Shutdown {
@@ -108,5 +110,33 @@ public class ServerProperties {
     private List<String> moderatorChannels = Collections.singletonList("#moderators");
     /** Format of clan channel names. Will be formatted with the clan's acronym. */
     private String clanChannelFormat = "#%s_clan";
+  }
+
+  @Data
+  public static class Ice {
+    private Twilio twilio = new Twilio();
+    private List<Server> servers = Collections.emptyList();
+    /** TTL in seconds. */
+    private int ttl = 3600;
+
+    @Data
+    public static class Twilio {
+      private String accountSid;
+      private String authToken;
+    }
+
+    @Data
+    public static class Server {
+      private String secret;
+      private String url;
+    }
+  }
+
+  @Data
+  public static class Jwt {
+    /**
+     * Secret used to sign and verify JWT payload.
+     */
+    private String secret;
   }
 }

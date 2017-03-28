@@ -22,6 +22,7 @@ import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
@@ -205,4 +206,9 @@ public class ChannelNames {
    * Channel for {@link DisconnectClientRequest}.
    */
   public static final String DISCONNECT_CLIENT_REQUEST = "disconnectClientRequest";
+
+  /**
+   * Channel for {@link IceServersRequest}.
+   */
+  public static final String ICE_SERVERS_REQUEST = "iceServersRequest";
 }
