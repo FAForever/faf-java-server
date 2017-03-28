@@ -1,4 +1,6 @@
 # Spring Boot based FAF-Server
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/18f658351dba40c98225f0c9e55d4b82)](https://www.codacy.com/app/FAForever/faf-java-server?utm_source=github.com&utm_medium=referral&utm_content=FAForever/faf-java-server&utm_campaign=badger) [![Build Status](https://travis-ci.org/FAForever/faf-java-server.svg?branch=develop)](https://travis-ci.org/FAForever/faf-java-server) [![Coveralls Status](https://img.shields.io/coveralls/micheljung/faf-java-server/develop.svg)](https://coveralls.io/github/micheljung/faf-java-server)
  
 This is a reimplementation of the  [Forged Alliance Forever](https://www.faforever.com/)'s server application.
 
@@ -8,11 +10,6 @@ legacy protocol while at the same time allowing new protocols to be added and su
 As the underlying (legacy) database schema isn't based on best education and diligence either, some data types,
 structures, concepts and/or field names may be questionable, too, even though efforts are made to abstract it with a
 clean layer as well (work in progress)
-
-master|develop
-:------------: | :-------------:
-[![Build Status](https://travis-ci.org/micheljung/faf-java-server.svg?branch=master)](https://travis-ci.org/micheljung/faf-java-server) | [![Build Status](https://travis-ci.org/micheljung/faf-java-server.svg?branch=develop)](https://travis-ci.org/micheljung/faf-java-server)
-[![Coveralls Status](https://img.shields.io/coveralls/micheljung/faf-java-server/master.svg)](https://coveralls.io/github/micheljung/faf-java-server) | [![Coveralls Status](https://img.shields.io/coveralls/micheljung/faf-java-server/develop.svg)](https://coveralls.io/github/micheljung/faf-java-server)
  
 ## How to run
 
