@@ -44,7 +44,7 @@ public class TeamKillService {
       return;
     }
 
-    boolean isKillerPartOfGame = game.getPlayerStats().stream()
+    boolean isKillerPartOfGame = game.getPlayerStats().values().stream()
       .anyMatch(gamePlayerStats -> gamePlayerStats.getPlayer().getId() == killerId);
 
     if (!isKillerPartOfGame) {

@@ -58,6 +58,9 @@ public class Player extends Login implements ConnectionAware {
   @Transient
   private ClientConnection clientConnection;
 
+  @Transient
+  private Game gameBeingJoined;
+
   public void setGameState(PlayerGameState gameState) {
     PlayerGameState.verifyTransition(this.gameState, gameState);
     this.gameState = gameState;

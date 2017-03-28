@@ -24,6 +24,7 @@ import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
+import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
@@ -217,4 +218,9 @@ public class ChannelNames {
    * Channel for {@link IceMessage}.
    */
   public static final String ICE_MESSAGE = "iceMessage";
+
+  /**
+   * Channel for {@link RestoreGameSessionRequest}.
+   */
+  public static final String RESTORE_GAME_SESSION_REQUEST = "restoreGameSessionRequest";
 }

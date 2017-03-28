@@ -67,7 +67,7 @@ public class RatingService {
    * @param noTeamId ID of the "no team" team
    */
   @SuppressWarnings("unchecked")
-  public void updateRatings(List<GamePlayerStats> playerStats, int noTeamId, RatingType ratingType) {
+  public void updateRatings(Collection<GamePlayerStats> playerStats, int noTeamId, RatingType ratingType) {
     Map<Integer, GamePlayerStats> playerStatsByPlayerId = playerStats.stream()
       .collect(Collectors.toMap(stats -> stats.getPlayer().getId(), Function.identity()));
 
@@ -99,7 +99,7 @@ public class RatingService {
     player.setLadder1v1Rating(new Ladder1v1Rating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
   }
 
-  private Map<Integer, ScoredTeam> teamsById(List<GamePlayerStats> playerStats, int noTeamId) {
+  private Map<Integer, ScoredTeam> teamsById(Collection<GamePlayerStats> playerStats, int noTeamId) {
     int highestTeamId = playerStats.stream()
       .map(GamePlayerStats::getTeam)
       .max(Integer::compareTo).orElse(noTeamId);

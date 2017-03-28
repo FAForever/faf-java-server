@@ -126,6 +126,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case ICE_MESSAGE:
         args = getArgs(source);
         return new IceMessage((int) args.get(0), args.get(1));
+      case RESTORE_GAME_SESSION:
+        return new RestoreGameSessionRequest((int) source.get("game_id"));
       case CREATE_ACCOUNT:
         Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
         break;

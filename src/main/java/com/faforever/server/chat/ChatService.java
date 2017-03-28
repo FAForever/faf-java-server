@@ -1,6 +1,7 @@
 package com.faforever.server.chat;
 
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Chat;
 import com.faforever.server.entity.GroupAssociation;
@@ -43,13 +44,13 @@ public class ChatService {
 
   @EventListener
   public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-    FafUserDetails details = (FafUserDetails) event.getAuthentication().getDetails();
+    FafUserDetails userDetails = (FafUserDetails) event.getAuthentication().getPrincipal();
     Chat chat = properties.getChat();
 
     Set<String> channels = new HashSet<>(3, 1);
     channels.addAll(chat.getDefaultChannels());
 
-    GroupAssociation groupAssociation = details.getUser().getGroupAssociation();
+    GroupAssociation groupAssociation = userDetails.getUser().getGroupAssociation();
     if (groupAssociation != null) {
       switch (groupAssociation.getGroup()) {
         case ADMIN:
@@ -64,6 +65,8 @@ public class ChatService {
     }
     // FIXME send clan channels as well (related to FAForever/faf-java-server#2)
 
-    clientService.sendChatChannels(channels, details);
+    // FafUserDetails is only made connection-aware after authentication. Instead, the the authentication details
+    // contains a ConnectionAware
+    clientService.sendChatChannels(channels, (ConnectionAware) event.getAuthentication().getDetails());
   }
 }

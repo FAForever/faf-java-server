@@ -513,4 +513,14 @@ public class LegacyRequestTransformerTest {
     assertThat(iceMessage.getReceiverId(), is(1));
     assertThat(iceMessage.getContent(), is("someObject"));
   }
+
+  @Test
+  public void restoreGameSession() throws Exception {
+    RestoreGameSessionRequest result = (RestoreGameSessionRequest) instance.transform(ImmutableMap.of(
+      "command", "restore_game_session",
+      "game_id", 5
+    ));
+
+    assertThat(result.getGameId(), is(5));
+  }
 }

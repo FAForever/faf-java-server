@@ -60,10 +60,10 @@ public class Game {
   private final List<ArmyStatistics> armyStatistics;
 
   /**
-   * Returns the list of players who are actively playing the game at the time of the request.
+   * Returns the list of players who are currently connected to the game.
    */
   @Transient
-  private final Map<Integer, Player> activePlayers;
+  private final Map<Integer, Player> connectedPlayers;
 
   /**
    * Maps player IDs to key-value option maps, like {@code 1234 -> "Color" -> 1 }
@@ -122,8 +122,11 @@ public class Game {
   @Enumerated(EnumType.ORDINAL)
   private Validity validity;
 
+  /**
+   * Mapped by player ID. Meant to be set just before game start.
+   */
   @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
-  private List<GamePlayerStats> playerStats;
+  private Map<Integer, GamePlayerStats> playerStats;
 
   @Transient
   private GameState state = GameState.INITIALIZING;
@@ -162,9 +165,9 @@ public class Game {
     reportedArmyScores = new HashMap<>();
     reportedArmyOutcomes = new HashMap<>();
     armyStatistics = new ArrayList<>();
-    playerStats = new ArrayList<>();
+    playerStats = new HashMap<>();
     simMods = new ArrayList<>();
-    activePlayers = new HashMap<>();
+    connectedPlayers = new HashMap<>();
     desyncCounter = new AtomicInteger();
     validity = Validity.RANKED;
     gameVisibility = GameVisibility.PUBLIC;

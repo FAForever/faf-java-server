@@ -13,6 +13,7 @@ import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.PlayerOptionReport;
+import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.stats.ArmyStatisticsReport;
@@ -105,7 +106,12 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.DISCONNECT_PEER_REQUEST)
   public void disconnectFromGame(DisconnectPeerRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.disconnectFromGame(clientConnection.getUserDetails().getUser(), request.getPlayerId());
+    gameService.disconnectPlayerFromGame(clientConnection.getUserDetails().getUser(), request.getPlayerId());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.RESTORE_GAME_SESSION_REQUEST)
+  public void restoreGameSession(RestoreGameSessionRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.restoreGameSession(clientConnection.getUserDetails().getPlayer(), request.getGameId());
   }
 
   private byte resolveMod(String mod) {

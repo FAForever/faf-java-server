@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
@@ -53,9 +54,10 @@ public class CoopServiceTest {
   @Test
   public void reportOperationComplete() throws Exception {
     Game game = new Game().setId(42).setMapName("SCMP_001");
-    game.getPlayerStats().add(new GamePlayerStats());
-    game.getPlayerStats().add(new GamePlayerStats());
-    game.getPlayerStats().add(new GamePlayerStats());
+    Map<Integer, GamePlayerStats> playerStats = game.getPlayerStats();
+    playerStats.put(1, new GamePlayerStats());
+    playerStats.put(2, new GamePlayerStats());
+    playerStats.put(3, new GamePlayerStats());
 
     Player player = new Player();
     player.setCurrentGame(game);

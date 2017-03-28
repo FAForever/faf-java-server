@@ -27,9 +27,11 @@ import com.faforever.server.rating.RatingType;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.util.Pair;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,6 +57,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -91,7 +95,7 @@ public class GameService {
    */
   private final AtomicInteger nextGameId;
   private final ClientService clientService;
-  private final Map<Integer, Game> gamesById;
+  private final Map<Integer, Game> activeGamesById;
   private final MapService mapService;
   private final ModService modService;
   private final PlayerService playerService;
@@ -121,7 +125,7 @@ public class GameService {
     this.entityManager = entityManager;
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
-    gamesById = new ConcurrentHashMap<>();
+    activeGamesById = new ConcurrentHashMap<>();
     gameFutures = Collections.synchronizedList(new ArrayList<>());
   }
 
@@ -157,12 +161,12 @@ public class GameService {
     game.setMinRating(minRating);
     game.setMaxRating(maxRating);
 
-    gamesById.put(game.getId(), game);
+    activeGamesById.put(game.getId(), game);
 
     log.debug("Player '{}' created game '{}'", player, game);
 
     clientService.startGameProcess(game, player);
-    addPlayer(game, player);
+    player.setGameBeingJoined(game);
 
     CompletableFuture<Game> future = new CompletableFuture<>();
     gameFutures.add(new WeakReference<>(future));
@@ -180,7 +184,7 @@ public class GameService {
 
     log.debug("Player '{}' joins game '{}'", player, gameId);
     clientService.startGameProcess(game, player);
-    addPlayer(game, player);
+    player.setGameBeingJoined(game);
   }
 
   /**
@@ -188,7 +192,7 @@ public class GameService {
    */
   @Transactional
   public void updatePlayerGameState(PlayerGameState newState, Player player) {
-    Game game = player.getCurrentGame();
+    Game game = MoreObjects.firstNonNull(player.getGameBeingJoined(), player.getCurrentGame());
     Requests.verify(game != null, ErrorCode.NOT_IN_A_GAME);
 
     log.debug("Player '{}' updated his game state from '{}' to '{}' (game: '{}')", player, player.getGameState(), newState, game);
@@ -220,21 +224,21 @@ public class GameService {
    * being hosted and until it finished.
    */
   public Optional<Game> getActiveGame(int id) {
-    return Optional.ofNullable(gamesById.get(id));
+    return Optional.ofNullable(activeGamesById.get(id));
   }
 
   /**
    * Updates an option value of the game that is currently being hosted by the specified host. If the specified player
    * is not currently hosting a game, this method does nothing.
    */
-  public void updateGameOption(Player host, String key, Object value) {
-    Game game = host.getCurrentGame();
+  public void updateGameOption(Player reporter, String key, Object value) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
       // Since this is called repeatedly, throwing exceptions here would not be a good idea
-      log.debug("Received game option for player w/o game: {}", host);
+      log.debug("Received game option for player w/o game: {}", reporter);
       return;
     }
-    Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
+    Requests.verify(Objects.equals(reporter.getCurrentGame().getHost(), reporter), ErrorCode.HOST_ONLY_OPTION, key);
 
     log.trace("Updating option for game '{}': '{}' = '{}'", game, key, value);
     game.getOptions().put(key, value);
@@ -256,47 +260,22 @@ public class GameService {
    *
    * @throws RequestException if the reporting player is not the host
    */
-  public void updatePlayerOption(Player host, int playerId, String key, Object value) {
-    Game game = host.getCurrentGame();
+  public void updatePlayerOption(Player reporter, int playerId, String key, Object value) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
       // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
-      log.warn("Received player option for player w/o game: {}", host);
+      log.warn("Received player option for player w/o game: {}", reporter);
       return;
     }
-    Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
+    Requests.verify(Objects.equals(reporter.getCurrentGame().getHost(), reporter), ErrorCode.HOST_ONLY_OPTION, key);
 
-    if (game.getPlayerStats().stream().noneMatch(gamePlayerStats -> gamePlayerStats.getPlayer().getId() == playerId)) {
-      log.warn("Player '{}' reported options for unknown player '{}' in game '{}'", host, playerId, game);
+    if (!game.getConnectedPlayers().containsKey(playerId)) {
+      log.warn("Player '{}' reported option '{}' with value '{}' for unknown player '{}' in game '{}'", reporter, key, value, playerId, game);
+      return;
     }
 
     log.trace("Updating option for player '{}' in game '{}': '{}' = '{}'", playerId, game.getId(), key, value);
     game.getPlayerOptions().computeIfAbsent(playerId, id -> new HashMap<>()).put(key, value);
-
-    if (OPTION_TEAM.equals(key)) {
-      getGamePlayerStats(playerId, game).map(playerStats -> playerStats.setTeam(((Integer) value).byteValue()))
-        .orElseGet(() -> {
-          log.warn("Player '{}' reported team '{}' for nonexistent player '{}' in game '{}'", host, value, playerId, game);
-          return null;
-        });
-    } else if (OPTION_FACTION.equals(key)) {
-      getGamePlayerStats(playerId, game).map(playerStats -> playerStats.setFaction(((Integer) value).byteValue()))
-        .orElseGet(() -> {
-          log.warn("Player '{}' reported faction '{}' for nonexistent player '{}' in game '{}'", host, value, playerId, game);
-          return null;
-        });
-    } else if (OPTION_COLOR.equals(key)) {
-      getGamePlayerStats(playerId, game).map(playerStats -> playerStats.setColor(((Integer) value).byteValue()))
-        .orElseGet(() -> {
-          log.warn("Player '{}' reported color '{}' for nonexistent player '{}' in game '{}'", host, value, playerId, game);
-          return null;
-        });
-    } else if (OPTION_START_SPOT.equals(key)) {
-      getGamePlayerStats(playerId, game).map(playerStats -> playerStats.setStartSpot(((Integer) value).byteValue()))
-        .orElseGet(() -> {
-          log.warn("Player '{}' reported start spot '{}' for nonexistent player '{}' in game '{}'", host, value, playerId, game);
-          return null;
-        });
-    }
 
     markDirty(game, Duration.ofSeconds(1), Duration.ofSeconds(5));
   }
@@ -307,14 +286,14 @@ public class GameService {
    *
    * @throws RequestException if the reporting player is not the host
    */
-  public void updateAiOption(Player host, String aiName, String key, Object value) {
-    Game game = host.getCurrentGame();
+  public void updateAiOption(Player reporter, String aiName, String key, Object value) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
       // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
-      log.warn("Received AI option for player w/o game: {}", host);
+      log.warn("Received AI option for player w/o game: {}", reporter);
       return;
     }
-    Requests.verify(Objects.equals(host.getCurrentGame().getHost(), host), ErrorCode.HOST_ONLY_OPTION, key);
+    Requests.verify(Objects.equals(reporter.getCurrentGame().getHost(), reporter), ErrorCode.HOST_ONLY_OPTION, key);
 
     log.trace("Updating option for AI '{}' in game '{}': '{}' = '{}'", aiName, game.getId(), key, value);
     game.getAiOptions().computeIfAbsent(aiName, s -> new HashMap<>()).put(key, value);
@@ -352,13 +331,13 @@ public class GameService {
    * Increments the desync counter for a player's game. If the specified player is currently not in a game, this method
    * does nothing.
    */
-  public void reportDesync(Player player) {
-    if (player.getCurrentGame() == null) {
-      log.warn("Desync reported by player w/o game: {}", player);
+  public void reportDesync(Player reporter) {
+    if (reporter.getCurrentGame() == null) {
+      log.warn("Desync reported by player w/o game: {}", reporter);
       return;
     }
-    int desyncCount = player.getCurrentGame().getDesyncCounter().incrementAndGet();
-    log.debug("Player '{}' increased desync count to '{}' for game: {}", player, desyncCount, player.getCurrentGame());
+    int desyncCount = reporter.getCurrentGame().getDesyncCounter().incrementAndGet();
+    log.debug("Player '{}' increased desync count to '{}' for game: {}", reporter, desyncCount, reporter.getCurrentGame());
   }
 
   /**
@@ -381,47 +360,47 @@ public class GameService {
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
-  public void reportArmyScore(Player player, int armyId, int score) {
-    Game game = player.getCurrentGame();
+  public void reportArmyScore(Player reporter, int armyId, int score) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
-      log.warn("Army result reported by player w/o game: {}", player);
+      log.warn("Army result reported by player w/o game: {}", reporter);
       return;
     }
 
     Optional<Integer> army = findArmy(armyId, game);
     if (!army.isPresent()) {
-      log.warn("Player '{}' reported score '{}' for unknown army '{}' in game '{}'", player, score, armyId, game);
+      log.warn("Player '{}' reported score '{}' for unknown army '{}' in game '{}'", reporter, score, armyId, game);
       return;
     }
 
-    log.debug("Player '{}' reported score for army '{}' in game '{}': {}", player, armyId, game, score);
-    game.getReportedArmyScores().computeIfAbsent(player.getId(), playerId -> new ArrayList<>()).add(new ArmyScore(armyId, score));
+    log.debug("Player '{}' reported score for army '{}' in game '{}': {}", reporter, armyId, game, score);
+    game.getReportedArmyScores().computeIfAbsent(reporter.getId(), playerId -> new ArrayList<>()).add(new ArmyScore(armyId, score));
   }
 
-  public void reportArmyOutcome(Player player, int armyId, Outcome outcome) {
-    Game game = player.getCurrentGame();
+  public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
-      log.warn("Army score reported by player w/o game: {}", player);
+      log.warn("Army score reported by player w/o game: {}", reporter);
       return;
     }
 
     Optional<Integer> army = findArmy(armyId, game);
     if (!army.isPresent()) {
-      log.warn("Player '{}' reported outcome '{}' for unknown army '{}' in game '{}'", player, outcome, armyId, game);
+      log.warn("Player '{}' reported outcome '{}' for unknown army '{}' in game '{}'", reporter, outcome, armyId, game);
       return;
     }
 
-    log.debug("Player '{}' reported result for army '{}' in game '{}': {}", player, armyId, game, outcome);
-    game.getReportedArmyOutcomes().computeIfAbsent(player.getId(), playerId -> new ArrayList<>()).add(new ArmyOutcome(armyId, outcome));
+    log.debug("Player '{}' reported result for army '{}' in game '{}': {}", reporter, armyId, game, outcome);
+    game.getReportedArmyOutcomes().computeIfAbsent(reporter.getId(), playerId -> new ArrayList<>()).add(new ArmyOutcome(armyId, outcome));
   }
 
   /**
    * Updates the game's army statistics. Last reporter wins.
    */
-  public void reportArmyStatistics(Player player, List<ArmyStatistics> armyStatistics) {
-    Game game = player.getCurrentGame();
+  public void reportArmyStatistics(Player reporter, List<ArmyStatistics> armyStatistics) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
-      log.warn("Game statistics reported by player w/o game: {}", player);
+      log.warn("Game statistics reported by player w/o game: {}", reporter);
       return;
     }
     game.replaceArmyStatistics(armyStatistics);
@@ -430,20 +409,20 @@ public class GameService {
   /**
    * Enforce rating even though the minimum game time has not yet been reached.
    */
-  public void enforceRating(Player player) {
-    Game game = player.getCurrentGame();
+  public void enforceRating(Player reporter) {
+    Game game = reporter.getCurrentGame();
     if (game == null) {
-      log.warn("Game statistics reported by player w/o game: {}", player);
+      log.warn("Game statistics reported by player w/o game: {}", reporter);
       return;
     }
-    log.debug("Player '{}' enforced rating for game '{}'", player, game);
+    log.debug("Player '{}' enforced rating for game '{}'", reporter, game);
     game.setRatingEnforced(true);
   }
 
   @EventListener
   public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
     clientService.sendGameList(
-      gamesById.values().stream().map(this::toResponse).collect(Collectors.toList()),
+      activeGamesById.values().stream().map(this::toResponse).collect(Collectors.toList()),
       (ConnectionAware) event.getAuthentication().getDetails()
     );
   }
@@ -453,44 +432,160 @@ public class GameService {
   public void onClientDisconnect(ClientDisconnectedEvent event) {
     Optional.ofNullable(event.getClientConnection().getUserDetails()).ifPresent(userDetails -> {
       Player player = userDetails.getPlayer();
-      log.debug("Removing player '{}' who went offline", userDetails.getPlayer());
-      Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removeFromActivePlayers(game, player));
+      Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removePlayer(game, player));
+      Optional.ofNullable(player.getGameBeingJoined()).ifPresent(game -> removePlayer(game, player));
     });
   }
 
   /**
    * Tells all peers of the player with the specified ID to drop their connections to him/her.
    */
-  public void disconnectFromGame(User user, int playerId) {
+  public void disconnectPlayerFromGame(User requester, int playerId) {
     Optional<Player> optional = playerService.getOnlinePlayer(playerId);
     if (!optional.isPresent()) {
-      log.warn("User '{}' tried to disconnect unknown player '{}' from game", user, playerId);
+      log.warn("User '{}' tried to disconnect unknown player '{}' from game", requester, playerId);
       return;
     }
     Player player = optional.get();
     Game game = player.getCurrentGame();
     if (game == null) {
-      log.warn("User '{}' tried to disconnect player '{}' from game, but no game is associated", user, player);
+      log.warn("User '{}' tried to disconnect player '{}' from game, but no game is associated", requester, player);
       return;
     }
 
-    Collection<? extends ConnectionAware> receivers = game.getActivePlayers().values().stream()
+    Collection<? extends ConnectionAware> receivers = game.getConnectedPlayers().values().stream()
       .filter(item -> !Objects.equals(item.getId(), playerId))
       .collect(Collectors.toList());
 
     clientService.disconnectPlayer(playerId, receivers);
-    log.info("User '{}' disconnected player '{}' from game '{}'", user, player, game);
+    log.info("User '{}' disconnected player '{}' from game '{}'", requester, player, game);
   }
 
-  private Optional<GamePlayerStats> getGamePlayerStats(int playerId, Game game) {
-    return game.getPlayerStats().stream()
-      .filter(gamePlayerStats -> gamePlayerStats.getPlayer().getId() == playerId)
-      .findFirst();
+  /**
+   * Associates the specified player with the specified game, if this player was previously part of the game and the
+   * game is still running. This is requested by the client after it lost connection to the server.
+   */
+  public void restoreGameSession(Player player, int gameId) {
+    if (player.getCurrentGame() != null) {
+      log.warn("Player '{}' requested game session restoration but is still associated with game '{}'", player, player.getCurrentGame());
+      return;
+    }
+
+    Optional<Game> gameOptional = getActiveGame(gameId);
+    Requests.verify(gameOptional.isPresent(), ErrorCode.CANT_RESTORE_GAME_DOESNT_EXIST);
+
+    Game game = gameOptional.get();
+    GameState gameState = game.getState();
+    Requests.verify(gameState == GameState.OPEN || gameState == GameState.PLAYING, ErrorCode.CANT_RESTORE_GAME_DOESNT_EXIST);
+    Requests.verify(game.getState() != GameState.PLAYING
+      || game.getPlayerStats().containsKey(player.getId()), ErrorCode.CANT_RESTORE_GAME_NOT_PARTICIPANT);
+
+    log.debug("Reassociating player '{}' with game '{}'", player, game);
+    addPlayer(game, player);
   }
 
   private void addPlayer(Game game, Player player) {
-    GamePlayerStats gamePlayerStats = new GamePlayerStats(game, player);
+    game.getConnectedPlayers().put(player.getId(), player);
+    player.setCurrentGame(game);
+    player.setGameBeingJoined(null);
 
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
+  }
+
+  private void removePlayer(Game game, Player player) {
+    log.debug("Removing player '{}' from game '{}'", player, game);
+
+    int playerId = player.getId();
+    player.setGameState(PlayerGameState.NONE);
+    player.setCurrentGame(null);
+    player.setGameBeingJoined(null);
+    game.getConnectedPlayers().remove(playerId, player);
+
+    if (game.getConnectedPlayers().isEmpty()) {
+      onGameEnded(game);
+    }
+  }
+
+  private void onPlayerGameEnded(Player reporter, Game game) {
+    if (game == null) {
+      // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
+      log.warn("Received player option for player w/o game: {}", reporter);
+      return;
+    }
+
+    log.debug("Player '{}' left game: {}", reporter, game);
+    removePlayer(game, reporter);
+  }
+
+  private void onGameEnded(Game game) {
+    log.debug("Game ended: {}", game);
+
+    try {
+      // Games can also end before they even started. Only process stats when did.
+      if (game.getState() == GameState.PLAYING) {
+        game.getPlayerStats().values().forEach(stats -> {
+          Player player = stats.getPlayer();
+          armyStatisticsService.process(player, game, game.getArmyStatistics());
+        });
+        updateGameValidity(game);
+        updateRatingsIfValid(game);
+        gameRepository.save(game);
+      }
+    } finally {
+      activeGamesById.remove(game.getId());
+      game.setState(GameState.CLOSED);
+      markDirty(game, Duration.ZERO, Duration.ZERO);
+    }
+  }
+
+  private void updateRatingsIfValid(Game game) {
+    if (game.getValidity() != Validity.RANKED) {
+      return;
+    }
+    RatingType ratingType = modService.isLadder1v1(game.getFeaturedMod()) ? RatingType.LADDER_1V1 : RatingType.GLOBAL;
+    ratingService.updateRatings(game.getPlayerStats().values(), NO_TEAM_ID, ratingType);
+  }
+
+  private void onGameLaunching(Player reporter, Game game) {
+    if (!Objects.equals(game.getHost(), reporter)) {
+      // TODO do non-hosts send this? If not, log to WARN
+      log.trace("Player '{}' reported launch for game: {}", reporter, game);
+      return;
+    }
+    game.setState(GameState.PLAYING);
+    game.setStartTime(Timestamp.from(Instant.now()));
+
+    createGamePlayerStats(game);
+
+    // Not using repository since ID is already set but entity is not yet persisted. There's no auto_increment.
+    entityManager.persist(game);
+    log.debug("Game launched: {}", game);
+    markDirty(game, Duration.ZERO, Duration.ZERO);
+  }
+
+  private void createGamePlayerStats(Game game) {
+    // TODO test how this handles observers
+    game.getConnectedPlayers().values()
+      .forEach(player -> {
+        GamePlayerStats gamePlayerStats = new GamePlayerStats(game, player);
+
+        Optional<Map<String, Object>> optional = Optional.ofNullable(game.getPlayerOptions().get(player.getId()));
+        if (!optional.isPresent()) {
+          log.warn("No player options available for player '{}' in game '{}'", player, game);
+        } else {
+          Map<String, Object> options = optional.get();
+          updateGamePlayerStatsFromOptions(gamePlayerStats, options);
+        }
+
+        updateGamePlayerStatsRating(gamePlayerStats, player);
+        gamePlayerStats.setPlayer(player);
+
+        game.getPlayerStats().put(player.getId(), gamePlayerStats);
+      });
+  }
+
+  private void updateGamePlayerStatsRating(GamePlayerStats gamePlayerStats, Player player) {
+    Game game = player.getCurrentGame();
     if (modService.isLadder1v1(game.getFeaturedMod())) {
       if (player.getLadder1v1Rating() == null) {
         ratingService.initLadder1v1Rating(player);
@@ -512,77 +607,25 @@ public class GameService {
       gamePlayerStats.setDeviation(globalRating.getDeviation());
       gamePlayerStats.setMean(globalRating.getMean());
     }
-
-    gamePlayerStats.setPlayer(player);
-    game.getPlayerStats().add(gamePlayerStats);
-    game.getActivePlayers().put(player.getId(), player);
-    player.setCurrentGame(game);
-
-    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
-  private void removeFromActivePlayers(Game game, Player player) {
-    player.setCurrentGame(null);
-    player.setGameState(PlayerGameState.NONE);
-    game.getActivePlayers().remove(player.getId(), player);
+  private void updateGamePlayerStatsFromOptions(GamePlayerStats gamePlayerStats, Map<String, Object> options) {
+    Arrays.asList(
+      Pair.of(OPTION_TEAM, (Consumer<Integer>) gamePlayerStats::setTeam),
+      Pair.of(OPTION_FACTION, (Consumer<Integer>) gamePlayerStats::setFaction),
+      Pair.of(OPTION_COLOR, (Consumer<Integer>) gamePlayerStats::setColor),
+      Pair.of(OPTION_START_SPOT, (Consumer<Integer>) gamePlayerStats::setStartSpot)
+    ).forEach(pair -> {
+      String key = pair.getFirst();
 
-    if (game.getActivePlayers().isEmpty()) {
-      onGameEnded(game);
-    }
-  }
-
-  private void onPlayerGameEnded(Player reporter, Game game) {
-    if (game == null) {
-      // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
-      log.warn("Received player option for player w/o game: {}", reporter);
-      return;
-    }
-
-    log.debug("Player '{}' left game: {}", reporter, game);
-    removeFromActivePlayers(game, reporter);
-  }
-
-  private void onGameEnded(Game game) {
-    log.debug("Game ended: {}", game);
-
-    try {
-      // Games can also end before they even started
-      if (game.getState() == GameState.PLAYING) {
-        game.getPlayerStats().forEach(stats -> {
-          Player player = stats.getPlayer();
-          armyStatisticsService.process(player, game, game.getArmyStatistics());
-        });
-        updateGameValidity(game);
-        updateRatingsIfValid(game);
-        gameRepository.save(game);
+      Optional<Integer> value = Optional.ofNullable((Integer) options.get(key));
+      if (value.isPresent()) {
+        pair.getSecond().accept(value.get());
+      } else {
+        Player player = gamePlayerStats.getPlayer();
+        log.warn("Missing option '{}' for player '{}' in game '{}'", key, player, player.getCurrentGame());
       }
-    } finally {
-      gamesById.remove(game.getId());
-      game.setState(GameState.CLOSED);
-      markDirty(game, Duration.ZERO, Duration.ZERO);
-    }
-  }
-
-  private void updateRatingsIfValid(Game game) {
-    if (game.getValidity() != Validity.RANKED) {
-      return;
-    }
-    RatingType ratingType = modService.isLadder1v1(game.getFeaturedMod()) ? RatingType.LADDER_1V1 : RatingType.GLOBAL;
-    ratingService.updateRatings(game.getPlayerStats(), NO_TEAM_ID, ratingType);
-  }
-
-  private void onGameLaunching(Player reporter, Game game) {
-    if (!Objects.equals(game.getHost(), reporter)) {
-      // TODO do non-hosts send this? If not, log to WARN
-      log.trace("Player '{}' reported launch for game: {}", reporter, game);
-      return;
-    }
-    game.setState(GameState.PLAYING);
-    game.setStartTime(Timestamp.from(Instant.now()));
-    // Not using repository since ID is already set but entity is not yet persisted. There's no auto_increment.
-    entityManager.persist(game);
-    log.debug("Game launched: {}", game);
-    markDirty(game, Duration.ZERO, Duration.ZERO);
+    });
   }
 
   /**
@@ -594,6 +637,7 @@ public class GameService {
    * to only the players who are in the game and then persisted.</p>
    */
   private void onLobbyEntered(Player player, Game game) {
+    addPlayer(game, player);
     if (Objects.equals(game.getHost(), player)) {
       game.setState(GameState.OPEN);
       clientService.hostGame(game, player);
@@ -602,7 +646,7 @@ public class GameService {
       markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     } else {
       clientService.connectToHost(game, player);
-      game.getActivePlayers().values().forEach(otherPlayer -> connectPeers(player, otherPlayer));
+      game.getConnectedPlayers().values().forEach(otherPlayer -> connectPeers(player, otherPlayer));
     }
   }
 
@@ -637,8 +681,14 @@ public class GameService {
       game.getSimMods(),
       game.getMapName(),
       game.getHost().getLogin(),
-      game.getPlayerStats().stream()
-        .map(stats -> new GameResponse.Player(stats.getTeam(), stats.getPlayer().getLogin()))
+      game.getConnectedPlayers().values().stream()
+        .map(player -> {
+          int team = (int) Optional.ofNullable(game.getPlayerOptions().get(player.getId()))
+            .map(options -> options.getOrDefault(OPTION_TEAM, NO_TEAM_ID))
+            .orElse(NO_TEAM_ID);
+
+          return new GameResponse.Player(team, player.getLogin());
+        })
         .collect(Collectors.toList()),
       game.getMaxPlayers(),
       Optional.ofNullable(game.getStartTime()).map(Timestamp::toInstant).orElse(null),
@@ -648,12 +698,13 @@ public class GameService {
   }
 
   private boolean isFreeForAll(Game game) {
-    if (game.getPlayerStats().size() < 3) {
+    Map<Integer, Map<String, Object>> playerOptions = game.getPlayerOptions();
+    if (playerOptions.size() < 3) {
       return false;
     }
     Set<Integer> teams = new HashSet<>();
-    for (GamePlayerStats stats : game.getPlayerStats()) {
-      int team = stats.getTeam();
+    for (Map<String, Object> options : playerOptions.values()) {
+      int team = (int) options.getOrDefault(OPTION_TEAM, NO_TEAM_ID);
       if (team != NO_TEAM_ID) {
         if (teams.contains(team)) {
           return false;
@@ -670,9 +721,9 @@ public class GameService {
    */
   @VisibleForTesting
   void updateGameValidity(Game game) {
-    if (game.getValidity() != Validity.RANKED) {
-      throw new IllegalStateException("Rankiness has already been set to: " + game.getValidity());
-    }
+    // You'd expect a null check here but since the DB field is not nullable the default value is RANKED.
+    Assert.state(game.getValidity() == Validity.RANKED, "Validity of game '" + game + "' has already been set to: " + game.getValidity());
+    Assert.state(game.getState() == GameState.PLAYING, "Validity of game '" + game + "' can't be set while in state: " + game.getState());
 
     int minSeconds = game.getPlayerStats().size() * properties.getGame().getRankedMinTimeMultiplicator();
     if (!game.getSimMods().stream().allMatch(modService::isModRanked)) {
@@ -705,12 +756,14 @@ public class GameService {
       game.setValidity(Validity.UNKNOWN_RESULT);
     } else if (Duration.between(Instant.now(), game.getStartTime().toInstant()).getSeconds() < minSeconds) {
       game.setValidity(Validity.TOO_SHORT);
+    } else {
+      game.setValidity(Validity.RANKED);
     }
   }
 
   @VisibleForTesting
   boolean areTeamsEven(Game game) {
-    Map<Integer, Long> playersPerTeam = game.getPlayerStats().stream()
+    Map<Integer, Long> playersPerTeam = game.getPlayerStats().values().stream()
       .map(GamePlayerStats::getTeam)
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 

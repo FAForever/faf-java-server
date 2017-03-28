@@ -74,12 +74,11 @@ public class ChatServiceTest {
 
   @SuppressWarnings("unchecked")
   private void testJoinChannels(Group group, String... expectedChannels) {
-    TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
     User user = (User) new User()
       .setPassword("pw")
       .setGroupAssociation(group == null ? null : new GroupAssociation().setGroup(group))
       .setLogin("junit");
-    authentication.setDetails(new FafUserDetails(user));
+    TestingAuthenticationToken authentication = new TestingAuthenticationToken(new FafUserDetails(user), "foo");
 
     instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
 

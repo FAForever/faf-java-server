@@ -15,7 +15,9 @@ public enum ErrorCode {
   UID_USED_BY_ANOTHER_USER(108, "Login denied", "Your computer is already associated with another FAF account.<br><br>To log in with a new account, you have to link it to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
   UNKNOWN_MESSAGE(109, "Unknown message", "The server received an unknown request from your client: {0}"),
   BANNED_FROM_MATCH_MAKER(110, "Banned from matchmaker", "You have been banned from the match maker."),
-  MATCHMAKER_1V1_ONLY(111, "Unsupported matchmaker operation", "Matchmaker currently only supports 1v1.");
+  MATCHMAKER_1V1_ONLY(111, "Unsupported matchmaker operation", "Matchmaker currently only supports 1v1."),
+  CANT_RESTORE_GAME_DOESNT_EXIST(112, "Can't restore game connection", "The game you were connected to does no longer exist."),
+  CANT_RESTORE_GAME_NOT_PARTICIPANT(113, "Can't restore game connection", "You have never been part of this game.");
 
   private final int code;
   private final String title;
