@@ -462,7 +462,7 @@ public class GameService {
    * Tells all peers of the player with the specified ID to drop their connections to him/her.
    */
   public void disconnectFromGame(User user, int playerId) {
-    Optional<Player> optional = playerService.getPlayer(playerId);
+    Optional<Player> optional = playerService.getOnlinePlayer(playerId);
     if (!optional.isPresent()) {
       log.warn("User '{}' tried to disconnect unknown player '{}' from game", user, playerId);
       return;

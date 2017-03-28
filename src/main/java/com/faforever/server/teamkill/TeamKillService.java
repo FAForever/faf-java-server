@@ -24,8 +24,8 @@ public class TeamKillService {
   }
 
   public void reportTeamKill(Player player, Duration timeDelta, int killerId, int victimId) {
-    Optional<Player> victim = playerService.getPlayer(victimId);
-    Optional<Player> killer = playerService.getPlayer(killerId);
+    Optional<Player> victim = playerService.getOnlinePlayer(victimId);
+    Optional<Player> killer = playerService.getOnlinePlayer(killerId);
 
     Game game = player.getCurrentGame();
     if (game == null) {

@@ -1,5 +1,5 @@
 package com.faforever.server.common;
 
-public interface ServerResponse {
+public interface ServerMessage {
 
 }

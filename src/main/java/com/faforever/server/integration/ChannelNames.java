@@ -6,7 +6,7 @@ import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.common.ClientMessage;
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
@@ -22,6 +22,7 @@ import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
@@ -47,13 +48,13 @@ public class ChannelNames {
 
   /**
    * Channel for single-receiver outbound client messages. The payload of messages in this channel is
-   * {@link ServerResponse}.
+   * {@link ServerMessage}.
    */
   public static final String CLIENT_OUTBOUND = "clientOutbound";
 
   /**
    * Channel for broadcast outbound client messages. The payload of messages in this channel is
-   * {@link ServerResponse}.
+   * {@link ServerMessage}.
    */
   public static final String CLIENT_OUTBOUND_BROADCAST = "clientOutboundBroadcast";
 
@@ -211,4 +212,9 @@ public class ChannelNames {
    * Channel for {@link IceServersRequest}.
    */
   public static final String ICE_SERVERS_REQUEST = "iceServersRequest";
+
+  /**
+   * Channel for {@link IceMessage}.
+   */
+  public static final String ICE_MESSAGE = "iceMessage";
 }

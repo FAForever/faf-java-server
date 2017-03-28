@@ -31,6 +31,8 @@ import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.ice.IceMessage;
+import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.legacy.LegacyClientMessageType;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
@@ -119,6 +121,11 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case INITIATE_TEST:
         log.warn("Ignoring " + messageType);
         return null;
+      case ICE_SERVERS:
+        return new IceServersRequest();
+      case ICE_MESSAGE:
+        args = getArgs(source);
+        return new IceMessage((int) args.get(0), args.get(1));
       case CREATE_ACCOUNT:
         Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
         break;
@@ -139,7 +146,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   private ClientMessage handleAdminAction(Map<String, Object> source) {
     switch ((String) source.get("action")) {
       case "closeFA":
-        return new DisconnectPeerRequest(((Double) source.get("user_id")).intValue());
+        return new DisconnectPeerRequest((int) source.get("user_id"));
       case "closeLobby":
         return new DisconnectClientRequest(((Double) source.get("user_id")).intValue());
       case "requestavatars":
@@ -166,10 +173,10 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     List<Object> args;
     args = getArgs(source);
     return new TeamKillReport(
-      Duration.ofSeconds(((Double) args.get(0)).intValue()),
-      ((Double) args.get(0)).intValue(),
+      Duration.ofSeconds((int) args.get(0)),
+      (int) args.get(0),
       (String) args.get(1),
-      ((Double) args.get(2)).intValue(),
+      (int) args.get(2),
       (String) args.get(3)
     );
   }
@@ -190,9 +197,9 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     List<Object> args;
     args = getArgs(source);
     return new CoopMissionCompletedReport(
-      ((Double) args.get(0)).intValue() == 1,
-      ((Double) args.get(1)).intValue() == 1,
-      Duration.ofSeconds(((Double) args.get(2)).intValue())
+      (int) args.get(0) == 1,
+      (int) args.get(1) == 1,
+      Duration.ofSeconds((int) args.get(2))
     );
   }
 

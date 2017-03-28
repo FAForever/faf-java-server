@@ -1,6 +1,6 @@
 package com.faforever.server.client;
 
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -10,7 +10,7 @@ import lombok.ToString;
 @Deprecated
 @Getter
 @ToString
-public enum SessionResponse implements ServerResponse {
+public enum SessionResponse implements ServerMessage {
 
   INSTANCE;
 

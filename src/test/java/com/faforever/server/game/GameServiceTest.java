@@ -141,7 +141,7 @@ public class GameServiceTest {
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID - 1));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
-    when(playerService.getPlayer(anyInt())).thenReturn(Optional.empty());
+    when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
     doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
       .when(ratingService).initGlobalRating(any());
 
@@ -708,7 +708,7 @@ public class GameServiceTest {
     activePlayers.put(3, player3);
     activePlayers.put(4, player4);
 
-    when(playerService.getPlayer(3)).thenReturn(Optional.of(player3));
+    when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(player3));
 
     instance.disconnectFromGame(new User(), 3);
 
@@ -730,7 +730,7 @@ public class GameServiceTest {
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
-    when(playerService.getPlayer(3)).thenReturn(Optional.of(new Player()));
+    when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(new Player()));
     instance.disconnectFromGame(new User(), 3);
     verifyZeroInteractions(clientService);
   }

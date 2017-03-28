@@ -1,6 +1,6 @@
 package com.faforever.server.game;
 
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -11,7 +11,7 @@ import java.time.Instant;
  * determine whether or not a response should be processed.
  */
 @Getter
-public class DelayedResponse<T extends ServerResponse> {
+public class DelayedResponse<T extends ServerMessage> {
 
   /**
    * The instant when this instance of {@link DelayedResponse} was created.

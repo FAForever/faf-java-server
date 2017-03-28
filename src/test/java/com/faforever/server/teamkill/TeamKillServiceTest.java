@@ -36,7 +36,7 @@ public class TeamKillServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    when(playerService.getPlayer(anyInt())).thenReturn(Optional.empty());
+    when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
 
     instance = new TeamKillService(playerService, teamKillRepository);
   }
@@ -49,8 +49,8 @@ public class TeamKillServiceTest {
     Player player = (Player) new Player().setCurrentGame(game).setId(1);
     Player killer = (Player) new Player().setId(2);
 
-    when(playerService.getPlayer(player.getId())).thenReturn(Optional.of(player));
-    when(playerService.getPlayer(killer.getId())).thenReturn(Optional.of(killer));
+    when(playerService.getOnlinePlayer(player.getId())).thenReturn(Optional.of(player));
+    when(playerService.getOnlinePlayer(killer.getId())).thenReturn(Optional.of(killer));
 
     instance.reportTeamKill(player, Duration.ofMinutes(28), killer.getId(), player.getId());
 
@@ -70,8 +70,8 @@ public class TeamKillServiceTest {
     Player player = (Player) new Player().setId(1);
     Player killer = (Player) new Player().setId(2);
 
-    when(playerService.getPlayer(player.getId())).thenReturn(Optional.of(player));
-    when(playerService.getPlayer(killer.getId())).thenReturn(Optional.of(killer));
+    when(playerService.getOnlinePlayer(player.getId())).thenReturn(Optional.of(player));
+    when(playerService.getOnlinePlayer(killer.getId())).thenReturn(Optional.of(killer));
 
     instance.reportTeamKill(player, Duration.ofMinutes(28), killer.getId(), player.getId());
     verifyZeroInteractions(teamKillRepository);
@@ -83,7 +83,7 @@ public class TeamKillServiceTest {
     player.setCurrentGame(new Game());
     player.setId(1);
 
-    when(playerService.getPlayer(player.getId())).thenReturn(Optional.of(player));
+    when(playerService.getOnlinePlayer(player.getId())).thenReturn(Optional.of(player));
 
     instance.reportTeamKill(player, Duration.ofMinutes(28), 991234, player.getId());
     verifyZeroInteractions(teamKillRepository);
@@ -99,7 +99,7 @@ public class TeamKillServiceTest {
 
     Player victim = (Player) new Player().setId(2);
 
-    when(playerService.getPlayer(killer.getId())).thenReturn(Optional.of(killer));
+    when(playerService.getOnlinePlayer(killer.getId())).thenReturn(Optional.of(killer));
 
     instance.reportTeamKill(reporter, Duration.ofMinutes(28), killer.getId(), victim.getId());
     verifyZeroInteractions(teamKillRepository);

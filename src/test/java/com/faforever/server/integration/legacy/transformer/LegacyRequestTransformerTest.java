@@ -26,6 +26,8 @@ import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.ice.IceMessage;
+import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
@@ -51,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
@@ -298,7 +301,7 @@ public class LegacyRequestTransformerTest {
   public void transformOperationComplete() throws Exception {
     CoopMissionCompletedReport coopMissionCompletedReport = (CoopMissionCompletedReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "OperationComplete",
-      KEY_ARGS, Arrays.asList(1d, 0d, 1440d)
+      KEY_ARGS, Arrays.asList(1, 0, 1440)
     ));
 
     assertThat(coopMissionCompletedReport, is(notNullValue()));
@@ -349,7 +352,7 @@ public class LegacyRequestTransformerTest {
   public void teamKillReport() throws Exception {
     TeamKillReport teamKillReport = (TeamKillReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "TeamkillReport",
-      KEY_ARGS, Arrays.asList(1d, TEST_USERNAME, 2d, "TestNG")
+      KEY_ARGS, Arrays.asList(1, TEST_USERNAME, 2, "TestNG")
     ));
 
     assertThat(teamKillReport.getVictimId(), is(1));
@@ -392,7 +395,7 @@ public class LegacyRequestTransformerTest {
     DisconnectPeerRequest request = (DisconnectPeerRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "closeFA",
-      "user_id", 1d
+      "user_id", 1
     ));
 
     assertThat(request.getPlayerId(), is(1));
@@ -489,5 +492,25 @@ public class LegacyRequestTransformerTest {
     ));
 
     assertThat(result.getQueueName(), is("ladder1v1"));
+  }
+
+  @Test
+  public void requestIceServers() throws Exception {
+    IceServersRequest result = (IceServersRequest) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "ice_servers"
+    ));
+
+    assertThat(result, is(instanceOf(IceServersRequest.class)));
+  }
+
+  @Test
+  public void iceMessage() throws Exception {
+    IceMessage iceMessage = (IceMessage) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "IceMsg",
+      KEY_ARGS, Arrays.asList(1, "someObject")
+    ));
+
+    assertThat(iceMessage.getReceiverId(), is(1));
+    assertThat(iceMessage.getContent(), is("someObject"));
   }
 }

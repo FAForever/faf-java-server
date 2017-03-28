@@ -1,6 +1,6 @@
 package com.faforever.server.coop;
 
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.Data;
 
 /**
@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @Deprecated
-public class CoopMissionResponse implements ServerResponse {
+public class CoopMissionResponse implements ServerMessage {
   private final String name;
   private final String description;
   private final String filename;

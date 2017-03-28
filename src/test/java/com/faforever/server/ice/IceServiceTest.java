@@ -2,6 +2,7 @@ package com.faforever.server.ice;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
+import com.faforever.server.player.PlayerService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,12 +14,15 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IceServiceTest {
@@ -27,10 +31,12 @@ public class IceServiceTest {
 
   @Mock
   private ClientService clientService;
+  @Mock
+  private PlayerService playerService;
 
   @Before
   public void setUp() throws Exception {
-    player = new Player();
+    player = (Player) new Player().setId(1);
     List<IceServersProvider> serverProviders = Arrays.asList(
       () -> new IceServerList(60, Instant.now(), Arrays.asList(
         new IceServer(URI.create("http://localhost:1234"), "user1", "password1"),
@@ -41,7 +47,7 @@ public class IceServiceTest {
         new IceServer(URI.create("http://localhost:4567"), "user4", "password4")
       ))
     );
-    instance = new IceService(clientService, serverProviders);
+    instance = new IceService(clientService, playerService, serverProviders);
   }
 
   @Test
@@ -62,5 +68,26 @@ public class IceServiceTest {
     assertThat(value.get(1).getServers().get(1).getUrl(), is(URI.create("http://localhost:4567")));
     assertThat(value.get(1).getServers().get(1).getUsername(), is("user4"));
     assertThat(value.get(1).getServers().get(1).getCredential(), is("password4"));
+  }
+
+  @Test
+  public void forwardIceMessageToOnlinePlayer() throws Exception {
+    Player receiver = (Player) new Player().setId(42);
+    when(playerService.getOnlinePlayer(42)).thenReturn(Optional.of(receiver));
+    Object payload = new Object();
+
+    instance.forwardIceMessage(player, 42, payload);
+
+    verify(clientService).sendIceMessage(player.getId(), payload, receiver);
+  }
+
+  @Test
+  public void forwardIceMessageToOfflinePlayer() throws Exception {
+    when(playerService.getOnlinePlayer(42)).thenReturn(Optional.empty());
+    Object payload = new Object();
+
+    instance.forwardIceMessage(player, 42, payload);
+
+    verifyZeroInteractions(clientService);
   }
 }

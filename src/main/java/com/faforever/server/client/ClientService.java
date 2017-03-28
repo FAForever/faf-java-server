@@ -3,7 +3,7 @@ package com.faforever.server.client;
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.chat.JoinChatChannelResponse;
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
@@ -15,6 +15,7 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.ice.ForwardedIceMessage;
 import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.response.StartGameProcessResponse;
@@ -156,7 +157,7 @@ public class ClientService {
    * @param <T> the type of the submitted object
    */
   @SuppressWarnings("unchecked")
-  public <T extends ServerResponse> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
+  public <T extends ServerMessage> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
     log.trace("Received object to send delayed: {}", object);
     synchronized (dirtyObjects) {
       dirtyObjects.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
@@ -242,6 +243,10 @@ public class ClientService {
     send(new IceServersResponse(iceServers), recipient);
   }
 
+  public void sendIceMessage(int senderId, Object content, ConnectionAware recipient) {
+    send(new ForwardedIceMessage(senderId, content), recipient);
+  }
+
   @EventListener
   private void onServerShutdown(ApplicationShutdownEvent event) {
     try {
@@ -260,11 +265,11 @@ public class ClientService {
     return Arrays.asList("/numgames", String.valueOf(numGames));
   }
 
-  private void send(ServerResponse serverResponse, @NotNull ConnectionAware connectionAware) {
+  private void send(ServerMessage serverMessage, @NotNull ConnectionAware connectionAware) {
     ClientConnection clientConnection = connectionAware.getClientConnection();
     if (clientConnection == null) {
       throw new IllegalStateException("No connection available: " + connectionAware);
     }
-    clientGateway.send(serverResponse, clientConnection);
+    clientGateway.send(serverMessage, clientConnection);
   }
 }

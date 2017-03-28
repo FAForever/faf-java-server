@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class PlayerService {
 
-  private final Map<Integer, Player> playersById;
+  private final Map<Integer, Player> onlinePlayersById;
   private final ClientService clientService;
 
   public PlayerService(ClientService clientService) {
     this.clientService = clientService;
-    playersById = new ConcurrentHashMap<>();
+    onlinePlayersById = new ConcurrentHashMap<>();
   }
 
   @EventListener
@@ -31,8 +31,8 @@ public class PlayerService {
     FafUserDetails fafUserDetails = (FafUserDetails) event.getAuthentication().getPrincipal();
     Player player = fafUserDetails.getPlayer();
 
-    playersById.put(player.getId(), player);
-    playersById.values().stream()
+    onlinePlayersById.put(player.getId(), player);
+    onlinePlayersById.values().stream()
       .filter(otherPlayer -> otherPlayer != player && otherPlayer.getClientConnection() != null)
       .forEach(otherPlayer -> clientService.sendPlayerDetails(otherPlayer, player));
   }
@@ -42,15 +42,15 @@ public class PlayerService {
     Optional.ofNullable(event.getClientConnection().getUserDetails())
       .ifPresent(userDetails -> {
         log.debug("Removing player '{}' who went offline", userDetails.getPlayer());
-        playersById.remove(userDetails.getPlayer().getId());
+        onlinePlayersById.remove(userDetails.getPlayer().getId());
       });
   }
 
-  public Optional<Player> getPlayer(int id) {
-    return Optional.ofNullable(playersById.get(id));
+  public Optional<Player> getOnlinePlayer(int id) {
+    return Optional.ofNullable(onlinePlayersById.get(id));
   }
 
   public Collection<Player> getPlayers() {
-    return playersById.values();
+    return onlinePlayersById.values();
   }
 }

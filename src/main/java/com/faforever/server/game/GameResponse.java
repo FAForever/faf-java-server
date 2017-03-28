@@ -1,6 +1,6 @@
 package com.faforever.server.game;
 
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import com.faforever.server.entity.GameState;
 import lombok.Data;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * Sends game information to the client.
  */
 @Data
-public class GameResponse implements ServerResponse {
+public class GameResponse implements ServerMessage {
   private final int id;
   private final String title;
   private final GameVisibility gameVisibility;

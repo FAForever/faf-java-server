@@ -75,7 +75,7 @@ public class ClientConnectionManagerTest {
     ClientConnection clientConnection12 = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     Player player12 = new Player()
       .setClientConnection(clientConnection12);
-    when(playerService.getPlayer(12)).thenReturn(Optional.of(player12));
+    when(playerService.getOnlinePlayer(12)).thenReturn(Optional.of(player12));
 
     instance.disconnectClient(new User(), 12);
 

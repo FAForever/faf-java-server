@@ -1,6 +1,6 @@
 package com.faforever.server.mod;
 
-import com.faforever.server.common.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.Data;
 
 /**
@@ -10,7 +10,7 @@ import lombok.Data;
  */
 @Deprecated
 @Data
-public class FeaturedModResponse implements ServerResponse {
+public class FeaturedModResponse implements ServerMessage {
 
   private final String technicalName;
   private final String displayName;

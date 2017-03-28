@@ -79,7 +79,7 @@ public class ClientConnectionManager {
    */
   void disconnectClient(User requester, int userId) {
     // TODO actually there should be a user service, returning a User
-    Optional<Player> optional = playerService.getPlayer(userId);
+    Optional<Player> optional = playerService.getOnlinePlayer(userId);
     if (!optional.isPresent()) {
       log.warn("User '{}' requested disconnection of unknown user '{}'", requester, userId);
       return;
