@@ -18,4 +18,7 @@ public class Ladder1v1Rating extends Rating {
   @Column(name = "winGames")
   private short winGames;
 
+  public Ladder1v1Rating(Player player, double mean, double deviation) {
+    super(player.getId(), 0, true, mean, deviation, player);
+  }
 }

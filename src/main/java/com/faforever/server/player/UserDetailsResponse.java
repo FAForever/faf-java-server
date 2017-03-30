@@ -1,6 +1,6 @@
 package com.faforever.server.player;
 
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class UserDetailsResponse implements ServerResponse {
+public class UserDetailsResponse implements ServerMessage {
   private final int userId;
   private final String username;
   private final String country;

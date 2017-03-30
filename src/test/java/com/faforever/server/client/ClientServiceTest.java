@@ -1,7 +1,8 @@
 package com.faforever.server.client;
 
 import com.faforever.server.api.dto.AchievementState;
-import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.Avatar;
 import com.faforever.server.entity.AvatarAssociation;
@@ -11,11 +12,11 @@ import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.PlayerService;
 import com.faforever.server.player.UserDetailsResponse;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,9 +24,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -50,9 +51,7 @@ public class ClientServiceTest {
   @Mock
   private CoopService coopService;
   @Mock
-  private PlayerService playerService;
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
+  private ServerProperties serverProperties;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -62,7 +61,7 @@ public class ClientServiceTest {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
 
-    instance = new ClientService(clientGateway, coopService);
+    instance = new ClientService(clientGateway, coopService, serverProperties);
   }
 
   @Test
@@ -124,7 +123,7 @@ public class ClientServiceTest {
 
   @Test
   public void reportUpdatedAchievements() throws Exception {
-    List<UpdatedAchievement> list = Collections.singletonList(new UpdatedAchievement(true, AchievementState.UNLOCKED));
+    List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", true, AchievementState.UNLOCKED));
 
     instance.reportUpdatedAchievements(list, player);
 
@@ -132,7 +131,7 @@ public class ClientServiceTest {
     verify(clientGateway).send(captor.capture(), any());
 
     assertThat(captor.getValue().getUpdatedAchievements(), hasSize(1));
-    assertThat(captor.getValue().getUpdatedAchievements().get(0).getState(), is(AchievementState.UNLOCKED));
+    assertThat(captor.getValue().getUpdatedAchievements().get(0).getCurrentState(), is(AchievementState.UNLOCKED));
     assertThat(captor.getValue().getUpdatedAchievements().get(0).getCurrentSteps(), is(nullValue()));
   }
 
@@ -209,5 +208,18 @@ public class ClientServiceTest {
     instance.sendOnlinePlayerList(players, connectionAware);
 
     verify(clientGateway).send(players.get(0), clientConnection);
+    verify(clientGateway).send(players.get(1), clientConnection);
+  }
+
+  @Test
+  public void sendIceServers() throws Exception {
+    List<IceServerList> iceServers = Collections.singletonList(
+      new IceServerList(60, Instant.now(), Collections.emptyList())
+    );
+    ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
+
+    instance.sendIceServers(iceServers, connectionAware);
+
+    verify(clientGateway).send(new IceServersResponse(iceServers), clientConnection);
   }
 }

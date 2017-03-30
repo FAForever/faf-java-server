@@ -1,5 +1,6 @@
 package com.faforever.server.integration.legacy;
 
+import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
@@ -34,13 +35,15 @@ public class LegacyServicesActivators {
   private final ClientService clientService;
   private final UniqueIdService uniqueIdService;
   private final GeoIpService geoIpService;
+  private final ChatService chatService;
 
   @Inject
-  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService, UniqueIdService uniqueIdService, GeoIpService geoIpService) {
+  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService, UniqueIdService uniqueIdService, GeoIpService geoIpService, ChatService chatService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
     this.geoIpService = geoIpService;
+    this.chatService = chatService;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
@@ -49,7 +52,7 @@ public class LegacyServicesActivators {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
-  @Transactional(readOnly = true)
+  @Transactional
   public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     try {
       UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequest.getLogin(), loginRequest.getPassword());
@@ -64,6 +67,7 @@ public class LegacyServicesActivators {
       geoIpService.lookupCountryCode(clientConnection.getClientAddress()).ifPresent(player::setCountry);
 
       uniqueIdService.verify(player, loginRequest.getUniqueId());
+      chatService.updateIrcPassword(userDetails.getUsername(), loginRequest.getPassword());
 
       clientService.sendPlayerDetails(player, clientConnection.getUserDetails().getPlayer());
     } catch (BadCredentialsException e) {

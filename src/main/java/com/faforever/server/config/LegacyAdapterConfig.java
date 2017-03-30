@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 import static com.faforever.server.integration.MessageHeaders.PROTOCOL;
 
 @Configuration
@@ -181,7 +180,7 @@ public class LegacyAdapterConfig {
    */
   private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.headerFunction(IpHeaders.CONNECTION_ID,
-      message -> message.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class).getId());
+      message -> message.getHeaders().get(MessageHeaders.CLIENT_CONNECTION, ClientConnection.class).getId());
   }
 
   /**

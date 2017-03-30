@@ -3,15 +3,18 @@ package com.faforever.server.security;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.BanDetails;
+import com.faforever.server.entity.GroupAssociation.Group;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import lombok.ToString;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-
-import static java.util.Collections.singletonList;
+import java.util.ArrayList;
+import java.util.List;
 
 @ToString
 public class FafUserDetails extends org.springframework.security.core.userdetails.User implements ConnectionAware {
@@ -19,14 +22,9 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
   private final User user;
 
   public FafUserDetails(User user) {
-    // TODO implement lobby_admin
-    super(user.getLogin(), user.getPassword(), true, true, true, isNonLocked(user.getBanDetails()), singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+    super(user.getLogin(), user.getPassword(), true, true, true,
+      isNonLocked(user.getBanDetails()), getRoles(user));
     this.user = user;
-  }
-
-  private static boolean isNonLocked(BanDetails banDetails) {
-    return banDetails == null
-      || banDetails.getExpiresAt().before(Timestamp.from(Instant.now()));
   }
 
   public User getUser() {
@@ -40,5 +38,22 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
   @Override
   public ClientConnection getClientConnection() {
     return user.getPlayer().getClientConnection();
+  }
+
+  @NotNull
+  private static List<GrantedAuthority> getRoles(User user) {
+    ArrayList<GrantedAuthority> roles = new ArrayList<>();
+    roles.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+    if (user.getGroupAssociation() != null && user.getGroupAssociation().getGroup() == Group.ADMIN) {
+      roles.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
+
+    return roles;
+  }
+
+  private static boolean isNonLocked(BanDetails banDetails) {
+    return banDetails == null
+      || banDetails.getExpiresAt().before(Timestamp.from(Instant.now()));
   }
 }

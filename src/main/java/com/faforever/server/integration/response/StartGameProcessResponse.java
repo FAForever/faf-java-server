@@ -1,6 +1,6 @@
 package com.faforever.server.integration.response;
 
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class StartGameProcessResponse implements ServerResponse {
+public class StartGameProcessResponse implements ServerMessage {
 
   private final String mod;
   private final int gameId;

@@ -8,6 +8,7 @@ import com.faforever.server.game.Faction;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.Unit;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.stats.ArmyStatistics.CategoryStats;
 import com.faforever.server.stats.achievements.AchievementId;
 import com.faforever.server.stats.achievements.AchievementService;
 import com.faforever.server.stats.achievements.AchievementUpdate;
@@ -28,7 +29,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.ToIntFunction;
 
-import static com.faforever.server.stats.ArmyStatistics.BrainType.AI;
 import static com.faforever.server.stats.ArmyStatistics.BrainType.HUMAN;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
@@ -59,10 +59,10 @@ public class ArmyStatisticsService {
     int playerArmyId = -1;
     for (ArmyStatistics statsItem : statistics) {
       currentIndex++;
-      if (statsItem.getType() == AI && !CIVILIAN_ARMY_NAME.equals(statsItem.getName())) {
-        log.debug("AI game reported by '{}', aborting stats processing", player);
-        return;
-      }
+//      if (statsItem.getType() == AI && !CIVILIAN_ARMY_NAME.equals(statsItem.getName())) {
+//        log.debug("AI game reported by '{}', aborting stats processing", player);
+//        return;
+//      }
 
       if (statsItem.getType() == HUMAN) {
         numberOfHumans += 1;
@@ -84,10 +84,10 @@ public class ArmyStatisticsService {
       return;
     }
 
-    if (numberOfHumans < 2) {
-      log.debug("Single player game '{}' reported by '{}', aborting stats processing", game, player);
-      return;
-    }
+//    if (numberOfHumans < 2) {
+//      log.debug("Single player game '{}' reported by '{}', aborting stats processing", game, player);
+//      return;
+//    }
 
     int finalArmyId = playerArmyId;
     Optional<ArmyOutcome> armyOutcome = game.getReportedArmyOutcomes().values().stream()
@@ -113,117 +113,127 @@ public class ArmyStatisticsService {
     ArmyStatistics.CategoryStats categoryStats = armyStats.getCategoryStats();
     boolean scoredHighest = Objects.equals(highestScorerName, player.getLogin());
 
+    int playerId = player.getId();
     if (survived && modService.isLadder1v1(game.getFeaturedMod())) {
-      unlock(AchievementId.ACH_FIRST_SUCCESS, achievementUpdates);
+      unlock(AchievementId.ACH_FIRST_SUCCESS, achievementUpdates, playerId);
     }
 
-    increment(AchievementId.ACH_NOVICE, 1, achievementUpdates);
-    increment(AchievementId.ACH_JUNIOR, 1, achievementUpdates);
-    increment(AchievementId.ACH_SENIOR, 1, achievementUpdates);
-    increment(AchievementId.ACH_VETERAN, 1, achievementUpdates);
-    increment(AchievementId.ACH_ADDICT, 1, achievementUpdates);
+    increment(AchievementId.ACH_NOVICE, 1, achievementUpdates, playerId);
+    increment(AchievementId.ACH_JUNIOR, 1, achievementUpdates, playerId);
+    increment(AchievementId.ACH_SENIOR, 1, achievementUpdates, playerId);
+    increment(AchievementId.ACH_VETERAN, 1, achievementUpdates, playerId);
+    increment(AchievementId.ACH_ADDICT, 1, achievementUpdates, playerId);
 
-    factionPlayed(faction, survived, achievementUpdates, eventUpdates);
-    categoryStats(categoryStats, survived, achievementUpdates, eventUpdates);
-    killedAcus(categoryStats, survived, achievementUpdates);
-    builtMercies(countBuiltUnits(unitStats, Unit.MERCY), achievementUpdates);
-    builtFireBeetles(countBuiltUnits(unitStats, Unit.FIRE_BEETLE), achievementUpdates);
-    builtSalvations(countBuiltUnits(unitStats, Unit.SALVATION), survived, achievementUpdates);
-    builtYolonaOss(countBuiltUnits(unitStats, Unit.YOLONA_OSS), survived, achievementUpdates);
-    builtParagons(countBuiltUnits(unitStats, Unit.PARAGON), survived, achievementUpdates);
-    builtAtlantis(countBuiltUnits(unitStats, Unit.ATLANTIS), achievementUpdates);
-    builtTempests(countBuiltUnits(unitStats, Unit.TEMPEST), achievementUpdates);
-    builtScathis(countBuiltUnits(unitStats, Unit.SCATHIS), survived, achievementUpdates);
-    builtMavors(countBuiltUnits(unitStats, Unit.MAVOR), survived, achievementUpdates);
-    builtCzars(countBuiltUnits(unitStats, Unit.CZAR), achievementUpdates);
-    builtAhwassas(countBuiltUnits(unitStats, Unit.AHWASSA), achievementUpdates);
-    builtYthothas(countBuiltUnits(unitStats, Unit.YTHOTHA), achievementUpdates);
-    builtFatboys(countBuiltUnits(unitStats, Unit.FATBOY), achievementUpdates);
-    builtMonkeylords(countBuiltUnits(unitStats, Unit.MONKEYLORD), achievementUpdates);
-    builtGalacticColossus(countBuiltUnits(unitStats, Unit.GALACTIC_COLOSSUS), achievementUpdates);
-    builtSoulRippers(countBuiltUnits(unitStats, Unit.SOUL_RIPPER), achievementUpdates);
-    builtMegaliths(countBuiltUnits(unitStats, Unit.MEGALITH), achievementUpdates);
-    builtAsfs(countBuiltUnits(unitStats, Unit.ASFS), achievementUpdates);
-    builtTransports(categoryStats.getTransportation().getBuilt(), achievementUpdates);
-    builtSacus(categoryStats.getSacu().getBuilt(), achievementUpdates);
-    lowestAcuHealth(count(unitStats, ArmyStatistics.UnitStats::getLowestHealth, Unit.ACUS), survived, achievementUpdates);
-    highscore(scoredHighest, numberOfHumans, achievementUpdates);
+    factionPlayed(faction, survived, achievementUpdates, eventUpdates, playerId);
+    categoryStats(categoryStats, survived, achievementUpdates, eventUpdates, playerId);
+    killedAcus(categoryStats, survived, achievementUpdates, playerId);
+    builtMercies(countBuiltUnits(unitStats, Unit.MERCY), achievementUpdates, playerId);
+    builtFireBeetles(countBuiltUnits(unitStats, Unit.FIRE_BEETLE), achievementUpdates, playerId);
+    builtSalvations(countBuiltUnits(unitStats, Unit.SALVATION), survived, achievementUpdates, playerId);
+    builtYolonaOss(countBuiltUnits(unitStats, Unit.YOLONA_OSS), survived, achievementUpdates, playerId);
+    builtParagons(countBuiltUnits(unitStats, Unit.PARAGON), survived, achievementUpdates, playerId);
+    builtAtlantis(countBuiltUnits(unitStats, Unit.ATLANTIS), achievementUpdates, playerId);
+    builtTempests(countBuiltUnits(unitStats, Unit.TEMPEST), achievementUpdates, playerId);
+    builtScathis(countBuiltUnits(unitStats, Unit.SCATHIS), survived, achievementUpdates, playerId);
+    builtMavors(countBuiltUnits(unitStats, Unit.MAVOR), survived, achievementUpdates, playerId);
+    builtCzars(countBuiltUnits(unitStats, Unit.CZAR), achievementUpdates, playerId);
+    builtAhwassas(countBuiltUnits(unitStats, Unit.AHWASSA), achievementUpdates, playerId);
+    builtYthothas(countBuiltUnits(unitStats, Unit.YTHOTHA), achievementUpdates, playerId);
+    builtFatboys(countBuiltUnits(unitStats, Unit.FATBOY), achievementUpdates, playerId);
+    builtMonkeylords(countBuiltUnits(unitStats, Unit.MONKEYLORD), achievementUpdates, playerId);
+    builtGalacticColossus(countBuiltUnits(unitStats, Unit.GALACTIC_COLOSSUS), achievementUpdates, playerId);
+    builtSoulRippers(countBuiltUnits(unitStats, Unit.SOUL_RIPPER), achievementUpdates, playerId);
+    builtMegaliths(countBuiltUnits(unitStats, Unit.MEGALITH), achievementUpdates, playerId);
+    builtAsfs(countBuiltUnits(unitStats, Unit.ASFS), achievementUpdates, playerId);
+    builtTransports(categoryStats.getTransportation().getBuilt(), achievementUpdates, playerId);
+    builtSacus(categoryStats.getSacu().getBuilt(), achievementUpdates, playerId);
+    lowestAcuHealth(count(unitStats, ArmyStatistics.UnitStats::getLowestHealth, Unit.ACUS), survived, achievementUpdates, playerId);
+    highscore(scoredHighest, numberOfHumans, achievementUpdates, playerId);
 
-    eventService.executeBatchUpdate(player, eventUpdates);
+    eventService.executeBatchUpdate(player, eventUpdates)
+      .exceptionally(throwable -> {
+        log.warn("Could not report '" + eventUpdates.size() + "' event updates for player '" + player + "'", throwable);
+        return null;
+      });
+
     achievementService.executeBatchUpdate(player, achievementUpdates)
-      .thenAccept((playerAchievements) -> clientService.reportUpdatedAchievements(playerAchievements, player));
+      .thenAccept(playerAchievements -> clientService.reportUpdatedAchievements(playerAchievements, player))
+      .exceptionally(throwable -> {
+        log.warn("Could not report '" + achievementUpdates.size() + "' achievement updates for player '" + player + "'", throwable);
+        return null;
+      });
   }
 
-  private void builtMercies(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_NO_MERCY, count, achievementUpdates);
+  private void builtMercies(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_NO_MERCY, count, achievementUpdates, playerId);
   }
 
-  private void builtFireBeetles(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_DEADLY_BUGS, count, achievementUpdates);
+  private void builtFireBeetles(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_DEADLY_BUGS, count, achievementUpdates, playerId);
   }
 
-  private void builtAtlantis(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_IT_AINT_A_CITY, count, achievementUpdates);
+  private void builtAtlantis(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_IT_AINT_A_CITY, count, achievementUpdates, playerId);
   }
 
-  private void builtTempests(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_STORMY_SEA, count, achievementUpdates);
+  private void builtTempests(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_STORMY_SEA, count, achievementUpdates, playerId);
   }
 
-  private void builtCzars(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_DEATH_FROM_ABOVE, count, achievementUpdates);
+  private void builtCzars(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_DEATH_FROM_ABOVE, count, achievementUpdates, playerId);
   }
 
-  private void builtAhwassas(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_ASS_WASHER, count, achievementUpdates);
+  private void builtAhwassas(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_ASS_WASHER, count, achievementUpdates, playerId);
   }
 
-  private void builtYthothas(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_ALIEN_INVASION, count, achievementUpdates);
+  private void builtYthothas(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_ALIEN_INVASION, count, achievementUpdates, playerId);
   }
 
-  private void builtFatboys(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_FATTER_IS_BETTER, count, achievementUpdates);
+  private void builtFatboys(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_FATTER_IS_BETTER, count, achievementUpdates, playerId);
   }
 
-  private void builtMonkeylords(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_ARACHNOLOGIST, count, achievementUpdates);
+  private void builtMonkeylords(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_ARACHNOLOGIST, count, achievementUpdates, playerId);
   }
 
-  private void builtGalacticColossus(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_INCOMING_ROBOTS, count, achievementUpdates);
+  private void builtGalacticColossus(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_INCOMING_ROBOTS, count, achievementUpdates, playerId);
   }
 
-  private void builtSoulRippers(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_FLYING_DEATH, count, achievementUpdates);
+  private void builtSoulRippers(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_FLYING_DEATH, count, achievementUpdates, playerId);
   }
 
-  private void builtMegaliths(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_HOLY_CRAB, count, achievementUpdates);
+  private void builtMegaliths(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_HOLY_CRAB, count, achievementUpdates, playerId);
   }
 
-  private void builtTransports(int count, List<AchievementUpdate> achievementUpdates) {
-    increment(AchievementId.ACH_THE_TRANSPORTER, count, achievementUpdates);
+  private void builtTransports(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    increment(AchievementId.ACH_THE_TRANSPORTER, count, achievementUpdates, playerId);
   }
 
-  private void builtSacus(int count, List<AchievementUpdate> achievementUpdates) {
-    setStepsAtLeast(AchievementId.ACH_WHO_NEEDS_SUPPORT, count, achievementUpdates);
+  private void builtSacus(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    setStepsAtLeast(AchievementId.ACH_WHO_NEEDS_SUPPORT, count, achievementUpdates, playerId);
   }
 
-  private void builtAsfs(int count, List<AchievementUpdate> achievementUpdates) {
-    setStepsAtLeast(AchievementId.ACH_WHAT_A_SWARM, count, achievementUpdates);
+  private void builtAsfs(int count, List<AchievementUpdate> achievementUpdates, int playerId) {
+    setStepsAtLeast(AchievementId.ACH_WHAT_A_SWARM, count, achievementUpdates, playerId);
   }
 
-  private void unlock(AchievementId achievementId, List<AchievementUpdate> achievementUpdates) {
-    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.UNLOCK, 0));
+  private void unlock(AchievementId achievementId, List<AchievementUpdate> achievementUpdates, int playerId) {
+    achievementUpdates.add(new AchievementUpdate(playerId, achievementId, AchievementUpdate.UpdateType.UNLOCK, 0));
   }
 
-  private void increment(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates) {
-    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.INCREMENT, steps));
+  private void increment(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates, int playerId) {
+    achievementUpdates.add(new AchievementUpdate(playerId, achievementId, AchievementUpdate.UpdateType.INCREMENT, steps));
   }
 
-  private void setStepsAtLeast(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates) {
-    achievementUpdates.add(new AchievementUpdate(achievementId, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, steps));
+  private void setStepsAtLeast(AchievementId achievementId, int steps, List<AchievementUpdate> achievementUpdates, int playerId) {
+    achievementUpdates.add(new AchievementUpdate(playerId, achievementId, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, steps));
   }
 
   private void recordEvent(EventId eventId, int count, List<EventUpdate> eventUpdates) {
@@ -243,7 +253,7 @@ public class ArmyStatisticsService {
   }
 
   @VisibleForTesting
-  void categoryStats(ArmyStatistics.CategoryStats categoryStats, boolean survived, List<AchievementUpdate> achievementUpdates, List<EventUpdate> eventUpdates) {
+  void categoryStats(CategoryStats categoryStats, boolean survived, List<AchievementUpdate> achievementUpdates, List<EventUpdate> eventUpdates, int playerId) {
     int builtAir = categoryStats.getAir().getBuilt();
     int builtLand = categoryStats.getLand().getBuilt();
     int builtNaval = categoryStats.getNaval().getBuilt();
@@ -269,133 +279,133 @@ public class ArmyStatisticsService {
 
     if (survived) {
       if (builtAir > builtLand && builtAir > builtNaval) {
-        increment(AchievementId.ACH_WINGMAN, 1, achievementUpdates);
-        increment(AchievementId.ACH_WRIGHT_BROTHER, 1, achievementUpdates);
-        increment(AchievementId.ACH_KING_OF_THE_SKIES, 1, achievementUpdates);
+        increment(AchievementId.ACH_WINGMAN, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_WRIGHT_BROTHER, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_KING_OF_THE_SKIES, 1, achievementUpdates, playerId);
       } else if (builtLand > builtAir && builtLand > builtNaval) {
-        increment(AchievementId.ACH_MILITIAMAN, 1, achievementUpdates);
-        increment(AchievementId.ACH_GRENADIER, 1, achievementUpdates);
-        increment(AchievementId.ACH_FIELD_MARSHAL, 1, achievementUpdates);
+        increment(AchievementId.ACH_MILITIAMAN, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_GRENADIER, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_FIELD_MARSHAL, 1, achievementUpdates, playerId);
       } else if (builtNaval > builtLand && builtNaval > builtAir) {
-        increment(AchievementId.ACH_LANDLUBBER, 1, achievementUpdates);
-        increment(AchievementId.ACH_SEAMAN, 1, achievementUpdates);
-        increment(AchievementId.ACH_ADMIRAL_OF_THE_FLEET, 1, achievementUpdates);
+        increment(AchievementId.ACH_LANDLUBBER, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_SEAMAN, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_ADMIRAL_OF_THE_FLEET, 1, achievementUpdates, playerId);
       }
     }
 
     if (builtExperimentals > 0) {
-      increment(AchievementId.ACH_DR_EVIL, builtExperimentals, achievementUpdates);
+      increment(AchievementId.ACH_DR_EVIL, builtExperimentals, achievementUpdates, playerId);
     }
 
     if (builtExperimentals >= 3) {
-      increment(AchievementId.ACH_TECHIE, 1, achievementUpdates);
-      increment(AchievementId.ACH_I_LOVE_BIG_TOYS, 1, achievementUpdates);
-      increment(AchievementId.ACH_EXPERIMENTALIST, 1, achievementUpdates);
+      increment(AchievementId.ACH_TECHIE, 1, achievementUpdates, playerId);
+      increment(AchievementId.ACH_I_LOVE_BIG_TOYS, 1, achievementUpdates, playerId);
+      increment(AchievementId.ACH_EXPERIMENTALIST, 1, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void factionPlayed(Faction faction, boolean survived, List<AchievementUpdate> achievementUpdates, List<EventUpdate> eventUpdates) {
+  void factionPlayed(Faction faction, boolean survived, List<AchievementUpdate> achievementUpdates, List<EventUpdate> eventUpdates, int playerId) {
     if (faction == Faction.AEON) {
       recordEvent(EventId.EVENT_AEON_PLAYS, 1, eventUpdates);
 
       if (survived) {
         recordEvent(EventId.EVENT_AEON_WINS, 1, eventUpdates);
-        increment(AchievementId.ACH_AURORA, 1, achievementUpdates);
-        increment(AchievementId.ACH_BLAZE, 1, achievementUpdates);
-        increment(AchievementId.ACH_SERENITY, 1, achievementUpdates);
+        increment(AchievementId.ACH_AURORA, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_BLAZE, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_SERENITY, 1, achievementUpdates, playerId);
       }
     } else if (faction == Faction.CYBRAN) {
       recordEvent(EventId.EVENT_CYBRAN_PLAYS, 1, eventUpdates);
 
       if (survived) {
         recordEvent(EventId.EVENT_CYBRAN_WINS, 1, eventUpdates);
-        increment(AchievementId.ACH_MANTIS, 1, achievementUpdates);
-        increment(AchievementId.ACH_WAGNER, 1, achievementUpdates);
-        increment(AchievementId.ACH_TREBUCHET, 1, achievementUpdates);
+        increment(AchievementId.ACH_MANTIS, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_WAGNER, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_TREBUCHET, 1, achievementUpdates, playerId);
       }
     } else if (faction == Faction.UEF) {
       recordEvent(EventId.EVENT_UEF_PLAYS, 1, eventUpdates);
 
       if (survived) {
         recordEvent(EventId.EVENT_UEF_WINS, 1, eventUpdates);
-        increment(AchievementId.ACH_MA12_STRIKER, 1, achievementUpdates);
-        increment(AchievementId.ACH_RIPTIDE, 1, achievementUpdates);
-        increment(AchievementId.ACH_DEMOLISHER, 1, achievementUpdates);
+        increment(AchievementId.ACH_MA12_STRIKER, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_RIPTIDE, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_DEMOLISHER, 1, achievementUpdates, playerId);
       }
     } else if (faction == Faction.SERAPHIM) {
       recordEvent(EventId.EVENT_SERAPHIM_PLAYS, 1, eventUpdates);
 
       if (survived) {
         recordEvent(EventId.EVENT_SERAPHIM_WINS, 1, eventUpdates);
-        increment(AchievementId.ACH_THAAM, 1, achievementUpdates);
-        increment(AchievementId.ACH_YENZYNE, 1, achievementUpdates);
-        increment(AchievementId.ACH_SUTHANUS, 1, achievementUpdates);
+        increment(AchievementId.ACH_THAAM, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_YENZYNE, 1, achievementUpdates, playerId);
+        increment(AchievementId.ACH_SUTHANUS, 1, achievementUpdates, playerId);
       }
     }
   }
 
   @VisibleForTesting
-  void killedAcus(ArmyStatistics.CategoryStats categoryStats, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void killedAcus(CategoryStats categoryStats, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     int acusPerPlayer = categoryStats.getCdr().getBuilt() > 0 ? categoryStats.getCdr().getBuilt() : 1;
     int killedAcus = categoryStats.getCdr().getKilled();
 
     // I'm aware that this is not perfectly correct, but it's edge case && tracking who got killed by whom would
     // require game code changes
     if (killedAcus >= 3 * acusPerPlayer && survived) {
-      unlock(AchievementId.ACH_HATTRICK, achievementUpdates);
+      unlock(AchievementId.ACH_HATTRICK, achievementUpdates, playerId);
     }
 
-    increment(AchievementId.ACH_DONT_MESS_WITH_ME, killedAcus / acusPerPlayer, achievementUpdates);
+    increment(AchievementId.ACH_DONT_MESS_WITH_ME, killedAcus / acusPerPlayer, achievementUpdates, playerId);
   }
 
   @VisibleForTesting
-  void builtSalvations(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void builtSalvations(int count, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (survived && count > 0) {
-      unlock(AchievementId.ACH_RAINMAKER, achievementUpdates);
+      unlock(AchievementId.ACH_RAINMAKER, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void builtYolonaOss(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void builtYolonaOss(int count, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (survived && count > 0) {
-      unlock(AchievementId.ACH_NUCLEAR_WAR, achievementUpdates);
+      unlock(AchievementId.ACH_NUCLEAR_WAR, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void builtParagons(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void builtParagons(int count, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (survived && count > 0) {
-      unlock(AchievementId.ACH_SO_MUCH_RESOURCES, achievementUpdates);
+      unlock(AchievementId.ACH_SO_MUCH_RESOURCES, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void builtScathis(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void builtScathis(int count, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (survived && count > 0) {
-      unlock(AchievementId.ACH_MAKE_IT_HAIL, achievementUpdates);
+      unlock(AchievementId.ACH_MAKE_IT_HAIL, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void builtMavors(int count, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void builtMavors(int count, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (survived && count > 0) {
-      unlock(AchievementId.ACH_I_HAVE_A_CANON, achievementUpdates);
+      unlock(AchievementId.ACH_I_HAVE_A_CANON, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void lowestAcuHealth(int health, boolean survived, List<AchievementUpdate> achievementUpdates) {
+  void lowestAcuHealth(int health, boolean survived, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (0 < health && health < 500 && survived) {
-      unlock(AchievementId.ACH_THAT_WAS_CLOSE, achievementUpdates);
+      unlock(AchievementId.ACH_THAT_WAS_CLOSE, achievementUpdates, playerId);
     }
   }
 
   @VisibleForTesting
-  void highscore(boolean scoredHighest, int numberOfHumans, List<AchievementUpdate> achievementUpdates) {
+  void highscore(boolean scoredHighest, int numberOfHumans, List<AchievementUpdate> achievementUpdates, int playerId) {
     if (scoredHighest && numberOfHumans >= 8) {
-      unlock(AchievementId.ACH_TOP_SCORE, achievementUpdates);
-      increment(AchievementId.ACH_UNBEATABLE, 1, achievementUpdates);
+      unlock(AchievementId.ACH_TOP_SCORE, achievementUpdates, playerId);
+      increment(AchievementId.ACH_UNBEATABLE, 1, achievementUpdates, playerId);
     }
   }
 }

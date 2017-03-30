@@ -8,6 +8,7 @@ import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
+import com.faforever.server.common.ClientMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
@@ -30,12 +31,13 @@ import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.ice.IceMessage;
+import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.legacy.LegacyClientMessageType;
 import com.faforever.server.integration.request.GameStateReport;
 import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
-import com.faforever.server.request.ClientMessage;
 import com.faforever.server.social.AddFoeRequest;
 import com.faforever.server.social.AddFriendRequest;
 import com.faforever.server.social.RemoveFoeRequest;
@@ -119,13 +121,22 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case INITIATE_TEST:
         log.warn("Ignoring " + messageType);
         return null;
+      case ICE_SERVERS:
+        return new IceServersRequest();
+      case ICE_MESSAGE:
+        args = getArgs(source);
+        return new IceMessage((int) args.get(0), args.get(1));
+      case RESTORE_GAME_SESSION:
+        return new RestoreGameSessionRequest((int) source.get("game_id"));
       case CREATE_ACCOUNT:
         Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
+        break;
       case ADMIN:
         return handleAdminAction(source);
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
+    throw new ProgrammingError("This should never be reached.");
   }
 
   @NotNull
@@ -137,7 +148,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   private ClientMessage handleAdminAction(Map<String, Object> source) {
     switch ((String) source.get("action")) {
       case "closeFA":
-        return new DisconnectPeerRequest(((Double) source.get("user_id")).intValue());
+        return new DisconnectPeerRequest((int) source.get("user_id"));
       case "closeLobby":
         return new DisconnectClientRequest(((Double) source.get("user_id")).intValue());
       case "requestavatars":
@@ -150,8 +161,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new BroadcastRequest((String) source.get("message"));
       default:
         Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
+        return null;
     }
-    return null;
   }
 
   private ClientMessage handleAiOption(Map<String, Object> source) {
@@ -164,10 +175,10 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     List<Object> args;
     args = getArgs(source);
     return new TeamKillReport(
-      Duration.ofSeconds(((Double) args.get(0)).intValue()),
-      ((Double) args.get(0)).intValue(),
+      Duration.ofSeconds((int) args.get(0)),
+      (int) args.get(0),
       (String) args.get(1),
-      ((Double) args.get(2)).intValue(),
+      (int) args.get(2),
       (String) args.get(3)
     );
   }
@@ -188,16 +199,16 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     List<Object> args;
     args = getArgs(source);
     return new CoopMissionCompletedReport(
-      ((Double) args.get(0)).intValue() == 1,
-      ((Double) args.get(1)).intValue() == 1,
-      Duration.ofSeconds(((Double) args.get(2)).intValue())
+      (int) args.get(0) == 1,
+      (int) args.get(1) == 1,
+      Duration.ofSeconds((int) args.get(2))
     );
   }
 
   private ClientMessage handleGameResult(Map<String, Object> source) {
     List<Object> args;
     args = getArgs(source);
-    int armyId = ((Double) args.get(0)).intValue();
+    int armyId = (int) args.get(0);
     String[] results = ((String) args.get(1)).split(" ");
 
     if ("score".equals(results[0])) {
@@ -216,8 +227,9 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new GameModsCountReport(((Double) args.get(1)).intValue());
       case "uids":
         return new GameModsReport(Arrays.asList(((String) args.get(1)).split(" ")));
+      default:
+        throw new IllegalArgumentException("Unknown GameMods argument: " + args.get(0));
     }
-    throw new IllegalArgumentException("Unknown GameMods argument: " + args.get(0));
   }
 
   private ClientMessage handleMatchMaking(Map<String, Object> source) {
@@ -225,7 +237,14 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "stop":
         return new MatchMakerCancelRequest("ladder1v1");
       default:
-        return new MatchMakerSearchRequest(Faction.fromString((String) source.get("faction")), "ladder1v1");
+        Object untypedFaction = source.get("faction");
+        Faction faction;
+        if (untypedFaction instanceof Number) {
+          faction = Faction.fromFaValue(((Number) untypedFaction).intValue());
+        } else {
+          faction = Faction.fromString((String) untypedFaction);
+        }
+        return new MatchMakerSearchRequest(faction, "ladder1v1");
     }
   }
 
@@ -264,7 +283,10 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       GameAccess.fromString((String) source.get("access")),
       source.get("version") == null ? null : ((Double) source.get("version")).intValue(),
       (String) source.get("password"),
-      GameVisibility.fromString((String) source.get("visibility")));
+      GameVisibility.fromString((String) source.get("visibility")),
+      source.get("minRating") == null ? null : ((Double) source.get("minRating")).intValue(),
+      source.get("maxRating") == null ? null : ((Double) source.get("maxRating")).intValue()
+    );
   }
 
   @SuppressWarnings("unchecked")

@@ -1,6 +1,6 @@
 package com.faforever.server.chat;
 
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import lombok.Data;
 
 import java.util.Set;
@@ -9,6 +9,6 @@ import java.util.Set;
  * Tells the client to join chat channels.
  */
 @Data
-public class JoinChatResponse implements ServerResponse {
+public class JoinChatChannelResponse implements ServerMessage {
   private final Set<String> channels;
 }

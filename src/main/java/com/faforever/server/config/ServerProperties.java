@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 
 @Data
 @ConfigurationProperties(prefix = "faf-server", ignoreUnknownFields = false)
@@ -13,12 +15,24 @@ public class ServerProperties {
 
   private int port = 8001;
   private String version = "dev";
-  private String apiBaseUrl = "http://localhost:8080";
+  private Api api = new Api();
   private TrueSkill trueSkill = new TrueSkill();
   private Uid uid = new Uid();
   private MatchMaker matchMaker = new MatchMaker();
   private Game game = new Game();
   private GeoIp geoIp = new GeoIp();
+  private Shutdown shutdown = new Shutdown();
+  private Chat chat = new Chat();
+  private Ice ice = new Ice();
+  private Jwt jwt = new Jwt();
+
+  @Data
+  public static class Shutdown {
+    /**
+     * Message to broadcast to all users when the server is going to shut down.
+     */
+    private String message;
+  }
 
   @Data
   public static class GeoIp {
@@ -75,5 +89,54 @@ public class ServerProperties {
      */
     private String privateKey;
     private String linkToSteamUrl;
+  }
+
+  @Data
+  public static class Api {
+    private String baseUrl = "http://localhost:8080";
+    private int maxPageSize = 10_000;
+    private String clientId;
+    private String clientSecret;
+    private String accessTokenUri;
+  }
+
+  @Data
+  public static class Chat {
+    /** List of channels the client is being told to join. */
+    private List<String> defaultChannels = Collections.singletonList("#aeolus");
+    /** List of channels administrators are being told to join. */
+    private List<String> adminChannels = Collections.singletonList("#admin");
+    /** List of channels moderators are being told to join. */
+    private List<String> moderatorChannels = Collections.singletonList("#moderators");
+    /** Format of clan channel names. Will be formatted with the clan's acronym. */
+    private String clanChannelFormat = "#%s_clan";
+  }
+
+  @Data
+  public static class Ice {
+    private Twilio twilio = new Twilio();
+    private List<Server> servers = Collections.emptyList();
+    /** TTL in seconds. */
+    private int ttl = 3600;
+
+    @Data
+    public static class Twilio {
+      private String accountSid;
+      private String authToken;
+    }
+
+    @Data
+    public static class Server {
+      private String secret;
+      private String url;
+    }
+  }
+
+  @Data
+  public static class Jwt {
+    /**
+     * Secret used to sign and verify JWT payload.
+     */
+    private String secret;
   }
 }

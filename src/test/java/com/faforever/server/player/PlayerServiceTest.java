@@ -50,7 +50,7 @@ public class PlayerServiceTest {
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
     instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(new TestingAuthenticationToken(fafUserDetails, "pw")));
-    assertThat(instance.getPlayer(player.getId()).isPresent(), is(true));
+    assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(true));
 
     InetAddress inetAddress = mock(InetAddress.class);
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress)
@@ -58,6 +58,6 @@ public class PlayerServiceTest {
 
     instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
 
-    assertThat(instance.getPlayer(player.getId()).isPresent(), is(false));
+    assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(false));
   }
 }

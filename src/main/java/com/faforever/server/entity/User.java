@@ -1,8 +1,8 @@
 package com.faforever.server.entity;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,8 +12,8 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "login")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 public class User extends Login {
 
@@ -24,8 +24,11 @@ public class User extends Login {
   @JoinColumn(name = "id", insertable = false, updatable = false)
   private Player player;
 
+  @OneToOne(mappedBy = "user")
+  private GroupAssociation groupAssociation;
+
   @Override
   public String toString() {
-    return "User(" + getId() + ", " + getLogin() + ")";
+    return "User(" + player.getId() + ", " + getLogin() + ")";
   }
 }

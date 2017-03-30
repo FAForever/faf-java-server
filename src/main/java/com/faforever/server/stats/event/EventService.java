@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -17,8 +18,8 @@ public class EventService {
     this.apiAccessor = apiAccessor;
   }
 
-  public void executeBatchUpdate(Player player, List<EventUpdate> eventUpdates) {
+  public CompletableFuture<Void> executeBatchUpdate(Player player, List<EventUpdate> eventUpdates) {
     log.debug("Updating '{}' events for player '{}'", eventUpdates.size(), player);
-    apiAccessor.updateEvents(eventUpdates);
+    return CompletableFuture.completedFuture(apiAccessor.updateEvents(eventUpdates));
   }
 }

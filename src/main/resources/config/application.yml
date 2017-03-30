@@ -8,6 +8,14 @@ faf-server:
     draw-probability: 0.1
   uid:
     link-to-steam-url: http://app.faforever.com/faf/steam.php
+  shutdown:
+    message: The server has been shut down for maintenance, but should be back online soon. If you experience any problems, please restart your client. We apologize for this interruption.
+  api:
+    base-url: ${API_BASE_URL}
+    client-id: ${API_CLIENT_ID}
+    client-secret: ${API_CLIENT_SECRET}
+    access-token-uri: ${API_ACCESS_TOKEN_URI}
+    max-page-size: 10000
 
 spring:
   application:
@@ -41,10 +49,5 @@ logging:
     com.faforever.server.config.IntegrationConfig: info
     com.faforever.server.config.LegacyAdapterConfig: info
 
-security:
-  oauth2:
-    client:
-      clientAuthenticationScheme: header
-
 server:
-  port: ${WEB_PORT:8080}
+  port: ${WEB_PORT:8088}

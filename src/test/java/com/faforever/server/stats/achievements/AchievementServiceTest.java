@@ -29,10 +29,10 @@ public class AchievementServiceTest {
 
   @Test
   public void executeBatchUpdate() throws Exception {
-    Player player = new Player();
+    Player player = (Player) new Player().setId(1);
     List<AchievementUpdate> achievementUpdates = Arrays.asList(
-      new AchievementUpdate(AchievementId.ACH_ADDICT, UpdateType.INCREMENT, 1),
-      new AchievementUpdate(AchievementId.ACH_AURORA, UpdateType.INCREMENT, 1)
+      new AchievementUpdate(1, AchievementId.ACH_ADDICT, UpdateType.INCREMENT, 1),
+      new AchievementUpdate(1, AchievementId.ACH_AURORA, UpdateType.INCREMENT, 1)
     );
 
     instance.executeBatchUpdate(player, achievementUpdates);

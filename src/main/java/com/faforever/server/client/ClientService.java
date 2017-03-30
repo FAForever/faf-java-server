@@ -1,6 +1,10 @@
 package com.faforever.server.client;
 
-import com.faforever.server.api.dto.UpdatedAchievement;
+import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
+import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.chat.JoinChatChannelResponse;
+import com.faforever.server.common.ServerMessage;
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.AvatarAssociation;
@@ -11,6 +15,8 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.ice.ForwardedIceMessage;
+import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.matchmaker.MatchMakerResponse;
@@ -18,9 +24,9 @@ import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.UserDetailsResponse;
 import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
 import com.faforever.server.player.UserDetailsResponse.Player.Rating;
-import com.faforever.server.response.ServerResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,11 +51,13 @@ public class ClientService {
 
   private final ClientGateway clientGateway;
   private final CoopService coopService;
-  private final Map<Object, DelayedResponse<?>> dirtyObjects;
+  private final Map<Object, DelayedResponse> dirtyObjects;
+  private final ServerProperties serverProperties;
 
-  public ClientService(ClientGateway clientGateway, CoopService coopService) {
+  public ClientService(ClientGateway clientGateway, CoopService coopService, ServerProperties serverProperties) {
     this.clientGateway = clientGateway;
     this.coopService = coopService;
+    this.serverProperties = serverProperties;
     dirtyObjects = new HashMap<>();
   }
 
@@ -80,9 +89,14 @@ public class ClientService {
     send(new HostGameResponse(game.getMapName()), connectionAware);
   }
 
-  public void reportUpdatedAchievements(List<UpdatedAchievement> playerAchievements, @NotNull ConnectionAware connectionAware) {
+  public void reportUpdatedAchievements(List<UpdatedAchievementResponse> playerAchievements, @NotNull ConnectionAware connectionAware) {
     send(new UpdatedAchievementsResponse(playerAchievements.stream()
-        .map(item -> new UpdatedAchievementsResponse.UpdatedAchievement(item.getCurrentSteps(), item.getState(), item.isNewlyUnlocked()))
+        .map(item -> new UpdatedAchievementsResponse.UpdatedAchievement(
+          item.getAchievementId(),
+          item.getCurrentSteps(),
+          item.getState(),
+          item.isNewlyUnlocked()
+        ))
         .collect(Collectors.toList())),
       connectionAware);
   }
@@ -142,10 +156,12 @@ public class ClientService {
    * with previous submissions of the same object.
    * @param <T> the type of the submitted object
    */
-  public <T extends ServerResponse> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
+  @SuppressWarnings("unchecked")
+  public <T extends ServerMessage> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
+    log.trace("Received object to send delayed: {}", object);
     synchronized (dirtyObjects) {
-      dirtyObjects.computeIfAbsent(idFunction.apply(object),
-        o -> new DelayedResponse<>(object, minDelay, maxDelay)).onUpdated();
+      dirtyObjects.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
+        .onUpdated(object);
     }
   }
 
@@ -160,7 +176,7 @@ public class ClientService {
   }
 
   /**
-   * Tells the client to drop connection to the player with the specified ID.
+   * Tells the client to drop game connection to the player with the specified ID.
    */
   public void disconnectPlayer(int playerId, Collection<? extends ConnectionAware> receivers) {
     receivers.forEach(connectionAware ->
@@ -181,12 +197,11 @@ public class ClientService {
         .map(Map.Entry::getKey)
         .collect(Collectors.toList());
 
-      int size = objectIds.size();
-      if (size < 1) {
+      if (objectIds.isEmpty()) {
         return;
       }
 
-      log.trace("Sending '{}' delayed responses", size);
+      log.trace("Sending '{}' delayed responses", objectIds.size());
       objectIds.forEach(id -> {
         DelayedResponse<?> delayedResponse = dirtyObjects.get(id);
         clientGateway.broadcast(delayedResponse.getResponse());
@@ -208,7 +223,37 @@ public class ClientService {
    * Sends a list of online players to the client.
    */
   public void sendOnlinePlayerList(Collection<UserDetailsResponse> players, ConnectionAware connectionAware) {
+    // FIXME this method isn't called from anywhere yet.
+    // TODO send a list of players instead?
     players.forEach(player -> send(player, connectionAware));
+  }
+
+  /**
+   * Sends a list of chat channels to join to the client.
+   */
+  public void sendChatChannels(Set<String> channelNames, ConnectionAware recipient) {
+    // TODO write test
+    send(new JoinChatChannelResponse(channelNames), recipient);
+  }
+
+  /**
+   * Sends a list of ICE servers to the client.
+   */
+  public void sendIceServers(List<IceServerList> iceServers, ConnectionAware recipient) {
+    send(new IceServersResponse(iceServers), recipient);
+  }
+
+  public void sendIceMessage(int senderId, Object content, ConnectionAware recipient) {
+    send(new ForwardedIceMessage(senderId, content), recipient);
+  }
+
+  @EventListener
+  private void onServerShutdown(ApplicationShutdownEvent event) {
+    try {
+      clientGateway.broadcast(new InfoResponse(serverProperties.getShutdown().getMessage()));
+    } catch (Exception e) {
+      log.warn("Could not broadcast shutdown to clients.", e);
+    }
   }
 
   /**
@@ -220,11 +265,11 @@ public class ClientService {
     return Arrays.asList("/numgames", String.valueOf(numGames));
   }
 
-  private void send(ServerResponse serverResponse, @NotNull ConnectionAware connectionAware) {
+  private void send(ServerMessage serverMessage, @NotNull ConnectionAware connectionAware) {
     ClientConnection clientConnection = connectionAware.getClientConnection();
     if (clientConnection == null) {
       throw new IllegalStateException("No connection available: " + connectionAware);
     }
-    clientGateway.send(serverResponse, clientConnection);
+    clientGateway.send(serverMessage, clientConnection);
   }
 }

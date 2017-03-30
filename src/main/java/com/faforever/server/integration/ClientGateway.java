@@ -1,7 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.response.ServerResponse;
+import com.faforever.server.common.ServerMessage;
 import org.springframework.integration.annotation.Gateway;
 import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.messaging.handler.annotation.Header;
@@ -18,11 +18,11 @@ public interface ClientGateway {
    * Sends the specified message to the specified client connection.
    */
   @Gateway(requestChannel = ChannelNames.CLIENT_OUTBOUND)
-  void send(ServerResponse serverResponse, @Header(CLIENT_CONNECTION) ClientConnection clientConnection);
+  void send(ServerMessage serverMessage, @Header(CLIENT_CONNECTION) ClientConnection clientConnection);
 
   /**
    * Sends the specified message to all clients.
    */
   @Gateway(requestChannel = ChannelNames.CLIENT_OUTBOUND_BROADCAST)
-  void broadcast(ServerResponse response);
+  void broadcast(ServerMessage response);
 }

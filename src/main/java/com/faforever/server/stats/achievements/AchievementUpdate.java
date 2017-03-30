@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class AchievementUpdate {
+  private final int playerId;
   private final AchievementId achievementId;
   private final UpdateType updateType;
   private final int steps;

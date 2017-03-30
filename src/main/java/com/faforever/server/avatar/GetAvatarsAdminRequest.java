@@ -1,6 +1,6 @@
 package com.faforever.server.avatar;
 
-import com.faforever.server.request.ClientMessage;
+import com.faforever.server.common.ClientMessage;
 import lombok.Data;
 
 /**

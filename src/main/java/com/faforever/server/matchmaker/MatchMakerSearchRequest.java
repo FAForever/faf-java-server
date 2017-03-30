@@ -1,7 +1,7 @@
 package com.faforever.server.matchmaker;
 
+import com.faforever.server.common.ClientMessage;
 import com.faforever.server.game.Faction;
-import com.faforever.server.request.ClientMessage;
 import lombok.Data;
 
 @Data

@@ -19,7 +19,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
 
 group = 'faforever'
-version = '0.9.5'
+version = '0.9.6'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -132,19 +132,24 @@ task pushDockerImage(type: DockerPushImage, dependsOn: buildDockerImage) {
 dependencies {
   compile("org.springframework.boot:spring-boot-starter-actuator")
   compile("org.springframework.boot:spring-boot-starter-jdbc")
+//  compile("org.zalando.stups:data-jpa-eclipselink-spring-boot-starter:${eclipseLinkStarterVersion}")
+//  compile("org.eclipse.persistence:org.eclipse.persistence.jpa:${eclipseLinkVersion}")
   compile("org.springframework.boot:spring-boot-starter-data-jpa")
+//    {
+//    exclude group: "org.hibernate", module: "hibernate-entitymanager"
+//  }
   compile("org.springframework.boot:spring-boot-starter-cache")
   compile("org.springframework.boot:spring-boot-starter-integration")
   compile("org.springframework.boot:spring-boot-starter-security")
   compile("org.springframework.boot:spring-boot-starter-jetty")
+  compile("org.springframework.boot:spring-boot-devtools")
   compile("org.springframework.security:spring-security-messaging")
+  compile("org.springframework.security:spring-security-jwt:${springSecurityJwtVersion}")
   compile("org.springframework.security.oauth:spring-security-oauth2")
   compile("org.springframework:spring-context-support")
   compile("org.springframework.integration:spring-integration-ip")
   compile("org.springframework.integration:spring-integration-security")
-  compile("org.springframework.boot:spring-boot-devtools")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
-
   compile("io.reactivex.rxjava2:rxjava:${rxJavaVersion}")
   compile("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
   compile("org.jolokia:jolokia-core:${jolokiaVersion}")
@@ -155,7 +160,12 @@ dependencies {
   compile("org.flywaydb:flyway-core:${flywayVersion}")
   compile("javax.inject:javax.inject:${javaxInjectVersion}")
   compile("org.projectlombok:lombok:${lombokVersion}")
-  compile("com.maxmind.geoip2:geoip2:${geoip2Version}")
+  compile("com.github.jasminb:jsonapi-converter:${jsonApiConverterVersion}")
+  compile("com.twilio.sdk:twilio:${twilioVersion}")
+
+  compile("com.maxmind.geoip2:geoip2:${geoip2Version}"){
+    exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+  }
   compile("com.zaxxer:HikariCP:${hikariCpVersion}") {
     exclude(module: 'tools')
   }

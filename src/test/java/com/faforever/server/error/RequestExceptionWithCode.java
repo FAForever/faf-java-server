@@ -13,7 +13,7 @@ public final class RequestExceptionWithCode extends BaseMatcher<RequestException
 
   @Override
   public void describeTo(Description description) {
-    description.appendText("an RequestException with error: " + errorCode);
+    description.appendText("a RequestException with error: " + errorCode);
   }
 
   @Override

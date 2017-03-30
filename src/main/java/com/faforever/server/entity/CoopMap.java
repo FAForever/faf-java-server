@@ -2,6 +2,7 @@ package com.faforever.server.entity;
 
 import com.faforever.server.coop.CoopMissionType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
@@ -9,6 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -16,12 +18,13 @@ import javax.persistence.Table;
 @Table(name = "coop_map")
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class CoopMap {
 
   @Id
   @Column(name = "id")
-  @GeneratedValue
-  private int id;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
   @Column(name = "type")
   @Enumerated(EnumType.ORDINAL)

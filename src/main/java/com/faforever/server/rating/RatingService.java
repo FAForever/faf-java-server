@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,9 +54,16 @@ public class RatingService {
   }
 
   public double calculateQuality(com.faforever.server.entity.Rating left, com.faforever.server.entity.Rating right) {
+    jskills.Rating leftRating = Optional.ofNullable(left)
+      .map(rating -> new jskills.Rating(left.getMean(), left.getDeviation()))
+      .orElse(gameInfo.getDefaultRating());
+    jskills.Rating rightRating = Optional.ofNullable(left)
+      .map(rating -> new jskills.Rating(right.getMean(), right.getDeviation()))
+      .orElse(gameInfo.getDefaultRating());
+
     Collection<ITeam> teams = Arrays.asList(
-      new Team(new Player<>(1), new jskills.Rating(left.getMean(), left.getDeviation())),
-      new Team(new Player<>(2), new jskills.Rating(right.getMean(), right.getDeviation()))
+      new Team(new Player<>(1), leftRating),
+      new Team(new Player<>(2), rightRating)
     );
     return TrueSkillCalculator.calculateMatchQuality(gameInfo, teams);
   }
@@ -66,7 +75,7 @@ public class RatingService {
    * @param noTeamId ID of the "no team" team
    */
   @SuppressWarnings("unchecked")
-  public void updateRatings(List<GamePlayerStats> playerStats, int noTeamId, RatingType ratingType) {
+  public void updateRatings(Collection<GamePlayerStats> playerStats, int noTeamId, RatingType ratingType) {
     Map<Integer, GamePlayerStats> playerStatsByPlayerId = playerStats.stream()
       .collect(Collectors.toMap(stats -> stats.getPlayer().getId(), Function.identity()));
 
@@ -88,7 +97,17 @@ public class RatingService {
       });
   }
 
-  private Map<Integer, ScoredTeam> teamsById(List<GamePlayerStats> playerStats, int noTeamId) {
+  public void initGlobalRating(com.faforever.server.entity.Player player) {
+    Assert.state(player.getGlobalRating() == null, "Global rating has already been set for player: " + player);
+    player.setGlobalRating(new GlobalRating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
+  }
+
+  public void initLadder1v1Rating(com.faforever.server.entity.Player player) {
+    Assert.state(player.getLadder1v1Rating() == null, "Ladder1v1 rating has already been set for player: " + player);
+    player.setLadder1v1Rating(new Ladder1v1Rating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
+  }
+
+  private Map<Integer, ScoredTeam> teamsById(Collection<GamePlayerStats> playerStats, int noTeamId) {
     int highestTeamId = playerStats.stream()
       .map(GamePlayerStats::getTeam)
       .max(Integer::compareTo).orElse(noTeamId);
@@ -96,7 +115,7 @@ public class RatingService {
     Map<Integer, ScoredTeam> teamsById = new HashMap<>();
     for (GamePlayerStats playerStat : playerStats) {
       IPlayer player = new Player<>(playerStat.getPlayer().getId());
-      jskills.Rating rating = toJSkillRating(playerStat);
+      jskills.Rating rating = new jskills.Rating(playerStat.getMean(), playerStat.getDeviation());
 
       int teamId = playerStat.getTeam();
       if (teamId == noTeamId) {
@@ -107,13 +126,6 @@ public class RatingService {
       teamsById.get(teamId).getScore().updateAndGet(score -> score + playerStat.getScore());
     }
     return teamsById;
-  }
-
-  private jskills.Rating toJSkillRating(GamePlayerStats playerStat) {
-    if (playerStat.getMean() == null || playerStat.getDeviation() == null) {
-      return gameInfo.getDefaultRating();
-    }
-    return new jskills.Rating(playerStat.getMean(), playerStat.getDeviation());
   }
 
   /**

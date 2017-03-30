@@ -48,6 +48,8 @@ public enum LegacyClientMessageType {
    */
   @Deprecated
   ADMIN("admin"),
+  ICE_SERVERS("ice_servers"),
+  RESTORE_GAME_SESSION("restore_game_session"),
 
   // Game messages
   GAME_STATE("GameState"),
@@ -61,7 +63,8 @@ public enum LegacyClientMessageType {
   JSON_STATS("JsonStats"),
   ENFORCE_RATING("EnforceRating"),
   TEAMKILL_REPORT("TeamkillReport"),
-  AI_OPTION("AIOption");
+  AI_OPTION("AIOption"),
+  ICE_MESSAGE("IceMsg");
 
   private static Map<String, LegacyClientMessageType> fromString;
 
@@ -78,12 +81,12 @@ public enum LegacyClientMessageType {
     this.string = string;
   }
 
-  public static LegacyClientMessageType fromString(String string) {
-    return fromString.get(string);
-  }
-
   @JsonValue
   public String getString() {
     return string;
+  }
+
+  public static LegacyClientMessageType fromString(String string) {
+    return fromString.get(string);
   }
 }

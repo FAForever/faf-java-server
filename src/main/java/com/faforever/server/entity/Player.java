@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -23,24 +24,24 @@ import java.util.Set;
 @Setter
 public class Player extends Login implements ConnectionAware {
 
-  @OneToOne(mappedBy = "player")
+  @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)
   @Nullable
   private Ladder1v1Rating ladder1v1Rating;
 
-  @OneToOne(mappedBy = "player")
+  @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)
   @Nullable
   private GlobalRating globalRating;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "unique_id_users",
     joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
     inverseJoinColumns = @JoinColumn(name = "uniqueid_hash", referencedColumnName = "id"))
   private Set<HardwareInformation> hardwareInformations;
 
-  @OneToOne(mappedBy = "player")
+  @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)
   private MatchMakerBanDetails matchMakerBanDetails;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "avatars",
     joinColumns = @JoinColumn(name = "idUser", referencedColumnName = "id"),
     inverseJoinColumns = @JoinColumn(name = "idAvatar", referencedColumnName = "id"))
@@ -54,6 +55,9 @@ public class Player extends Login implements ConnectionAware {
 
   @Transient
   private ClientConnection clientConnection;
+
+  @Transient
+  private Game gameBeingJoined;
 
   public void setGameState(PlayerGameState gameState) {
     PlayerGameState.verifyTransition(this.gameState, gameState);
