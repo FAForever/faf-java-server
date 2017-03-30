@@ -16,6 +16,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -126,6 +127,7 @@ public class Game {
    * Mapped by player ID. Meant to be set just before game start.
    */
   @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
+  @MapKey(name = "id")
   private Map<Integer, GamePlayerStats> playerStats;
 
   @Transient

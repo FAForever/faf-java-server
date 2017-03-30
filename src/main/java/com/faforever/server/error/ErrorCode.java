@@ -10,12 +10,12 @@ public enum ErrorCode {
   GAME_NOT_JOINABLE(103, "Game not joinable", "The game you tried to join has been started already and can't be joined anymore."),
   COOP_CANT_REPORT_NOT_IN_GAME(104, "Can't report Co-Op result", "Your game result could not be reported since you are not associated with a game. This may happen if you got disconnected from the server."),
   CREATE_ACCOUNT_IS_DEPRECATED(105, "Unsupported operation", "Creating accounts is no longer supported. Please visit the website http://www.faforever.com instead."),
-  HOST_ONLY_OPTION(106, "Invalid operation", "The option '{0}' can only be set by the host of the game"),
+  HOST_ONLY_OPTION(106, "Invalid operation", "The option ''{0}'' can only be set by the host of the game"),
   UID_USED_BY_MULTIPLE_USERS(107, "Login denied", "Your computer is associated with too many FAF accounts.<br>To continue using them, you have to link them to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
   UID_USED_BY_ANOTHER_USER(108, "Login denied", "Your computer is already associated with another FAF account.<br><br>To log in with a new account, you have to link it to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
   UNKNOWN_MESSAGE(109, "Unknown message", "The server received an unknown request from your client: {0}"),
-  BANNED_FROM_MATCH_MAKER(110, "Banned from matchmaker", "You have been banned from the match maker."),
-  MATCHMAKER_1V1_ONLY(111, "Unsupported matchmaker operation", "Matchmaker currently only supports 1v1."),
+  BANNED_FROM_MATCH_MAKER(110, "Banned from match maker", "You have been banned from the match maker."),
+  MATCH_MAKER_POOL_DOESNT_EXIST(111, "No such match maker pool", "Match maker pool with name ''{0}'' does not exist."),
   CANT_RESTORE_GAME_DOESNT_EXIST(112, "Can't restore game connection", "The game you were connected to does no longer exist."),
   CANT_RESTORE_GAME_NOT_PARTICIPANT(113, "Can't restore game connection", "You have never been part of this game.");
 

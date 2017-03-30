@@ -91,7 +91,7 @@ public class ModService {
     return Optional.ofNullable(featuredModRepository.findOne(modId));
   }
 
-  public FeaturedMod getLadder1v1() {
-    return ladder1v1FeaturedMod;
+  public Optional<FeaturedMod> getLadder1v1() {
+    return Optional.ofNullable(ladder1v1FeaturedMod);
   }
 }

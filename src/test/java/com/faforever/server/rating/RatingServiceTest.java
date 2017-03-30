@@ -134,4 +134,11 @@ public class RatingServiceTest {
 
     assertThat(quality, is(0.16000885216755253));
   }
+
+  @Test
+  public void calculateQualityDefaultForNull() throws Exception {
+    double quality = instance.calculateQuality(null, null);
+
+    assertThat(quality, is(0.4327310675847713));
+  }
 }

@@ -26,7 +26,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -48,10 +47,14 @@ import java.util.stream.Collectors;
 public class MatchMakerService {
 
   private static final double DESIRED_MIN_GAME_QUALITY = 0.8d;
+  private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
   private final ModService modService;
   private final ServerProperties properties;
   private final RatingService ratingService;
-  private final Map<String, Map<Player, MatchMakerSearch>> searchesByPoolName;
+  /**
+   * Maps pool name -&gt; player ID -&gt; search.
+   */
+  private final Map<String, Map<Integer, MatchMakerSearch>> searchesByPoolName;
   private final GameService gameService;
   private final MapService mapService;
   private final PlayerService playerService;
@@ -72,12 +75,6 @@ public class MatchMakerService {
     searchesByPoolName = new HashMap<>();
   }
 
-  @PostConstruct
-  public void postConstruct() {
-    modByPoolName.put("ladder1v1", modService.getLadder1v1());
-    // Before adding additional pools here, be advised that this class currently uses ladder1v1Rating
-  }
-
   /**
    * Submits a new search to the matchmaker, thus marking a player available for matchmaking. Any other searches by the
    * same player for the same pool will be updated.
@@ -85,20 +82,23 @@ public class MatchMakerService {
    * @param faction the faction the player will play once the game starts
    */
   public void submitSearch(Player player, Faction faction, String poolName) {
+    modByPoolName.computeIfAbsent(LADDER_1V1_MOD_NAME, s -> modService.getLadder1v1().orElse(null));
+
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
     Requests.verify(isNotBanned(player), ErrorCode.BANNED_FROM_MATCH_MAKER);
-    Requests.verify(modByPoolName.get(poolName) != null, ErrorCode.MATCHMAKER_1V1_ONLY);
+    Requests.verify(modByPoolName.get(poolName) != null, ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST, poolName);
 
-    Map<Player, MatchMakerSearch> pool = getPool(poolName);
+    Map<Integer, MatchMakerSearch> pool = getPool(poolName);
 
     synchronized (searchesByPoolName) {
-      MatchMakerSearch search = getPool(poolName).get(player);
+      MatchMakerSearch search = getPool(poolName).get(player.getId());
       if (search != null) {
-        log.debug("Updating search of player player '{}'", search.player, search.poolName);
+        log.debug("Updating search of player '{}' for pool '{}'", search.player, search.poolName);
         search.faction = faction;
       } else {
         log.debug("Adding player '{}' to pool '{}'", player, poolName);
-        pool.put(player, new MatchMakerSearch(Instant.now(), player, poolName, faction));
+        search = new MatchMakerSearch(Instant.now(), player, poolName, faction);
+        pool.put(player.getId(), search);
       }
       notifyPlayers(search, DESIRED_MIN_GAME_QUALITY);
     }
@@ -130,11 +130,11 @@ public class MatchMakerService {
   public void cancelSearch(String poolName, Player player) {
     synchronized (searchesByPoolName) {
       log.debug("Removing searches from pool '{}' for player '{}'", poolName, player);
-      Map<Player, MatchMakerSearch> pool = getPool(poolName);
+      Map<Integer, MatchMakerSearch> pool = getPool(poolName);
       pool.values().stream()
         .filter(search -> search.player.equals(player))
         .collect(Collectors.toList())
-        .forEach(search -> pool.remove(search.player));
+        .forEach(search -> pool.remove(search.player.getId()));
     }
   }
 
@@ -144,12 +144,12 @@ public class MatchMakerService {
       Player player = userDetails.getPlayer();
       log.debug("Removing offline player '{}' from all pools", userDetails.getPlayer());
       synchronized (searchesByPoolName) {
-        searchesByPoolName.values().forEach(pool -> pool.remove(player));
+        searchesByPoolName.values().forEach(pool -> pool.remove(player.getId()));
       }
     });
   }
 
-  private void processPool(String poolName, Map<Player, MatchMakerSearch> pool) {
+  private void processPool(String poolName, Map<Integer, MatchMakerSearch> pool) {
     Set<MatchMakerSearch> processedSearches = new HashSet<>();
 
     log.trace("Processing '{}' entries of pool '{}'", pool.size(), poolName);
@@ -170,15 +170,15 @@ public class MatchMakerService {
         Player rightPlayer = rightSearch.player;
 
         log.debug("Player '{}' was matched against '{}' with game quality '{}'", leftPlayer, rightPlayer, match.quality);
-        pool.remove(leftSearch.player);
-        pool.remove(rightSearch.player);
+        pool.remove(leftSearch.player.getId());
+        pool.remove(rightSearch.player.getId());
 
         int modId = modByPoolName.get(leftSearch.poolName).getId();
         startGame(modId, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
       });
   }
 
-  private Map<Player, MatchMakerSearch> getPool(String poolName) {
+  private Map<Integer, MatchMakerSearch> getPool(String poolName) {
     return searchesByPoolName.computeIfAbsent(poolName, s -> new HashMap<>());
   }
 
@@ -211,11 +211,12 @@ public class MatchMakerService {
   }
 
   /**
-   * Notify all players, except those already searching and the one who owns the search, about the {@code search} if
-   * they would result in a game with a quality of at least {@code minQuality}.
+   * Notify all players, except those already searching (which includes the search owner) about the {@code search},
+   * given that they would result in a game with a quality of at least {@code minQuality}.
    */
   private void notifyPlayers(MatchMakerSearch search, double minQuality) {
     playerService.getPlayers().parallelStream()
+      .filter(player -> !getPool(search.poolName).containsKey(player.getId()))
       .map(rightPlayer -> new PotentialMatch(
         rightPlayer,
         search.poolName,
@@ -322,7 +323,7 @@ public class MatchMakerService {
   }
 
   @VisibleForTesting
-  Map<String, Map<Player, MatchMakerSearch>> getSearchPools() {
+  Map<String, Map<Integer, MatchMakerSearch>> getSearchPools() {
     return searchesByPoolName;
   }
 }

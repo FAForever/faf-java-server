@@ -53,7 +53,6 @@ public class MatchMakerServiceTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   private MatchMakerService instance;
-  private RatingService ratingService;
   private ServerProperties properties;
   @Mock
   private ModService modService;
@@ -66,22 +65,19 @@ public class MatchMakerServiceTest {
   @Mock
   private PlayerService playerService;
 
-  private FeaturedMod ladder1v1Mod;
-
   @Before
   public void setUp() throws Exception {
     properties = new ServerProperties();
-    ladder1v1Mod = new FeaturedMod().setId(1);
+    FeaturedMod ladder1v1Mod = new FeaturedMod().setId(1);
 
     when(modService.getFeaturedMod(ladder1v1Mod.getId())).thenReturn(Optional.of(ladder1v1Mod));
-    when(modService.getLadder1v1()).thenReturn(ladder1v1Mod);
+    when(modService.getLadder1v1()).thenReturn(Optional.of(ladder1v1Mod));
     when(modService.isLadder1v1(ladder1v1Mod)).thenReturn(true);
     when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("SCMP_001"));
     when(gameService.createGame(any(), anyInt(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(CompletableFuture.completedFuture(new Game()));
 
-    ratingService = new RatingService(properties);
+    RatingService ratingService = new RatingService(properties);
     instance = new MatchMakerService(modService, properties, ratingService, clientService, gameService, mapService, playerService);
-    instance.postConstruct();
   }
 
   @Test
@@ -104,10 +100,9 @@ public class MatchMakerServiceTest {
 
   @Test
   public void startSearchModNotAvailable() throws Exception {
-    when(modService.getLadder1v1()).thenReturn(null);
-    instance.postConstruct();
+    when(modService.getLadder1v1()).thenReturn(Optional.empty());
 
-    expectedException.expect(requestExceptionWithCode(ErrorCode.MATCHMAKER_1V1_ONLY));
+    expectedException.expect(requestExceptionWithCode(ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST));
     instance.submitSearch(new Player(), Faction.CYBRAN, QUEUE_NAME);
   }
 

@@ -3,7 +3,6 @@ package com.faforever.server.entity;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.game.PlayerGameState;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,6 @@ import java.util.Set;
 @Table(name = "login")
 @Getter
 @Setter
-@EqualsAndHashCode(callSuper = true)
 public class Player extends Login implements ConnectionAware {
 
   @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)
