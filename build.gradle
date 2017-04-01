@@ -28,6 +28,7 @@ repositories {
   mavenCentral()
   jcenter()
   maven { url 'https://jitpack.io' }
+  maven { url "http://dl.bintray.com/typesafe/maven-releases" }
 }
 
 configurations {
@@ -57,6 +58,18 @@ jacocoTestReport {
   reports {
     xml.enabled = true
   }
+}
+
+// CODACY
+
+configurations {
+  codacy
+}
+
+task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
+  main = "com.codacy.CodacyCoverageReporter"
+  classpath = configurations.codacy
+  args = ["-l", "Java", "-r", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"]
 }
 
 // DOCKER & APPLICATION
@@ -175,4 +188,6 @@ dependencies {
   optional("org.springframework.boot:spring-boot-configuration-processor")
 
   testCompile("org.springframework.boot:spring-boot-starter-test")
+
+  codacy("com.github.codacy:codacy-coverage-reporter:-SNAPSHOT")
 }
