@@ -79,7 +79,7 @@ public class GameServiceTest {
   private static final String PLAYER_NAME_2 = "player2";
   private static final String MAP_NAME = "SCMP_001";
   private static final int FAF_MOD_ID = 1;
-  private static final int NEXT_GAME_ID = 2;
+  private static final int NEXT_GAME_ID = 1;
   private static final String QAI = "QAI";
   private static final String AIX = "AIX";
   private static final String OPTION_FACTION = "Faction";
@@ -145,7 +145,7 @@ public class GameServiceTest {
     FeaturedMod fafFeaturedMod = new FeaturedMod();
     fafFeaturedMod.setId(FAF_MOD_ID);
 
-    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID - 1));
+    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());

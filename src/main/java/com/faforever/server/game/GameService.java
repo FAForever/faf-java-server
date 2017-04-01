@@ -133,7 +133,7 @@ public class GameService {
   @Transactional(readOnly = true)
   public void onApplicationEvent(ContextRefreshedEvent event) {
     gameRepository.findMaxId().ifPresent(nextGameId::set);
-    log.debug("Next game ID is: {}", nextGameId.incrementAndGet());
+    log.debug("Next game ID is: {}", nextGameId.get());
   }
 
   /**
