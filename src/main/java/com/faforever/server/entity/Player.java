@@ -12,6 +12,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -47,6 +48,9 @@ public class Player extends Login implements ConnectionAware {
     inverseJoinColumns = @JoinColumn(name = "idAvatar", referencedColumnName = "id"))
   private List<AvatarAssociation> availableAvatars;
 
+  @OneToMany(mappedBy = "player")
+  private List<ClanMembership> clanMemberships;
+
   @Transient
   private Game currentGame;
 
@@ -58,6 +62,13 @@ public class Player extends Login implements ConnectionAware {
 
   @Transient
   private Game gameBeingJoined;
+
+  public Clan getClan() {
+    if (getClanMemberships() != null && getClanMemberships().size() == 1) {
+      return getClanMemberships().get(0).getClan();
+    }
+    return null;
+  }
 
   public void setGameState(PlayerGameState gameState) {
     PlayerGameState.verifyTransition(this.gameState, gameState);

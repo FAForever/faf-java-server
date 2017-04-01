@@ -123,7 +123,8 @@ public class ClientService {
           globalRating.orElse(null),
           ladder1v1Rating.orElse(null),
           Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0),
-          avatar.orElse(null)
+          avatar.orElse(null),
+          Optional.ofNullable(player.getClan()).map(clan -> clan.getTag()).orElse(null)
         )
       ),
       connectionAware);

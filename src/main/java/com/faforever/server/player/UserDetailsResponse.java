@@ -21,6 +21,7 @@ public class UserDetailsResponse implements ServerMessage {
     private final Rating ladder1v1Rating;
     private final int numberOfGames;
     private final Avatar avatar;
+    private final String clanTag;
 
     @Data
     public static class Rating {
