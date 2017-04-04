@@ -5,6 +5,7 @@ import com.faforever.server.config.ServerProperties.GeoIp;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.DatabaseReader.Builder;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
+import com.maxmind.geoip2.model.CityResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 
 import static com.github.nocatch.NoCatch.noCatch;
@@ -32,7 +34,7 @@ public class GeoIpService {
   private final ServerProperties properties;
   private DatabaseReader databaseReader;
 
-  public GeoIpService(ServerProperties properties) throws IOException {
+  public GeoIpService(ServerProperties properties) {
     this.properties = properties;
   }
 
@@ -63,10 +65,18 @@ public class GeoIpService {
   }
 
   public Optional<String> lookupCountryCode(InetAddress inetAddress) {
+    return lookupCity(inetAddress).map(city -> city.getCountry().getIsoCode());
+  }
+
+  public Optional<TimeZone> lookupTimezone(InetAddress inetAddress) {
+    return lookupCity(inetAddress).map(city -> city.getLocation().getTimeZone()).map(TimeZone::getTimeZone);
+  }
+
+  private Optional<CityResponse> lookupCity(InetAddress inetAddress) {
     Assert.state(databaseReader != null, "Database has not been initialized");
     return noCatch(() -> {
       try {
-        return Optional.of(databaseReader.country(inetAddress).getCountry().getIsoCode());
+        return Optional.of(databaseReader.city(inetAddress));
       } catch (AddressNotFoundException e) {
         log.warn("No entry for address: {}", inetAddress);
         return Optional.empty();

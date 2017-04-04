@@ -3,6 +3,7 @@ package com.faforever.server.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -13,6 +14,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
+import java.util.TimeZone;
 
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -48,4 +50,8 @@ public abstract class Login {
 
   @Transient
   private String country;
+
+  @Transient
+  @Nullable
+  private TimeZone timeZone;
 }

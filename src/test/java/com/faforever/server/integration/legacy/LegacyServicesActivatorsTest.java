@@ -78,6 +78,7 @@ public class LegacyServicesActivatorsTest {
     player.setClientConnection(clientConnection);
 
     when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.empty());
+    when(geoIpService.lookupTimezone(any())).thenReturn(Optional.empty());
 
     instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService,
       playerService, chatService, counterService);

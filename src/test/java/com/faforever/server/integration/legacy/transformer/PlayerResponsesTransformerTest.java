@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -27,6 +28,7 @@ public class PlayerResponsesTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
+        TimeZone.getDefault(),
         new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
@@ -65,6 +67,7 @@ public class PlayerResponsesTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
+        TimeZone.getDefault(),
         new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
@@ -86,6 +89,7 @@ public class PlayerResponsesTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
+        TimeZone.getDefault(),
         new PlayerResponse.Player(
           null,
           new Rating(900d, 100d),
@@ -107,6 +111,7 @@ public class PlayerResponsesTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
+        TimeZone.getDefault(),
         new PlayerResponse.Player(
           new Rating(900d, 100d),
           null,
@@ -128,6 +133,7 @@ public class PlayerResponsesTransformerTest {
         1,
         TEST_USERNAME,
         null,
+        TimeZone.getDefault(),
         new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
@@ -139,5 +145,27 @@ public class PlayerResponsesTransformerTest {
 
     List<Map<String, Object>> players = (List<Map<String, Object>>) result.get("players");
     assertThat(players.get(0).get("country"), is(""));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void transformHandleTimeZoneyNull() throws Exception {
+    Map<String, Serializable> result = PlayerResponsesTransformer.INSTANCE.transform(new PlayerResponses(
+      Collections.singletonList(new PlayerResponse(
+        1,
+        TEST_USERNAME,
+        "CH",
+        null,
+        new PlayerResponse.Player(
+          new Rating(1200d, 200d),
+          new Rating(900d, 100d),
+          12,
+          null,
+          "FOO"
+        )
+      ))));
+
+    List<Map<String, Object>> players = (List<Map<String, Object>>) result.get("players");
+    assertThat(players.get(0).containsKey("time_zone"), is(false));
   }
 }

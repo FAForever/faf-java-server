@@ -7,6 +7,7 @@ public class LoginDetailsResponse extends PlayerResponse {
       playerResponse.getPlayerId(),
       playerResponse.getUsername(),
       playerResponse.getCountry(),
+      playerResponse.getTimeZone(),
       playerResponse.getPlayer()
     );
   }

@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.TimeZone;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -29,7 +30,7 @@ public class GeoIpServiceTest {
 
     ServerProperties properties = new ServerProperties();
     GeoIp geoIp = properties.getGeoIp();
-    geoIp.setDatabaseUrl(getClass().getResource("/geoip/GeoLite2-Country.mmdb.gz").toURI().toString());
+    geoIp.setDatabaseUrl(getClass().getResource("/geoip/GeoIP2-City-Test.mmdb.gz").toURI().toString());
     geoIp.setDatabaseFile(databaseFile);
 
     instance = new GeoIpService(properties);
@@ -40,14 +41,31 @@ public class GeoIpServiceTest {
 
   @Test
   public void lookupCountry() throws Exception {
-    // Let's see how long the NASA servers stay in the US under the Trump administration
-    Optional<String> country = instance.lookupCountryCode(InetAddress.getByName("192.203.230.10"));
-    assertThat(country.get(), is("US"));
+    Optional<String> country = instance.lookupCountryCode(InetAddress.getByName("81.2.69.160"));
+    assertThat(country.get(), is("GB"));
   }
 
   @Test
-  public void lookupCountryLoopbackReturnsEmpty() throws Exception {
+  public void lookupCountryLoopbackReturnsEmpty() {
     Optional<String> result = instance.lookupCountryCode(InetAddress.getLoopbackAddress());
+    assertThat(result.isPresent(), is(false));
+  }
+
+  @Test
+  public void lookupTimezone() throws Exception {
+    Optional<TimeZone> timeZone = instance.lookupTimezone(InetAddress.getByName("81.2.69.160"));
+    assertThat(timeZone.get().getID(), is("Europe/London"));
+  }
+
+  @Test
+  public void lookupTimezoneUnknownReturnsEmpty() throws Exception {
+    Optional<TimeZone> result = instance.lookupTimezone(InetAddress.getByName("10.10.10.10"));
+    assertThat(result.isPresent(), is(false));
+  }
+
+  @Test
+  public void lookupTimezoneLoopbackReturnsEmpty() {
+    Optional<TimeZone> result = instance.lookupTimezone(InetAddress.getLoopbackAddress());
     assertThat(result.isPresent(), is(false));
   }
 }

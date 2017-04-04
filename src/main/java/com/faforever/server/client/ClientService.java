@@ -323,6 +323,7 @@ public class ClientService {
       player.getId(),
       player.getLogin(),
       player.getCountry(),
+      player.getTimeZone(),
       new PlayerResponse.Player(
         globalRating.orElse(null),
         ladder1v1Rating.orElse(null),
