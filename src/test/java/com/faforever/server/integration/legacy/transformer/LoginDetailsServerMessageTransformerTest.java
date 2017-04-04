@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -25,6 +26,7 @@ public class LoginDetailsServerMessageTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
+        TimeZone.getTimeZone("Europe/Berlin"),
         new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
@@ -53,6 +55,7 @@ public class LoginDetailsServerMessageTransformerTest {
 
     assertThat(me.get("country"), is("CH"));
     assertThat(me.get("clan"), is("FOO"));
+    assertThat(me.get("time_zone"), is("Europe/Berlin"));
   }
 
   @Test
@@ -63,13 +66,13 @@ public class LoginDetailsServerMessageTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerResponse.Player(
-          new Rating(1200d, 200d),
-          new Rating(900d, 100d),
-          12,
-          null,
-          "FOO"
-        )
+        TimeZone.getTimeZone("Europe/Berlin"), new PlayerResponse.Player(
+        new Rating(1200d, 200d),
+        new Rating(900d, 100d),
+        12,
+        null,
+        "FOO"
+      )
       )));
 
     Map<String, Object> me = (Map<String, Object>) result.get("me");
@@ -84,13 +87,13 @@ public class LoginDetailsServerMessageTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerResponse.Player(
-          null,
-          new Rating(900d, 100d),
-          12,
-          new Avatar("http://example.com", "Tooltip"),
-          "FOO"
-        )
+        TimeZone.getTimeZone("Europe/Berlin"), new PlayerResponse.Player(
+        null,
+        new Rating(900d, 100d),
+        12,
+        new Avatar("http://example.com", "Tooltip"),
+        "FOO"
+      )
       )));
 
     Map<String, Object> me = (Map<String, Object>) result.get("me");
@@ -105,13 +108,13 @@ public class LoginDetailsServerMessageTransformerTest {
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerResponse.Player(
-          new Rating(900d, 100d),
-          null,
-          12,
-          new Avatar("http://example.com", "Tooltip"),
-          "FOO"
-        )
+        TimeZone.getTimeZone("Europe/Berlin"), new PlayerResponse.Player(
+        new Rating(900d, 100d),
+        null,
+        12,
+        new Avatar("http://example.com", "Tooltip"),
+        "FOO"
+      )
       )));
 
     Map<String, Object> me = (Map<String, Object>) result.get("me");
@@ -126,7 +129,29 @@ public class LoginDetailsServerMessageTransformerTest {
         1,
         TEST_USERNAME,
         null,
-        new PlayerResponse.Player(
+        null, new PlayerResponse.Player(
+        new Rating(1200d, 200d),
+        new Rating(900d, 100d),
+        12,
+        null,
+        "FOO"
+      )
+      )));
+
+    Map<String, Object> me = (Map<String, Object>) result.get("me");
+    assertThat(me.get("country"), is(""));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void transformHandleTimeZoneNull() throws Exception {
+    Map<String, Serializable> result = LoginDetailsResponseTransformer.INSTANCE.transform(new LoginDetailsResponse(
+      new PlayerResponse(
+        1,
+        TEST_USERNAME,
+        "CH",
+        null,
+        new LoginDetailsResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
           12,
@@ -136,6 +161,6 @@ public class LoginDetailsServerMessageTransformerTest {
       )));
 
     Map<String, Object> me = (Map<String, Object>) result.get("me");
-    assertThat(me.get("country"), is(""));
+    assertThat(me.containsKey("time_zone"), is(false));
   }
 }

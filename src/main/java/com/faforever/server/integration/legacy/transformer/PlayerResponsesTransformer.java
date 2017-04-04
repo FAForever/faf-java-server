@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 public enum PlayerResponsesTransformer implements GenericTransformer<PlayerResponses, Map<String, Serializable>> {
@@ -52,6 +53,7 @@ public enum PlayerResponsesTransformer implements GenericTransformer<PlayerRespo
       .put("number_of_games", Optional.of(player).map(Player::getNumberOfGames).orElse(0))
       .put("country", Optional.ofNullable(source.getCountry()).orElse(""));
 
+    Optional.ofNullable(source.getTimeZone()).map(TimeZone::getID).ifPresent(timeZone -> builder.put("time_zone", timeZone));
     Optional.ofNullable(source.getPlayer().getClanTag()).ifPresent(clan -> builder.put("clan", clan));
 
     if (avatar != null) {
