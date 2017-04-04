@@ -144,7 +144,7 @@ public class GameService {
    * aware that there are various reasons for the game to never start (crash, disconnect, abort) so never wait without a
    * timeout.
    */
-  public CompletableFuture<Game> createGame(String title, int modId, String mapname,
+  public CompletableFuture<Game> createGame(String title, String featuredModName, String mapname,
                                             String password, GameVisibility visibility,
                                             Integer minRating, Integer maxRating, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
@@ -152,7 +152,7 @@ public class GameService {
     int gameId = this.nextGameId.getAndIncrement();
     Game game = new Game(gameId);
     game.setHost(player);
-    modService.getFeaturedMod(modId).ifPresent(game::setFeaturedMod);
+    modService.getFeaturedMod(featuredModName).ifPresent(game::setFeaturedMod);
     game.setTitle(title);
     mapService.findMap(mapname).ifPresent(game::setMap);
     game.setMapName(mapname);

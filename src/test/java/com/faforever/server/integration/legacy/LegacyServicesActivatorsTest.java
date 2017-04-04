@@ -13,7 +13,6 @@ import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
-import com.faforever.server.social.SocialService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,8 +51,6 @@ public class LegacyServicesActivatorsTest {
   private GeoIpService geoIpService;
   @Mock
   private ChatService chatService;
-  @Mock
-  private SocialService socialService;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -66,7 +63,7 @@ public class LegacyServicesActivatorsTest {
 
     when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.empty());
 
-    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService, chatService, socialService);
+    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService, chatService);
   }
 
   @Test

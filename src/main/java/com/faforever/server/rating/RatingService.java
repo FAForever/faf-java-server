@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,11 +52,11 @@ public class RatingService {
     );
   }
 
-  public double calculateQuality(com.faforever.server.entity.Rating left, com.faforever.server.entity.Rating right) {
-    jskills.Rating leftRating = Optional.ofNullable(left)
+  public double calculateQuality(Rating left, Rating right) {
+    jskills.Rating leftRating = ofNullable(left)
       .map(rating -> new jskills.Rating(left.getMean(), left.getDeviation()))
       .orElse(gameInfo.getDefaultRating());
-    jskills.Rating rightRating = Optional.ofNullable(left)
+    jskills.Rating rightRating = ofNullable(left)
       .map(rating -> new jskills.Rating(right.getMean(), right.getDeviation()))
       .orElse(gameInfo.getDefaultRating());
 

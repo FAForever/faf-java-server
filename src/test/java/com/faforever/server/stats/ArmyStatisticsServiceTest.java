@@ -70,19 +70,19 @@ public class ArmyStatisticsServiceTest {
     game = new Game();
     game.setId(1);
 
-    unitStats = new ArmyStatistics.CategoryStats() {{
-      setAir(new ArmyStatistics.UnitStats());
-      setLand(new ArmyStatistics.UnitStats());
-      setNaval(new ArmyStatistics.UnitStats());
-      setExperimental(new ArmyStatistics.UnitStats());
-      setCdr(new ArmyStatistics.UnitStats());
-      setTech1(new ArmyStatistics.UnitStats());
-      setTech2(new ArmyStatistics.UnitStats());
-      setTech3(new ArmyStatistics.UnitStats());
-      setEngineer(new ArmyStatistics.UnitStats());
-      setTransportation(new ArmyStatistics.UnitStats());
-      setSacu(new ArmyStatistics.UnitStats());
-    }};
+    unitStats = new ArmyStatistics.CategoryStats()
+      .setAir(new ArmyStatistics.UnitStats())
+      .setLand(new ArmyStatistics.UnitStats())
+      .setNaval(new ArmyStatistics.UnitStats())
+      .setExperimental(new ArmyStatistics.UnitStats())
+      .setCdr(new ArmyStatistics.UnitStats())
+      .setTech1(new ArmyStatistics.UnitStats())
+      .setTech2(new ArmyStatistics.UnitStats())
+      .setTech3(new ArmyStatistics.UnitStats())
+      .setEngineer(new ArmyStatistics.UnitStats())
+      .setTransportation(new ArmyStatistics.UnitStats())
+      .setSacu(new ArmyStatistics.UnitStats());
+
     achievementUpdates = new ArrayList<>();
     eventUpdates = new ArrayList<>();
 

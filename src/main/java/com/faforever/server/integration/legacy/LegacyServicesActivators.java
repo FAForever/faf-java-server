@@ -14,7 +14,6 @@ import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
-import com.faforever.server.social.SocialService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
@@ -37,18 +36,15 @@ public class LegacyServicesActivators {
   private final UniqueIdService uniqueIdService;
   private final GeoIpService geoIpService;
   private final ChatService chatService;
-  private final SocialService socialService;
 
   @Inject
   public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
-                                  UniqueIdService uniqueIdService, GeoIpService geoIpService, ChatService chatService,
-                                  SocialService socialService) {
+                                  UniqueIdService uniqueIdService, GeoIpService geoIpService, ChatService chatService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
     this.geoIpService = geoIpService;
     this.chatService = chatService;
-    this.socialService = socialService;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)

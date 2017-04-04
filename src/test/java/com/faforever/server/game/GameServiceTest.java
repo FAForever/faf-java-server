@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
@@ -78,7 +77,7 @@ public class GameServiceTest {
   private static final String PLAYER_NAME_1 = "player1";
   private static final String PLAYER_NAME_2 = "player2";
   private static final String MAP_NAME = "SCMP_001";
-  private static final int FAF_MOD_ID = 1;
+  private static final String FAF_TECHNICAL_NAME = "faf";
   private static final int NEXT_GAME_ID = 1;
   private static final String QAI = "QAI";
   private static final String AIX = "AIX";
@@ -143,11 +142,11 @@ public class GameServiceTest {
     player2.setLogin(PLAYER_NAME_2);
 
     FeaturedMod fafFeaturedMod = new FeaturedMod();
-    fafFeaturedMod.setId(FAF_MOD_ID);
+    fafFeaturedMod.setTechnicalName(FAF_TECHNICAL_NAME);
 
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
-    when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
+    when(modService.getFeaturedMod(FAF_TECHNICAL_NAME)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
     doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
       .when(ratingService).initGlobalRating(any());
@@ -162,7 +161,7 @@ public class GameServiceTest {
   @Test
   public void createGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
     Optional<Game> optional = instance.getActiveGame(NEXT_GAME_ID);
     assertThat(optional.isPresent(), is(true));
@@ -171,7 +170,7 @@ public class GameServiceTest {
     verify(clientService).startGameProcess(game, player1);
     assertThat(game.getTitle(), is("Game title"));
     assertThat(game.getHost(), is(player1));
-    assertThat(game.getFeaturedMod().getId(), is(FAF_MOD_ID));
+    assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
     assertThat(game.getMap(), is(nullValue()));
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
@@ -186,7 +185,7 @@ public class GameServiceTest {
   @Test
   public void joinGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.joinGame(NEXT_GAME_ID, player2);
 
@@ -389,7 +388,7 @@ public class GameServiceTest {
   @Test
   public void endGameIfNoPlayerConnected() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
@@ -459,7 +458,7 @@ public class GameServiceTest {
   @Test
   public void onGameLaunching() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -725,7 +724,7 @@ public class GameServiceTest {
   @Test
   public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     assertThat(player1.getGameBeingJoined(), is(notNullValue()));
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -750,7 +749,7 @@ public class GameServiceTest {
   @SuppressWarnings("unchecked")
   public void onAuthenticationSuccess() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_MOD_ID, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
@@ -777,7 +776,6 @@ public class GameServiceTest {
       .setCurrentGame(game)
       .setId(3);
 
-    Map<Integer, Player> activePlayers = game.getConnectedPlayers();
     addPlayer(game, player1, 2);
     addPlayer(game, player2, 3);
     addPlayer(game, player3, 2);
@@ -813,7 +811,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionWasNeverInGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     launchGame();
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -826,7 +824,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionOpenGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -852,7 +850,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionPlayingGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();

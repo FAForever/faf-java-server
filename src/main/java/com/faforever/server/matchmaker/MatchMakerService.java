@@ -173,8 +173,8 @@ public class MatchMakerService {
         pool.remove(leftSearch.player.getId());
         pool.remove(rightSearch.player.getId());
 
-        int modId = modByPoolName.get(leftSearch.poolName).getId();
-        startGame(modId, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
+        String technicalModName = modByPoolName.get(leftSearch.poolName).getTechnicalName();
+        startGame(technicalModName, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
       });
   }
 
@@ -229,10 +229,10 @@ public class MatchMakerService {
   /**
    * Tells one player to host a game and the other player to join the game.
    */
-  private void startGame(int modId, Player host, Faction hostFaction, Player opponent, Faction opponentFaction) {
+  private void startGame(String technicalModName, Player host, Faction hostFaction, Player opponent, Faction opponentFaction) {
     gameService.createGame(
       host.getLogin() + " vs. " + opponent.getLogin(),
-      modId,
+      technicalModName,
       // TODO filename is probably the wrong parameter
       mapService.getRandomLadderMap().getFilename(),
       null,

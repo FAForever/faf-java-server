@@ -13,5 +13,6 @@ public class FafServerApplicationTests {
 
   @Test
   public void contextLoads() {
+    // Spring Boot test
   }
 }
