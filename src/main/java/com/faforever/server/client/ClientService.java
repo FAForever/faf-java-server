@@ -8,6 +8,7 @@ import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.AvatarAssociation;
+import com.faforever.server.entity.Clan;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
@@ -24,6 +25,7 @@ import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.UserDetailsResponse;
 import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
 import com.faforever.server.player.UserDetailsResponse.Player.Rating;
+import com.faforever.server.social.SocialRelationListResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;
@@ -124,7 +126,7 @@ public class ClientService {
           ladder1v1Rating.orElse(null),
           Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0),
           avatar.orElse(null),
-          Optional.ofNullable(player.getClan()).map(clan -> clan.getTag()).orElse(null)
+          Optional.ofNullable(player.getClan()).map(Clan::getTag).orElse(null)
         )
       ),
       connectionAware);
@@ -153,8 +155,8 @@ public class ClientService {
    * @param maxDelay the maximum time to wait before the object is forcibly sent, even if the object has been updated
    * less than {@code minDelay} ago. This helps to avoid objects being delayed for too long if they receive frequent
    * updates.
-   * @param idFunction the function to use to calculate the object's ID, so that subsequent calls can be associated
-   * with previous submissions of the same object.
+   * @param idFunction the function to use to calculate the object's ID, so that subsequent calls can be associated with
+   * previous submissions of the same object.
    * @param <T> the type of the submitted object
    */
   @SuppressWarnings("unchecked")
@@ -246,6 +248,10 @@ public class ClientService {
 
   public void sendIceMessage(int senderId, Object content, ConnectionAware recipient) {
     send(new ForwardedIceMessage(senderId, content), recipient);
+  }
+
+  public void sendSocialRelations(SocialRelationListResponse response, ConnectionAware recipient) {
+    send(response, recipient);
   }
 
   @EventListener

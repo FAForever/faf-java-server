@@ -15,6 +15,7 @@ import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.UserDetailsResponse;
+import com.faforever.server.social.SocialRelationListResponse;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
 
@@ -44,6 +45,7 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerMessa
       .put(DisconnectPlayerResponse.class, DisconnectPeerResponseTransformer.INSTANCE)
       .put(UpdatedAchievementsResponse.class, UpdatedAchievementsTransformer.INSTANCE)
       .put(JoinChatChannelResponse.class, JoinChatChannelsResponseTransformer.INSTANCE)
+      .put(SocialRelationListResponse.class, SocialRelationListResponseTransformer.INSTANCE)
       .put(IceServersResponse.class, IceServersResponseTransformer.INSTANCE)
       .build();
   }

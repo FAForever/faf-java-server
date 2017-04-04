@@ -51,6 +51,9 @@ public class Player extends Login implements ConnectionAware {
   @OneToMany(mappedBy = "player")
   private List<ClanMembership> clanMemberships;
 
+  @OneToMany(mappedBy = "player")
+  private List<SocialRelation> socialRelations;
+
   @Transient
   private Game currentGame;
 

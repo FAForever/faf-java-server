@@ -10,9 +10,9 @@ import java.io.Serializable;
 public class SocialRelationPK implements Serializable {
   @Id
   @Column(name = "user_id")
-  private int userId;
+  private Integer playerId;
 
   @Id
   @Column(name = "subject_id")
-  private int subjectId;
+  private Integer subjectId;
 }
