@@ -144,7 +144,7 @@ public class GameServiceTest {
     FeaturedMod fafFeaturedMod = new FeaturedMod();
     fafFeaturedMod.setTechnicalName(FAF_TECHNICAL_NAME);
 
-    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID));
+    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID - 1));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_TECHNICAL_NAME)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
