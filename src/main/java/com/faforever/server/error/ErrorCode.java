@@ -17,7 +17,8 @@ public enum ErrorCode {
   BANNED_FROM_MATCH_MAKER(110, "Banned from match maker", "You have been banned from the match maker."),
   MATCH_MAKER_POOL_DOESNT_EXIST(111, "No such match maker pool", "Match maker pool with name ''{0}'' does not exist."),
   CANT_RESTORE_GAME_DOESNT_EXIST(112, "Can't restore game connection", "The game you were connected to does no longer exist."),
-  CANT_RESTORE_GAME_NOT_PARTICIPANT(113, "Can't restore game connection", "You have never been part of this game.");
+  CANT_RESTORE_GAME_NOT_PARTICIPANT(113, "Can't restore game connection", "You have never been part of this game."),
+  MAP_BLACKLISTED(114, "Can't create game with this map", "This map has been blacklisted and is prohibited from being hosted.");
 
   private final int code;
   private final String title;

@@ -148,6 +148,7 @@ public class GameService {
                                             String password, GameVisibility visibility,
                                             Integer minRating, Integer maxRating, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
+    Requests.verify(mapService.isBlacklisted(mapname) == false, ErrorCode.MAP_BLACKLISTED);
 
     int gameId = this.nextGameId.getAndIncrement();
     Game game = new Game(gameId);

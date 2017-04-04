@@ -147,6 +147,7 @@ public class GameServiceTest {
 
     when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID - 1));
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
+    when(mapService.isBlacklisted(anyString())).thenReturn(false);
     when(modService.getFeaturedMod(FAF_MOD_ID)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
     doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
@@ -181,6 +182,17 @@ public class GameServiceTest {
     assertThat(game.getMaxRating(), is(GAME_MAX_RATING));
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameBeingJoined(), is(game));
+  }
+
+  @Test
+  public void createGameBlacklistedMap() throws Exception {
+    when(mapService.isBlacklisted(anyString())).thenReturn(true);
+
+    player1.setCurrentGame(null);
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.MAP_BLACKLISTED));
+
+    instance.createGame("Game title", FAF_MOD_ID, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
   }
 
   @Test

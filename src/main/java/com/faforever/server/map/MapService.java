@@ -26,6 +26,10 @@ public class MapService {
     return mapVersionRepository.findByFilenameIgnoreCase(filename);
   }
 
+  public boolean isBlacklisted(String mapname) {
+    return false;//TODO: implement
+  }
+
   public MapVersion getRandomLadderMap() {
     List<MapVersion> ladder1v1Maps = getLadder1v1Maps();
     return ladder1v1Maps.get(random.nextInt(ladder1v1Maps.size() - 1));
