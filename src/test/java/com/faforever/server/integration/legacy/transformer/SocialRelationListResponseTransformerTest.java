@@ -26,6 +26,7 @@ public class SocialRelationListResponseTransformerTest {
     );
 
     assertThat(result, is(ImmutableMap.of(
+      "command", "social",
       "friends", Arrays.asList(1, 4),
       "foes", Arrays.asList(2, 3)
     )));

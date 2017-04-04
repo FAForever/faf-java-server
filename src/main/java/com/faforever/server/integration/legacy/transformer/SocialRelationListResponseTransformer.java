@@ -18,6 +18,7 @@ public enum SocialRelationListResponseTransformer implements GenericTransformer<
   @Override
   public Map<String, Serializable> transform(SocialRelationListResponse source) {
     return ImmutableMap.of(
+      "command", "social",
       "friends", extractPlayerIds(source.getSocialRelations(), RelationType.FRIEND),
       "foes", extractPlayerIds(source.getSocialRelations(), RelationType.FOE)
     );
