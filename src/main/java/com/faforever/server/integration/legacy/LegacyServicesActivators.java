@@ -38,7 +38,8 @@ public class LegacyServicesActivators {
   private final ChatService chatService;
 
   @Inject
-  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService, UniqueIdService uniqueIdService, GeoIpService geoIpService, ChatService chatService) {
+  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
+                                  UniqueIdService uniqueIdService, GeoIpService geoIpService, ChatService chatService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;

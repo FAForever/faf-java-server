@@ -133,7 +133,7 @@ public class GameService {
   @Transactional(readOnly = true)
   public void onApplicationEvent(ContextRefreshedEvent event) {
     gameRepository.findMaxId().ifPresent(nextGameId::set);
-    log.debug("Next game ID is: {}", nextGameId.incrementAndGet());
+    log.debug("Next game ID is: {}", nextGameId.get());
   }
 
   /**
@@ -144,15 +144,16 @@ public class GameService {
    * aware that there are various reasons for the game to never start (crash, disconnect, abort) so never wait without a
    * timeout.
    */
-  public CompletableFuture<Game> createGame(String title, int modId, String mapname,
+  @Transactional(readOnly = true)
+  public CompletableFuture<Game> createGame(String title, String featuredModName, String mapname,
                                             String password, GameVisibility visibility,
                                             Integer minRating, Integer maxRating, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
-    int gameId = this.nextGameId.getAndIncrement();
+    int gameId = this.nextGameId.incrementAndGet();
     Game game = new Game(gameId);
     game.setHost(player);
-    modService.getFeaturedMod(modId).ifPresent(game::setFeaturedMod);
+    modService.getFeaturedMod(featuredModName).ifPresent(game::setFeaturedMod);
     game.setTitle(title);
     mapService.findMap(mapname).ifPresent(game::setMap);
     game.setMapName(mapname);

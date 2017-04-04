@@ -96,9 +96,7 @@ The following features of the Python server have not yet been implemented in thi
 
 * Accepting "mutually agreed draw"
 * Timeout unstarted games
-* Send clan tags
-* Join clan channels
-* Send friends and foes
+* Send clan channels
 
 ## Additional features
 

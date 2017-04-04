@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.ToIntFunction;
 
+import static com.faforever.server.stats.ArmyStatistics.BrainType.AI;
 import static com.faforever.server.stats.ArmyStatistics.BrainType.HUMAN;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
@@ -59,10 +60,10 @@ public class ArmyStatisticsService {
     int playerArmyId = -1;
     for (ArmyStatistics statsItem : statistics) {
       currentIndex++;
-//      if (statsItem.getType() == AI && !CIVILIAN_ARMY_NAME.equals(statsItem.getName())) {
-//        log.debug("AI game reported by '{}', aborting stats processing", player);
-//        return;
-//      }
+      if (statsItem.getType() == AI && !CIVILIAN_ARMY_NAME.equals(statsItem.getName())) {
+        log.debug("AI game reported by '{}', aborting stats processing", player);
+        return;
+      }
 
       if (statsItem.getType() == HUMAN) {
         numberOfHumans += 1;
@@ -84,10 +85,10 @@ public class ArmyStatisticsService {
       return;
     }
 
-//    if (numberOfHumans < 2) {
-//      log.debug("Single player game '{}' reported by '{}', aborting stats processing", game, player);
-//      return;
-//    }
+    if (numberOfHumans < 2) {
+      log.debug("Single player game '{}' reported by '{}', aborting stats processing", game, player);
+      return;
+    }
 
     int finalArmyId = playerArmyId;
     Optional<ArmyOutcome> armyOutcome = game.getReportedArmyOutcomes().values().stream()

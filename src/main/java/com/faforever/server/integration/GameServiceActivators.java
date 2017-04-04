@@ -35,7 +35,7 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.HOST_GAME_REQUEST)
   public void hostGameRequest(HostGameRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    gameService.createGame(request.getTitle(), resolveMod(request.getMod()), request.getMapName(), request.getPassword(),
+    gameService.createGame(request.getTitle(), request.getMod(), request.getMapName(), request.getPassword(),
       request.getVisibility(), request.getMinRating(), request.getMaxRating(), clientConnection.getUserDetails().getPlayer());
   }
 
@@ -112,10 +112,5 @@ public class GameServiceActivators {
   @ServiceActivator(inputChannel = ChannelNames.RESTORE_GAME_SESSION_REQUEST)
   public void restoreGameSession(RestoreGameSessionRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     gameService.restoreGameSession(clientConnection.getUserDetails().getPlayer(), request.getGameId());
-  }
-
-  private byte resolveMod(String mod) {
-    // FIXME implement
-    return 1;
   }
 }

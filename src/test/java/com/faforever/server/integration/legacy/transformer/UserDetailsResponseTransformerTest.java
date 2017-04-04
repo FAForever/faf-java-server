@@ -27,7 +27,8 @@ public class UserDetailsResponseTransformerTest {
         new Rating(1200d, 200d),
         new Rating(900d, 100d),
         12,
-        new Avatar("http://example.com", "Tooltip")
+        new Avatar("http://example.com", "Tooltip"),
+        "FOO"
       )
     ));
 
@@ -49,7 +50,7 @@ public class UserDetailsResponseTransformerTest {
     assertThat(avatarMap.get("tooltip"), is("Tooltip"));
 
     assertThat(me.get("country"), is("CH"));
-    assertThat(me.get("clan"), is(""));
+    assertThat(me.get("clan"), is("FOO"));
   }
 
   @Test
@@ -63,7 +64,8 @@ public class UserDetailsResponseTransformerTest {
         new Rating(1200d, 200d),
         new Rating(900d, 100d),
         12,
-        null
+        null,
+        "FOO"
       )
     ));
 
@@ -82,7 +84,8 @@ public class UserDetailsResponseTransformerTest {
         null,
         new Rating(900d, 100d),
         12,
-        new Avatar("http://example.com", "Tooltip")
+        new Avatar("http://example.com", "Tooltip"),
+        "FOO"
       )
     ));
 
@@ -101,7 +104,8 @@ public class UserDetailsResponseTransformerTest {
         new Rating(900d, 100d),
         null,
         12,
-        new Avatar("http://example.com", "Tooltip")
+        new Avatar("http://example.com", "Tooltip"),
+        "FOO"
       )
     ));
 
@@ -120,7 +124,8 @@ public class UserDetailsResponseTransformerTest {
         new Rating(1200d, 200d),
         new Rating(900d, 100d),
         12,
-        null
+        null,
+        "FOO"
       )
     ));
 

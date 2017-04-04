@@ -6,6 +6,8 @@ import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.Avatar;
 import com.faforever.server.entity.AvatarAssociation;
+import com.faforever.server.entity.Clan;
+import com.faforever.server.entity.ClanMembership;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
@@ -144,6 +146,7 @@ public class ClientServiceTest {
       ))
       .setGlobalRating((GlobalRating) new GlobalRating().setNumGames(12).setMean(1100d).setDeviation(100d))
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(900d).setDeviation(50d))
+      .setClanMemberships(Collections.singletonList(new ClanMembership().setClan(new Clan().setTag("FOO"))))
       .setCountry("CH")
       .setLogin("JUnit")
       .setId(5);
@@ -163,6 +166,7 @@ public class ClientServiceTest {
     assertThat(response.getPlayer().getLadder1v1Rating().getMean(), is(900d));
     assertThat(response.getPlayer().getLadder1v1Rating().getDeviation(), is(50d));
     assertThat(response.getPlayer().getNumberOfGames(), is(12));
+    assertThat(response.getPlayer().getClanTag(), is("FOO"));
     assertThat(response.getCountry(), is("CH"));
   }
 

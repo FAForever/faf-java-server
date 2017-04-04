@@ -5,7 +5,6 @@ import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
-import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
 import org.junit.Before;
@@ -29,8 +28,6 @@ public class PlayerServiceTest {
 
   @Mock
   private ClientService clientService;
-  @Mock
-  private GeoIpService geoIpService;
 
   @Before
   public void setUp() throws Exception {

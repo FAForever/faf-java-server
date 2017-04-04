@@ -94,4 +94,8 @@ public class ModService {
   public Optional<FeaturedMod> getLadder1v1() {
     return Optional.ofNullable(ladder1v1FeaturedMod);
   }
+
+  public Optional<FeaturedMod> getFeaturedMod(String featuredModName) {
+    return featuredModRepository.findOneByTechnicalName(featuredModName);
+  }
 }
