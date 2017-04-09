@@ -20,6 +20,7 @@ import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.ice.IceMessage;
@@ -180,6 +181,7 @@ public class IntegrationConfig {
     payloadTypeRouter.setChannelMapping(IceServersRequest.class.getName(), ChannelNames.ICE_SERVERS_REQUEST);
     payloadTypeRouter.setChannelMapping(IceMessage.class.getName(), ChannelNames.ICE_MESSAGE);
     payloadTypeRouter.setChannelMapping(RestoreGameSessionRequest.class.getName(), ChannelNames.RESTORE_GAME_SESSION_REQUEST);
+    payloadTypeRouter.setChannelMapping(MutuallyAgreedDrawRequest.class.getName(), ChannelNames.MUTUALLY_AGREED_DRAW_REQUEST);
     payloadTypeRouter.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
     payloadTypeRouter.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
     payloadTypeRouter.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);

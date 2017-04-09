@@ -75,6 +75,7 @@ public class GameService {
    * ID of the team that stands for "no team" according to the game.
    */
   public static final int NO_TEAM_ID = 1;
+  public static final int OBSERVERS_TEAM_ID = -1;
   public static final String OPTION_FOG_OF_WAR = "FogOfWar";
   public static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
   public static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
@@ -540,6 +541,31 @@ public class GameService {
     onGameEnded(game);
   }
 
+  public void mutuallyAgreeDraw(Player player) {
+    Requests.verify(player.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
+
+    Game game = player.getCurrentGame();
+    GameState gameState = game.getState();
+    Requests.verify(gameState == GameState.PLAYING, ErrorCode.INVALID_GAME_STATE, GameState.PLAYING);
+
+    getPlayerTeamId(player)
+      .filter(teamId -> OBSERVERS_TEAM_ID != teamId)
+      .ifPresent(teamId -> {
+        log.debug("Adding player '{}' to mutually accepted draw list in game '{}'", player, game);
+        game.getMutuallyAcceptedDrawPlayerIds().add(player.getId());
+
+        final boolean allConnectedNonObserverPlayersAgreedOnMutualDraw = game.getConnectedPlayers().values().stream()
+          .filter(connectedPlayer -> !getPlayerTeamId(connectedPlayer).equals(Optional.of(OBSERVERS_TEAM_ID))
+            && !getPlayerTeamId(connectedPlayer).equals(Optional.empty()))
+          .allMatch(connectedPlayer -> game.getMutuallyAcceptedDrawPlayerIds().contains(connectedPlayer.getId()));
+
+        if (allConnectedNonObserverPlayersAgreedOnMutualDraw) {
+          log.debug("All in-game players agreed on mutual draw. Setting mutually agreed draw state in game '{}'", game);
+          game.setMutuallyAgreedDraw(true);
+        }
+      });
+  }
+
   private void addPlayer(Game game, Player player) {
     game.getConnectedPlayers().put(player.getId(), player);
     player.setCurrentGame(game);
@@ -766,6 +792,12 @@ public class GameService {
       .filter(options -> options.containsKey("Army"))
       .map(options -> (int) options.get("Army"))
       .anyMatch(id -> id == armyId);
+  }
+
+  Optional<Integer> getPlayerTeamId(Player player) {
+    return Optional.ofNullable(player.getCurrentGame())
+      .map(game -> game.getPlayerOptions().get(player.getId()))
+      .map(playerOptions -> (Integer) playerOptions.get(OPTION_TEAM));
   }
 
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {

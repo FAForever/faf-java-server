@@ -18,7 +18,9 @@ public enum ErrorCode {
   MATCH_MAKER_POOL_DOESNT_EXIST(111, "No such match maker pool", "Match maker pool with name ''{0}'' does not exist."),
   CANT_RESTORE_GAME_DOESNT_EXIST(112, "Can't restore game connection", "The game you were connected to does no longer exist."),
   CANT_RESTORE_GAME_NOT_PARTICIPANT(113, "Can't restore game connection", "You have never been part of this game."),
-  USER_ALREADY_CONNECTED(114, "User is already connected", "Please close any other client, that is still connected to the server.");
+  USER_ALREADY_CONNECTED(114, "User is already connected", "Please close any other client, that is still connected to the server."),
+  INVALID_GAME_STATE(115, "Invalid game state", "Game is in unexpected state. Expected state: {0}."),
+  ;
 
   private final int code;
   private final String title;
