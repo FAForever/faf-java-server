@@ -2,7 +2,7 @@ package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.chat.JoinChatChannelResponse;
 import com.faforever.server.client.ConnectToPlayerResponse;
-import com.faforever.server.client.DisconnectPlayerResponse;
+import com.faforever.server.client.DisconnectPlayerFromGameResponse;
 import com.faforever.server.client.IceServersResponse;
 import com.faforever.server.client.InfoResponse;
 import com.faforever.server.client.SessionResponse;
@@ -42,7 +42,7 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerMessa
       .put(FeaturedModResponse.class, FeaturedModResponseTransformer.INSTANCE)
       .put(GameResponse.class, GameResponseTransformer.INSTANCE)
       .put(CoopMissionResponse.class, CoopMissionsResponseTransformer.INSTANCE)
-      .put(DisconnectPlayerResponse.class, DisconnectPeerResponseTransformer.INSTANCE)
+      .put(DisconnectPlayerFromGameResponse.class, DisconnectPeerResponseTransformer.INSTANCE)
       .put(UpdatedAchievementsResponse.class, UpdatedAchievementsTransformer.INSTANCE)
       .put(JoinChatChannelResponse.class, JoinChatChannelsResponseTransformer.INSTANCE)
       .put(SocialRelationListResponse.class, SocialRelationListResponseTransformer.INSTANCE)

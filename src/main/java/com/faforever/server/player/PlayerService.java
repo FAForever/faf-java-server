@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,5 +53,9 @@ public class PlayerService {
 
   public Collection<Player> getPlayers() {
     return onlinePlayersById.values();
+  }
+
+  public boolean isPlayerOnline(String login) {
+    return onlinePlayersById.values().stream().anyMatch(player -> Objects.equals(player.getLogin(), login));
   }
 }

@@ -1,6 +1,6 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.client.DisconnectPlayerResponse;
+import com.faforever.server.client.DisconnectPlayerFromGameResponse;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 public class DisconnectPeerResponseTransformerTest {
   @Test
   public void transform() throws Exception {
-    Map<String, Serializable> response = DisconnectPeerResponseTransformer.INSTANCE.transform(new DisconnectPlayerResponse(51));
+    Map<String, Serializable> response = DisconnectPeerResponseTransformer.INSTANCE.transform(new DisconnectPlayerFromGameResponse(51));
 
     assertThat(response.get("command"), is("DisconnectPeer"));
     assertThat(response.get("peer_id"), is(51));

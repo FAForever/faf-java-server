@@ -458,7 +458,7 @@ public class GameService {
       .filter(item -> !Objects.equals(item.getId(), playerId))
       .collect(Collectors.toList());
 
-    clientService.disconnectPlayer(playerId, receivers);
+    clientService.disconnectPlayerFromGame(playerId, receivers);
     log.info("User '{}' disconnected player '{}' from game '{}'", requester, player, game);
   }
 

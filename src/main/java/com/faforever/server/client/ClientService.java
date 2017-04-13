@@ -181,9 +181,9 @@ public class ClientService {
   /**
    * Tells the client to drop game connection to the player with the specified ID.
    */
-  public void disconnectPlayer(int playerId, Collection<? extends ConnectionAware> receivers) {
+  public void disconnectPlayerFromGame(int playerId, Collection<? extends ConnectionAware> receivers) {
     receivers.forEach(connectionAware ->
-      clientGateway.send(new DisconnectPlayerResponse(playerId), connectionAware.getClientConnection()));
+      clientGateway.send(new DisconnectPlayerFromGameResponse(playerId), connectionAware.getClientConnection()));
   }
 
   @Scheduled(fixedDelay = 1000)
