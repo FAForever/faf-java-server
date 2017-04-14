@@ -27,7 +27,9 @@ import com.faforever.server.rating.RatingType;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -368,14 +370,15 @@ public class GameService {
       return;
     }
 
-    Optional<Integer> army = findArmy(armyId, game);
-    if (!army.isPresent()) {
+    if (!hasArmy(game, armyId)) {
       log.warn("Player '{}' reported score '{}' for unknown army '{}' in game '{}'", reporter, score, armyId, game);
       return;
     }
 
     log.debug("Player '{}' reported score for army '{}' in game '{}': {}", reporter, armyId, game, score);
     game.getReportedArmyScores().computeIfAbsent(reporter.getId(), playerId -> new ArrayList<>()).add(new ArmyScore(armyId, score));
+
+    endGameIfScoresComplete(game);
   }
 
   public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome) {
@@ -385,8 +388,7 @@ public class GameService {
       return;
     }
 
-    Optional<Integer> army = findArmy(armyId, game);
-    if (!army.isPresent()) {
+    if (!hasArmy(game, armyId)) {
       log.warn("Player '{}' reported outcome '{}' for unknown army '{}' in game '{}'", reporter, outcome, armyId, game);
       return;
     }
@@ -485,6 +487,41 @@ public class GameService {
     addPlayer(game, player);
   }
 
+  /**
+   * Checks whether every connected player reported scores for all armies (player and AI). If so, the game is set to
+   * {@link GameState#CLOSED}.
+   */
+  private void endGameIfScoresComplete(Game game) {
+    List<Integer> armies = Streams.concat(
+      game.getPlayerOptions().values().stream(),
+      game.getAiOptions().values().stream()
+    ).map(options -> (Integer) options.get(OPTION_ARMY))
+      .collect(Collectors.toList());
+
+    Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
+    Map<Integer, List<ArmyScore>> reportedArmyScores = game.getReportedArmyScores();
+
+    for (Integer playerId : connectedPlayers.keySet()) {
+      List<ArmyScore> reportedScores = reportedArmyScores.get(playerId);
+      if (reportedScores == null) {
+        return;
+      }
+      Collection<Integer> armiesWithoutScoreReport = new ArrayList<>(armies);
+      for (ArmyScore reportedScore : reportedScores) {
+        armiesWithoutScoreReport.remove(reportedScore.getArmyId());
+      }
+      if (!armiesWithoutScoreReport.isEmpty()) {
+        if (log.isTraceEnabled()) {
+          log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
+            playerId, Joiner.on(", ").join(armiesWithoutScoreReport));
+        }
+        return;
+      }
+    }
+
+    onGameEnded(game);
+  }
+
   private void addPlayer(Game game, Player player) {
     game.getConnectedPlayers().put(player.getId(), player);
     player.setCurrentGame(game);
@@ -501,8 +538,10 @@ public class GameService {
     player.setCurrentGame(null);
     player.setGameBeingJoined(null);
     game.getConnectedPlayers().remove(playerId, player);
+    // Discard reports of disconnected players since their report may not reflect the end result
+    game.getReportedArmyScores().remove(playerId);
 
-    if (game.getConnectedPlayers().isEmpty()) {
+    if (game.getState() != GameState.CLOSED && game.getConnectedPlayers().isEmpty()) {
       onGameEnded(game);
     }
   }
@@ -530,6 +569,7 @@ public class GameService {
         });
         updateGameValidity(game);
         updateRatingsIfValid(game);
+        updateScores(game);
         gameRepository.save(game);
       }
     } finally {
@@ -539,8 +579,52 @@ public class GameService {
     }
   }
 
+  /**
+   * Sets the score of each player according to the reported score of his army.
+   */
+  private void updateScores(Game game) {
+    Map<Integer, ArmyScore> armyIdsToMostReportedScore = findMostReportedArmyScores(game);
+
+    for (Entry<Integer, GamePlayerStats> entry : game.getPlayerStats().entrySet()) {
+      Integer playerId = entry.getKey();
+      Integer armyScore = Optional.ofNullable(game.getPlayerOptions())
+        .map(playerOptions -> playerOptions.get(playerId))
+        .map(options -> (Integer) options.get(OPTION_ARMY))
+        .map(armyIdsToMostReportedScore::get)
+        .map(ArmyScore::getScore)
+        .orElse(null);
+
+      entry.getValue().setScore(armyScore);
+    }
+  }
+
+  /**
+   * Finds the {@link ArmyScore ArmyScores} that have been reported the most, per army ID.
+   */
+  private Map<Integer, ArmyScore> findMostReportedArmyScores(Game game) {
+    Map<ArmyScore, Long> armyScoreToOccurrence = game.getReportedArmyScores().values().stream()
+      .flatMap(Collection::stream)
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    Map<Integer, ArmyScore> armyIdsToMostReportedScore = new HashMap<>();
+    Map<Integer, Long> mostOccurrencesByArmyId = new HashMap<>();
+
+    for (Entry<ArmyScore, Long> entry : armyScoreToOccurrence.entrySet()) {
+      ArmyScore armyScore = entry.getKey();
+      Long occurrence = entry.getValue();
+
+      int armyId = armyScore.getArmyId();
+      Long mostOccurrence = mostOccurrencesByArmyId.get(armyId);
+      if (mostOccurrence == null || occurrence > mostOccurrence) {
+        mostOccurrencesByArmyId.put(armyId, occurrence);
+        armyIdsToMostReportedScore.put(armyId, armyScore);
+      }
+    }
+    return armyIdsToMostReportedScore;
+  }
+
   private void updateRatingsIfValid(Game game) {
-    if (game.getValidity() != Validity.RANKED) {
+    if (game.getValidity() != Validity.RANKED && !game.isRatingEnforced()) {
       return;
     }
     RatingType ratingType = modService.isLadder1v1(game.getFeaturedMod()) ? RatingType.LADDER_1V1 : RatingType.GLOBAL;
@@ -659,12 +743,11 @@ public class GameService {
     clientService.connectToPlayer(player, player);
   }
 
-  private Optional<Integer> findArmy(int armyId, Game game) {
+  private boolean hasArmy(Game game, int armyId) {
     return Stream.concat(game.getPlayerOptions().values().stream(), game.getAiOptions().values().stream())
       .filter(options -> options.containsKey("Army"))
       .map(options -> (int) options.get("Army"))
-      .filter(id -> id == armyId)
-      .findFirst();
+      .anyMatch(id -> id == armyId);
   }
 
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {

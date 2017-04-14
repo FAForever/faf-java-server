@@ -330,6 +330,43 @@ public class GameServiceTest {
   }
 
   @Test
+  public void reportArmyScoreWithCheater() throws Exception {
+    Player player3 = (Player) new Player().setId(3);
+    addPlayer(game, player1, 2);
+    addPlayer(game, player2, 3);
+    addPlayer(game, player3, 3);
+
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_ARMY, 3);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.reportArmyScore(player1, 1, 10);
+    instance.reportArmyScore(player1, 2, -1);
+    instance.reportArmyScore(player1, 3, -1);
+
+    instance.reportArmyScore(player2, 1, 10);
+    instance.reportArmyScore(player2, 2, -1);
+    instance.reportArmyScore(player2, 3, -1);
+
+    instance.reportArmyScore(player3, 1, -1);
+    instance.reportArmyScore(player3, 2, -1);
+    instance.reportArmyScore(player3, 3, 10);
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player3);
+
+    assertThat(game.getPlayerStats().values(), hasSize(3));
+    assertThat(game.getPlayerStats().get(player1.getId()).getScore(), is(10));
+    assertThat(game.getPlayerStats().get(player2.getId()).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(player3.getId()).getScore(), is(-1));
+  }
+
+  @Test
   public void reportArmyScoreAiScore() throws Exception {
     addPlayer(game, player1, 2);
 
