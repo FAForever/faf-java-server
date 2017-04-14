@@ -20,6 +20,7 @@ import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.ice.IceMessage;
@@ -223,4 +224,9 @@ public class ChannelNames {
    * Channel for {@link RestoreGameSessionRequest}.
    */
   public static final String RESTORE_GAME_SESSION_REQUEST = "restoreGameSessionRequest";
+
+  /**
+   * Channel for {@link MutuallyAgreedDrawRequest}.
+   */
+  public static final String MUTUALLY_AGREED_DRAW_REQUEST = "mutuallyAgreedDrawRequest";
 }

@@ -12,6 +12,7 @@ import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
 import com.faforever.server.integration.request.GameStateReport;
@@ -112,5 +113,10 @@ public class GameServiceActivators {
   @ServiceActivator(inputChannel = ChannelNames.RESTORE_GAME_SESSION_REQUEST)
   public void restoreGameSession(RestoreGameSessionRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     gameService.restoreGameSession(clientConnection.getUserDetails().getPlayer(), request.getGameId());
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.MUTUALLY_AGREED_DRAW_REQUEST)
+  public void mutuallyAgreeDraw(MutuallyAgreedDrawRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    gameService.mutuallyAgreeDraw(clientConnection.getUserDetails().getPlayer());
   }
 }

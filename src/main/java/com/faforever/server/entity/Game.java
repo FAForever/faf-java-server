@@ -24,8 +24,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Entity
@@ -71,6 +73,12 @@ public class Game {
    */
   @Transient
   private final Map<Integer, Map<String, Object>> playerOptions;
+
+  /**
+   * Set of player ids who accepted mutual draw
+   */
+  @Transient
+  private final Set<Integer> mutuallyAcceptedDrawPlayerIds;
 
   /**
    * Maps AI names to key-value option maps, like {@code "AI: Rufus" -> "Color" -> 1 }
@@ -167,6 +175,7 @@ public class Game {
     aiOptions = new HashMap<>();
     reportedArmyScores = new HashMap<>();
     reportedArmyOutcomes = new HashMap<>();
+    mutuallyAcceptedDrawPlayerIds = new HashSet<>();
     armyStatistics = new ArrayList<>();
     playerStats = new HashMap<>();
     simMods = new ArrayList<>();

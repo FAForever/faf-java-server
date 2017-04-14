@@ -947,6 +947,91 @@ public class GameServiceTest {
     instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
   }
 
+  @Test
+  public void mutualDrawRequestedByPlayerWithoutGame() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    launchGame();
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.NOT_IN_A_GAME));
+
+    instance.mutuallyAgreeDraw(player2);
+  }
+
+  @Test
+  public void mutualDrawRequestedByPlayerInNonPlayingGameState() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_GAME_STATE));
+
+    instance.mutuallyAgreeDraw(player1);
+  }
+
+  @Test
+  public void mutualDrawRequestedByObserver() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+
+    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.mutuallyAgreeDraw(player1);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(false));
+  }
+
+  @Test
+  public void mutualDrawRequestedByPlayer() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.NO_TEAM_ID);
+
+    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.mutuallyAgreeDraw(player1);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(true));
+  }
+
+  @Test
+  public void mutualDrawRequestedByAllPlayers() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
+
+    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+
+    instance.joinGame(game.getId(), player2);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
+
+    Player player3 = new Player();
+    player3.setId(3);
+
+    instance.joinGame(game.getId(), player3);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player3);
+    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.mutuallyAgreeDraw(player1);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(false));
+
+    instance.mutuallyAgreeDraw(player2);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(true));
+  }
+
   private void launchGame() {
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);

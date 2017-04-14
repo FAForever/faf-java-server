@@ -27,6 +27,7 @@ import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.GameVisibility;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
@@ -116,6 +117,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new EnforceRatingRequest();
       case TEAMKILL_REPORT:
         return handleTeamKillReport(source);
+      case MUTUAL_DRAW:
+        return new MutuallyAgreedDrawRequest();
       case AI_OPTION:
         return handleAiOption(source);
       case INITIATE_TEST:
