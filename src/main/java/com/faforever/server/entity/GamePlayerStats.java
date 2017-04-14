@@ -62,7 +62,7 @@ public class GamePlayerStats {
   private Double afterDeviation;
 
   @Column(name = "score")
-  private int score;
+  private Integer score;
 
   @Column(name = "scoreTime")
   private Timestamp scoreTime;
