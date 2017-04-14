@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.ip.tcp.connection.TcpConnection;
@@ -38,7 +37,7 @@ public class LegacyAdapterConfigTest {
 
   @Test
   public void onConnectionClosed() throws Exception {
-    TcpConnection connection = Mockito.mock(TcpConnection.class);
+    TcpConnection connection = mock(TcpConnection.class);
     when(connection.getConnectionId()).thenReturn("1");
     when(serverProperties.getPort()).thenReturn(0);
 
