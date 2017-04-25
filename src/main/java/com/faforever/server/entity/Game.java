@@ -20,7 +20,7 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -104,7 +104,10 @@ public class Game {
   private Integer id;
 
   @Column(name = "startTime")
-  private Timestamp startTime;
+  private Instant startTime;
+
+  @Column(name = "endTime")
+  private Instant endTime;
 
   @Column(name = "gameType")
   private VictoryCondition victoryCondition;

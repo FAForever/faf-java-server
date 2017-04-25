@@ -43,7 +43,6 @@ import org.springframework.util.Assert;
 import javax.persistence.EntityManager;
 import java.lang.ref.WeakReference;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -611,6 +610,7 @@ public class GameService {
           Player player = stats.getPlayer();
           armyStatisticsService.process(player, game, game.getArmyStatistics());
         });
+        game.setEndTime(Instant.now());
         updateGameValidity(game);
         updateRatingsIfValid(game);
         updateScores(game);
@@ -638,7 +638,7 @@ public class GameService {
         .map(ArmyScore::getScore)
         .orElse(null);
 
-      entry.getValue().setScore(armyScore);
+      entry.getValue().setScore(armyScore).setScoreTime(Instant.now());
     }
   }
 
@@ -682,7 +682,7 @@ public class GameService {
       return;
     }
     game.setState(GameState.PLAYING);
-    game.setStartTime(Timestamp.from(Instant.now()));
+    game.setStartTime(Instant.now());
 
     createGamePlayerStats(game);
 
@@ -825,7 +825,7 @@ public class GameService {
         })
         .collect(Collectors.toList()),
       game.getMaxPlayers(),
-      Optional.ofNullable(game.getStartTime()).map(Timestamp::toInstant).orElse(null),
+      Optional.ofNullable(game.getStartTime()).orElse(null),
       game.getMinRating(),
       game.getMaxRating()
     );
@@ -888,7 +888,7 @@ public class GameService {
       game.setValidity(Validity.SINGLE_PLAYER);
     } else if (game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty()) {
       game.setValidity(Validity.UNKNOWN_RESULT);
-    } else if (Duration.between(Instant.now(), game.getStartTime().toInstant()).getSeconds() < minSeconds) {
+    } else if (Duration.between(Instant.now(), game.getStartTime()).getSeconds() < minSeconds) {
       game.setValidity(Validity.TOO_SHORT);
     } else {
       game.setValidity(Validity.RANKED);
