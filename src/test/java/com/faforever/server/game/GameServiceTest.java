@@ -39,7 +39,6 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 
 import javax.persistence.EntityManager;
 import java.net.InetAddress;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,7 +127,7 @@ public class GameServiceTest {
       .setMap(map)
       .setFeaturedMod(new FeaturedMod())
       .setVictoryCondition(VictoryCondition.DEMORALIZATION)
-      .setStartTime(Timestamp.from(Instant.now().plusSeconds(999)));
+      .setStartTime(Instant.now().plusSeconds(999));
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
     game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "Off");
@@ -509,8 +508,8 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     assertThat(game.getState(), is(GameState.PLAYING));
-    assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now().plusSeconds(1)))));
-    assertThat(game.getStartTime(), is(greaterThan(Timestamp.from(Instant.now().minusSeconds(10)))));
+    assertThat(game.getStartTime(), is(lessThan(Instant.now().plusSeconds(1))));
+    assertThat(game.getStartTime(), is(greaterThan(Instant.now().minusSeconds(10))));
 
     verify(entityManager).persist(game);
     verify(clientService, atLeastOnce()).sendDelayed(any(GameResponse.class), any(), any(), any());
@@ -943,10 +942,6 @@ public class GameServiceTest {
     assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(true));
   }
 
-  private void createDefaultGame() {
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-  }
-
   @Test
   public void mutualDrawRequestedByPlayerWithoutGame() throws Exception {
     player1.setCurrentGame(null);
@@ -1030,6 +1025,10 @@ public class GameServiceTest {
     instance.mutuallyAgreeDraw(player2);
 
     assertThat(game.isMutuallyAgreedDraw(), is(true));
+  }
+
+  private void createDefaultGame() {
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
   }
 
   private void launchGame() {
