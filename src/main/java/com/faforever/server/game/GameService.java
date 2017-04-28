@@ -381,7 +381,7 @@ public class GameService {
       return;
     }
 
-    log.debug("Player '{}' reported score for army '{}' in game '{}': {}", reporter, armyId, game, score);
+    log.debug("Player '{}' reported score '{}' for army '{}' in game '{}'", reporter, score, armyId, game);
     game.getReportedArmyScores().computeIfAbsent(reporter.getId(), playerId -> new ArrayList<>()).add(new ArmyScore(armyId, score));
 
     endGameIfScoresComplete(game);
@@ -493,6 +493,31 @@ public class GameService {
     addPlayer(game, player);
   }
 
+  public void mutuallyAgreeDraw(Player player) {
+    Requests.verify(player.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
+
+    Game game = player.getCurrentGame();
+    GameState gameState = game.getState();
+    Requests.verify(gameState == GameState.PLAYING, ErrorCode.INVALID_GAME_STATE, GameState.PLAYING);
+
+    getPlayerTeamId(player)
+      .filter(teamId -> OBSERVERS_TEAM_ID != teamId)
+      .ifPresent(teamId -> {
+        log.debug("Adding player '{}' to mutually accepted draw list in game '{}'", player, game);
+        game.getMutuallyAcceptedDrawPlayerIds().add(player.getId());
+
+        final boolean allConnectedNonObserverPlayersAgreedOnMutualDraw = game.getConnectedPlayers().values().stream()
+          .filter(connectedPlayer -> !getPlayerTeamId(connectedPlayer).equals(Optional.of(OBSERVERS_TEAM_ID))
+            && !getPlayerTeamId(connectedPlayer).equals(Optional.empty()))
+          .allMatch(connectedPlayer -> game.getMutuallyAcceptedDrawPlayerIds().contains(connectedPlayer.getId()));
+
+        if (allConnectedNonObserverPlayersAgreedOnMutualDraw) {
+          log.debug("All in-game players agreed on mutual draw. Setting mutually agreed draw state in game '{}'", game);
+          game.setMutuallyAgreedDraw(true);
+        }
+      });
+  }
+
   /**
    * Schedules a task that ends a game if it's in {@link GameState#INITIALIZING} for too long. This happens if a game
    * is requested by a host, but the player's game process crashes before it can enter {@link GameState#OPEN}.
@@ -538,31 +563,6 @@ public class GameService {
     }
 
     onGameEnded(game);
-  }
-
-  public void mutuallyAgreeDraw(Player player) {
-    Requests.verify(player.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
-
-    Game game = player.getCurrentGame();
-    GameState gameState = game.getState();
-    Requests.verify(gameState == GameState.PLAYING, ErrorCode.INVALID_GAME_STATE, GameState.PLAYING);
-
-    getPlayerTeamId(player)
-      .filter(teamId -> OBSERVERS_TEAM_ID != teamId)
-      .ifPresent(teamId -> {
-        log.debug("Adding player '{}' to mutually accepted draw list in game '{}'", player, game);
-        game.getMutuallyAcceptedDrawPlayerIds().add(player.getId());
-
-        final boolean allConnectedNonObserverPlayersAgreedOnMutualDraw = game.getConnectedPlayers().values().stream()
-          .filter(connectedPlayer -> !getPlayerTeamId(connectedPlayer).equals(Optional.of(OBSERVERS_TEAM_ID))
-            && !getPlayerTeamId(connectedPlayer).equals(Optional.empty()))
-          .allMatch(connectedPlayer -> game.getMutuallyAcceptedDrawPlayerIds().contains(connectedPlayer.getId()));
-
-        if (allConnectedNonObserverPlayersAgreedOnMutualDraw) {
-          log.debug("All in-game players agreed on mutual draw. Setting mutually agreed draw state in game '{}'", game);
-          game.setMutuallyAgreedDraw(true);
-        }
-      });
   }
 
   private void addPlayer(Game game, Player player) {
@@ -794,12 +794,6 @@ public class GameService {
       .anyMatch(id -> id == armyId);
   }
 
-  Optional<Integer> getPlayerTeamId(Player player) {
-    return Optional.ofNullable(player.getCurrentGame())
-      .map(game -> game.getPlayerOptions().get(player.getId()))
-      .map(playerOptions -> (Integer) playerOptions.get(OPTION_TEAM));
-  }
-
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {
     clientService.sendDelayed(toResponse(game), minDelay, maxDelay, GameResponse::getId);
   }
@@ -847,6 +841,12 @@ public class GameService {
       }
     }
     return true;
+  }
+
+  Optional<Integer> getPlayerTeamId(Player player) {
+    return Optional.ofNullable(player.getCurrentGame())
+      .map(game -> game.getPlayerOptions().get(player.getId()))
+      .map(playerOptions -> (Integer) playerOptions.get(OPTION_TEAM));
   }
 
   /**
