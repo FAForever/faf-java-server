@@ -845,6 +845,122 @@
           "built": 12
         }
       }
+    },
+    {
+      "blueprints": [],
+      "type": "AI",
+      "general": {
+        "score": 0,
+        "currentcap": {
+          "count": 1000
+        },
+        "lastReclaimedMass": 0,
+        "kills": {
+          "mass": 0,
+          "count": 0,
+          "energy": 0
+        },
+        "built": {
+          "mass": 0,
+          "count": 0,
+          "energy": 0
+        },
+        "lastReclaimedEnergy": 0,
+        "lost": {
+          "mass": 0,
+          "count": 0,
+          "energy": 0
+        },
+        "energy": 0,
+        "currentunits": {
+          "count": 0
+        },
+        "mass": 0
+      },
+      "faction": 5,
+      "resources": {
+        "massin": {
+          "total": 0,
+          "rate": 0
+        },
+        "energyover": 0,
+        "energyin": {
+          "total": 0,
+          "rate": 0
+        },
+        "energyout": {
+          "total": 0,
+          "rate": 0
+        },
+        "massover": 0,
+        "massout": {
+          "total": 0,
+          "rate": 0
+        }
+      },
+      "name": "civilian",
+      "units": {
+        "air": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "tech3": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "cdr": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "tech2": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "tech1": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "transportation": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "land": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "experimental": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "structures": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "engineer": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "naval": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        },
+        "sacu": {
+          "lost": 0,
+          "kills": 0,
+          "built": 0
+        }
+      }
     }
   ]
 }
