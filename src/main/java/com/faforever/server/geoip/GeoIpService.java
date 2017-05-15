@@ -28,8 +28,8 @@ import static com.github.nocatch.NoCatch.noCatch;
 @Slf4j
 public class GeoIpService {
 
+  private static final Object DATABASE_LOCK = new Object();
   private final ServerProperties properties;
-  private final Object DATABASE_LOCK = new Object();
   private DatabaseReader databaseReader;
 
   public GeoIpService(ServerProperties properties) throws IOException {

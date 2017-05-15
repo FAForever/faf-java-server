@@ -7,4 +7,9 @@ import com.faforever.server.common.ClientMessage;
  * yet been reached.
  */
 public class EnforceRatingRequest implements ClientMessage {
+  public static final EnforceRatingRequest INSTANCE = new EnforceRatingRequest();
+
+  private EnforceRatingRequest() {
+    // Singleton instance
+  }
 }

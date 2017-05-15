@@ -16,15 +16,16 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.ForwardedIceMessage;
 import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
-import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.matchmaker.MatchMakerResponse;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.UserDetailsResponse;
-import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
-import com.faforever.server.player.UserDetailsResponse.Player.Rating;
+import com.faforever.server.player.LoginDetailsResponse;
+import com.faforever.server.player.PlayerInformationResponse;
+import com.faforever.server.player.PlayerInformationResponse.Player.Avatar;
+import com.faforever.server.player.PlayerInformationResponse.Player.Rating;
 import com.faforever.server.social.SocialRelationListResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +37,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -53,18 +59,22 @@ public class ClientService {
 
   private final ClientGateway clientGateway;
   private final CoopService coopService;
-  private final Map<Object, DelayedResponse> dirtyObjects;
+  private final ConcurrentMap<Object, DelayedResponse> dirtyObjects;
   private final ServerProperties serverProperties;
+  private final ExecutorService executorService;
 
   public ClientService(ClientGateway clientGateway, CoopService coopService, ServerProperties serverProperties) {
     this.clientGateway = clientGateway;
     this.coopService = coopService;
     this.serverProperties = serverProperties;
-    dirtyObjects = new HashMap<>();
+    dirtyObjects = new ConcurrentHashMap<>();
+
+    AtomicInteger threadCount = new AtomicInteger();
+    executorService = Executors.newFixedThreadPool(1, runnable -> new Thread(runnable, "client-service-" + threadCount.incrementAndGet()));
   }
 
   public void startGameProcess(Game game, Player player) {
-    log.debug("Telling '{}' to start game progress for game '{}'", game.getHost(), game);
+    log.debug("Telling '{}' to start game process for game '{}'", game.getHost(), game);
     send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), getCommandLineArgs(player)), player);
   }
 
@@ -103,33 +113,11 @@ public class ClientService {
       connectionAware);
   }
 
-  public void sendPlayerDetails(Player player, @NotNull ConnectionAware connectionAware) {
-    Optional<Avatar> avatar = player.getAvailableAvatars().stream()
-      .filter(AvatarAssociation::isSelected)
-      .findFirst()
-      .map(association -> {
-        com.faforever.server.entity.Avatar avatarEntity = association.getAvatar();
-        return new Avatar(avatarEntity.getUrl(), avatarEntity.getTooltip());
-      });
-
-    Optional<Rating> globalRating = Optional.ofNullable(player.getGlobalRating())
-      .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
-    Optional<Rating> ladder1v1Rating = Optional.ofNullable(player.getLadder1v1Rating())
-      .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
-
-    send(new UserDetailsResponse(
-        player.getId(),
-        player.getLogin(),
-        player.getCountry(),
-        new UserDetailsResponse.Player(
-          globalRating.orElse(null),
-          ladder1v1Rating.orElse(null),
-          Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0),
-          avatar.orElse(null),
-          Optional.ofNullable(player.getClan()).map(Clan::getTag).orElse(null)
-        )
-      ),
-      connectionAware);
+  /**
+   * Send a player his own information, usually called after successful login.
+   */
+  public void sendLoginDetails(Player player, @NotNull ConnectionAware connectionAware) {
+    send(new LoginDetailsResponse(toPlayerInformationResponse(player)), connectionAware);
   }
 
   /**
@@ -147,8 +135,8 @@ public class ClientService {
   }
 
   /**
-   * Sends a response that needs to be send to the client at some point in the future. Responses can be hold back for
-   * a while in order to avoid message flooding if the object is updated frequently in a short amount of time.
+   * Sends a response that needs to be send to the client at some point in the future. Responses can be hold back for a
+   * while in order to avoid message flooding if the object is updated frequently in a short amount of time.
    *
    * @param object the object to be sent.
    * @param minDelay the minimum time to wait since the object has been updated.
@@ -156,16 +144,15 @@ public class ClientService {
    * less than {@code minDelay} ago. This helps to avoid objects being delayed for too long if they receive frequent
    * updates.
    * @param idFunction the function to use to calculate the object's ID, so that subsequent calls can be associated with
-   * previous submissions of the same object.
+   * previous submissions of the same object. Special care needs to be taken that the generated ID does not clash with
+   * IDs generated by other callers, so it's advised to add a prefix like 'game-1' instead of '1'.
    * @param <T> the type of the submitted object
    */
   @SuppressWarnings("unchecked")
-  public <T extends ServerMessage> void sendDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
+  public <T extends ServerMessage> void broadcastDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
     log.trace("Received object to send delayed: {}", object);
-    synchronized (dirtyObjects) {
-      dirtyObjects.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
-        .onUpdated(object);
-    }
+    dirtyObjects.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
+      .onUpdated(object);
   }
 
   /**
@@ -187,30 +174,27 @@ public class ClientService {
   }
 
   @Scheduled(fixedDelay = 1000)
-  public void sendDirtyObjects() {
-    synchronized (dirtyObjects) {
-      List<Object> objectIds = dirtyObjects.entrySet().stream()
-        .filter(entry -> {
-          DelayedResponse<?> delayedResponse = entry.getValue();
-          Instant now = Instant.now();
+  public void broadcastDirtyObjects() {
+    List<Object> objectIds = dirtyObjects.entrySet().stream()
+      .filter(entry -> {
+        DelayedResponse<?> delayedResponse = entry.getValue();
+        Instant now = Instant.now();
 
-          return now.isAfter(delayedResponse.getUpdateTime().plus(delayedResponse.getMinDelay()))
-            || now.isAfter(delayedResponse.getCreateTime().plus(delayedResponse.getMaxDelay()));
-        })
-        .map(Map.Entry::getKey)
-        .collect(Collectors.toList());
+        return now.isAfter(delayedResponse.getUpdateTime().plus(delayedResponse.getMinDelay()))
+          || now.isAfter(delayedResponse.getCreateTime().plus(delayedResponse.getMaxDelay()));
+      })
+      .map(Map.Entry::getKey)
+      .collect(Collectors.toList());
 
-      if (objectIds.isEmpty()) {
-        return;
-      }
-
-      log.trace("Sending '{}' delayed responses", objectIds.size());
-      objectIds.forEach(id -> {
-        DelayedResponse<?> delayedResponse = dirtyObjects.get(id);
-        clientGateway.broadcast(delayedResponse.getResponse());
-        dirtyObjects.remove(id);
-      });
+    if (objectIds.isEmpty()) {
+      return;
     }
+
+    log.trace("Sending '{}' delayed responses", objectIds.size());
+    objectIds.forEach(id -> {
+      DelayedResponse<?> delayedResponse = dirtyObjects.remove(id);
+      clientGateway.broadcast(delayedResponse.getResponse());
+    });
   }
 
   /**
@@ -223,12 +207,19 @@ public class ClientService {
   }
 
   /**
-   * Sends a list of online players to the client.
+   * Sends a list of player information to the specified recipient.
    */
-  public void sendOnlinePlayerList(Collection<UserDetailsResponse> players, ConnectionAware connectionAware) {
-    // FIXME this method isn't called from anywhere yet.
-    // TODO send a list of players instead?
-    players.forEach(player -> send(player, connectionAware));
+  public void sendPlayerInformation(Collection<Player> players, ConnectionAware recipient) {
+    toPlayerInformationResponses(players)
+      .thenAccept(responses -> send(responses, recipient));
+  }
+
+  /**
+   * Sends a list of player information to all authenticated clients.
+   */
+  public void broadcastPlayerInformation(Collection<Player> players) {
+    toPlayerInformationResponses(players)
+      .thenAccept(responses -> broadcastDelayed(responses, Duration.ofSeconds(2), Duration.ofSeconds(5), o -> "players"));
   }
 
   /**
@@ -254,6 +245,40 @@ public class ClientService {
     send(response, recipient);
   }
 
+  private CompletableFuture<PlayerInformationResponses> toPlayerInformationResponses(Collection<Player> players) {
+    return CompletableFuture.supplyAsync((() -> new PlayerInformationResponses(players.stream()
+      .map(this::toPlayerInformationResponse)
+      .collect(Collectors.toList()))), executorService);
+  }
+
+  private PlayerInformationResponse toPlayerInformationResponse(Player player) {
+    Optional<Avatar> avatar = player.getAvailableAvatars().stream()
+      .filter(AvatarAssociation::isSelected)
+      .findFirst()
+      .map(association -> {
+        com.faforever.server.entity.Avatar avatarEntity = association.getAvatar();
+        return new Avatar(avatarEntity.getUrl(), avatarEntity.getTooltip());
+      });
+
+    Optional<Rating> globalRating = Optional.ofNullable(player.getGlobalRating())
+      .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
+    Optional<Rating> ladder1v1Rating = Optional.ofNullable(player.getLadder1v1Rating())
+      .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
+
+    return new PlayerInformationResponse(
+      player.getId(),
+      player.getLogin(),
+      player.getCountry(),
+      new PlayerInformationResponse.Player(
+        globalRating.orElse(null),
+        ladder1v1Rating.orElse(null),
+        Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0),
+        avatar.orElse(null),
+        Optional.ofNullable(player.getClan()).map(Clan::getTag).orElse(null)
+      )
+    );
+  }
+
   @EventListener
   private void onServerShutdown(ApplicationShutdownEvent event) {
     try {
@@ -274,9 +299,13 @@ public class ClientService {
 
   private void send(ServerMessage serverMessage, @NotNull ConnectionAware connectionAware) {
     ClientConnection clientConnection = connectionAware.getClientConnection();
-    if (clientConnection == null) {
-      throw new IllegalStateException("No connection available: " + connectionAware);
+    try {
+      if (clientConnection == null) {
+        throw new IllegalStateException("No connection available: " + connectionAware);
+      }
+      clientGateway.send(serverMessage, clientConnection);
+    } catch (Exception e) {
+      log.warn("Could not send message to connection '" + clientConnection + "': " + serverMessage, e);
     }
-    clientGateway.send(serverMessage, clientConnection);
   }
 }

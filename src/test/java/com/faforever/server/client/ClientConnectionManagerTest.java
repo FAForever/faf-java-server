@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.boot.actuate.metrics.GaugeService;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
 import java.util.Optional;
@@ -45,24 +46,20 @@ public class ClientConnectionManagerTest {
   @Test
   public void updateConnections() throws Exception {
     InetAddress inetAddress = mock(InetAddress.class);
-    instance.obtainConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
+    instance.createClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
     verify(gaugeService).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
     assertThat(instance.getConnections(), hasSize(1));
 
-    instance.obtainConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(gaugeService, times(2)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
-    assertThat(instance.getConnections(), hasSize(1));
-
-    instance.obtainConnection("2", Protocol.LEGACY_UTF_16, inetAddress);
+    instance.createClientConnection("2", Protocol.LEGACY_UTF_16, inetAddress);
     verify(gaugeService).submit(Metrics.ACTIVE_CONNECTIONS, 2d);
     assertThat(instance.getConnections(), hasSize(2));
 
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(gaugeService, times(3)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
+    verify(gaugeService, times(2)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(gaugeService, times(4)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
+    verify(gaugeService, times(3)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.removeConnection("2", Protocol.LEGACY_UTF_16);
@@ -77,7 +74,7 @@ public class ClientConnectionManagerTest {
       .setClientConnection(clientConnection12);
     when(playerService.getOnlinePlayer(12)).thenReturn(Optional.of(player12));
 
-    instance.disconnectClient(new User(), 12);
+    instance.disconnectClient(new TestingAuthenticationToken(new User(), null), 12);
 
     ArgumentCaptor<CloseConnectionEvent> captor = ArgumentCaptor.forClass(CloseConnectionEvent.class);
     verify(eventPublisher).publishEvent(captor.capture());

@@ -1,8 +1,8 @@
-package com.faforever.server.config;
+package com.faforever.server.config.integration;
 
 import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
@@ -19,6 +19,8 @@ import com.faforever.server.game.EnforceRatingRequest;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
+import com.faforever.server.game.GameStateReport;
+import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerOptionReport;
@@ -26,10 +28,7 @@ import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.ChannelNames;
-import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
-import com.faforever.server.integration.request.GameStateReport;
-import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.social.AddFriendRequest;
@@ -39,55 +38,58 @@ import com.google.common.collect.ImmutableMap;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.IntegrationComponentScan;
-import org.springframework.integration.config.GlobalChannelInterceptor;
 import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.core.GenericSelector;
-import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.support.Consumer;
+import org.springframework.integration.event.inbound.ApplicationEventListeningMessageProducer;
 import org.springframework.integration.router.AbstractMappingMessageRouter;
 import org.springframework.integration.router.AbstractMessageRouter;
 import org.springframework.integration.router.PayloadTypeRouter;
-import org.springframework.integration.security.channel.SecurityContextPropagationChannelInterceptor;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.AbstractTransformer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
-import org.springframework.util.Assert;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
 
 import static com.faforever.server.integration.MessageHeaders.BROADCAST;
-import static com.faforever.server.integration.MessageHeaders.CLIENT_ADDRESS;
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
-import static com.faforever.server.integration.MessageHeaders.PROTOCOL;
-import static com.github.nocatch.NoCatch.noCatch;
-import static java.net.InetAddress.getByName;
-import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
 @IntegrationComponentScan("com.faforever.server.integration")
 public class IntegrationConfig {
 
-  private final ClientConnectionManager clientConnectionManager;
-
-  public IntegrationConfig(ClientConnectionManager clientConnectionManager) {
-    this.clientConnectionManager = clientConnectionManager;
-  }
+  private static final String INBOUND_DISPATCH_POLLING_CONSUMER = "inboundDispatchPollingConsumer";
 
   /**
-   * Reads messages from the standard client inbound channel.
+   * Reads messages from the standard client inbound channel. Messages are expected to have an authorization header.
    */
   @Bean
   public IntegrationFlow inboundFlow() {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_INBOUND)
-      .enrichHeaders(sessionHeaderEnricher())
+      .resequence(spec -> spec.releasePartialSequences(true))
+      .channel(ChannelNames.INBOUND_DISPATCH)
+      .get();
+  }
+
+  @Bean
+  public IntegrationFlow dispatchFlow() {
+    return IntegrationFlows
+      .from(ChannelNames.INBOUND_DISPATCH)
       .route(inboundRouter())
       .get();
+  }
+
+  @Bean
+  public TaskScheduler inboundDispatchTaskScheduler() {
+    ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
+    taskScheduler.setThreadNamePrefix("inbound-dispatch-");
+    return taskScheduler;
   }
 
   /**
@@ -97,7 +99,7 @@ public class IntegrationConfig {
   public IntegrationFlow outboundFlow() {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_OUTBOUND)
-      .route(singleRecipientOutboundRouter())
+      .route(outboundAdapterRouter())
       .get();
   }
 
@@ -110,10 +112,9 @@ public class IntegrationConfig {
     return IntegrationFlows
       .from(ChannelNames.CLIENT_OUTBOUND_BROADCAST)
       .enrichHeaders(ImmutableMap.of(BROADCAST, true))
-      .routeToRecipients(recipientListRouterSpec -> recipientListRouterSpec
+      .routeToRecipients(spec -> spec
         .recipient(ChannelNames.LEGACY_OUTBOUND)
       )
-      .route(singleRecipientOutboundRouter())
       .get();
   }
 
@@ -130,16 +131,23 @@ public class IntegrationConfig {
       .get();
   }
 
+  /**
+   * Turns specific application events into messages.
+   */
   @Bean
-  @GlobalChannelInterceptor
-  public SecurityContextPropagationChannelInterceptor securityContextPropagationChannelInterceptor() {
-    return new SecurityContextPropagationChannelInterceptor();
+  public ApplicationEventListeningMessageProducer applicationEventListeningMessageProducer() {
+    ApplicationEventListeningMessageProducer producer = new ApplicationEventListeningMessageProducer();
+    producer.setEventTypes(
+      ClientDisconnectedEvent.class
+    );
+    producer.setOutputChannelName(ChannelNames.INBOUND_DISPATCH);
+    return producer;
   }
 
   /**
    * Routes response messages to the appropriate outbound adapter (currently, only legacy adapter is supported).
    */
-  private AbstractMessageRouter singleRecipientOutboundRouter() {
+  private AbstractMessageRouter outboundAdapterRouter() {
     return new AbstractMappingMessageRouter() {
       @Override
       protected List<Object> getChannelKeys(Message<?> message) {
@@ -157,38 +165,38 @@ public class IntegrationConfig {
    * Routes request messages to their corresponding request channel.
    */
   private PayloadTypeRouter inboundRouter() {
-    PayloadTypeRouter payloadTypeRouter = new PayloadTypeRouter();
-    payloadTypeRouter.setChannelMapping(HostGameRequest.class.getName(), ChannelNames.HOST_GAME_REQUEST);
-    payloadTypeRouter.setChannelMapping(JoinGameRequest.class.getName(), ChannelNames.JOIN_GAME_REQUEST);
-    payloadTypeRouter.setChannelMapping(GameStateReport.class.getName(), ChannelNames.UPDATE_GAME_STATE_REQUEST);
-    payloadTypeRouter.setChannelMapping(GameOptionReport.class.getName(), ChannelNames.GAME_OPTION_REQUEST);
-    payloadTypeRouter.setChannelMapping(PlayerOptionReport.class.getName(), ChannelNames.PLAYER_OPTION_REQUEST);
-    payloadTypeRouter.setChannelMapping(ClearSlotRequest.class.getName(), ChannelNames.CLEAR_SLOT_REQUEST);
-    payloadTypeRouter.setChannelMapping(AiOptionReport.class.getName(), ChannelNames.AI_OPTION_REQUEST);
-    payloadTypeRouter.setChannelMapping(DesyncReport.class.getName(), ChannelNames.DESYNC_REPORT);
-    payloadTypeRouter.setChannelMapping(GameModsReport.class.getName(), ChannelNames.GAME_MODS_REPORT);
-    payloadTypeRouter.setChannelMapping(GameModsCountReport.class.getName(), ChannelNames.GAME_MODS_COUNT_REPORT);
-    payloadTypeRouter.setChannelMapping(ArmyScoreReport.class.getName(), ChannelNames.ARMY_SCORE_REPORT);
-    payloadTypeRouter.setChannelMapping(ArmyOutcomeReport.class.getName(), ChannelNames.ARMY_OUTCOME_REPORT);
-    payloadTypeRouter.setChannelMapping(CoopMissionCompletedReport.class.getName(), ChannelNames.OPERATION_COMPLETE_REPORT);
-    payloadTypeRouter.setChannelMapping(ArmyStatisticsReport.class.getName(), ChannelNames.GAME_STATISTICS_REPORT);
-    payloadTypeRouter.setChannelMapping(EnforceRatingRequest.class.getName(), ChannelNames.ENFORCE_RATING_REQUEST);
-    payloadTypeRouter.setChannelMapping(TeamKillReport.class.getName(), ChannelNames.TEAM_KILL_REPORT);
-    payloadTypeRouter.setChannelMapping(DisconnectPeerRequest.class.getName(), ChannelNames.DISCONNECT_PEER_REQUEST);
-    payloadTypeRouter.setChannelMapping(DisconnectClientRequest.class.getName(), ChannelNames.DISCONNECT_CLIENT_REQUEST);
-    payloadTypeRouter.setChannelMapping(MatchMakerSearchRequest.class.getName(), ChannelNames.MATCH_MAKER_SEARCH_REQUEST);
-    payloadTypeRouter.setChannelMapping(MatchMakerCancelRequest.class.getName(), ChannelNames.MATCH_MAKER_CANCEL_REQUEST);
-    payloadTypeRouter.setChannelMapping(IceServersRequest.class.getName(), ChannelNames.ICE_SERVERS_REQUEST);
-    payloadTypeRouter.setChannelMapping(IceMessage.class.getName(), ChannelNames.ICE_MESSAGE);
-    payloadTypeRouter.setChannelMapping(RestoreGameSessionRequest.class.getName(), ChannelNames.RESTORE_GAME_SESSION_REQUEST);
-    payloadTypeRouter.setChannelMapping(MutuallyAgreedDrawRequest.class.getName(), ChannelNames.MUTUALLY_AGREED_DRAW_REQUEST);
-    payloadTypeRouter.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
-    payloadTypeRouter.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
-    payloadTypeRouter.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);
-    payloadTypeRouter.setChannelMapping(AddFriendRequest.class.getName(), ChannelNames.LEGACY_ADD_FRIEND_REQUEST);
-    payloadTypeRouter.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST);
-
-    return payloadTypeRouter;
+    PayloadTypeRouter router = new PayloadTypeRouter();
+    router.setChannelMapping(HostGameRequest.class.getName(), ChannelNames.HOST_GAME_REQUEST);
+    router.setChannelMapping(JoinGameRequest.class.getName(), ChannelNames.JOIN_GAME_REQUEST);
+    router.setChannelMapping(GameStateReport.class.getName(), ChannelNames.UPDATE_GAME_STATE_REQUEST);
+    router.setChannelMapping(GameOptionReport.class.getName(), ChannelNames.GAME_OPTION_REQUEST);
+    router.setChannelMapping(PlayerOptionReport.class.getName(), ChannelNames.PLAYER_OPTION_REQUEST);
+    router.setChannelMapping(ClearSlotRequest.class.getName(), ChannelNames.CLEAR_SLOT_REQUEST);
+    router.setChannelMapping(AiOptionReport.class.getName(), ChannelNames.AI_OPTION_REQUEST);
+    router.setChannelMapping(DesyncReport.class.getName(), ChannelNames.DESYNC_REPORT);
+    router.setChannelMapping(GameModsReport.class.getName(), ChannelNames.GAME_MODS_REPORT);
+    router.setChannelMapping(GameModsCountReport.class.getName(), ChannelNames.GAME_MODS_COUNT_REPORT);
+    router.setChannelMapping(ArmyScoreReport.class.getName(), ChannelNames.ARMY_SCORE_REPORT);
+    router.setChannelMapping(ArmyOutcomeReport.class.getName(), ChannelNames.ARMY_OUTCOME_REPORT);
+    router.setChannelMapping(CoopMissionCompletedReport.class.getName(), ChannelNames.OPERATION_COMPLETE_REPORT);
+    router.setChannelMapping(ArmyStatisticsReport.class.getName(), ChannelNames.GAME_STATISTICS_REPORT);
+    router.setChannelMapping(EnforceRatingRequest.class.getName(), ChannelNames.ENFORCE_RATING_REQUEST);
+    router.setChannelMapping(TeamKillReport.class.getName(), ChannelNames.TEAM_KILL_REPORT);
+    router.setChannelMapping(DisconnectPeerRequest.class.getName(), ChannelNames.DISCONNECT_PEER_REQUEST);
+    router.setChannelMapping(DisconnectClientRequest.class.getName(), ChannelNames.DISCONNECT_CLIENT_REQUEST);
+    router.setChannelMapping(MatchMakerSearchRequest.class.getName(), ChannelNames.MATCH_MAKER_SEARCH_REQUEST);
+    router.setChannelMapping(MatchMakerCancelRequest.class.getName(), ChannelNames.MATCH_MAKER_CANCEL_REQUEST);
+    router.setChannelMapping(IceServersRequest.class.getName(), ChannelNames.ICE_SERVERS_REQUEST);
+    router.setChannelMapping(IceMessage.class.getName(), ChannelNames.ICE_MESSAGE);
+    router.setChannelMapping(RestoreGameSessionRequest.class.getName(), ChannelNames.RESTORE_GAME_SESSION_REQUEST);
+    router.setChannelMapping(MutuallyAgreedDrawRequest.class.getName(), ChannelNames.MUTUALLY_AGREED_DRAW_REQUEST);
+    router.setChannelMapping(ClientDisconnectedEvent.class.getName(), ChannelNames.CLIENT_DISCONNECTED_EVENT);
+    router.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
+    router.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
+    router.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);
+    router.setChannelMapping(AddFriendRequest.class.getName(), ChannelNames.LEGACY_ADD_FRIEND_REQUEST);
+    router.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST);
+    return router;
   }
 
   /**
@@ -221,21 +229,5 @@ public class IntegrationConfig {
         return builder.build();
       }
     };
-  }
-
-  /**
-   * Adds an existing or new {@link ClientConnection} to the message's header, using the correlationId header as a
-   * session ID.
-   */
-  private Consumer<HeaderEnricherSpec> sessionHeaderEnricher() {
-    return headerEnricherSpec -> headerEnricherSpec.messageProcessor(message -> {
-      String sessionId = (String) message.getHeaders().get(CORRELATION_ID);
-      Protocol protocol = (Protocol) message.getHeaders().get(PROTOCOL);
-      InetAddress inetAddress = noCatch(() -> getByName((String) message.getHeaders().get(CLIENT_ADDRESS)));
-
-      Assert.state(inetAddress != null, "Message header '" + CLIENT_ADDRESS + "' has not been set");
-
-      return ImmutableMap.of(CLIENT_CONNECTION, clientConnectionManager.obtainConnection(sessionId, protocol, inetAddress));
-    });
   }
 }

@@ -15,11 +15,11 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class UpdatedAchievementsTransformerTest {
+public class UpdatedAchievementsResponseTransformerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void transform() throws Exception {
-    Map<String, Serializable> result = UpdatedAchievementsTransformer.INSTANCE.transform(new UpdatedAchievementsResponse(Arrays.asList(
+    Map<String, Serializable> result = UpdatedAchievementsResponseTransformer.INSTANCE.transform(new UpdatedAchievementsResponse(Arrays.asList(
       new UpdatedAchievement("111", 1, AchievementState.REVEALED, false),
       new UpdatedAchievement("222", 10, AchievementState.REVEALED, true)
     )));

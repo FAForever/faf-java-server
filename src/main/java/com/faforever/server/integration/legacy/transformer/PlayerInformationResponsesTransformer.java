@@ -1,32 +1,40 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.player.UserDetailsResponse;
-import com.faforever.server.player.UserDetailsResponse.Player;
-import com.faforever.server.player.UserDetailsResponse.Player.Avatar;
-import com.faforever.server.player.UserDetailsResponse.Player.Rating;
+import com.faforever.server.client.PlayerInformationResponses;
+import com.faforever.server.player.PlayerInformationResponse;
+import com.faforever.server.player.PlayerInformationResponse.Player;
+import com.faforever.server.player.PlayerInformationResponse.Player.Avatar;
+import com.faforever.server.player.PlayerInformationResponse.Player.Rating;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import org.springframework.integration.transformer.GenericTransformer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-public enum UserDetailsResponseTransformer implements GenericTransformer<UserDetailsResponse, Map<String, Serializable>> {
+public enum PlayerInformationResponsesTransformer implements GenericTransformer<PlayerInformationResponses, Map<String, Serializable>> {
 
   INSTANCE;
 
   @Override
-  public Map<String, Serializable> transform(UserDetailsResponse source) {
+  public Map<String, Serializable> transform(PlayerInformationResponses source) {
     return ImmutableMap.of(
-      "command", "welcome",
-      "id", source.getUserId(),
-      "login", source.getUsername(),
-      "me", me(source)
+      "command", "player_info",
+      "players", players(source.getResponses())
     );
   }
 
-  private ImmutableMap<Object, Object> me(UserDetailsResponse source) {
+  private ArrayList<ImmutableMap<Object, Object>> players(Collection<PlayerInformationResponse> source) {
+    return source.stream()
+      .map(PlayerInformationResponsesTransformer::player)
+      .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  static ImmutableMap<Object, Object> player(PlayerInformationResponse source) {
     Player player = source.getPlayer();
     Rating globalRating = player.getGlobalRating();
     Rating ladder1v1Rating = player.getLadder1v1Rating();

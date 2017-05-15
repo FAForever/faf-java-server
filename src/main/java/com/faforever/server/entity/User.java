@@ -29,6 +29,6 @@ public class User extends Login {
 
   @Override
   public String toString() {
-    return "User(" + player.getId() + ", " + getLogin() + ")";
+    return "User(" + (player != null ? player.getId() : null) + ", " + getLogin() + ")";
   }
 }

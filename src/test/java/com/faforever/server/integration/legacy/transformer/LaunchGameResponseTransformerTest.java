@@ -1,6 +1,6 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.integration.response.StartGameProcessResponse;
+import com.faforever.server.game.StartGameProcessResponse;
 import org.junit.Test;
 
 import java.io.Serializable;

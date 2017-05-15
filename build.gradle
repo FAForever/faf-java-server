@@ -9,14 +9,19 @@ buildscript {
   dependencies {
     classpath("com.bmuschko:gradle-docker-plugin:${gradleDockerVersion}")
     classpath("org.springframework.build.gradle:propdeps-plugin:${propdepsVersion}")
-    classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
     classpath("org.kt3k.gradle.plugin:coveralls-gradle-plugin:${coverallsGradlePluginVersion}")
   }
+}
+
+plugins {
+  id "io.franzbecker.gradle-lombok" version "1.10"
 }
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
+
 
 group = 'faforever'
 version = '0.9.7'
@@ -37,8 +42,13 @@ configurations {
   compile.exclude module: "assertj-core"
 }
 
+lombok {
+  version = "1.16.18"
+  sha256 = ""
+}
+
 task wrapper(type: Wrapper) {
-  gradleVersion = '3.2.1'
+  gradleVersion = '3.5'
 }
 
 compileJava.dependsOn(processResources)
@@ -84,7 +94,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 applicationName = rootProject.name
 applicationDistribution.exclude("**/spring-boot-devtools*.jar")
-applicationDefaultJvmArgs = ["-Xmx128m"]
+applicationDefaultJvmArgs = ["-server -XX:MaxRAM=1024m -XX:MaxHeapFreeRatio=30 -XX:+UseG1GC -XX:+UseStringDeduplication -XX:-HeapDumpOnOutOfMemoryError"]
 
 docker {
   if (project.hasProperty('dockerHost')) {
@@ -147,35 +157,32 @@ dependencies {
   compile("org.springframework.boot:spring-boot-starter-jdbc")
 //  compile("org.zalando.stups:data-jpa-eclipselink-spring-boot-starter:${eclipseLinkStarterVersion}")
 //  compile("org.eclipse.persistence:org.eclipse.persistence.jpa:${eclipseLinkVersion}")
-
-  // We're explicitly using Hibernate 5.2. This can be removed after going spring-boot 2.0.0+
-  compile("org.springframework.boot:spring-boot-starter-data-jpa") {
-    exclude group: "org.hibernate", module: "hibernate-entitymanager"
-  }
+  compile("org.springframework.boot:spring-boot-starter-data-jpa")
   compile("org.springframework.boot:spring-boot-starter-cache")
   compile("org.springframework.boot:spring-boot-starter-integration")
   compile("org.springframework.boot:spring-boot-starter-security")
   compile("org.springframework.boot:spring-boot-starter-jetty")
-  compile("org.springframework.boot:spring-boot-devtools")
   compile("org.springframework.security:spring-security-messaging")
   compile("org.springframework.security:spring-security-jwt:${springSecurityJwtVersion}")
   compile("org.springframework.security.oauth:spring-security-oauth2")
   compile("org.springframework:spring-context-support")
   compile("org.springframework.integration:spring-integration-ip")
   compile("org.springframework.integration:spring-integration-security")
+  compile("org.springframework.integration:spring-integration-event")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
-  compile("io.reactivex.rxjava2:rxjava:${rxJavaVersion}")
   compile("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
   compile("org.jolokia:jolokia-core:${jolokiaVersion}")
   compile("com.github.nsp:JSkills:${jSkillsVersion}")
   compile("com.github.nocatch:nocatch:${noCatchVersion}")
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
+  compile("com.github.ben-manes.caffeine:caffeine")
   compile("com.google.guava:guava:${guavaVersion}")
-  compile("org.flywaydb:flyway-core:${flywayVersion}")
   compile("javax.inject:javax.inject:${javaxInjectVersion}")
-  compile("org.projectlombok:lombok:${lombokVersion}")
   compile("com.github.jasminb:jsonapi-converter:${jsonApiConverterVersion}")
   compile("com.twilio.sdk:twilio:${twilioVersion}")
+  compile("io.prometheus:simpleclient_hotspot:${prometheusVersion}")
+  compile("io.prometheus:simpleclient_servlet:${prometheusVersion}")
+  compile("io.prometheus:simpleclient_spring_boot:${prometheusVersion}")
 
   compile("com.maxmind.geoip2:geoip2:${geoip2Version}"){
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
@@ -186,6 +193,7 @@ dependencies {
 
   runtime("mysql:mysql-connector-java:${mysqlConnectorVersion}")
 
+  optional("org.springframework.boot:spring-boot-devtools")
   optional("org.springframework.boot:spring-boot-configuration-processor")
 
   testCompile("org.springframework.boot:spring-boot-starter-test")

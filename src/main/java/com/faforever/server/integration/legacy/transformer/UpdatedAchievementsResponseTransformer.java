@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public enum UpdatedAchievementsTransformer implements GenericTransformer<UpdatedAchievementsResponse, Map<String, Serializable>> {
+public enum UpdatedAchievementsResponseTransformer implements GenericTransformer<UpdatedAchievementsResponse, Map<String, Serializable>> {
   INSTANCE;
 
   @Override

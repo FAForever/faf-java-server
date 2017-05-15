@@ -5,6 +5,7 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.entity.SocialRelation;
 import com.faforever.server.entity.SocialRelationStatus;
 import com.faforever.server.entity.User;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.social.SocialRelationListResponse.SocialRelation.RelationType;
 import org.junit.Before;
@@ -14,8 +15,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
 import java.util.Arrays;
 
@@ -94,9 +93,8 @@ public class SocialServiceTest {
       .setPassword("pw")
       .setLogin("junit");
     FafUserDetails userDetails = new FafUserDetails(user);
-    TestingAuthenticationToken authentication = new TestingAuthenticationToken(userDetails, "foo");
 
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, userDetails.getPlayer()));
 
     ArgumentCaptor<SocialRelationListResponse> captor = ArgumentCaptor.forClass(SocialRelationListResponse.class);
     verify(clientService).sendSocialRelations(captor.capture(), any());
@@ -117,9 +115,8 @@ public class SocialServiceTest {
       .setPassword("pw")
       .setLogin("junit");
     FafUserDetails userDetails = new FafUserDetails(user);
-    TestingAuthenticationToken authentication = new TestingAuthenticationToken(userDetails, "foo");
 
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, userDetails.getPlayer()));
 
     verify(clientService, never()).sendSocialRelations(any(), any());
   }

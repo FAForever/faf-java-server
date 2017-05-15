@@ -9,7 +9,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 
 /**
- * A Spring Integration gateway to send messages to the client.
+ * A Spring Integration gateway to send messages to the client. When a service calls a gateway method, th
  */
 @MessagingGateway
 public interface ClientGateway {

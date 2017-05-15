@@ -27,7 +27,10 @@ public class RequestException extends RuntimeException {
   }
 
   public RequestException(ErrorCode errorCode, Object[] args, Throwable cause) {
-    super(MessageFormat.format(errorCode.getTitle() + ": " + errorCode.getDetail(), args), cause);
+    super(MessageFormat.format(
+      errorCode.getTitle().replace("'", "''")
+        + ": "
+        + errorCode.getDetail().replace("'", "''"), args), cause);
     this.errorCode = errorCode;
     this.args = args;
   }

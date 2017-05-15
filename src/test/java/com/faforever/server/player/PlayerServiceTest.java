@@ -1,7 +1,6 @@
 package com.faforever.server.player;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
@@ -12,8 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
 import java.net.InetAddress;
 
@@ -40,14 +37,10 @@ public class PlayerServiceTest {
   public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
     FafUserDetails fafUserDetails = createFafUserDetails();
 
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(new TestingAuthenticationToken(fafUserDetails, "pw")));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, fafUserDetails.getPlayer()));
     assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(true));
 
-    InetAddress inetAddress = mock(InetAddress.class);
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress)
-      .setUserDetails(new FafUserDetails(fafUserDetails.getUser()));
-
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
+    instance.removePlayer(fafUserDetails.getPlayer());
 
     assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(false));
   }
@@ -57,7 +50,7 @@ public class PlayerServiceTest {
     FafUserDetails fafUserDetails = createFafUserDetails();
 
     assertThat(instance.isPlayerOnline(fafUserDetails.getUser().getPlayer().getLogin()), is(false));
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(new TestingAuthenticationToken(fafUserDetails, "pw")));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, fafUserDetails.getPlayer()));
     assertThat(instance.isPlayerOnline(fafUserDetails.getUser().getPlayer().getLogin()), is(true));
   }
 

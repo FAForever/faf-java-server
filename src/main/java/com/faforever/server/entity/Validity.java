@@ -5,7 +5,7 @@ package com.faforever.server.entity;
  */
 public enum Validity {
   // Order sensitive
-  RANKED,
+  VALID,
   TOO_MANY_DESYNCS,
   WRONG_VICTORY_CONDITION,
   NO_FOG_OF_WAR,

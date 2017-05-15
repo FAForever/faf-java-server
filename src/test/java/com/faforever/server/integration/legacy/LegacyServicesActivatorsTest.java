@@ -3,7 +3,6 @@ package com.faforever.server.integration.legacy;
 import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
-import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionResponse;
@@ -12,6 +11,7 @@ import com.faforever.server.entity.User;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,8 +33,8 @@ import java.net.InetAddress;
 import java.util.Optional;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -59,6 +60,8 @@ public class LegacyServicesActivatorsTest {
   private GeoIpService geoIpService;
   @Mock
   private ChatService chatService;
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @Mock
   private PlayerService playerService;
@@ -73,7 +76,8 @@ public class LegacyServicesActivatorsTest {
 
     when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.empty());
 
-    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService, playerService, chatService);
+    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService,
+      playerService, chatService, eventPublisher);
   }
 
   @Test
@@ -94,8 +98,10 @@ public class LegacyServicesActivatorsTest {
 
     assertThat(authentication.getPrincipal(), is("JUnit"));
     assertThat(authentication.getCredentials(), is("password"));
-    assertThat(authentication.getDetails(), is(instanceOf(ConnectionAware.class)));
-    assertThat(((ConnectionAware) authentication.getDetails()).getClientConnection(), is(clientConnection));
+
+    ArgumentCaptor<PlayerOnlineEvent> onlineEventCaptor = ArgumentCaptor.forClass(PlayerOnlineEvent.class);
+    verify(eventPublisher).publishEvent(onlineEventCaptor.capture());
+    assertThat(onlineEventCaptor.getValue().getPlayer(), is(notNullValue()));
   }
 
   @Test

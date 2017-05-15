@@ -1,5 +1,5 @@
 faf-server:
-  version:
+  version: #faf-server.version#
   true-skill:
     initial-mean: 1500
     initial-standard-deviation: 500
@@ -23,11 +23,10 @@ spring:
   application:
     name: FAF Java Server Prototype
   datasource:
-    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      connection-test-query: SELECT 1 FROM DUAL
       minimum-idle: 2
-      maximum-pool-size: 8
+      maximum-pool-size: 4
   jpa:
     hibernate:
       naming:
@@ -39,7 +38,7 @@ spring:
   profiles:
     active: ${SERVER_PROFILE:dev}
   main:
-    banner-mode: off
+    banner-mode: console
 
 logging:
   level:
@@ -53,3 +52,7 @@ logging:
 
 server:
   port: ${WEB_PORT:8088}
+
+management:
+  security:
+    enabled: false

@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
 
@@ -36,20 +37,20 @@ public class MatchMakerServiceActivatorTest {
     player.setClientConnection(clientConnection);
 
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
-      .setUserDetails(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")));
+      .setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")), null));
 
     instance = new MatchMakerServiceActivator(matchmakerService);
   }
 
   @Test
   public void startSearch() throws Exception {
-    instance.startSearch(new MatchMakerSearchRequest(Faction.CYBRAN, LADDER_1V1), clientConnection);
+    instance.startSearch(new MatchMakerSearchRequest(Faction.CYBRAN, LADDER_1V1), clientConnection.getAuthentication());
     verify(matchmakerService).submitSearch(player, Faction.CYBRAN, LADDER_1V1);
   }
 
   @Test
   public void cancelSearch() throws Exception {
-    instance.cancelSearch(new MatchMakerCancelRequest(LADDER_1V1), clientConnection);
+    instance.cancelSearch(new MatchMakerCancelRequest(LADDER_1V1), clientConnection.getAuthentication());
     verify(matchmakerService).cancelSearch(LADDER_1V1, player);
   }
 }

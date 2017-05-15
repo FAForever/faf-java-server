@@ -1,8 +1,6 @@
-package com.faforever.server.integration.request;
+package com.faforever.server.game;
 
 import com.faforever.server.common.ClientMessage;
-import com.faforever.server.game.GameAccess;
-import com.faforever.server.game.GameVisibility;
 import lombok.Data;
 
 @Data

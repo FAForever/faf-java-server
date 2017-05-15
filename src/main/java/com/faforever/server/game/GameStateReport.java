@@ -1,7 +1,6 @@
-package com.faforever.server.integration.request;
+package com.faforever.server.game;
 
 import com.faforever.server.common.ClientMessage;
-import com.faforever.server.game.PlayerGameState;
 import lombok.Data;
 
 @Data

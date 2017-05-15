@@ -40,12 +40,12 @@ public enum VictoryCondition {
 
     @Override
     public String convertToDatabaseColumn(VictoryCondition attribute) {
-      return String.valueOf(attribute.ordinal());
+      return attribute == null ? null : String.valueOf(attribute.ordinal());
     }
 
     @Override
     public VictoryCondition convertToEntityAttribute(String dbData) {
-      return values()[Integer.parseInt(dbData)];
+      return dbData == null ? null : values()[Integer.parseInt(dbData)];
     }
   }
 }

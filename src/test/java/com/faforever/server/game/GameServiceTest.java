@@ -1,7 +1,6 @@
 package com.faforever.server.game;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.config.ServerProperties;
@@ -20,6 +19,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
@@ -35,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
 import javax.persistence.EntityManager;
 import java.net.InetAddress;
@@ -43,7 +42,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -151,7 +149,7 @@ public class GameServiceTest {
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_TECHNICAL_NAME)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
-    doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
+    doAnswer(invocation -> ((Player) invocation.getArgumentAt(0, Player.class)).setGlobalRating(new GlobalRating()))
       .when(ratingService).initGlobalRating(any());
 
     serverProperties = new ServerProperties();
@@ -333,6 +331,10 @@ public class GameServiceTest {
     assertThat(game.getReportedArmyScores().get(player2.getId()), hasSize(2));
   }
 
+  /**
+   * Tests whether the service correctly chooses the scores reported by the majority of connected players and ignores
+   * the results reported by a "cheater" (that is, someone who reports different results).
+   */
   @Test
   public void reportArmyScoreWithCheater() throws Exception {
     Player player3 = (Player) new Player().setId(3);
@@ -352,13 +354,25 @@ public class GameServiceTest {
     instance.reportArmyScore(player1, 2, -1);
     instance.reportArmyScore(player1, 3, -1);
 
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player1, 3, Outcome.DEFEAT);
+
     instance.reportArmyScore(player2, 1, 10);
     instance.reportArmyScore(player2, 2, -1);
     instance.reportArmyScore(player2, 3, -1);
 
+    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player2, 3, Outcome.DEFEAT);
+
     instance.reportArmyScore(player3, 1, -1);
     instance.reportArmyScore(player3, 2, -1);
     instance.reportArmyScore(player3, 3, 10);
+
+    instance.reportArmyOutcome(player3, 1, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player3, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player3, 3, Outcome.VICTORY);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
@@ -397,6 +411,13 @@ public class GameServiceTest {
   public void reportArmyOutcome() throws Exception {
     addPlayer(game, player1, 2);
     addPlayer(game, player2, 3);
+
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
@@ -512,7 +533,7 @@ public class GameServiceTest {
     assertThat(game.getStartTime(), is(greaterThan(Instant.now().minusSeconds(10))));
 
     verify(entityManager).persist(game);
-    verify(clientService, atLeastOnce()).sendDelayed(any(GameResponse.class), any(), any(), any());
+    verify(clientService, atLeastOnce()).broadcastDelayed(any(GameResponse.class), any(), any(), any());
   }
 
   @Test
@@ -653,7 +674,7 @@ public class GameServiceTest {
 
     instance.updateGameValidity(game);
 
-    assertThat(game.getValidity(), is(Validity.RANKED));
+    assertThat(game.getValidity(), is(Validity.VALID));
   }
 
   @Test
@@ -776,9 +797,7 @@ public class GameServiceTest {
     user.setLogin("JUnit");
     user.setPlayer(player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
-      .setUserDetails(new FafUserDetails(user));
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
+    instance.removePlayer(player1);
 
     assertThat(player1.getGameBeingJoined(), is(nullValue()));
     assertThat(player1.getCurrentGame(), is(nullValue()));
@@ -792,11 +811,10 @@ public class GameServiceTest {
     player1.setCurrentGame(null);
     instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
-    authentication.setDetails(player2.setClientConnection(clientConnection));
+    authentication.setDetails(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
 
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player2));
 
     ArgumentCaptor<Collection<GameResponse>> captor = ArgumentCaptor.forClass((Class) Collection.class);
     verify(clientService).sendGameList(captor.capture(), eq(player2));
@@ -824,7 +842,7 @@ public class GameServiceTest {
 
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(player3));
 
-    instance.disconnectPlayerFromGame(new User(), 3);
+    instance.disconnectPlayerFromGame(new TestingAuthenticationToken(new User(), null), 3);
 
     ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
     verify(clientService).disconnectPlayerFromGame(eq(3), captor.capture());
@@ -838,14 +856,14 @@ public class GameServiceTest {
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerUnknown() throws Exception {
-    instance.disconnectPlayerFromGame(new User(), 412312);
+    instance.disconnectPlayerFromGame(new TestingAuthenticationToken(new User(), null), 412312);
     verifyZeroInteractions(clientService);
   }
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(new Player()));
-    instance.disconnectPlayerFromGame(new User(), 3);
+    instance.disconnectPlayerFromGame(new TestingAuthenticationToken(new User(), null), 3);
     verifyZeroInteractions(clientService);
   }
 
@@ -878,9 +896,9 @@ public class GameServiceTest {
     assertThat(player2.getCurrentGame(), is(game));
 
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
-    clientConnection.setUserDetails(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")));
+    clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
     player2.setClientConnection(clientConnection);
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, player2.getClientConnection()));
+    instance.removePlayer(player2);
     assertThat(player2.getGameBeingJoined(), is(nullValue()));
     assertThat(player2.getCurrentGame(), is(nullValue()));
 
@@ -902,44 +920,13 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
-    clientConnection.setUserDetails(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")));
+    clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
     player2.setClientConnection(clientConnection);
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, player2.getClientConnection()));
+    instance.removePlayer(player2);
     assertThat(player2.getCurrentGame(), is(nullValue()));
 
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
-  }
-
-  @Test
-  public void staleGameEnder() throws Exception {
-    player1.setCurrentGame(null);
-    doAnswer(invocation -> {
-      invocation.getArgumentAt(0, Runnable.class).run();
-      return null;
-    }).when(taskScheduler).schedule(any(Runnable.class), any(Date.class));
-
-    createDefaultGame();
-
-    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(false));
-
-    ArgumentCaptor<GameResponse> captor = ArgumentCaptor.forClass(GameResponse.class);
-    verify(clientService, atLeastOnce()).sendDelayed(captor.capture(), any(), any(), any());
-    assertThat(captor.getValue().getState(), is(GameState.CLOSED));
-  }
-
-  @Test
-  public void staleGameEnderDoesntEndGameIfStarted() throws Exception {
-    player1.setCurrentGame(null);
-    createDefaultGame();
-
-    ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-    verify(taskScheduler).schedule(runnableCaptor.capture(), any(Date.class));
-
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-    runnableCaptor.getValue().run();
-
-    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(true));
   }
 
   @Test

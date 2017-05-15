@@ -1,14 +1,12 @@
 package com.faforever.server.social;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.SocialRelation;
 import com.faforever.server.entity.SocialRelationStatus;
-import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.social.SocialRelationListResponse.SocialRelation.RelationType;
 import org.springframework.context.event.EventListener;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,9 +40,9 @@ public class SocialService {
   }
 
   @EventListener
-  public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-    FafUserDetails userDetails = (FafUserDetails) event.getAuthentication().getPrincipal();
-    List<SocialRelation> socialRelations = userDetails.getPlayer().getSocialRelations();
+  public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
+    Player player = event.getPlayer();
+    List<SocialRelation> socialRelations = player.getSocialRelations();
     if (socialRelations == null) {
       return;
     }
@@ -54,6 +52,6 @@ public class SocialService {
         .map(socialRelation -> new SocialRelationListResponse.SocialRelation(
           socialRelation.getSubjectId(), RelationType.valueOf(socialRelation.getStatus().toString())))
         .collect(Collectors.toList())
-    ), (ConnectionAware) event.getAuthentication().getDetails());
+    ), player);
   }
 }

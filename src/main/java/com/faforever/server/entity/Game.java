@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Entity
@@ -166,6 +167,13 @@ public class Game {
   @Transient
   private boolean mutuallyAgreedDraw;
 
+  /**
+   * Future that is completed as soon as the game is ready to be joined. A game may never complete this future, for
+   * instance if the host's game crashes before entering lobby mode, so never wait without a timeout.
+   */
+  @Transient
+  private CompletableFuture<Game> joinableFuture;
+
   public Game(int id) {
     this();
     this.id = id;
@@ -184,8 +192,10 @@ public class Game {
     simMods = new ArrayList<>();
     connectedPlayers = new HashMap<>();
     desyncCounter = new AtomicInteger();
-    validity = Validity.RANKED;
+    validity = Validity.VALID;
     gameVisibility = GameVisibility.PUBLIC;
+    victoryCondition = VictoryCondition.DEMORALIZATION;
+    joinableFuture = new CompletableFuture<>();
   }
 
   public void replaceArmyStatistics(List<ArmyStatistics> newList) {
@@ -205,6 +215,7 @@ public class Game {
   public Game setState(GameState state) {
     GameState.verifyTransition(this.state, state);
     this.state = state;
+    joinableFuture.complete(this);
     return this;
   }
 }

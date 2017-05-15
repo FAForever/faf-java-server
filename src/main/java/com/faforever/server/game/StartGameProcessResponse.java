@@ -1,4 +1,4 @@
-package com.faforever.server.integration.response;
+package com.faforever.server.game;
 
 import com.faforever.server.common.ServerMessage;
 import lombok.AllArgsConstructor;
@@ -6,10 +6,14 @@ import lombok.Getter;
 
 import java.util.List;
 
+/**
+ * Tells the Client to start a game process.
+ */
 @Getter
 @AllArgsConstructor
 public class StartGameProcessResponse implements ServerMessage {
 
+  /** The technical name of the mod, e.g. "faf". */
   private final String mod;
   private final int gameId;
   /**
