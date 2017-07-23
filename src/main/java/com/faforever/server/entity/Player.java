@@ -18,6 +18,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Entity
 @Table(name = "login")
@@ -64,8 +65,12 @@ public class Player extends Login implements ConnectionAware {
   @Transient
   private ClientConnection clientConnection;
 
+  /**
+   * The future that will be completed as soon as the player's game entered {@link GameState#OPEN}. A player's game may
+   * never start if it crashes or the player disconnects.
+   */
   @Transient
-  private Game gameBeingJoined;
+  private CompletableFuture<Game> gameFuture;
 
   public Clan getClan() {
     if (getClanMemberships() != null && getClanMemberships().size() == 1) {

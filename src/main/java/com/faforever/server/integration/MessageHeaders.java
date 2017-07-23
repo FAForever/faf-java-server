@@ -25,4 +25,6 @@ public final class MessageHeaders {
   private MessageHeaders() {
     // Not instantiatable
   }
+
+  public static final String WS_SESSION_ID = SimpMessageHeaderAccessor.SESSION_ID_HEADER;
 }

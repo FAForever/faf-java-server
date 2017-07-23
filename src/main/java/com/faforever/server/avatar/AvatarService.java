@@ -2,7 +2,10 @@ package com.faforever.server.avatar;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Avatar;
+import com.faforever.server.entity.AvatarAssociation;
 import com.faforever.server.entity.Player;
+import com.faforever.server.error.ErrorCode;
+import com.faforever.server.error.Requests;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,8 +21,18 @@ public class AvatarService {
     this.clientService = clientService;
   }
 
-  public void selectAvatar(Player player, String avatarUrl) {
-    avatarAssociationRepository.selectAvatar(player.getId(), avatarUrl);
+  /**
+   * @param avatarUrl (deprecated) only used by the legacy client, will be removed in future. Either this or {@code
+   * avatarId} must be set.
+   * @param avatarId Either this or {@code avatarUrl} must be set.
+   */
+  public void selectAvatar(Player player, String avatarUrl, Integer avatarId) {
+    Requests.verify(avatarId != null || avatarUrl != null, ErrorCode.EITHER_AVATAR_ID_OR_URL);
+    if (avatarUrl != null) {
+      avatarAssociationRepository.selectAvatar(player.getId(), avatarUrl);
+    } else {
+      avatarAssociationRepository.selectAvatar(player.getId(), avatarId);
+    }
   }
 
   /**
@@ -27,7 +40,7 @@ public class AvatarService {
    */
   public void sendAvatarList(Player player) {
     List<Avatar> avatars = player.getAvailableAvatars().stream()
-      .map(avatarAssociation -> avatarAssociation.getAvatar())
+      .map(AvatarAssociation::getAvatar)
       .collect(Collectors.toList());
 
     clientService.sendAvatarList(avatars, player);

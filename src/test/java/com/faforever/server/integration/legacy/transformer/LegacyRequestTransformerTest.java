@@ -4,19 +4,20 @@ import com.faforever.server.avatar.AddAvatarAdminRequest;
 import com.faforever.server.avatar.GetAvatarsAdminRequest;
 import com.faforever.server.avatar.RemoveAvatarAdminRequest;
 import com.faforever.server.client.BroadcastRequest;
-import com.faforever.server.client.LoginMessage;
-import com.faforever.server.client.SessionRequest;
+import com.faforever.server.client.LegacyLoginRequest;
+import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
+import com.faforever.server.game.BottleneckClearedReport;
+import com.faforever.server.game.BottleneckReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
-import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -25,6 +26,7 @@ import com.faforever.server.game.GameVisibility;
 import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.Outcome;
+import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
@@ -87,7 +89,6 @@ public class LegacyRequestTransformerTest {
       .put("title", "Test")
       .put("mod", "faf")
       .put("access", "private")
-      .put("version", 1337.0) // Because JSON deserializes integer values to Double
       .put("password", TEST_PASSWORD)
       .put("visibility", "public")
       .put("minRating", 1000.0) // Because JSON deserializes integer values to Double
@@ -99,8 +100,6 @@ public class LegacyRequestTransformerTest {
     assertThat(hostGameRequest.getMapName(), is("SCMP_001"));
     assertThat(hostGameRequest.getTitle(), is("Test"));
     assertThat(hostGameRequest.getMod(), is("faf"));
-    assertThat(hostGameRequest.getAccess(), is(GameAccess.PRIVATE));
-    assertThat(hostGameRequest.getVersion(), is(1337));
     assertThat(hostGameRequest.getPassword(), is(TEST_PASSWORD));
     assertThat(hostGameRequest.getVisibility(), is(GameVisibility.PUBLIC));
     assertThat(hostGameRequest.getMinRating(), is(1000));
@@ -111,7 +110,7 @@ public class LegacyRequestTransformerTest {
   public void transformJoinGame() throws Exception {
     JoinGameRequest joinGameRequest = (JoinGameRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "game_join",
-      "uid", 123.0, // Because JSON deserializes untyped integer values to Double
+      "uid", 123,
       "password", TEST_PASSWORD
     ));
 
@@ -122,7 +121,7 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void transformAskSession() throws Exception {
-    SessionRequest sessionRequest = (SessionRequest) instance.transform(ImmutableMap.of(KEY_COMMAND, "ask_session"));
+    LegacySessionRequest sessionRequest = (LegacySessionRequest) instance.transform(ImmutableMap.of(KEY_COMMAND, "ask_session"));
 
     assertThat(sessionRequest, is(notNullValue()));
   }
@@ -131,7 +130,7 @@ public class LegacyRequestTransformerTest {
   public void transformAddFriend() throws Exception {
     AddFriendRequest addFriendRequest = (AddFriendRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_add",
-      "friend", 123.0 // Because JSON deserializes untyped integer values to Double
+      "friend", 123
     ));
 
     assertThat(addFriendRequest, is(notNullValue()));
@@ -142,7 +141,7 @@ public class LegacyRequestTransformerTest {
   public void transformAddFoe() throws Exception {
     AddFoeRequest addFoeRequest = (AddFoeRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_add",
-      "foe", 123.0 // Because JSON deserializes untyped integer values to Double
+      "foe", 123
     ));
 
     assertThat(addFoeRequest, is(notNullValue()));
@@ -153,7 +152,7 @@ public class LegacyRequestTransformerTest {
   public void transformRemoveFriend() throws Exception {
     RemoveFriendRequest request = (RemoveFriendRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_remove",
-      "friend", 123.0 // Because JSON deserializes untyped integer values to Double
+      "friend", 123
     ));
 
     assertThat(request, is(notNullValue()));
@@ -164,7 +163,7 @@ public class LegacyRequestTransformerTest {
   public void transformRemoveFoe() throws Exception {
     RemoveFoeRequest request = (RemoveFoeRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_remove",
-      "foe", 123.0 // Because JSON deserializes untyped integer values to Double
+      "foe", 123
     ));
 
     assertThat(request, is(notNullValue()));
@@ -191,17 +190,17 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void transformLogin() throws Exception {
-    LoginMessage loginMessage = (LoginMessage) instance.transform(ImmutableMap.of(
+    LegacyLoginRequest loginRequest = (LegacyLoginRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "hello",
       "login", TEST_USERNAME,
       "password", TEST_PASSWORD,
       "unique_id", "foobar"
     ));
 
-    assertThat(loginMessage, is(notNullValue()));
-    assertThat(loginMessage.getLogin(), is(TEST_USERNAME));
-    assertThat(loginMessage.getPassword(), is(TEST_PASSWORD));
-    assertThat(loginMessage.getUniqueId(), is("foobar"));
+    assertThat(loginRequest, is(notNullValue()));
+    assertThat(loginRequest.getLogin(), is(TEST_USERNAME));
+    assertThat(loginRequest.getPassword(), is(TEST_PASSWORD));
+    assertThat(loginRequest.getUniqueId(), is("foobar"));
   }
 
   @Test
@@ -307,7 +306,7 @@ public class LegacyRequestTransformerTest {
     assertThat(coopMissionCompletedReport, is(notNullValue()));
     assertThat(coopMissionCompletedReport.isPrimaryTargets(), is(true));
     assertThat(coopMissionCompletedReport.isSecondaryTargets(), is(false));
-    assertThat(coopMissionCompletedReport.getDuration(), is(Duration.ofSeconds(1440)));
+    assertThat(coopMissionCompletedReport.getTime(), is(Duration.ofSeconds(1440)));
   }
 
   @Test
@@ -327,12 +326,12 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformEnforceRating() throws Exception {
-    EnforceRatingRequest enforceRatingRequest = (EnforceRatingRequest) instance.transform(ImmutableMap.of(
+  public void transformPlayerDefeated() throws Exception {
+    PlayerDefeatedReport playerDefeatedReport = (PlayerDefeatedReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "EnforceRating"
     ));
 
-    assertThat(enforceRatingRequest, is(notNullValue()));
+    assertThat(playerDefeatedReport, is(notNullValue()));
   }
 
   @Test
@@ -385,6 +384,33 @@ public class LegacyRequestTransformerTest {
   public void desync() throws Exception {
     DesyncReport report = (DesyncReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "Desync"
+    ));
+
+    assertThat(report, is(notNullValue()));
+  }
+
+  @Test
+  public void disconnected() throws Exception {
+    DisconnectedReport report = (DisconnectedReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "Disconnected"
+    ));
+
+    assertThat(report, is(notNullValue()));
+  }
+
+  @Test
+  public void bottleneck() throws Exception {
+    BottleneckReport report = (BottleneckReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "Bottleneck"
+    ));
+
+    assertThat(report, is(notNullValue()));
+  }
+
+  @Test
+  public void bottleneckCleared() throws Exception {
+    BottleneckClearedReport report = (BottleneckClearedReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "BottleneckCleared"
     ));
 
     assertThat(report, is(notNullValue()));
@@ -466,7 +492,7 @@ public class LegacyRequestTransformerTest {
       "state", "start"
     ));
 
-    assertThat(result.getQueueName(), is("ladder1v1"));
+    assertThat(result.getPoolName(), is("ladder1v1"));
     assertThat(result.getFaction(), is(Faction.SERAPHIM));
   }
 
@@ -479,7 +505,7 @@ public class LegacyRequestTransformerTest {
       "state", "start"
     ));
 
-    assertThat(result.getQueueName(), is("ladder1v1"));
+    assertThat(result.getPoolName(), is("ladder1v1"));
     assertThat(result.getFaction(), is(Faction.SERAPHIM));
   }
 
@@ -491,7 +517,7 @@ public class LegacyRequestTransformerTest {
       "state", "stop"
     ));
 
-    assertThat(result.getQueueName(), is("ladder1v1"));
+    assertThat(result.getPoolName(), is("ladder1v1"));
   }
 
   @Test

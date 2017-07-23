@@ -24,6 +24,6 @@ public class CoopServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.OPERATION_COMPLETE_REPORT)
   public void reportOperationComplete(CoopMissionCompletedReport report, @Header(USER_HEADER) Authentication authentication) {
-    coopService.reportOperationComplete(((FafUserDetails) authentication.getPrincipal()).getPlayer(), report.isSecondaryTargets(), report.getDuration());
+    coopService.reportOperationComplete(((FafUserDetails) authentication.getPrincipal()).getPlayer(), report.isSecondaryTargets(), report.getTime());
   }
 }

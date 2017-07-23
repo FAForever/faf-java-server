@@ -46,31 +46,31 @@ public class ClientConnectionServiceTest {
   @Test
   public void updateConnections() throws Exception {
     InetAddress inetAddress = mock(InetAddress.class);
-    instance.createClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(counterService).increment(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.LEGACY_UTF_16));
+    instance.createClientConnection("1", Protocol.V1_LEGACY_UTF_16, inetAddress);
+    verify(counterService).increment(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.V1_LEGACY_UTF_16));
     assertThat(instance.getConnections(), hasSize(1));
 
-    instance.createClientConnection("2", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(counterService, times(2)).increment(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.LEGACY_UTF_16));
+    instance.createClientConnection("2", Protocol.V1_LEGACY_UTF_16, inetAddress);
+    verify(counterService, times(2)).increment(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.V1_LEGACY_UTF_16));
     assertThat(instance.getConnections(), hasSize(2));
 
-    instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(counterService).decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.LEGACY_UTF_16));
+    instance.removeConnection("1", Protocol.V1_LEGACY_UTF_16);
+    verify(counterService).decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.V1_LEGACY_UTF_16));
     assertThat(instance.getConnections(), hasSize(1));
 
     // This connection has already been removed, so expect no change
-    instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(counterService).decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.LEGACY_UTF_16));
+    instance.removeConnection("1", Protocol.V1_LEGACY_UTF_16);
+    verify(counterService).decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.V1_LEGACY_UTF_16));
     assertThat(instance.getConnections(), hasSize(1));
 
-    instance.removeConnection("2", Protocol.LEGACY_UTF_16);
-    verify(counterService, times(2)).decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.LEGACY_UTF_16));
+    instance.removeConnection("2", Protocol.V1_LEGACY_UTF_16);
+    verify(counterService, times(2)).decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, Protocol.V1_LEGACY_UTF_16));
     assertThat(instance.getConnections(), hasSize(0));
   }
 
   @Test
   public void disconnectClient() throws Exception {
-    ClientConnection clientConnection12 = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    ClientConnection clientConnection12 = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     Player player12 = new Player()
       .setClientConnection(clientConnection12);
     when(playerService.getOnlinePlayer(12)).thenReturn(Optional.of(player12));

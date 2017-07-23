@@ -1,6 +1,6 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.client.ConnectToPlayerResponse;
+import com.faforever.server.client.ConnectToPeerResponse;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -14,7 +14,7 @@ public class LegacyResponseTransformerTest {
 
   @Test
   public void transform() throws Exception {
-    Map<String, Serializable> result = LegacyResponseTransformer.INSTANCE.transform(new ConnectToPlayerResponse("JUnit", 1));
+    Map<String, Serializable> result = LegacyResponseTransformer.INSTANCE.transform(new ConnectToPeerResponse("JUnit", 1, true));
     assertThat(result, is(notNullValue()));
   }
 }

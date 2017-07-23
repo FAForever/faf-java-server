@@ -16,5 +16,6 @@ public class DisconnectPeerResponseTransformerTest {
 
     assertThat(response.get("command"), is("DisconnectPeer"));
     assertThat(response.get("peer_id"), is(51));
+    assertThat(response.get("target"), is("game"));
   }
 }

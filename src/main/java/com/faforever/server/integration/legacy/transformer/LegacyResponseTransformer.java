@@ -1,7 +1,8 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.chat.JoinChatChannelResponse;
-import com.faforever.server.client.ConnectToPlayerResponse;
+import com.faforever.server.client.ConnectToHostResponse;
+import com.faforever.server.client.ConnectToPeerResponse;
 import com.faforever.server.client.DisconnectPlayerFromGameResponse;
 import com.faforever.server.client.GameResponses;
 import com.faforever.server.client.IceServersResponse;
@@ -14,6 +15,7 @@ import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
+import com.faforever.server.ice.ForwardedIceMessage;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.LoginDetailsResponse;
 import com.faforever.server.social.SocialRelationListResponse;
@@ -43,7 +45,7 @@ public final class LegacyResponseTransformer implements GenericTransformer<Serve
       .put(ErrorResponse.class, ErrorResponseTransformer.INSTANCE)
       .put(InfoResponse.class, InfoResponseTransformer.INSTANCE)
       .put(HostGameResponse.class, HostGameResponseTransformer.INSTANCE)
-      .put(ConnectToPlayerResponse.class, ConnectToPlayerResponseTransformer.INSTANCE)
+      .put(ConnectToPeerResponse.class, ConnectToPeerResponseTransformer.INSTANCE)
       .put(FeaturedModResponse.class, FeaturedModResponseTransformer.INSTANCE)
       .put(GameResponses.class, GameResponsesTransformer.INSTANCE)
       .put(CoopMissionResponse.class, CoopMissionsResponseTransformer.INSTANCE)
@@ -52,6 +54,8 @@ public final class LegacyResponseTransformer implements GenericTransformer<Serve
       .put(JoinChatChannelResponse.class, JoinChatChannelsResponseTransformer.INSTANCE)
       .put(SocialRelationListResponse.class, SocialRelationListResponseTransformer.INSTANCE)
       .put(IceServersResponse.class, IceServersResponseTransformer.INSTANCE)
+      .put(ForwardedIceMessage.class, ForwardedIceMessageTransformer.INSTANCE)
+      .put(ConnectToHostResponse.class, ConnectToHostResponseTransformer.INSTANCE)
       .build();
   }
 

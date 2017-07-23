@@ -168,12 +168,36 @@ public class GameServiceTest {
   public void joinGame() throws Exception {
     Game game = hostGame(player1);
 
-    instance.joinGame(game.getId(), player2);
+    instance.joinGame(game.getId(), game.getPassword(), player2);
     verify(clientService).startGameProcess(game, player2);
-    assertThat(player2.getGameBeingJoined(), is(game));
+    assertThat(player2.getCurrentGame(), is(game));
+    assertThat(player2.getGameState(), is(PlayerGameState.INITIALIZING));
 
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
     assertThat(player2.getCurrentGame(), is(game));
+  }
+
+  @Test
+  public void joinGameWithPassword() throws Exception {
+    Game game = hostGame(player1);
+    game.setPassword("pw");
+
+    instance.joinGame(game.getId(), "pw", player2);
+    verify(clientService).startGameProcess(game, player2);
+    assertThat(player2.getCurrentGame(), is(game));
+    assertThat(player2.getGameState(), is(PlayerGameState.INITIALIZING));
+
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    assertThat(player2.getCurrentGame(), is(game));
+  }
+
+  @Test
+  public void joinGameWrongPassword() throws Exception {
+    Game game = hostGame(player1);
+    game.setPassword("pw");
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_PASSWORD));
+    instance.joinGame(game.getId(), "PW", player2);
   }
 
   @Test
@@ -215,13 +239,23 @@ public class GameServiceTest {
   }
 
   @Test
-  public void updateAiOption() throws Exception {
+  public void updateAiOptionArmy() throws Exception {
+    Game game = hostGame(player1);
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
+
+    instance.updateAiOption(player1, QAI, OPTION_ARMY, 2);
+
+    assertThat(game.getAiOptions().get(QAI).get(OPTION_ARMY), is(2));
+  }
+
+  @Test
+  public void updateAiOptionFactionIgnored() throws Exception {
     Game game = hostGame(player1);
     assertThat(game.getAiOptions().containsKey(QAI), is(false));
 
     instance.updateAiOption(player1, QAI, OPTION_FACTION, 2);
 
-    assertThat(game.getAiOptions().get(QAI).get(OPTION_FACTION), is(2));
+    assertThat(game.getAiOptions().containsKey(QAI), is(false));
   }
 
   @Test
@@ -229,11 +263,6 @@ public class GameServiceTest {
     Game game = hostGame(player1);
     instance.updatePlayerOption(game.getHost(), player1.getId(), OPTION_SLOT, 2);
     addPlayer(game, player2);
-
-    instance.updateAiOption(player1, QAI, OPTION_FACTION, 1);
-    instance.updateAiOption(player1, QAI, OPTION_SLOT, 1);
-    instance.updateAiOption(player1, AIX, OPTION_FACTION, 2);
-    instance.updateAiOption(player1, AIX, OPTION_SLOT, 2);
 
     instance.updatePlayerOption(player1, 1, OPTION_SLOT, 3);
     instance.updatePlayerOption(player1, 1, OPTION_FACTION, 3);
@@ -243,26 +272,18 @@ public class GameServiceTest {
     instance.clearSlot(game, 1);
     assertThat(game.getPlayerOptions().containsKey(1), is(true));
     assertThat(game.getPlayerOptions().containsKey(2), is(true));
-    assertThat(game.getAiOptions().containsKey(QAI), is(false));
-    assertThat(game.getAiOptions().containsKey(AIX), is(true));
 
     instance.clearSlot(game, 4);
     assertThat(game.getPlayerOptions().containsKey(1), is(true));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
-    assertThat(game.getAiOptions().containsKey(QAI), is(false));
-    assertThat(game.getAiOptions().containsKey(AIX), is(true));
 
     instance.clearSlot(game, 3);
     assertThat(game.getPlayerOptions().containsKey(1), is(false));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
-    assertThat(game.getAiOptions().containsKey(QAI), is(false));
-    assertThat(game.getAiOptions().containsKey(AIX), is(true));
 
     instance.clearSlot(game, 2);
     assertThat(game.getPlayerOptions().containsKey(1), is(false));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
-    assertThat(game.getAiOptions().containsKey(QAI), is(false));
-    assertThat(game.getAiOptions().containsKey(AIX), is(false));
   }
 
   @Test
@@ -563,7 +584,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
-    verify(mapService).incrementTimesPlayed(game.getMap().getMap());
+    verify(mapService).incrementTimesPlayed(game.getMapVersion().getMap());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -630,7 +651,7 @@ public class GameServiceTest {
     assertThat(game.getStartTime(), is(greaterThan(Instant.now().minusSeconds(10))));
 
     verify(entityManager).persist(game);
-    verify(clientService, atLeastOnce()).broadcastDelayed(any(GameResponse.class), any(), any(), any());
+    verify(clientService, atLeastOnce()).broadcastDelayed(any(GameResponse.class), any(), any(), any(), any());
   }
 
   @Test
@@ -663,7 +684,7 @@ public class GameServiceTest {
   public void updateGameValidityUnrankedMap() throws Exception {
     Game game = hostGame(player1);
 
-    game.getMap().setRanked(false);
+    game.getMapVersion().setRanked(false);
 
     launchGame(game);
 
@@ -1019,14 +1040,12 @@ public class GameServiceTest {
   public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
     Game game = hostGame(player1);
 
-    assertThat(player1.getGameBeingJoined(), is(nullValue()));
     assertThat(player1.getCurrentGame(), is(game));
     assertThat(player1.getGameState(), is(PlayerGameState.LOBBY));
     assertThat(instance.getActiveGame(game.getId()).isPresent(), is(true));
 
     instance.removePlayer(player1);
 
-    assertThat(player1.getGameBeingJoined(), is(nullValue()));
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(instance.getActiveGame(game.getId()).isPresent(), is(false));
@@ -1107,43 +1126,51 @@ public class GameServiceTest {
   public void restoreGameSessionOpenGame() throws Exception {
     Game game = hostGame(player1);
 
-    instance.joinGame(game.getId(), player2);
-    assertThat(player2.getGameBeingJoined(), is(game));
     assertThat(player2.getCurrentGame(), is(nullValue()));
 
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    instance.joinGame(game.getId(), game.getPassword(), player2);
     assertThat(player2.getCurrentGame(), is(game));
+    assertThat(player2.getGameState(), is(PlayerGameState.INITIALIZING));
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player2);
+    assertThat(player2.getGameState(), is(PlayerGameState.LAUNCHING));
+
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
     player2.setClientConnection(clientConnection);
     instance.removePlayer(player2);
-    assertThat(player2.getGameBeingJoined(), is(nullValue()));
     assertThat(player2.getCurrentGame(), is(nullValue()));
+    assertThat(player2.getGameState(), is(PlayerGameState.NONE));
 
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
+    assertThat(player2.getGameState(), is(PlayerGameState.LOBBY));
   }
 
   @Test
   public void restoreGameSessionPlayingGame() throws Exception {
     Game game = hostGame(player1);
 
-    instance.joinGame(game.getId(), player2);
-    assertThat(player2.getGameBeingJoined(), is(game));
+    instance.joinGame(game.getId(), game.getPassword(), player2);
+    assertThat(player2.getCurrentGame(), is(game));
 
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player2);
+    assertThat(player2.getGameState(), is(PlayerGameState.LAUNCHING));
+
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
     player2.setClientConnection(clientConnection);
     instance.removePlayer(player2);
     assertThat(player2.getCurrentGame(), is(nullValue()));
+    assertThat(player2.getGameState(), is(PlayerGameState.NONE));
 
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
+    assertThat(player2.getGameState(), is(PlayerGameState.LAUNCHING));
   }
 
   @Test
@@ -1194,14 +1221,14 @@ public class GameServiceTest {
     Game game = hostGame(player1);
     instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
 
-    instance.joinGame(game.getId(), player2);
+    instance.joinGame(game.getId(), game.getPassword(), player2);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 3);
 
     Player player3 = new Player();
     player3.setId(3);
 
-    instance.joinGame(game.getId(), player3);
+    instance.joinGame(game.getId(), game.getPassword(), player3);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player3);
     instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
 
@@ -1225,15 +1252,16 @@ public class GameServiceTest {
     assertThat(joinable.isDone(), is(false));
     assertThat(joinable.isCancelled(), is(false));
     assertThat(joinable.isCompletedExceptionally(), is(false));
-    verify(counterService, never()).decrement(anyString());
+    verify(counterService, never()).decrement(String.format(Metrics.GAMES_STATE_FORMAT, GameState.CLOSED));
     verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
 
     Game game = instance.getActiveGame(1).get();
     assertThat(game.getState(), is(GameState.INITIALIZING));
-    assertThat(player1.getCurrentGame(), is(nullValue()));
-    assertThat(player1.getGameBeingJoined(), is(game));
+    assertThat(player1.getCurrentGame(), is(game));
+    assertThat(player1.getGameState(), is(PlayerGameState.INITIALIZING));
 
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    assertThat(player1.getGameState(), is(PlayerGameState.LOBBY));
 
     game = joinable.get();
 
@@ -1254,7 +1282,7 @@ public class GameServiceTest {
     assertThat(game.getTitle(), is("Game title"));
     assertThat(game.getHost(), is(player1));
     assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
-    assertThat(game.getMap(), is(notNullValue()));
+    assertThat(game.getMapVersion(), is(notNullValue()));
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
     assertThat(game.getState(), is(GameState.OPEN));
@@ -1262,7 +1290,6 @@ public class GameServiceTest {
     assertThat(game.getMinRating(), is(GAME_MIN_RATING));
     assertThat(game.getMaxRating(), is(GAME_MAX_RATING));
     assertThat(player1.getCurrentGame(), is(game));
-    assertThat(player1.getGameBeingJoined(), is(nullValue()));
 
     return game;
   }
@@ -1276,7 +1303,7 @@ public class GameServiceTest {
   }
 
   private void addPlayer(Game game, Player player) {
-    instance.joinGame(game.getId(), player);
+    instance.joinGame(game.getId(), game.getPassword(), player);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player);
     instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_FACTION, 1);
     instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_SLOT, player.getId());

@@ -5,6 +5,7 @@ import lombok.Getter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.function.BiFunction;
 
 /**
  * Hold a response as well as information about when the it was created or updated. This information can be used to
@@ -26,6 +27,10 @@ public class DelayedResponse<T extends ServerMessage> {
    */
   private final Duration maxDelay;
   /**
+   * Function to use to calculate the new value when the response is being updated.
+   */
+  private final BiFunction<T, T, T> aggregateFunction;
+  /**
    * The response object.
    */
   private T response;
@@ -34,17 +39,18 @@ public class DelayedResponse<T extends ServerMessage> {
    */
   private Instant updateTime;
 
-  public DelayedResponse(T response, Duration minDelay, Duration maxDelay) {
+  public DelayedResponse(T response, Duration minDelay, Duration maxDelay, BiFunction<T, T, T> aggregateFunction) {
     this.response = response;
     this.minDelay = minDelay;
     this.maxDelay = maxDelay;
+    this.aggregateFunction = aggregateFunction;
     createTime = Instant.now();
     updateTime = createTime;
   }
 
   public void onUpdated(T object) {
     updateTime = Instant.now();
-    this.response = object;
+    this.response = aggregateFunction.apply(this.response, object);
   }
 
   @SuppressWarnings("unchecked")

@@ -19,7 +19,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.integration.dsl.support.Consumer;
@@ -52,6 +51,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 @Configuration
 @Slf4j
@@ -150,9 +152,8 @@ public class LegacyAdapterConfig {
   public IntegrationFlow legacyAdapterInboundFlow(ObjectMapper objectMapper) {
     return IntegrationFlows
       .from(tcpReceivingChannelAdapter())
-      .wireTap(this::loggerFlow)
+      .enrichHeaders(clientConnectionEnricher())
       .transform(legacyByteArrayToStringTransformer())
-      .wireTap(this::loggerFlow)
       .transform(Transformers.fromJson(HashMap.class))
       .transform(new LegacyRequestTransformer(objectMapper))
       .channel(ChannelNames.CLIENT_INBOUND)
@@ -184,26 +185,22 @@ public class LegacyAdapterConfig {
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
       TcpNioConnection connection = (TcpNioConnection) event.getSource();
       InetAddress inetAddress = connection.getSocketInfo().getInetAddress();
-      clientConnectionService.createClientConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16, inetAddress);
+      clientConnectionService.createClientConnection(event.getConnectionId(), Protocol.V1_LEGACY_UTF_16, inetAddress);
     }
   }
 
   @EventListener
   public void onConnectionClosed(TcpConnectionCloseEvent event) {
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
-      clientConnectionService.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
+      clientConnectionService.removeConnection(event.getConnectionId(), Protocol.V1_LEGACY_UTF_16);
     }
   }
 
   @EventListener
   public void onCloseConnection(CloseConnectionEvent event) {
-    if (event.getClientConnection().getProtocol() == Protocol.LEGACY_UTF_16) {
+    if (event.getClientConnection().getProtocol() == Protocol.V1_LEGACY_UTF_16) {
       tcpServerConnectionFactory().closeConnection(event.getClientConnection().getId());
     }
-  }
-
-  private void loggerFlow(IntegrationFlowDefinition<?> flow) {
-    flow.handle(message -> log.trace("Incoming {}: {}", message));
   }
 
   /**
@@ -219,7 +216,7 @@ public class LegacyAdapterConfig {
         }
 
         return clientConnectionService.getConnections().stream()
-          .filter(clientConnection -> clientConnection.getProtocol() == Protocol.LEGACY_UTF_16)
+          .filter(clientConnection -> clientConnection.getProtocol() == Protocol.V1_LEGACY_UTF_16)
           .map(clientConnection -> MessageBuilder.fromMessage(message)
             .setHeader(MessageHeaders.CLIENT_CONNECTION, clientConnection)
           )
@@ -243,11 +240,24 @@ public class LegacyAdapterConfig {
   }
 
   /**
-   * Extracts the connection ID from the {@link ClientConnection} header and sets it as {@link
-   * IpHeaders#CONNECTION_ID}.
+   * Extracts the connection ID from the {@link ClientConnection} header and sets it as {@link IpHeaders#CONNECTION_ID}.
+   * This is required in order for the the TCP adapter to know to which socket the message needs to be sent to.
    */
   private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.headerFunction(IpHeaders.CONNECTION_ID,
       message -> message.getHeaders().get(MessageHeaders.CLIENT_CONNECTION, ClientConnection.class).getId());
+  }
+
+  /**
+   * Looks up the {@link ClientConnection} associated with the correlation ID and and sets it as {@link
+   * MessageHeaders#CLIENT_CONNECTION}.
+   */
+  private Consumer<HeaderEnricherSpec> clientConnectionEnricher() {
+    return headerEnricherSpec -> headerEnricherSpec.headerFunction(CLIENT_CONNECTION,
+      message -> {
+        String connectionId = (String) message.getHeaders().get(CORRELATION_ID);
+        return clientConnectionService.getClientConnection(connectionId)
+          .orElseThrow(() -> new IllegalStateException("There is no connection with ID: " + connectionId));
+      });
   }
 }

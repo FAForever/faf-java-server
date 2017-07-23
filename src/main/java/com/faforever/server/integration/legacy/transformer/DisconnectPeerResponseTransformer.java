@@ -14,7 +14,8 @@ public enum DisconnectPeerResponseTransformer implements GenericTransformer<Disc
   public Map<String, Serializable> transform(DisconnectPlayerFromGameResponse source) {
     return ImmutableMap.of(
       "command", "DisconnectPeer",
-      "peer_id", source.getPlayerId()
+      "peer_id", source.getPlayerId(),
+      "target", "game"
     );
   }
 }

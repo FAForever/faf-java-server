@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,7 +16,7 @@ public class ErrorResponseTransformerTest {
   @Test
   public void transform() throws Exception {
     ErrorCode errorCode = ErrorCode.UNSUPPORTED_REQUEST;
-    ErrorResponse errorResponse = new ErrorResponse(errorCode, new Object[]{"foobar"});
+    ErrorResponse errorResponse = new ErrorResponse(errorCode, UUID.randomUUID(), new Object[]{"foobar"});
 
     Map<String, Serializable> result = ErrorResponseTransformer.INSTANCE.transform(errorResponse);
 

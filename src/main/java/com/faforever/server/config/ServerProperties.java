@@ -26,7 +26,7 @@ public class ServerProperties {
   private Chat chat = new Chat();
   private Ice ice = new Ice();
   private Jwt jwt = new Jwt();
-  private Jetty jetty = new Jetty();
+  private OAuth2 oAuth2 = new OAuth2();
   private Messaging messaging = new Messaging();
   private Database database = new Database();
 
@@ -166,10 +166,8 @@ public class ServerProperties {
   }
 
   @Data
-  public static class Jetty {
-    private int minThreads = 1;
-    private int maxThreads = 10;
-    private int idleTimeoutMillis = 60000;
+  public static class OAuth2 {
+    private String resourceId = "faf-server";
   }
 
   @Data

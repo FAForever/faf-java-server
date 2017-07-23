@@ -33,7 +33,7 @@ public class IceServiceActivatorsTest {
     player = new Player();
     player.setClientConnection(clientConnection);
 
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
+    clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class))
       .setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")), null));
 
     instance = new IceServiceActivators(iceService);

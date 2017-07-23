@@ -2,13 +2,13 @@ package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.avatar.AddAvatarAdminRequest;
 import com.faforever.server.avatar.GetAvatarsAdminRequest;
-import com.faforever.server.avatar.ListAvatarsMessage;
+import com.faforever.server.avatar.ListAvatarsRequest;
 import com.faforever.server.avatar.RemoveAvatarAdminRequest;
 import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.DisconnectClientRequest;
-import com.faforever.server.client.LoginMessage;
-import com.faforever.server.client.SessionRequest;
+import com.faforever.server.client.LegacyLoginRequest;
+import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
@@ -18,12 +18,13 @@ import com.faforever.server.error.Requests;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
+import com.faforever.server.game.BottleneckClearedReport;
+import com.faforever.server.game.BottleneckReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
-import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -33,6 +34,7 @@ import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.Outcome;
+import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
@@ -83,10 +85,10 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case HOST_GAME:
         return handleHostGame(source);
       case JOIN_GAME:
-        return new JoinGameRequest(((Double) source.get("uid")).intValue(), (String) source.get("password"));
+        return new JoinGameRequest(((Number) source.get("uid")).intValue(), (String) source.get("password"));
       case ASK_SESSION:
         String userAgent = (String) source.get("user_agent");
-        return SessionRequest.forUserAgent(userAgent);
+        return LegacySessionRequest.forUserAgent(userAgent);
       case SOCIAL_ADD:
         return handleSocialAdd(source);
       case SOCIAL_REMOVE:
@@ -119,11 +121,11 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case JSON_STATS:
         return handleJsonStats(source);
       case ENFORCE_RATING:
-        return EnforceRatingRequest.INSTANCE;
+        return PlayerDefeatedReport.INSTANCE;
       case TEAMKILL_REPORT:
         return handleTeamKillReport(source);
       case MUTUAL_DRAW:
-        return new MutuallyAgreedDrawRequest();
+        return MutuallyAgreedDrawRequest.INSTANCE;
       case AI_OPTION:
         return handleAiOption(source);
       case INITIATE_TEST:
@@ -139,6 +141,12 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         throw new RequestException(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
       case ADMIN:
         return handleAdminAction(source);
+      case DISCONNECTED:
+        return DisconnectedReport.INSTANCE;
+      case BOTTLENECK:
+        return BottleneckReport.INSTANCE;
+      case BOTTLENECK_CLEARED:
+        return BottleneckClearedReport.INSTANCE;
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
@@ -157,9 +165,9 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   private ClientMessage handleAvatar(Map<String, Object> source) {
     switch ((String) source.get("action")) {
       case "list_avatar":
-        return ListAvatarsMessage.INSTANCE;
+        return ListAvatarsRequest.INSTANCE;
       case "select":
-        return new SelectAvatarRequest((String) source.get("avatar"));
+        return new SelectAvatarRequest(null, (String) source.get("avatar"));
       default:
         throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
     }
@@ -170,13 +178,13 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "closeFA":
         return new DisconnectPeerRequest((int) source.get("user_id"));
       case "closeLobby":
-        return new DisconnectClientRequest(((Double) source.get("user_id")).intValue());
+        return new DisconnectClientRequest(((Number) source.get("user_id")).intValue());
       case "requestavatars":
         return new GetAvatarsAdminRequest();
       case "remove_avatar":
-        return new RemoveAvatarAdminRequest(((Double) source.get("idavatar")).intValue(), ((Double) source.get("iduser")).intValue());
+        return new RemoveAvatarAdminRequest(((Number) source.get("idavatar")).intValue(), ((Number) source.get("iduser")).intValue());
       case "add_avatar":
-        return new AddAvatarAdminRequest(((Double) source.get("idavatar")).intValue(), ((Double) source.get("iduser")).intValue());
+        return new AddAvatarAdminRequest(((Number) source.get("idavatar")).intValue(), ((Number) source.get("iduser")).intValue());
       case "broadcast":
         return new BroadcastRequest((String) source.get("message"));
       default:
@@ -243,7 +251,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     args = getArgs(source);
     switch ((String) args.get(0)) {
       case "activated":
-        return new GameModsCountReport(((Double) args.get(1)).intValue());
+        return new GameModsCountReport(((Number) args.get(1)).intValue());
       case "uids":
         return new GameModsReport(Arrays.asList(((String) args.get(1)).split(" ")));
       default:
@@ -268,7 +276,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   }
 
   private ClientMessage handleLogin(Map<String, Object> source) {
-    return new LoginMessage(
+    return new LegacyLoginRequest(
       (String) source.get("login"),
       (String) source.get("password"),
       (String) source.get("unique_id"));
@@ -276,18 +284,18 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
   private ClientMessage handleSocialRemove(Map<String, Object> source) {
     if (source.containsKey("friend")) {
-      return new RemoveFriendRequest(((Double) source.get("friend")).intValue());
+      return new RemoveFriendRequest(((Number) source.get("friend")).intValue());
     } else if (source.containsKey("foe")) {
-      return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
+      return new RemoveFoeRequest(((Number) source.get("foe")).intValue());
     }
     throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
   }
 
   private ClientMessage handleSocialAdd(Map<String, Object> source) {
     if (source.containsKey("friend")) {
-      return new AddFriendRequest(((Double) source.get("friend")).intValue());
+      return new AddFriendRequest(((Number) source.get("friend")).intValue());
     } else if (source.containsKey("foe")) {
-      return new AddFoeRequest(((Double) source.get("foe")).intValue());
+      return new AddFoeRequest(((Number) source.get("foe")).intValue());
     }
     throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
   }
@@ -297,12 +305,10 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       (String) source.get("mapname"),
       (String) source.get("title"),
       (String) source.get("mod"),
-      GameAccess.fromString((String) source.get("access")),
-      source.get("version") == null ? null : ((Double) source.get("version")).intValue(),
       (String) source.get("password"),
       GameVisibility.fromString((String) source.get("visibility")),
-      source.get("minRating") == null ? null : ((Double) source.get("minRating")).intValue(),
-      source.get("maxRating") == null ? null : ((Double) source.get("maxRating")).intValue()
+      source.get("minRating") == null ? null : ((Number) source.get("minRating")).intValue(),
+      source.get("maxRating") == null ? null : ((Number) source.get("maxRating")).intValue()
     );
   }
 

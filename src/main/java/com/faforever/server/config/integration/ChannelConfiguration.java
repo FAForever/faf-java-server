@@ -85,6 +85,24 @@ public class ChannelConfiguration {
     return MessageChannels.executor(threadPoolExecutor).get();
   }
 
+  /**
+   * Executor channel with limited queue size to prevent out of memory on excessive message production.
+   *
+   * @see ChannelNames#WEB_SOCKET_OUTBOUND
+   */
+  @Bean(name = ChannelNames.WEB_SOCKET_OUTBOUND)
+  public MessageChannel webSocketOutbound(ServerProperties properties) {
+    AtomicInteger counter = new AtomicInteger();
+    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+      1,
+      4,
+      30, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<>(properties.getMessaging().getLegacyAdapterOutboundQueueSize()),
+      runnable -> new Thread(runnable, "web-socket-out-" + counter.incrementAndGet()));
+
+    return MessageChannels.executor(threadPoolExecutor).get();
+  }
+
   @Bean(name = ChannelNames.JOIN_GAME_REQUEST)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel joinGameRequest() {
@@ -97,25 +115,25 @@ public class ChannelConfiguration {
     return MessageChannels.direct().get();
   }
 
-  @Bean(name = ChannelNames.LEGACY_ADD_FRIEND_REQUEST)
+  @Bean(name = ChannelNames.ADD_FRIEND_REQUEST)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel addFriendRequest() {
     return MessageChannels.direct().get();
   }
 
-  @Bean(name = ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST)
+  @Bean(name = ChannelNames.REMOVE_FRIEND_REQUEST)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel removeFriendRequest() {
     return MessageChannels.direct().get();
   }
 
-  @Bean(name = ChannelNames.LEGACY_ADD_FOE_REQUEST)
+  @Bean(name = ChannelNames.ADD_FOE_REQUEST)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel addFoeRequest() {
     return MessageChannels.direct().get();
   }
 
-  @Bean(name = ChannelNames.LEGACY_REMOVE_FOE_REQUEST)
+  @Bean(name = ChannelNames.REMOVE_FOE_REQUEST)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel removeFoeRequest() {
     return MessageChannels.direct().get();

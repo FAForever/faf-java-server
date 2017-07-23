@@ -15,7 +15,7 @@ public enum LoginDetailsResponseTransformer implements GenericTransformer<LoginD
   public Map<String, Serializable> transform(LoginDetailsResponse source) {
     return ImmutableMap.of(
       "command", "welcome",
-      "id", source.getUserId(),
+      "id", source.getPlayerId(),
       "login", source.getUsername(),
       "me", PlayerResponsesTransformer.player(source)
     );

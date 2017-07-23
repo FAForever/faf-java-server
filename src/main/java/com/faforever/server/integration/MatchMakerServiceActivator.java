@@ -1,7 +1,11 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientDisconnectedEvent;
+import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.entity.Player;
+import com.faforever.server.matchmaker.CreateMatchRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
+import com.faforever.server.matchmaker.MatchMakerMapper;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.matchmaker.MatchMakerService;
 import com.faforever.server.security.FafUserDetails;
@@ -20,28 +24,50 @@ import static com.faforever.server.integration.MessageHeaders.USER_HEADER;
 @MessageEndpoint
 public class MatchMakerServiceActivator {
   private final MatchMakerService matchMakerService;
+  private final MatchMakerMapper matchMakerMapper;
 
-  public MatchMakerServiceActivator(MatchMakerService matchMakerService) {
+  public MatchMakerServiceActivator(MatchMakerService matchMakerService, MatchMakerMapper matchMakerMapper) {
     this.matchMakerService = matchMakerService;
+    this.matchMakerMapper = matchMakerMapper;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.MATCH_MAKER_SEARCH_REQUEST)
   public void startSearch(MatchMakerSearchRequest request, @Header(USER_HEADER) Authentication authentication) {
     matchMakerService.submitSearch(
-      ((FafUserDetails) authentication.getPrincipal()).getPlayer(),
+      getPlayer(authentication),
       request.getFaction(),
-      request.getQueueName()
+      request.getPoolName()
     );
   }
 
   @ServiceActivator(inputChannel = ChannelNames.MATCH_MAKER_CANCEL_REQUEST)
   public void cancelSearch(MatchMakerCancelRequest request, @Header(USER_HEADER) Authentication authentication) {
-    matchMakerService.cancelSearch(request.getQueueName(), ((FafUserDetails) authentication.getPrincipal()).getPlayer());
+    matchMakerService.cancelSearch(request.getPoolName(), getPlayer(authentication));
+  }
+
+  private Player getPlayer(@Header(USER_HEADER) Authentication authentication) {
+    return ((FafUserDetails) authentication.getPrincipal()).getPlayer();
   }
 
   @ServiceActivator(inputChannel = ChannelNames.CLIENT_DISCONNECTED_EVENT)
   public void onClientDisconnected(ClientDisconnectedEvent event) {
     Optional.ofNullable(event.getClientConnection().getAuthentication())
-      .ifPresent(authentication -> matchMakerService.removePlayer(((FafUserDetails) authentication.getPrincipal()).getPlayer()));
+      .ifPresent(authentication -> matchMakerService.removePlayer(getPlayer(authentication)));
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.CREATE_MATCH_REQUEST)
+  public void createMatch(CreateMatchRequest request, @Header(USER_HEADER) Authentication authentication) {
+    matchMakerService.createMatch(
+      getRequester(authentication),
+      request.getRequestId(),
+      request.getTitle(),
+      request.getFeaturedMod(),
+      matchMakerMapper.map(request.getParticipants()),
+      request.getMapVersionId()
+    );
+  }
+
+  private ConnectionAware getRequester(Authentication authentication) {
+    return (ConnectionAware) authentication.getPrincipal();
   }
 }

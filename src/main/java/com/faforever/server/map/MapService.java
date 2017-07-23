@@ -33,6 +33,11 @@ public class MapService {
     return mapVersionRepository.findByFilenameIgnoreCase(filename);
   }
 
+  @Cacheable(CacheNames.MAP_VERSIONS)
+  public Optional<MapVersion> findMap(int mapVersionId) {
+    return Optional.ofNullable(mapVersionRepository.findOne(mapVersionId));
+  }
+
   public MapVersion getRandomLadderMap() {
     List<MapVersion> ladder1v1Maps = getLadder1v1Maps();
     return ladder1v1Maps.get(random.nextInt(ladder1v1Maps.size() - 1));

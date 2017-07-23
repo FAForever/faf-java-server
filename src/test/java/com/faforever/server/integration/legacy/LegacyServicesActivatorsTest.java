@@ -4,16 +4,15 @@ import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.ListCoopRequest;
-import com.faforever.server.client.LoginMessage;
-import com.faforever.server.client.SessionRequest;
+import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
-import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
@@ -27,7 +26,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.boot.actuate.metrics.CounterService;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,7 +36,6 @@ import java.util.Optional;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -66,8 +63,6 @@ public class LegacyServicesActivatorsTest {
   private GeoIpService geoIpService;
   @Mock
   private ChatService chatService;
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
 
   @Mock
   private PlayerService playerService;
@@ -78,21 +73,21 @@ public class LegacyServicesActivatorsTest {
 
   @Before
   public void setUp() throws Exception {
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player();
     player.setClientConnection(clientConnection);
 
     when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.empty());
 
     instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService, geoIpService,
-      playerService, chatService, eventPublisher, counterService);
+      playerService, chatService, counterService);
   }
 
   @Test
   public void askSession() throws Exception {
     assertThat(clientConnection.getUserAgent(), is(nullValue()));
 
-    SessionResponse sessionResponse = instance.askSession(SessionRequest.forUserAgent("junit"), clientConnection);
+    SessionResponse sessionResponse = instance.askSession(LegacySessionRequest.forUserAgent("junit"), clientConnection);
 
     assertThat(sessionResponse, is(SessionResponse.INSTANCE));
     assertThat(clientConnection.getUserAgent(), is("junit"));
@@ -113,7 +108,7 @@ public class LegacyServicesActivatorsTest {
   public void loginRequest() throws Exception {
     createAuthentication(player);
 
-    instance.loginRequest(new LoginMessage("JUnit", "password", "uniqueid"), clientConnection);
+    instance.loginRequest(new LegacyLoginRequest("JUnit", "password", "uniqueId"), clientConnection);
 
     ArgumentCaptor<Authentication> captor = ArgumentCaptor.forClass(Authentication.class);
     verify(authenticationManager).authenticate(captor.capture());
@@ -122,18 +117,16 @@ public class LegacyServicesActivatorsTest {
     assertThat(authentication.getPrincipal(), is("JUnit"));
     assertThat(authentication.getCredentials(), is("password"));
 
-    ArgumentCaptor<PlayerOnlineEvent> onlineEventCaptor = ArgumentCaptor.forClass(PlayerOnlineEvent.class);
-    verify(eventPublisher).publishEvent(onlineEventCaptor.capture());
-    assertThat(onlineEventCaptor.getValue().getPlayer(), is(notNullValue()));
+    verify(playerService).setPlayerOnline(player);
   }
 
   @Test
   public void loginRequestCallsUniqueIdService() throws Exception {
     createAuthentication(new Player());
 
-    instance.loginRequest(new LoginMessage("JUnit", "password", "uniqueid"), clientConnection);
+    instance.loginRequest(new LegacyLoginRequest("JUnit", "password", "uniqueId"), clientConnection);
 
-    verify(uniqueIdService).verify(any(), eq("uniqueid"));
+    verify(uniqueIdService).verify(any(), eq("uniqueId"));
   }
 
   @Test
@@ -141,7 +134,7 @@ public class LegacyServicesActivatorsTest {
     when(playerService.isPlayerOnline("JUnit")).thenReturn(true);
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.USER_ALREADY_CONNECTED));
-    instance.loginRequest(new LoginMessage("JUnit", "pw", "uniqueid"), clientConnection);
+    instance.loginRequest(new LegacyLoginRequest("JUnit", "password", "uniqueId"), clientConnection);
   }
 
   @Test

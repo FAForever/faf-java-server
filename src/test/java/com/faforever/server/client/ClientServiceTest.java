@@ -67,43 +67,27 @@ public class ClientServiceTest {
   @Before
   public void setUp() throws Exception {
     serverProperties = new ServerProperties();
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
 
     instance = new ClientService(clientGateway, coopService, serverProperties);
   }
 
   @Test
-  public void connectToPlayer() throws Exception {
+  public void connectToPeer() throws Exception {
     Player peer = new Player();
     peer.setId(2);
     peer.setLogin("test");
 
-    instance.connectToPlayer(player, peer);
+    instance.connectToPeer(player, peer, false);
 
-    ArgumentCaptor<ConnectToPlayerResponse> captor = ArgumentCaptor.forClass(ConnectToPlayerResponse.class);
+    ArgumentCaptor<ConnectToPeerResponse> captor = ArgumentCaptor.forClass(ConnectToPeerResponse.class);
     verify(clientGateway).send(captor.capture(), eq(clientConnection));
-    ConnectToPlayerResponse response = captor.getValue();
+    ConnectToPeerResponse response = captor.getValue();
 
     assertThat(response.getPlayerId(), is(peer.getId()));
     assertThat(response.getPlayerName(), is(peer.getLogin()));
-  }
-
-  @Test
-  public void connectToHost() throws Exception {
-    Player host = new Player();
-    host.setId(1);
-
-    Game game = new Game();
-    game.setHost(host);
-
-    instance.connectToHost(game, player);
-
-    ArgumentCaptor<ConnectToHostResponse> captor = ArgumentCaptor.forClass(ConnectToHostResponse.class);
-    verify(clientGateway).send(captor.capture(), eq(clientConnection));
-    ConnectToHostResponse response = captor.getValue();
-
-    assertThat(response.getHostId(), is(host.getId()));
+    assertThat(response.isOffer(), is(false));
   }
 
   @Test
@@ -164,7 +148,7 @@ public class ClientServiceTest {
     verify(clientGateway).send(captor.capture(), any());
 
     PlayerResponse response = captor.getValue();
-    assertThat(response.getUserId(), is(5));
+    assertThat(response.getPlayerId(), is(5));
     assertThat(response.getUsername(), is("JUnit"));
     assertThat(response.getPlayer().getAvatar().getDescription(), is("Tooltip"));
     assertThat(response.getPlayer().getAvatar().getUrl(), is("http://example.com"));
@@ -226,8 +210,8 @@ public class ClientServiceTest {
     assertThat(responses.getResponses(), hasSize(2));
 
     Iterator<PlayerResponse> iterator = responses.getResponses().iterator();
-    assertThat(iterator.next().getUserId(), is(1));
-    assertThat(iterator.next().getUserId(), is(2));
+    assertThat(iterator.next().getPlayerId(), is(1));
+    assertThat(iterator.next().getPlayerId(), is(2));
   }
 
   @Test

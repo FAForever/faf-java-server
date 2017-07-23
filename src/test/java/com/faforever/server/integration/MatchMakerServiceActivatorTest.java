@@ -4,6 +4,7 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.game.Faction;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
+import com.faforever.server.matchmaker.MatchMakerMapper;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.matchmaker.MatchMakerService;
 import com.faforever.server.security.FafUserDetails;
@@ -24,6 +25,8 @@ public class MatchMakerServiceActivatorTest {
 
   @Mock
   private MatchMakerService matchmakerService;
+  @Mock
+  private MatchMakerMapper matchMakerMapper;
 
   private Player player;
   private Authentication authentication;
@@ -35,7 +38,7 @@ public class MatchMakerServiceActivatorTest {
     authentication = new TestingAuthenticationToken(new FafUserDetails((User) new User()
       .setPlayer(player).setPassword("pw").setLogin("JUnit")), null);
 
-    instance = new MatchMakerServiceActivator(matchmakerService);
+    instance = new MatchMakerServiceActivator(matchmakerService, matchMakerMapper);
   }
 
   @Test

@@ -1,8 +1,8 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.social.SocialRelationListResponse;
-import com.faforever.server.social.SocialRelationListResponse.SocialRelation;
-import com.faforever.server.social.SocialRelationListResponse.SocialRelation.RelationType;
+import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse;
+import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse.RelationType;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.integration.transformer.GenericTransformer;
 
@@ -24,10 +24,10 @@ public enum SocialRelationListResponseTransformer implements GenericTransformer<
     );
   }
 
-  private ArrayList<Integer> extractPlayerIds(List<SocialRelation> relations, RelationType type) {
+  private ArrayList<Integer> extractPlayerIds(List<SocialRelationResponse> relations, RelationType type) {
     return relations.stream()
       .filter(socialRelation -> socialRelation.getType() == type)
-      .map(SocialRelation::getPlayerId)
+      .map(SocialRelationResponse::getPlayerId)
       .collect(Collectors.toCollection(ArrayList::new));
   }
 }

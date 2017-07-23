@@ -5,14 +5,18 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.entity.SocialRelation;
 import com.faforever.server.entity.SocialRelationStatus;
 import com.faforever.server.player.PlayerOnlineEvent;
-import com.faforever.server.social.SocialRelationListResponse.SocialRelation.RelationType;
+import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse;
+import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse.RelationType;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class SocialService {
 
   private final SocialRelationRepository socialRelationRepository;
@@ -23,20 +27,32 @@ public class SocialService {
     this.clientService = clientService;
   }
 
-  public void addFriend(Player requester, int playerId) {
-    socialRelationRepository.save(new SocialRelation(requester.getId(), requester, playerId, SocialRelationStatus.FRIEND));
+  @Transactional
+  public void addFriend(Player requester, int friendId) {
+    removeFoe(requester, friendId);
+
+    log.debug("Adding '{}' as a friend of player '{}'", friendId, requester);
+    socialRelationRepository.save(new SocialRelation(requester.getId(), requester, friendId, SocialRelationStatus.FRIEND));
   }
 
+  @Transactional
   public void addFoe(Player requester, int foeId) {
+    removeFriend(requester, foeId);
+
+    log.debug("Adding '{}' as a foe of player '{}'", foeId, requester);
     socialRelationRepository.save(new SocialRelation(requester.getId(), requester, foeId, SocialRelationStatus.FOE));
   }
 
+  @Transactional
   public void removeFriend(Player requester, int friendId) {
+    log.debug("Removing '{}' as a friend of player '{}'", friendId, requester);
     socialRelationRepository.deleteByPlayerIdAndSubjectIdAndStatus(requester.getId(), friendId, SocialRelationStatus.FRIEND);
   }
 
-  public void removeFoe(Player requester, int friendId) {
-    socialRelationRepository.deleteByPlayerIdAndSubjectIdAndStatus(requester.getId(), friendId, SocialRelationStatus.FOE);
+  @Transactional
+  public void removeFoe(Player requester, int foeId) {
+    log.debug("Removing '{}' as a foe of player '{}'", foeId, requester);
+    socialRelationRepository.deleteByPlayerIdAndSubjectIdAndStatus(requester.getId(), foeId, SocialRelationStatus.FOE);
   }
 
   @EventListener
@@ -49,7 +65,7 @@ public class SocialService {
 
     clientService.sendSocialRelations(new SocialRelationListResponse(
       socialRelations.stream()
-        .map(socialRelation -> new SocialRelationListResponse.SocialRelation(
+        .map(socialRelation -> new SocialRelationResponse(
           socialRelation.getSubjectId(), RelationType.valueOf(socialRelation.getStatus().toString())))
         .collect(Collectors.toList())
     ), player);

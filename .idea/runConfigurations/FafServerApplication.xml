@@ -11,6 +11,18 @@
     <option name="ENABLE_JMX_AGENT" value="false" />
     <option name="VM_PARAMETERS" value="-server -Xms128m -Xmx768m -XX:MaxMetaspaceSize=196m -XX:MinHeapFreeRatio=25 -XX:MaxHeapFreeRatio=40 -XX:+UseG1GC -XX:+UseStringDeduplication -XX:-HeapDumpOnOutOfMemoryError" />
     <option name="ALTERNATIVE_JRE_PATH" />
+    <additionalParameters>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="faf-server.ice.twilio.auth-token" />
+        <option name="value" value="c2b7abd989e129160e378a6925fc21db" />
+      </param>
+      <param>
+        <option name="enabled" value="true" />
+        <option name="name" value="faf-server.ice.twilio.account-sid" />
+        <option name="value" value="AC826a4dd9967612d5ad8b018bfc267739" />
+      </param>
+    </additionalParameters>
     <module name="faf-java-server_main" />
     <envs />
     <method />

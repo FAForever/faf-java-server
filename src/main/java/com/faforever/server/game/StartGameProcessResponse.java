@@ -17,7 +17,7 @@ public class StartGameProcessResponse implements ServerMessage {
   private final String mod;
   private final int gameId;
   /**
-   * @deprecated the server should never send command line arguments. They should always be generated on server-side.
+   * @deprecated the server should never send command line arguments. They should always be generated on client side.
    * This is currently used for {@code /numgames} which shouldn't even be reported by a peer anyway, but looked up.
    */
   @Deprecated

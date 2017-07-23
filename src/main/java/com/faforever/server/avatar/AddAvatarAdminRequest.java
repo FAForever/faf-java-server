@@ -1,14 +1,14 @@
 package com.faforever.server.avatar;
 
 import com.faforever.server.common.ClientMessage;
-import lombok.Data;
+import lombok.Value;
 
 /**
  * @deprecated The client should use the API instead.
  */
 @Deprecated
-@Data
+@Value
 public class AddAvatarAdminRequest implements ClientMessage {
-  private final int avatarId;
-  private final int playerId;
+  int avatarId;
+  int playerId;
 }

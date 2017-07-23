@@ -1,6 +1,7 @@
 package com.faforever.server.matchmaker;
 
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
@@ -24,7 +25,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
@@ -32,6 +36,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -126,7 +132,7 @@ public class MatchMakerServiceTest {
     instance.processPools();
 
     verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any());
-    verify(gameService, never()).joinGame(anyInt(), any());
+    verify(gameService, never()).joinGame(anyInt(), eq(null), any());
   }
 
   /**
@@ -144,9 +150,9 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "faf", "SCMP_001",
+    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "faf", "maps/SCMP_001.zip",
       null, GameVisibility.PRIVATE, null, null, player1);
-    verify(gameService).joinGame(1, player2);
+    verify(gameService).joinGame(1, null, player2);
   }
 
   /**
@@ -168,7 +174,7 @@ public class MatchMakerServiceTest {
     instance.processPools();
 
     verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any());
-    verify(gameService, never()).joinGame(anyInt(), any());
+    verify(gameService, never()).joinGame(anyInt(), eq(null), any());
   }
 
   @Test
@@ -204,6 +210,25 @@ public class MatchMakerServiceTest {
     instance.removePlayer(player1);
 
     assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(1));
+  }
+
+  @Test
+  public void createMatch() throws Exception {
+    MatchParticipant participant1 = new MatchParticipant().setId(1);
+    MatchParticipant participant2 = new MatchParticipant().setId(2);
+
+    ConnectionAware requester = mock(ConnectionAware.class);
+    UUID requestId = UUID.randomUUID();
+    List<MatchParticipant> participants = Arrays.asList(
+      participant1, participant2
+    );
+    int mapVersionId = 1;
+
+    when(playerService.getOnlinePlayer(participant1.getId())).thenReturn(Optional.of((Player) new Player().setId(1)));
+    when(playerService.getOnlinePlayer(participant2.getId())).thenReturn(Optional.of((Player) new Player().setId(2)));
+    when(mapService.findMap(mapVersionId)).thenReturn(Optional.of(new MapVersion().setFilename("maps/foo.zip")));
+
+    instance.createMatch(requester, requestId, "Test match", "faf", participants, mapVersionId);
   }
 
   // TODO test updating queue

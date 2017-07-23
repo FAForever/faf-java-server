@@ -52,7 +52,7 @@ public class TwilioService implements IceServersProvider {
       Integer.parseInt(token.getTtl()),
       Instant.ofEpochSecond(token.getDateCreated().getMillis() / 1000),
       token.getIceServers().stream()
-        .map(iceServer -> new IceServer(iceServer.getUrl(), iceServer.getUsername(), iceServer.getCredential()))
+        .map(iceServer -> new IceServer(iceServer.getUrl(), iceServer.getUsername(), iceServer.getCredential(), "token"))
         .collect(Collectors.toList())
     );
   }
@@ -64,8 +64,8 @@ public class TwilioService implements IceServersProvider {
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
       Environment environment = context.getEnvironment();
-      return !Strings.isNullOrEmpty(environment.getProperty("faf-server.twilio.account-sid"))
-        && !Strings.isNullOrEmpty(environment.getProperty("faf-server.twilio.auth-token"));
+      return !Strings.isNullOrEmpty(environment.getProperty("faf-server.ice.twilio.account-sid"))
+        && !Strings.isNullOrEmpty(environment.getProperty("faf-server.ice.twilio.auth-token"));
     }
   }
 }

@@ -10,6 +10,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +24,10 @@ public class ServersResponseTransformerTest {
   @SuppressWarnings("unchecked")
   public void transform() throws Exception {
     Instant now = Instant.now();
-    List<IceServerList> iceServersLists = Arrays.asList(
+    List<IceServerList> iceServersLists = Collections.singletonList(
       new IceServerList(60, now, Arrays.asList(
-        new IceServer(URI.create("http://localhost:1234"), "junit1", "test1"),
-        new IceServer(URI.create("http://localhost:2345"), "junit2", "test2")
+        new IceServer(URI.create("http://localhost:1234"), "junit1", "test1", "token"),
+        new IceServer(URI.create("http://localhost:2345"), "junit2", "test2", "token")
       ))
     );
 

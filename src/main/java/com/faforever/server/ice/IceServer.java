@@ -9,4 +9,5 @@ public class IceServer {
   private final URI url;
   private final String username;
   private final String credential;
+  private final String credentialType;
 }

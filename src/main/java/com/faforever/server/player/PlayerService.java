@@ -6,7 +6,7 @@ import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.metrics.CounterService;
-import org.springframework.context.event.EventListener;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.management.MXBean;
@@ -28,17 +28,18 @@ public class PlayerService {
   private final Map<Integer, Player> onlinePlayersById;
   private final ClientService clientService;
   private final CounterService counterService;
+  private final ApplicationEventPublisher eventPublisher;
 
-  public PlayerService(ClientService clientService, CounterService counterService) {
+  public PlayerService(ClientService clientService, CounterService counterService, ApplicationEventPublisher eventPublisher) {
     this.clientService = clientService;
     this.counterService = counterService;
+    this.eventPublisher = eventPublisher;
     onlinePlayersById = new ConcurrentHashMap<>();
     Stream.of(PlayerGameState.values()).forEach(state -> counterService.reset(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, state)));
   }
 
-  @EventListener
-  public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
-    Player player = event.getPlayer();
+  public void setPlayerOnline(Player player) {
+    log.debug("Adding player '{}'", player);
 
     onlinePlayersById.put(player.getId(), player);
     counterService.increment(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, player.getGameState()));
@@ -46,13 +47,16 @@ public class PlayerService {
     List<Player> otherOnlinePlayers = getOtherOnlinePlayers(player);
     clientService.sendLoginDetails(player, player);
     clientService.sendPlayerInformation(otherOnlinePlayers, player);
+
+    eventPublisher.publishEvent(new PlayerOnlineEvent(this, player));
     announceOnline(player);
   }
 
   public void removePlayer(Player player) {
     log.debug("Removing player '{}'", player);
+
     if (onlinePlayersById.remove(player.getId()) != null) {
-      counterService.decrement(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, player.getGameState()));
+      eventPublisher.publishEvent(new PlayerOfflineEvent(this, player));
     }
   }
 
