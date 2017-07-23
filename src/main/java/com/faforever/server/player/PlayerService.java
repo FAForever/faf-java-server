@@ -1,19 +1,21 @@
 package com.faforever.server.player;
 
-import com.faforever.server.client.ClientDisconnectedEvent;
-import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
-import com.faforever.server.security.FafUserDetails;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
-import org.springframework.stereotype.Service;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.context.event.EventListener;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.stereotype.Service;
+
+import com.faforever.server.client.ClientDisconnectedEvent;
+import com.faforever.server.client.ClientService;
+import com.faforever.server.entity.Player;
+import com.faforever.server.security.FafUserDetails;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -35,7 +37,7 @@ public class PlayerService {
     onlinePlayersById.put(player.getId(), player);
     onlinePlayersById.values().stream()
       .filter(otherPlayer -> otherPlayer != player && otherPlayer.getClientConnection() != null)
-      .forEach(otherPlayer -> clientService.sendPlayerDetails(otherPlayer, player));
+      .forEach(otherPlayer -> clientService.sendPlayerDetails(player, otherPlayer));
   }
 
   @EventListener
