@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.util.Pair;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -476,7 +475,7 @@ public class GameService {
   /**
    * Tells all peers of the player with the specified ID to drop their connections to him/her.
    */
-  public void disconnectPlayerFromGame(Authentication requester, int playerId) {
+  public void disconnectPlayerFromGame(Player requester, int playerId) {
     Optional<Player> optional = playerService.getOnlinePlayer(playerId);
     if (!optional.isPresent()) {
       log.warn("User '{}' tried to disconnect unknown player '{}' from game", requester, playerId);

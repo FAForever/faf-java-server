@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 import static org.hamcrest.CoreMatchers.is;
@@ -41,8 +43,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -212,12 +214,13 @@ public class ClientServiceTest {
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
+    CompletableFuture<PlayerInformationResponses> sent = new CompletableFuture<>();
+    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerInformationResponses.class)))
+      .when(clientGateway).send(any(PlayerInformationResponses.class), eq(clientConnection));
+
     instance.sendPlayerInformation(players, connectionAware);
 
-    ArgumentCaptor<PlayerInformationResponses> captor = ArgumentCaptor.forClass(PlayerInformationResponses.class);
-    verify(clientGateway, timeout(30)).send(captor.capture(), eq(clientConnection));
-
-    PlayerInformationResponses responses = captor.getValue();
+    PlayerInformationResponses responses = sent.get(10, TimeUnit.SECONDS);
     assertThat(responses.getResponses(), hasSize(2));
 
     Iterator<PlayerInformationResponse> iterator = responses.getResponses().iterator();

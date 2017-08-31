@@ -842,7 +842,7 @@ public class GameServiceTest {
 
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(player3));
 
-    instance.disconnectPlayerFromGame(new TestingAuthenticationToken(new User(), null), 3);
+    instance.disconnectPlayerFromGame(player1, 3);
 
     ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
     verify(clientService).disconnectPlayerFromGame(eq(3), captor.capture());
@@ -856,14 +856,14 @@ public class GameServiceTest {
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerUnknown() throws Exception {
-    instance.disconnectPlayerFromGame(new TestingAuthenticationToken(new User(), null), 412312);
+    instance.disconnectPlayerFromGame(player1, 412312);
     verifyZeroInteractions(clientService);
   }
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(new Player()));
-    instance.disconnectPlayerFromGame(new TestingAuthenticationToken(new User(), null), 3);
+    instance.disconnectPlayerFromGame(player1, 3);
     verifyZeroInteractions(clientService);
   }
 

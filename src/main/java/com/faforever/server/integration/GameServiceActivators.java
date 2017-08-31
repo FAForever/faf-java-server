@@ -112,7 +112,7 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.DISCONNECT_PEER_REQUEST)
   public void disconnectFromGame(DisconnectPeerRequest request, @Header(USER_HEADER) Authentication authentication) {
-    gameService.disconnectPlayerFromGame(authentication, request.getPlayerId());
+    gameService.disconnectPlayerFromGame(getPlayer(authentication), request.getPlayerId());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.RESTORE_GAME_SESSION_REQUEST)
