@@ -11,6 +11,7 @@ import com.faforever.server.integration.legacy.transformer.LegacyRequestTransfor
 import com.faforever.server.integration.legacy.transformer.LegacyResponseTransformer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,9 +35,11 @@ import org.springframework.integration.ip.tcp.serializer.ByteArrayLengthHeaderSe
 import org.springframework.integration.splitter.AbstractMessageSplitter;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.GenericTransformer;
+import org.springframework.integration.util.CompositeExecutor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import javax.inject.Inject;
@@ -45,11 +48,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -114,12 +115,25 @@ public class LegacyAdapterConfig {
     connectionFactory.setUsingDirectBuffers(true);
     connectionFactory.getMapper().setApplySequence(true);
 
-    AtomicInteger threadCount = new AtomicInteger();
-    connectionFactory.setTaskExecutor(new ThreadPoolExecutor(
-      8, 8, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(serverProperties.getMessaging().getLegacyAdapterInboundQueueSize()),
-      (Runnable r) -> new Thread(r, "legacy-tcp-" + threadCount.incrementAndGet())
+    // See https://docs.spring.io/spring-integration/reference/html/ip.html#_thread_pool_task_executor_with_caller_runs_policy
+    connectionFactory.setTaskExecutor(new CompositeExecutor(
+      createNioTaskExecutor("legacy-io-"),
+      createNioTaskExecutor("legacy-assembler-")
     ));
+
     return connectionFactory;
+  }
+
+  @NotNull
+  private Executor createNioTaskExecutor(String threadNamePrefix) {
+    ThreadPoolTaskExecutor ioExecutor = new ThreadPoolTaskExecutor();
+    ioExecutor.setCorePoolSize(1);
+    ioExecutor.setMaxPoolSize(4);
+    ioExecutor.setQueueCapacity(0);
+    ioExecutor.setThreadNamePrefix(threadNamePrefix);
+    ioExecutor.setRejectedExecutionHandler(new AbortPolicy());
+    ioExecutor.initialize();
+    return ioExecutor;
   }
 
   /**
