@@ -1,7 +1,7 @@
 package com.faforever.server.stats.event;
 
 import com.faforever.server.api.ApiAccessor;
-import com.faforever.server.entity.Player;
+import com.faforever.server.api.dto.UpdatedEventResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +18,8 @@ public class EventService {
     this.apiAccessor = apiAccessor;
   }
 
-  public CompletableFuture<Void> executeBatchUpdate(Player player, List<EventUpdate> eventUpdates) {
-    log.debug("Updating '{}' events for player '{}'", eventUpdates.size(), player);
+  public CompletableFuture<List<UpdatedEventResponse>> executeBatchUpdate(List<EventUpdate> eventUpdates) {
+    log.debug("Updating '{}' events", eventUpdates.size());
     return CompletableFuture.completedFuture(apiAccessor.updateEvents(eventUpdates));
   }
 }

@@ -130,7 +130,7 @@ public class ClientServiceTest {
 
   @Test
   public void reportUpdatedAchievements() throws Exception {
-    List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", true, AchievementState.UNLOCKED));
+    List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", "1", null, AchievementState.UNLOCKED, true));
 
     instance.reportUpdatedAchievements(list, player);
 

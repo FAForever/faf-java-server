@@ -1,8 +1,11 @@
 package com.faforever.server.api;
 
 import com.faforever.server.api.dto.AchievementUpdateRequest;
+import com.faforever.server.api.dto.EventUpdateRequest;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.api.dto.UpdatedEventResponse;
 import com.faforever.server.config.ServerProperties;
+import com.faforever.server.stats.achievements.AchievementUpdate;
 import com.faforever.server.stats.event.EventUpdate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,7 @@ public class ApiAccessor {
     this.serverProperties = serverProperties;
   }
 
-  public List<UpdatedAchievementResponse> updateAchievements(List<com.faforever.server.stats.achievements.AchievementUpdate> achievementUpdates) {
+  public List<UpdatedAchievementResponse> updateAchievements(List<AchievementUpdate> achievementUpdates) {
     List<AchievementUpdateRequest> updates = achievementUpdates.stream()
       .map(AchievementUpdateRequest::fromInternal)
       .collect(Collectors.toList());
@@ -32,10 +35,11 @@ public class ApiAccessor {
   }
 
   @Async
-  public Void updateEvents(List<EventUpdate> eventUpdates) {
-    // FIXME implement
-//    return completedFuture(restOperations.patchForObject(url("/playerEvents"), eventUpdates, Void.class));
-    return null;
+  public List<UpdatedEventResponse> updateEvents(List<EventUpdate> eventUpdates) {
+    List<EventUpdateRequest> updates = eventUpdates.stream()
+      .map(EventUpdateRequest::fromInternal)
+      .collect(Collectors.toList());
+    return patch("/events/update", updates);
   }
 
   @SuppressWarnings("unchecked")

@@ -12,12 +12,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdatedAchievementResponse {
+public class UpdatedEventResponse {
 
   @Id
   private String id;
-  private String achievementId;
-  private Integer currentSteps;
-  private AchievementState state;
-  private boolean newlyUnlocked;
+  private String eventId;
+  private Integer currentCount;
 }
