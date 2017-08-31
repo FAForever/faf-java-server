@@ -7,8 +7,6 @@
     <bytecodeTargetLevel>
       <module name="faf-java-server_main" target="1.8" />
       <module name="faf-java-server_test" target="1.8" />
-      <module name="faf-server_main" target="1.8" />
-      <module name="faf-server_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

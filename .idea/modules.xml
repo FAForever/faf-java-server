@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/faf-java-server.iml" filepath="$PROJECT_DIR$/.idea/modules/faf-java-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/faf-java-server.iml" filepath="$PROJECT_DIR$/faf-java-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/faf-java-server_main.iml" filepath="$PROJECT_DIR$/.idea/modules/faf-java-server_main.iml" group="faf-java-server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/faf-java-server_test.iml" filepath="$PROJECT_DIR$/.idea/modules/faf-java-server_test.iml" group="faf-java-server" />
     </modules>
