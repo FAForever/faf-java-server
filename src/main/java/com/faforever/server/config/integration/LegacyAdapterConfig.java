@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.integration.context.IntegrationContextUtils;
-import org.springframework.integration.core.MessageSelector;
 import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
@@ -153,7 +152,6 @@ public class LegacyAdapterConfig {
       .transform(stringToLegacyByteArrayTransformer())
       .split(broadcastSplitter())
       .enrichHeaders(connectionIdEnricher())
-//      .filter(activeConnectionFilter())
       .handle(tcpSendingMessageHandler())
       .get();
   }
@@ -190,17 +188,6 @@ public class LegacyAdapterConfig {
 
   private void loggerFlow(IntegrationFlowDefinition<?> flow) {
     flow.handle(message -> log.trace("Incoming {}: {}", message));
-  }
-
-  /**
-   * As it may happen that clients disconnect before the server was able to send all pending messages to them, this
-   * filter aims to reduce the amount of failed messages by filtering out all messages whose recepient is no longer
-   * connected. Of course, a client may disconnect just after this filter but at least we minimize the number of such
-   * cases.
-   */
-  private MessageSelector activeConnectionFilter() {
-    return message -> tcpServerConnectionFactory().getOpenConnectionIds()
-      .contains((String) message.getHeaders().get(IpHeaders.CONNECTION_ID));
   }
 
   /**

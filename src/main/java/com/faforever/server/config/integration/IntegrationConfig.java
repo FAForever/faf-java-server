@@ -63,8 +63,6 @@ import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 @IntegrationComponentScan("com.faforever.server.integration")
 public class IntegrationConfig {
 
-  private static final String INBOUND_DISPATCH_POLLING_CONSUMER = "inboundDispatchPollingConsumer";
-
   /**
    * Reads messages from the standard client inbound channel. Messages are expected to have an authorization header.
    */

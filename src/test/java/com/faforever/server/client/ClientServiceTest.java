@@ -215,7 +215,7 @@ public class ClientServiceTest {
     instance.sendPlayerInformation(players, connectionAware);
 
     ArgumentCaptor<PlayerInformationResponses> captor = ArgumentCaptor.forClass(PlayerInformationResponses.class);
-    verify(clientGateway, timeout(5)).send(captor.capture(), eq(clientConnection));
+    verify(clientGateway, timeout(30)).send(captor.capture(), eq(clientConnection));
 
     PlayerInformationResponses responses = captor.getValue();
     assertThat(responses.getResponses(), hasSize(2));

@@ -156,7 +156,7 @@ public class GameServiceTest {
     serverProperties.getGame().setRankedMinTimeMultiplicator(-1);
 
     instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService,
-      taskScheduler, serverProperties, entityManager, armyStatisticsService);
+      serverProperties, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
   }
 

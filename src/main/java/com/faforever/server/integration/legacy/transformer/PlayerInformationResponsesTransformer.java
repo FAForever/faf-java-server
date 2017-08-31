@@ -34,6 +34,10 @@ public enum PlayerInformationResponsesTransformer implements GenericTransformer<
       .collect(Collectors.toCollection(ArrayList::new));
   }
 
+  private static double[] ratingToDoubleArray(Rating globalRating) {
+    return globalRating != null ? new double[]{globalRating.getMean(), globalRating.getDeviation()} : new double[2];
+  }
+
   static ImmutableMap<Object, Object> player(PlayerInformationResponse source) {
     Player player = source.getPlayer();
     Rating globalRating = player.getGlobalRating();
@@ -43,9 +47,9 @@ public enum PlayerInformationResponsesTransformer implements GenericTransformer<
     Builder<Object, Object> builder = ImmutableMap.builder()
       .put("id", source.getUserId())
       .put("login", source.getUsername())
-      .put("global_rating", globalRating != null ? new double[]{globalRating.getMean(), globalRating.getDeviation()} : new double[2])
-      .put("ladder_rating", ladder1v1Rating != null ? new double[]{ladder1v1Rating.getMean(), ladder1v1Rating.getDeviation()} : new double[2])
-      .put("number_of_games", globalRating != null ? player.getNumberOfGames() : 0)
+      .put("global_rating", ratingToDoubleArray(globalRating))
+      .put("ladder_rating", ratingToDoubleArray(ladder1v1Rating))
+      .put("number_of_games", Optional.of(player).map(Player::getNumberOfGames).orElse(0))
       .put("country", Optional.ofNullable(source.getCountry()).orElse(""));
 
     Optional.ofNullable(source.getPlayer().getClanTag()).ifPresent(clan -> builder.put("clan", clan));

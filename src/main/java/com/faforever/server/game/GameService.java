@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.util.Pair;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,7 +110,7 @@ public class GameService {
 
   public GameService(GameRepository gameRepository, ClientService clientService, MapService mapService,
                      ModService modService, PlayerService playerService, RatingService ratingService,
-                     TaskScheduler taskScheduler, ServerProperties properties, EntityManager entityManager,
+                     ServerProperties properties, EntityManager entityManager,
                      ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.clientService = clientService;
