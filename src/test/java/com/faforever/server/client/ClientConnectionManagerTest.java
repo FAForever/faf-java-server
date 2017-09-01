@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.boot.actuate.metrics.GaugeService;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 
@@ -32,7 +32,7 @@ public class ClientConnectionManagerTest {
   private ClientConnectionManager instance;
 
   @Mock
-  private GaugeService gaugeService;
+  private CounterService counterService;
   @Mock
   private ApplicationEventPublisher eventPublisher;
   @Mock
@@ -40,30 +40,31 @@ public class ClientConnectionManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    instance = new ClientConnectionManager(gaugeService, playerService, eventPublisher);
+    instance = new ClientConnectionManager(counterService, playerService, eventPublisher);
   }
 
   @Test
   public void updateConnections() throws Exception {
     InetAddress inetAddress = mock(InetAddress.class);
     instance.createClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(gaugeService).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
+    verify(counterService).increment(Metrics.ACTIVE_CONNECTIONS);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.createClientConnection("2", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(gaugeService).submit(Metrics.ACTIVE_CONNECTIONS, 2d);
+    verify(counterService, times(2)).increment(Metrics.ACTIVE_CONNECTIONS);
     assertThat(instance.getConnections(), hasSize(2));
 
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(gaugeService, times(2)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
+    verify(counterService).decrement(Metrics.ACTIVE_CONNECTIONS);
     assertThat(instance.getConnections(), hasSize(1));
 
+    // This connection has already been removed, so expect no change
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(gaugeService, times(3)).submit(Metrics.ACTIVE_CONNECTIONS, 1d);
+    verify(counterService).decrement(Metrics.ACTIVE_CONNECTIONS);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.removeConnection("2", Protocol.LEGACY_UTF_16);
-    verify(gaugeService).submit(Metrics.ACTIVE_CONNECTIONS, 0d);
+    verify(counterService, times(2)).decrement(Metrics.ACTIVE_CONNECTIONS);
     assertThat(instance.getConnections(), hasSize(0));
   }
 

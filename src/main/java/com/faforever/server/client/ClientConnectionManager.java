@@ -80,9 +80,9 @@ public class ClientConnectionManager {
       Optional.ofNullable(connections.remove(connectionId)).ifPresent(clientConnection -> {
         log.debug("Removing connection '{}' with protocol '{}'", connectionId, protocol);
         eventPublisher.publishEvent(new ClientDisconnectedEvent(clientConnection, clientConnection));
+        counterService.decrement(Metrics.ACTIVE_CONNECTIONS);
+        counterService.decrement(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol));
       });
-      counterService.decrement(Metrics.ACTIVE_CONNECTIONS);
-      counterService.decrement(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol));
     }
   }
 
