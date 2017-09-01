@@ -25,6 +25,7 @@ import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
+import com.faforever.server.stats.Metrics;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,7 +34,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.scheduling.TaskScheduler;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import javax.persistence.EntityManager;
@@ -108,7 +109,7 @@ public class GameServiceTest {
   @Mock
   private EntityManager entityManager;
   @Mock
-  private TaskScheduler taskScheduler;
+  private CounterService counterService;
 
   private Player player1;
   private Player player2;
@@ -149,13 +150,13 @@ public class GameServiceTest {
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
     when(modService.getFeaturedMod(FAF_TECHNICAL_NAME)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
-    doAnswer(invocation -> ((Player) invocation.getArgumentAt(0, Player.class)).setGlobalRating(new GlobalRating()))
+    doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
       .when(ratingService).initGlobalRating(any());
 
     serverProperties = new ServerProperties();
     serverProperties.getGame().setRankedMinTimeMultiplicator(-1);
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService,
+    instance = new GameService(gameRepository, counterService, clientService, mapService, modService, playerService, ratingService,
       serverProperties, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
   }
@@ -1021,6 +1022,7 @@ public class GameServiceTest {
   private void launchGame() {
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    verify(counterService).increment(Metrics.PLAYING_GAMES);
   }
 
   private void addPlayer(Game game, Player player, int team) {

@@ -111,6 +111,7 @@ public class IntegrationConfig {
       .from(ChannelNames.CLIENT_OUTBOUND_BROADCAST)
       .enrichHeaders(ImmutableMap.of(BROADCAST, true))
       .routeToRecipients(spec -> spec
+        // Add more channels here as more protocols come available
         .recipient(ChannelNames.LEGACY_OUTBOUND)
       )
       .get();

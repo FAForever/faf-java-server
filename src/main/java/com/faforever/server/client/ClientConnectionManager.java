@@ -5,7 +5,7 @@ import com.faforever.server.integration.Protocol;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.metrics.GaugeService;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -18,8 +18,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 /**
  * Keeps track of client connections.
@@ -32,23 +30,20 @@ public class ClientConnectionManager {
    * Client connections by connection ID.
    */
   private final Map<String, ClientConnection> connections;
-  private final GaugeService gaugeService;
+  private final CounterService counterService;
   private final PlayerService playerService;
   private final ApplicationEventPublisher eventPublisher;
-  private final Map<Protocol, AtomicInteger> connectionsByProtocol;
 
-  public ClientConnectionManager(GaugeService gaugeService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
-    this.gaugeService = gaugeService;
+  public ClientConnectionManager(CounterService counterService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
+    this.counterService = counterService;
     this.playerService = playerService;
     this.eventPublisher = eventPublisher;
     connections = new ConcurrentHashMap<>();
-    connectionsByProtocol = new ConcurrentHashMap<>();
   }
 
   @PostConstruct
   public void postConstruct() {
-    gaugeService.submit(Metrics.ACTIVE_CONNECTIONS, 0);
-    Stream.of(Protocol.values()).forEach(protocol -> submitProtocolConnections(protocol, 0));
+    counterService.reset(Metrics.ACTIVE_CONNECTIONS);
   }
 
   /**
@@ -60,9 +55,9 @@ public class ClientConnectionManager {
     synchronized (connections) {
       Assert.state(!connections.containsKey(connectionId), "A connection with ID " + connectionId + " already exists");
 
-      connectionsByProtocol.computeIfAbsent(protocol, p -> new AtomicInteger()).incrementAndGet();
       connections.put(connectionId, new ClientConnection(connectionId, protocol, inetAddress));
-      onConnectionsUpdated();
+      counterService.increment(Metrics.ACTIVE_CONNECTIONS);
+      counterService.increment(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol));
 
       return connections.get(connectionId);
     }
@@ -83,23 +78,12 @@ public class ClientConnectionManager {
   public void removeConnection(String connectionId, Protocol protocol) {
     synchronized (connections) {
       Optional.ofNullable(connections.remove(connectionId)).ifPresent(clientConnection -> {
-        log.debug("Removing connection '{}' at protocol '{}'", connectionId, protocol);
-        connectionsByProtocol.computeIfAbsent(clientConnection.getProtocol(), p -> new AtomicInteger()).decrementAndGet();
+        log.debug("Removing connection '{}' with protocol '{}'", connectionId, protocol);
         eventPublisher.publishEvent(new ClientDisconnectedEvent(clientConnection, clientConnection));
       });
-      onConnectionsUpdated();
+      counterService.decrement(Metrics.ACTIVE_CONNECTIONS);
+      counterService.decrement(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol));
     }
-  }
-
-  private void onConnectionsUpdated() {
-    int numberOfConnections = connections.size();
-    log.debug("Updating number of connections to: {}", numberOfConnections);
-    gaugeService.submit(Metrics.ACTIVE_CONNECTIONS, numberOfConnections);
-    connectionsByProtocol.forEach((protocol, counter) -> submitProtocolConnections(protocol, counter.doubleValue()));
-  }
-
-  private void submitProtocolConnections(Protocol protocol, double value) {
-    gaugeService.submit(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol.name()), value);
   }
 
   /**
