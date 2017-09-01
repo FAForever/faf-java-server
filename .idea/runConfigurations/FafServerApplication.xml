@@ -9,7 +9,7 @@
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.faforever.server.FafServerApplication" />
     <option name="ENABLE_LAUNCH_OPTIMIZATION" value="false" />
     <option name="ENABLE_JMX_AGENT" value="false" />
-    <option name="VM_PARAMETERS" value="-server -XX:MaxRAM=1536m -XX:MaxHeapFreeRatio=40 -XX:+UseG1GC -XX:+UseStringDeduplication -XX:-HeapDumpOnOutOfMemoryError" />
+    <option name="VM_PARAMETERS" value="-server -Xms64m -Xmx512m -XX:MaxMetaspaceSize=256m -XX:MinHeapFreeRatio=25 -XX:MaxHeapFreeRatio=40 -XX:+UseG1GC -XX:+UseStringDeduplication -XX:-HeapDumpOnOutOfMemoryError" />
     <option name="ALTERNATIVE_JRE_PATH" />
     <module name="faf-java-server_main" />
     <envs />
