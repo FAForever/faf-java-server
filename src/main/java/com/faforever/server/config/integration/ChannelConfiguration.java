@@ -1,4 +1,4 @@
-package com.faforever.server.config;
+package com.faforever.server.config.integration;
 
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.ClientConnectionChannelInterceptor;
@@ -25,27 +25,40 @@ public class ChannelConfiguration {
   private static final String ROLE_USER = "ROLE_USER";
   private static final String ROLE_ADMIN = "ROLE_ADMIN";
 
+  /**
+   * Channel that receives {@link com.faforever.server.common.ClientMessage ClientMessages} created by  client adapters.
+   * Each messages will have their headers enriched with connection information.
+   */
   @Bean(name = ChannelNames.CLIENT_INBOUND)
-  public MessageChannel clientInbound(SecurityContextChannelInterceptor securityContextChannelInterceptor,
-                                      ClientConnectionChannelInterceptor clientConnectionChannelInterceptor) {
+  public MessageChannel clientInbound(ClientConnectionChannelInterceptor clientConnectionChannelInterceptor) {
     return MessageChannels.direct()
       .interceptor(clientConnectionChannelInterceptor)
-      .interceptor(securityContextChannelInterceptor)
       .get();
   }
 
+  /**
+   * Takes all messages to be processed by the server (no matter whether produced by internal events or incoming
+   * messages) and schedules them to be processed by a single thread. Each messages will have their headers enriched
+   * with authentication information.
+   *
+   * @see ChannelNames#INBOUND_DISPATCH
+   */
   @Bean(name = ChannelNames.INBOUND_DISPATCH)
   public MessageChannel inboundDispatch(SecurityContextChannelInterceptor securityContextChannelInterceptor) {
     return MessageChannels
-      .executor(Executors.newSingleThreadExecutor(r -> new Thread(r, "inbound-dispatch")))
+      .executor(Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "inbound-dispatch")))
       .interceptor(securityContextChannelInterceptor)
       .get();
   }
 
+  /**
+   * Takes all {@link com.faforever.server.common.ServerMessage ServerMessages} to be received by a single client and
+   * schedules them to be sent by a single thread.
+   */
   @Bean(name = ChannelNames.CLIENT_OUTBOUND)
   public MessageChannel clientOutbound() {
     return MessageChannels
-      .executor(Executors.newFixedThreadPool(4, r -> new Thread(r, "client-outbound")))
+      .executor(Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "client-outbound")))
       .get();
   }
 

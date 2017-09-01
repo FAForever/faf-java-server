@@ -38,9 +38,7 @@ import org.springframework.integration.transformer.GenericTransformer;
 import org.springframework.integration.util.CompositeExecutor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import javax.inject.Inject;
 import java.net.InetAddress;
@@ -95,7 +93,6 @@ public class LegacyAdapterConfig {
   public TcpSendingMessageHandler tcpSendingMessageHandler() {
     TcpSendingMessageHandler handler = new TcpSendingMessageHandler();
     handler.setConnectionFactory(tcpServerConnectionFactory());
-    handler.setTaskScheduler(tcpSendingTaskScheduler());
     handler.setStatsEnabled(true);
     return handler;
   }
@@ -165,16 +162,12 @@ public class LegacyAdapterConfig {
       .transform(Transformers.toJson())
       .transform(stringToLegacyByteArrayTransformer())
       .split(broadcastSplitter())
+      // Handle each message in a single task so that one failing message does not prevent others from being sent.
+      // A message may fail if the receiving client is no longer connected
+      .channel(MessageChannels.executor(Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "legacy-tcp-out"))))
       .enrichHeaders(connectionIdEnricher())
       .handle(tcpSendingMessageHandler())
       .get();
-  }
-
-  private TaskScheduler tcpSendingTaskScheduler() {
-    ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-    scheduler.setThreadNamePrefix("tcp-legacy-out");
-    scheduler.setPoolSize(1);
-    return scheduler;
   }
 
   @EventListener

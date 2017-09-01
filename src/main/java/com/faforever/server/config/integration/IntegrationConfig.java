@@ -91,7 +91,7 @@ public class IntegrationConfig {
   }
 
   /**
-   * Reads messages from the standard outbound channel and sends it to the correct adapter's channel.
+   * Reads messages from the client outbound channel and sends it to the target adapter's channel.
    */
   @Bean
   public IntegrationFlow outboundFlow() {
