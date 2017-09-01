@@ -150,7 +150,7 @@ public class ServerProperties {
   @Data
   public static class Jetty {
     private int minThreads = 1;
-    private int maxThreads = 16;
+    private int maxThreads = 10;
     private int idleTimeoutMillis = 60000;
   }
 
@@ -159,10 +159,10 @@ public class ServerProperties {
     /**
      * Size of the inbound message queue. Incoming messages will be discarded as long as the queue is full.
      */
-    private int legacyAdapterInboundQueueSize = 100_000;
+    private int legacyAdapterInboundQueueSize = 5_000;
     /**
      * Size of the outbound message queue. Outgoing messages will be discarded as long as the queue is full.
      */
-    private int legacyAdapterOutboundQueueSize = 100_000;
+    private int legacyAdapterOutboundQueueSize = 40_000;
   }
 }

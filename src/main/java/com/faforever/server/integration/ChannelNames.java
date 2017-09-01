@@ -239,4 +239,9 @@ public final class ChannelNames {
    * client.
    */
   public static final String LEGACY_INBOUND = "legacyInbound";
+
+  /**
+   * Channel for raw legacy outbound messages to be written on the TCP socket.
+   */
+  public static final String LEGACY_TCP_OUTBOUND = "legacyTcpOutbound";
 }

@@ -51,9 +51,7 @@ logging:
     com.faforever.server.config.IntegrationConfig: info
     com.faforever.server.config.LegacyAdapterConfig: info
 
-server:
-  port: ${WEB_PORT:8088}
-
 management:
+  port: 8089
   security:
     enabled: false

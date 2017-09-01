@@ -47,8 +47,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -71,7 +73,14 @@ public class LegacyAdapterConfig {
    */
   @Bean(name = ChannelNames.LEGACY_INBOUND)
   public MessageChannel legacyInbound() {
-    return MessageChannels.executor(Executors.newFixedThreadPool(1, r -> new Thread(r, "legacy-in"))).get();
+    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+      1,
+      1,
+      0L, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<>(serverProperties.getMessaging().getLegacyAdapterInboundQueueSize()),
+      runnable -> new Thread(runnable, "legacy-in"));
+
+    return MessageChannels.executor(threadPoolExecutor).get();
   }
 
   /**
@@ -164,7 +173,7 @@ public class LegacyAdapterConfig {
       .split(broadcastSplitter())
       // Handle each message in a single task so that one failing message does not prevent others from being sent.
       // A message may fail if the receiving client is no longer connected
-      .channel(MessageChannels.executor(Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "legacy-tcp-out"))))
+      .channel(ChannelNames.LEGACY_TCP_OUTBOUND)
       .enrichHeaders(connectionIdEnricher())
       .handle(tcpSendingMessageHandler())
       .get();

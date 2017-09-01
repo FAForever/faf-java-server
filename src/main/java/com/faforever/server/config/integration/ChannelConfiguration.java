@@ -1,5 +1,6 @@
 package com.faforever.server.config.integration;
 
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.integration.ClientConnectionChannelInterceptor;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,9 @@ import org.springframework.messaging.SubscribableChannel;
 import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Creates Spring Integration channels. Bean names must match their entry in {@link
@@ -60,6 +64,23 @@ public class ChannelConfiguration {
     return MessageChannels
       .executor(Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "client-outbound")))
       .get();
+  }
+
+  /**
+   * Executor channel with limited queue size to prevent out of memory on excessive message production.
+   *
+   * @see ChannelNames#LEGACY_TCP_OUTBOUND
+   */
+  @Bean(name = ChannelNames.LEGACY_TCP_OUTBOUND)
+  public MessageChannel legacyTcpOutbound(ServerProperties properties) {
+    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+      1,
+      1,
+      0L, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<>(properties.getMessaging().getLegacyAdapterOutboundQueueSize()),
+      runnable -> new Thread(runnable, "legacy-tcp-out"));
+
+    return MessageChannels.executor(threadPoolExecutor).get();
   }
 
   @Bean(name = ChannelNames.JOIN_GAME_REQUEST)
