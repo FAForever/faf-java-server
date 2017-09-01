@@ -8,7 +8,6 @@ import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.common.ServerMessage;
-import com.faforever.server.config.integration.ChannelConfiguration;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
@@ -38,7 +37,7 @@ import com.faforever.server.stats.ArmyStatisticsReport;
 
 /**
  * Holds the names of all channel. A channel's name is also the name of its bean. Channels can be configured in {@link
- * ChannelConfiguration ChannelConfiguration}.
+ * com.faforever.server.config.integration.ChannelConfiguration}.
  */
 public final class ChannelNames {
 

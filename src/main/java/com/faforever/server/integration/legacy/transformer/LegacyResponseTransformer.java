@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Transforms responses into legacy response formats.
  */
-public class LegacyResponseTransformer implements GenericTransformer<ServerMessage, Map<String, Serializable>> {
+public final class LegacyResponseTransformer implements GenericTransformer<ServerMessage, Map<String, Serializable>> {
 
   // Can't convert to enum singleton since otherwise spring integration throws some "ambiguous parameter type" exception
   public static final LegacyResponseTransformer INSTANCE = new LegacyResponseTransformer();
