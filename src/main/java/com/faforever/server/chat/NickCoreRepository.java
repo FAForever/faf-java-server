@@ -16,7 +16,8 @@ public class NickCoreRepository {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  void updatePassword(String username, String password) {
+  // Don't make this package private, see https://jira.spring.io/browse/SPR-15911
+  public void updatePassword(String username, String password) {
     jdbcTemplate.update("UPDATE `faf-anope`.anope_db_NickCore SET pass = :password WHERE display = :username",
       ImmutableMap.of(
         "password", password,

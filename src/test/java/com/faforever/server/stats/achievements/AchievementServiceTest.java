@@ -35,7 +35,7 @@ public class AchievementServiceTest {
       new AchievementUpdate(1, AchievementId.ACH_AURORA, UpdateType.INCREMENT, 1)
     );
 
-    instance.executeBatchUpdate(player, achievementUpdates);
+    instance.executeBatchUpdate(achievementUpdates);
 
     verify(apiAccessor).updateAchievements(achievementUpdates);
   }

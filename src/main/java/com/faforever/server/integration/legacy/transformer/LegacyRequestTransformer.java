@@ -25,8 +25,11 @@ import com.faforever.server.game.GameAccess;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
+import com.faforever.server.game.GameStateReport;
 import com.faforever.server.game.GameVisibility;
+import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
@@ -34,8 +37,6 @@ import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.legacy.LegacyClientMessageType;
-import com.faforever.server.integration.request.GameStateReport;
-import com.faforever.server.integration.request.HostGameRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.social.AddFoeRequest;
@@ -73,14 +74,16 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
 
   @Override
   public ClientMessage transform(Map<String, Object> source) {
-    LegacyClientMessageType messageType = LegacyClientMessageType.fromString((String) source.get("command"));
+    String command = (String) source.get("command");
+    LegacyClientMessageType messageType = LegacyClientMessageType.fromString(command);
+    Requests.verify(messageType != null, ErrorCode.INVALID_COMMAND, command);
     switch (messageType) {
       case HOST_GAME:
         return handleHostGame(source);
       case JOIN_GAME:
         return new JoinGameRequest(((Double) source.get("uid")).intValue(), (String) source.get("password"));
       case ASK_SESSION:
-        return new SessionRequest();
+        return SessionRequest.INSTANCE;
       case SOCIAL_ADD:
         return handleSocialAdd(source);
       case SOCIAL_REMOVE:
@@ -101,9 +104,9 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), args.get(2));
       case CLEAR_SLOT:
         args = getArgs(source);
-        return new ClearSlotRequest((int) args.get(0));
+        return ClearSlotRequest.valueOf((int) args.get(0));
       case DESYNC:
-        return new DesyncReport();
+        return DesyncReport.INSTANCE;
       case GAME_MODS:
         return handleGameMods(source);
       case GAME_RESULT:
@@ -113,16 +116,18 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case JSON_STATS:
         return handleJsonStats(source);
       case ENFORCE_RATING:
-        return new EnforceRatingRequest();
+        return EnforceRatingRequest.INSTANCE;
       case TEAMKILL_REPORT:
         return handleTeamKillReport(source);
+      case MUTUAL_DRAW:
+        return new MutuallyAgreedDrawRequest();
       case AI_OPTION:
         return handleAiOption(source);
       case INITIATE_TEST:
         log.warn("Ignoring " + messageType);
         return null;
       case ICE_SERVERS:
-        return new IceServersRequest();
+        return IceServersRequest.INSTANCE;
       case ICE_MESSAGE:
         args = getArgs(source);
         return new IceMessage((int) args.get(0), args.get(1));
@@ -142,7 +147,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
   @NotNull
   private ClientMessage handleAvatar() {
     // FIXME implement?
-    return new AvatarMessage();
+    return AvatarMessage.INSTANCE;
   }
 
   private ClientMessage handleAdminAction(Map<String, Object> source) {
@@ -216,7 +221,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     }
 
     Outcome outcome = Outcome.fromString(results[0]);
-    return new ArmyOutcomeReport(armyId, outcome);
+    return ArmyOutcomeReport.valueOf(armyId, outcome);
   }
 
   private ClientMessage handleGameMods(Map<String, Object> source) {

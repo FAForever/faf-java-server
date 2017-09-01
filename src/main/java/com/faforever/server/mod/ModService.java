@@ -2,15 +2,14 @@ package com.faforever.server.mod;
 
 import com.faforever.server.cache.CacheNames;
 import com.faforever.server.client.ClientService;
-import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.entity.FeaturedMod;
+import com.faforever.server.player.PlayerOnlineEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,12 +70,12 @@ public class ModService {
   }
 
   @EventListener
-  public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
+  public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
     List<FeaturedMod> mods = getFeaturedMods().stream()
       .filter(FeaturedMod::isPublish)
       .collect(Collectors.toList());
 
-    clientService.sendModList(mods, ((ConnectionAware) event.getAuthentication().getDetails()));
+    clientService.sendModList(mods, event.getPlayer());
   }
 
   public boolean isCoop(FeaturedMod featuredMod) {

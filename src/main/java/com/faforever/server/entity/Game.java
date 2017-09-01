@@ -20,12 +20,15 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Entity
@@ -61,7 +64,7 @@ public class Game {
   private final List<ArmyStatistics> armyStatistics;
 
   /**
-   * Returns the list of players who are currently connected to the game.
+   * Returns the list of players who are currently connected to the game (including observers)
    */
   @Transient
   private final Map<Integer, Player> connectedPlayers;
@@ -71,6 +74,12 @@ public class Game {
    */
   @Transient
   private final Map<Integer, Map<String, Object>> playerOptions;
+
+  /**
+   * Set of player ids who accepted mutual draw
+   */
+  @Transient
+  private final Set<Integer> mutuallyAcceptedDrawPlayerIds;
 
   /**
    * Maps AI names to key-value option maps, like {@code "AI: Rufus" -> "Color" -> 1 }
@@ -96,7 +105,10 @@ public class Game {
   private Integer id;
 
   @Column(name = "startTime")
-  private Timestamp startTime;
+  private Instant startTime;
+
+  @Column(name = "endTime")
+  private Instant endTime;
 
   @Column(name = "gameType")
   private VictoryCondition victoryCondition;
@@ -131,7 +143,7 @@ public class Game {
   private Map<Integer, GamePlayerStats> playerStats;
 
   @Transient
-  private GameState state = GameState.INITIALIZING;
+  private GameState state;
 
   @Transient
   private String password;
@@ -155,24 +167,35 @@ public class Game {
   @Transient
   private boolean mutuallyAgreedDraw;
 
+  /**
+   * Future that is completed as soon as the game is ready to be joined. A game may never complete this future, for
+   * instance if the host's game crashes before entering lobby mode, so never wait without a timeout.
+   */
+  @Transient
+  private CompletableFuture<Game> joinableFuture;
+
   public Game(int id) {
     this();
     this.id = id;
   }
 
   public Game() {
+    state = GameState.INITIALIZING;
     playerOptions = new HashMap<>();
     options = new HashMap<>();
     aiOptions = new HashMap<>();
     reportedArmyScores = new HashMap<>();
     reportedArmyOutcomes = new HashMap<>();
+    mutuallyAcceptedDrawPlayerIds = new HashSet<>();
     armyStatistics = new ArrayList<>();
     playerStats = new HashMap<>();
     simMods = new ArrayList<>();
     connectedPlayers = new HashMap<>();
     desyncCounter = new AtomicInteger();
-    validity = Validity.RANKED;
+    validity = Validity.VALID;
     gameVisibility = GameVisibility.PUBLIC;
+    victoryCondition = VictoryCondition.DEMORALIZATION;
+    joinableFuture = new CompletableFuture<>();
   }
 
   public void replaceArmyStatistics(List<ArmyStatistics> newList) {
@@ -192,6 +215,7 @@ public class Game {
   public Game setState(GameState state) {
     GameState.verifyTransition(this.state, state);
     this.state = state;
+    joinableFuture.complete(this);
     return this;
   }
 }

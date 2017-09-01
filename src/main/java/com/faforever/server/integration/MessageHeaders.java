@@ -1,8 +1,28 @@
 package com.faforever.server.integration;
 
-public class MessageHeaders {
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+
+/**
+ * Holds the names of our own message headers.
+ */
+public final class MessageHeaders {
+
+  /** Boolean flag to indicate whether a message is to be broadcasted. */
   public static final String BROADCAST = "broadcast";
-  public static final String PROTOCOL = "protocol";
+
+  /**
+   * The {@link com.faforever.server.client.ClientConnection} a message belongs to. Basically, this tells us which
+   * client sent the message.
+   */
   public static final String CLIENT_CONNECTION = "clientConnection";
-  public static final String CLIENT_ADDRESS = "clientAddress";
+
+  /**
+   * Contains the sender's {@link org.springframework.security.core.Authentication}. Its principal is expected to be of
+   * type {@link com.faforever.server.security.FafUserDetails}.
+   */
+  public static final String USER_HEADER = SimpMessageHeaderAccessor.USER_HEADER;
+
+  private MessageHeaders() {
+    // Not instantiatable
+  }
 }

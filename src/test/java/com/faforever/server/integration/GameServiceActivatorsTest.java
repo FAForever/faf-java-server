@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
 
@@ -26,25 +27,27 @@ public class GameServiceActivatorsTest {
   @Mock
   private GameService gameService;
   private ClientConnection clientConnection;
+  private Player player;
 
   @Before
   public void setUp() throws Exception {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
-    User user = (User) new User().setPlayer(new Player()).setPassword("password").setLogin("JUnit");
-    clientConnection.setUserDetails(new FafUserDetails(user));
+    player = new Player();
+    User user = (User) new User().setPlayer(player).setPassword("password").setLogin("JUnit");
+    clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails(user), null));
 
     instance = new GameServiceActivators(gameService);
   }
 
   @Test
   public void disconnectFromGame() throws Exception {
-    instance.disconnectFromGame(new DisconnectPeerRequest(13), clientConnection);
-    verify(gameService).disconnectPlayerFromGame(clientConnection.getUserDetails().getUser(), 13);
+    instance.disconnectFromGame(new DisconnectPeerRequest(13), clientConnection.getAuthentication());
+    verify(gameService).disconnectPlayerFromGame(player, 13);
   }
 
   @Test
   public void restoreGameSession() throws Exception {
-    instance.restoreGameSession(new RestoreGameSessionRequest(5), clientConnection);
-    verify(gameService).restoreGameSession(new Player(), 5);
+    instance.restoreGameSession(new RestoreGameSessionRequest(5), clientConnection.getAuthentication());
+    verify(gameService).restoreGameSession(player, 5);
   }
 }

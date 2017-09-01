@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
 
@@ -33,14 +34,14 @@ public class IceServiceActivatorsTest {
     player.setClientConnection(clientConnection);
 
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
-      .setUserDetails(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")));
+      .setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")), null));
 
     instance = new IceServiceActivators(iceService);
   }
 
   @Test
   public void requestIceServers() throws Exception {
-    instance.requestIceServers(new IceServersRequest(), clientConnection);
+    instance.requestIceServers(IceServersRequest.INSTANCE, clientConnection.getAuthentication());
 
     verify(iceService).requestIceServers(player);
   }
@@ -48,7 +49,7 @@ public class IceServiceActivatorsTest {
   @Test
   public void forwardIceMessage() throws Exception {
     Object payload = new Object();
-    instance.forwardIceMessage(new IceMessage(42, payload), clientConnection);
+    instance.forwardIceMessage(new IceMessage(42, payload), clientConnection.getAuthentication());
 
     verify(iceService).forwardIceMessage(player, 42, payload);
   }

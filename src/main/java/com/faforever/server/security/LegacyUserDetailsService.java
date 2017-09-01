@@ -23,7 +23,7 @@ public class LegacyUserDetailsService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    return userRepository.findOneByLogin(username)
+    return userRepository.findOneByLoginIgnoreCase(username)
       .map(FafUserDetails::new)
       .orElseThrow(() -> new UsernameNotFoundException("User could not be found: " + username));
   }

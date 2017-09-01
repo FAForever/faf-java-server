@@ -1,8 +1,8 @@
 package com.faforever.server.map;
 
+import com.faforever.server.cache.CacheNames;
 import com.faforever.server.entity.MapVersion;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Random;
 
 @Service
-@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class MapService {
   private final MapVersionRepository mapVersionRepository;
   private final Ladder1v1MapRepository ladder1v1MapRepository;
@@ -22,6 +21,7 @@ public class MapService {
     this.random = new Random();
   }
 
+  @Cacheable(CacheNames.MAP_VERSIONS)
   public Optional<MapVersion> findMap(String filename) {
     return mapVersionRepository.findByFilenameIgnoreCase(filename);
   }

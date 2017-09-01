@@ -1,7 +1,5 @@
 package com.faforever.server.matchmaker;
 
-import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.FeaturedMod;
@@ -10,17 +8,14 @@ import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.MatchMakerBanDetails;
 import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
-import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
-import com.faforever.server.security.FafUserDetails;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,7 +24,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.net.InetAddress;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,7 +32,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -208,13 +201,7 @@ public class MatchMakerServiceTest {
 
     assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(2));
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
-      .setUserDetails(new FafUserDetails((User) new User()
-        .setPlayer(player1)
-        .setPassword("p")
-        .setLogin(player1.getLogin())));
-
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
+    instance.removePlayer(player1);
 
     assertThat(instance.getSearchPools().get(QUEUE_NAME).keySet(), hasSize(1));
   }

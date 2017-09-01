@@ -5,8 +5,9 @@ import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Chat;
 import com.faforever.server.entity.GroupAssociation;
 import com.faforever.server.entity.GroupAssociation.Group;
+import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
-import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.google.common.hash.Hashing;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,8 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -78,9 +77,8 @@ public class ChatServiceTest {
       .setPassword("pw")
       .setGroupAssociation(group == null ? null : new GroupAssociation().setGroup(group))
       .setLogin("junit");
-    TestingAuthenticationToken authentication = new TestingAuthenticationToken(new FafUserDetails(user), "foo");
 
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, new Player().setUser(user)));
 
     ArgumentCaptor<Set<String>> captor = ArgumentCaptor.forClass((Class) Set.class);
     verify(clientService).sendChatChannels(captor.capture(), any());

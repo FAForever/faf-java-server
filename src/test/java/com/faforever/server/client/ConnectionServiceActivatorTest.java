@@ -2,12 +2,12 @@ package com.faforever.server.client;
 
 import com.faforever.server.entity.User;
 import com.faforever.server.integration.Protocol;
-import com.faforever.server.security.FafUserDetails;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
 
@@ -32,7 +32,7 @@ public class ConnectionServiceActivatorTest {
       .setLogin("JUnit");
 
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
-      .setUserDetails(new FafUserDetails(user));
+      .setAuthentication(new TestingAuthenticationToken(user, null));
 
     instance = new ConnectionServiceActivator(clientConnectionManager);
   }
@@ -43,6 +43,6 @@ public class ConnectionServiceActivatorTest {
 
     instance.disconnectClientRequest(request, clientConnection);
 
-    verify(clientConnectionManager).disconnectClient(user, 1);
+    verify(clientConnectionManager).disconnectClient(new TestingAuthenticationToken(user, null), 1);
   }
 }

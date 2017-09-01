@@ -1,7 +1,6 @@
 package com.faforever.server.stats.event;
 
 import com.faforever.server.api.ApiAccessor;
-import com.faforever.server.entity.Player;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,12 +27,11 @@ public class EventServiceTest {
 
   @Test
   public void executeBatchUpdate() throws Exception {
-    Player player = new Player();
     List<EventUpdate> eventUpdates = Arrays.asList(
-      new EventUpdate(EventId.EVENT_AEON_PLAYS, 1),
-      new EventUpdate(EventId.EVENT_AEON_WINS, 1)
+      new EventUpdate(1, EventId.EVENT_AEON_PLAYS, 1),
+      new EventUpdate(2, EventId.EVENT_AEON_WINS, 1)
     );
-    instance.executeBatchUpdate(player, eventUpdates);
+    instance.executeBatchUpdate(eventUpdates);
 
     verify(apiAccessor).updateEvents(eventUpdates);
   }

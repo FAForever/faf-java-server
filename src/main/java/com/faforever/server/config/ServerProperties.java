@@ -25,6 +25,8 @@ public class ServerProperties {
   private Chat chat = new Chat();
   private Ice ice = new Ice();
   private Jwt jwt = new Jwt();
+  private Jetty jetty = new Jetty();
+  private Messaging messaging = new Messaging();
 
   @Data
   public static class Shutdown {
@@ -46,6 +48,11 @@ public class ServerProperties {
      * How many seconds a game needs to run per participating player in order to be ranked.
      */
     private int rankedMinTimeMultiplicator = 60;
+    /**
+     * How many seconds a game may be in state {@link com.faforever.server.entity.GameState#INITIALIZING} before it's
+     * being terminated.
+     */
+    private int staleGameTimeoutSeconds = 45;
   }
 
   @Data
@@ -138,5 +145,24 @@ public class ServerProperties {
      * Secret used to sign and verify JWT payload.
      */
     private String secret;
+  }
+
+  @Data
+  public static class Jetty {
+    private int minThreads = 1;
+    private int maxThreads = 16;
+    private int idleTimeoutMillis = 60000;
+  }
+
+  @Data
+  public static class Messaging {
+    /**
+     * Size of the inbound message queue. Incoming messages will be discarded as long as the queue is full.
+     */
+    private int legacyAdapterInboundQueueSize = 100_000;
+    /**
+     * Size of the outbound message queue. Outgoing messages will be discarded as long as the queue is full.
+     */
+    private int legacyAdapterOutboundQueueSize = 100_000;
   }
 }

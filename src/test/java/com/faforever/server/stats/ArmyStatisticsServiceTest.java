@@ -87,14 +87,14 @@ public class ArmyStatisticsServiceTest {
     eventUpdates = new ArrayList<>();
 
     doAnswer(invocation -> {
-      achievementUpdates.addAll((Collection<? extends AchievementUpdate>) invocation.getArguments()[1]);
+      achievementUpdates.addAll((Collection<? extends AchievementUpdate>) invocation.getArguments()[0]);
       return CompletableFuture.completedFuture(null);
-    }).when(achievementService).executeBatchUpdate(any(), any());
+    }).when(achievementService).executeBatchUpdate(any());
 
     doAnswer(invocation -> {
-      eventUpdates.addAll((Collection<? extends EventUpdate>) invocation.getArguments()[1]);
+      eventUpdates.addAll((Collection<? extends EventUpdate>) invocation.getArguments()[0]);
       return CompletableFuture.completedFuture(null);
-    }).when(eventService).executeBatchUpdate(any(), any());
+    }).when(eventService).executeBatchUpdate(any());
   }
 
   @Test
@@ -107,67 +107,68 @@ public class ArmyStatisticsServiceTest {
 
     instance.process(player, game, stats);
 
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_NOVICE, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_JUNIOR, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_SENIOR, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_VETERAN, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_ADDICT, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_THAAM, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_YENZYNE, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_SUTHANUS, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_DONT_MESS_WITH_ME, AchievementUpdate.UpdateType.INCREMENT, 3)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_NO_MERCY, AchievementUpdate.UpdateType.INCREMENT, 154)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_DEADLY_BUGS, AchievementUpdate.UpdateType.INCREMENT, 147)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_IT_AINT_A_CITY, AchievementUpdate.UpdateType.INCREMENT, 47)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_STORMY_SEA, AchievementUpdate.UpdateType.INCREMENT, 74)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_LANDLUBBER, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_SEAMAN, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_ADMIRAL_OF_THE_FLEET, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_DEATH_FROM_ABOVE, AchievementUpdate.UpdateType.INCREMENT, 71)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_ASS_WASHER, AchievementUpdate.UpdateType.INCREMENT, 37)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_ALIEN_INVASION, AchievementUpdate.UpdateType.INCREMENT, 41)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_FATTER_IS_BETTER, AchievementUpdate.UpdateType.INCREMENT, 73)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_ARACHNOLOGIST, AchievementUpdate.UpdateType.INCREMENT, 87)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_INCOMING_ROBOTS, AchievementUpdate.UpdateType.INCREMENT, 83)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_FLYING_DEATH, AchievementUpdate.UpdateType.INCREMENT, 49)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_HOLY_CRAB, AchievementUpdate.UpdateType.INCREMENT, 51)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_THE_TRANSPORTER, AchievementUpdate.UpdateType.INCREMENT, 101)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_DR_EVIL, AchievementUpdate.UpdateType.INCREMENT, 20)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_TECHIE, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_I_LOVE_BIG_TOYS, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_EXPERIMENTALIST, AchievementUpdate.UpdateType.INCREMENT, 1)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_WHO_NEEDS_SUPPORT, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, 110)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_WHAT_A_SWARM, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, 198)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_HATTRICK, AchievementUpdate.UpdateType.UNLOCK, 0)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_RAINMAKER, AchievementUpdate.UpdateType.UNLOCK, 0)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_NUCLEAR_WAR, AchievementUpdate.UpdateType.UNLOCK, 0)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_SO_MUCH_RESOURCES, AchievementUpdate.UpdateType.UNLOCK, 0)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_MAKE_IT_HAIL, AchievementUpdate.UpdateType.UNLOCK, 0)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_I_HAVE_A_CANON, AchievementUpdate.UpdateType.UNLOCK, 0)));
-    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_THAT_WAS_CLOSE, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    int playerId = 42;
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_NOVICE, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_JUNIOR, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_SENIOR, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_VETERAN, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_ADDICT, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_THAAM, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_YENZYNE, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_SUTHANUS, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_DONT_MESS_WITH_ME, AchievementUpdate.UpdateType.INCREMENT, 3)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_NO_MERCY, AchievementUpdate.UpdateType.INCREMENT, 154)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_DEADLY_BUGS, AchievementUpdate.UpdateType.INCREMENT, 147)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_IT_AINT_A_CITY, AchievementUpdate.UpdateType.INCREMENT, 47)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_STORMY_SEA, AchievementUpdate.UpdateType.INCREMENT, 74)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_LANDLUBBER, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_SEAMAN, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_ADMIRAL_OF_THE_FLEET, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_DEATH_FROM_ABOVE, AchievementUpdate.UpdateType.INCREMENT, 71)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_ASS_WASHER, AchievementUpdate.UpdateType.INCREMENT, 37)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_ALIEN_INVASION, AchievementUpdate.UpdateType.INCREMENT, 41)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_FATTER_IS_BETTER, AchievementUpdate.UpdateType.INCREMENT, 73)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_ARACHNOLOGIST, AchievementUpdate.UpdateType.INCREMENT, 87)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_INCOMING_ROBOTS, AchievementUpdate.UpdateType.INCREMENT, 83)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_FLYING_DEATH, AchievementUpdate.UpdateType.INCREMENT, 49)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_HOLY_CRAB, AchievementUpdate.UpdateType.INCREMENT, 51)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_THE_TRANSPORTER, AchievementUpdate.UpdateType.INCREMENT, 101)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_DR_EVIL, AchievementUpdate.UpdateType.INCREMENT, 20)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_TECHIE, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_I_LOVE_BIG_TOYS, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_EXPERIMENTALIST, AchievementUpdate.UpdateType.INCREMENT, 1)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_WHO_NEEDS_SUPPORT, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, 110)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_WHAT_A_SWARM, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, 198)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_HATTRICK, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_RAINMAKER, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_NUCLEAR_WAR, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_SO_MUCH_RESOURCES, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_MAKE_IT_HAIL, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_I_HAVE_A_CANON, AchievementUpdate.UpdateType.UNLOCK, 0)));
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_THAT_WAS_CLOSE, AchievementUpdate.UpdateType.UNLOCK, 0)));
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_ACUS, 0)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_AIR_UNITS, 1)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_AIR_UNITS, 2)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_LAND_UNITS, 4)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_LAND_UNITS, 5)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_NAVAL_UNITS, 33)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_NAVAL_UNITS, 11)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_TECH_1_UNITS, 12)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_TECH_2_UNITS, 13)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_TECH_3_UNITS, 14)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_TECH_1_UNITS, 16)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_TECH_2_UNITS, 17)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_TECH_3_UNITS, 18)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_EXPERIMENTALS, 19)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_EXPERIMENTALS, 20)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_LOST_ENGINEERS, 21)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_BUILT_ENGINEERS, 22)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_SERAPHIM_PLAYS, 1)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_SERAPHIM_WINS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_ACUS, 0)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_AIR_UNITS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_AIR_UNITS, 2)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_LAND_UNITS, 4)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_LAND_UNITS, 5)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_NAVAL_UNITS, 33)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_NAVAL_UNITS, 11)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_TECH_1_UNITS, 12)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_TECH_2_UNITS, 13)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_TECH_3_UNITS, 14)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_TECH_1_UNITS, 16)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_TECH_2_UNITS, 17)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_TECH_3_UNITS, 18)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_EXPERIMENTALS, 19)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_EXPERIMENTALS, 20)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_LOST_ENGINEERS, 21)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_BUILT_ENGINEERS, 22)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_SERAPHIM_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(playerId, EventId.EVENT_SERAPHIM_WINS, 1)));
 
-    verify(achievementService).executeBatchUpdate(player, achievementUpdates);
-    verify(eventService).executeBatchUpdate(player, eventUpdates);
+    verify(achievementService).executeBatchUpdate(achievementUpdates);
+    verify(eventService).executeBatchUpdate(eventUpdates);
   }
 
   @Test
@@ -280,8 +281,8 @@ public class ArmyStatisticsServiceTest {
   public void testFactionPlayedAeonSurvived() throws Exception {
     instance.factionPlayed(Faction.AEON, true, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_AEON_PLAYS, 1)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_AEON_WINS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_AEON_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_AEON_WINS, 1)));
 
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_AURORA, AchievementUpdate.UpdateType.INCREMENT, 1)));
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_BLAZE, AchievementUpdate.UpdateType.INCREMENT, 1)));
@@ -292,15 +293,15 @@ public class ArmyStatisticsServiceTest {
   public void testFactionPlayedAeonDied() throws Exception {
     instance.factionPlayed(Faction.AEON, false, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_AEON_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_AEON_PLAYS, 1)));
   }
 
   @Test
   public void testFactionPlayedCybranSurvived() throws Exception {
     instance.factionPlayed(Faction.CYBRAN, true, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_CYBRAN_PLAYS, 1)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_CYBRAN_WINS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_CYBRAN_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_CYBRAN_WINS, 1)));
 
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_MANTIS, AchievementUpdate.UpdateType.INCREMENT, 1)));
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_WAGNER, AchievementUpdate.UpdateType.INCREMENT, 1)));
@@ -311,15 +312,15 @@ public class ArmyStatisticsServiceTest {
   public void testFactionPlayedCybranDied() throws Exception {
     instance.factionPlayed(Faction.CYBRAN, false, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_CYBRAN_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_CYBRAN_PLAYS, 1)));
   }
 
   @Test
   public void testFactionPlayedUefSurvived() throws Exception {
     instance.factionPlayed(Faction.UEF, true, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_UEF_PLAYS, 1)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_UEF_WINS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_UEF_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_UEF_WINS, 1)));
 
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_MA12_STRIKER, AchievementUpdate.UpdateType.INCREMENT, 1)));
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_RIPTIDE, AchievementUpdate.UpdateType.INCREMENT, 1)));
@@ -330,15 +331,15 @@ public class ArmyStatisticsServiceTest {
   public void testFactionPlayedUefDied() throws Exception {
     instance.factionPlayed(Faction.UEF, false, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_UEF_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_UEF_PLAYS, 1)));
   }
 
   @Test
   public void testFactionPlayedSeraphimSurvived() throws Exception {
     instance.factionPlayed(Faction.SERAPHIM, true, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_SERAPHIM_PLAYS, 1)));
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_SERAPHIM_WINS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_SERAPHIM_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_SERAPHIM_WINS, 1)));
 
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_THAAM, AchievementUpdate.UpdateType.INCREMENT, 1)));
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_YENZYNE, AchievementUpdate.UpdateType.INCREMENT, 1)));
@@ -349,7 +350,7 @@ public class ArmyStatisticsServiceTest {
   public void testFactionPlayedSeraphimDied() throws Exception {
     instance.factionPlayed(Faction.SERAPHIM, false, achievementUpdates, eventUpdates, player.getId());
 
-    assertThat(eventUpdates, hasItem(new EventUpdate(EventId.EVENT_SERAPHIM_PLAYS, 1)));
+    assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_SERAPHIM_PLAYS, 1)));
     verifyZeroInteractions(achievementService);
   }
 

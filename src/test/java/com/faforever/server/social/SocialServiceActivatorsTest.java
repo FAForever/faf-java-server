@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
 
@@ -31,32 +32,33 @@ public class SocialServiceActivatorsTest {
     player = (Player) new Player().setId(1);
 
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
-    clientConnection.setUserDetails(new FafUserDetails((User) new User().setPlayer(player).setPassword("pw").setLogin("JUnit")));
+    clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User()
+      .setPlayer(player).setPassword("pw").setLogin("JUnit")), null));
 
     instance = new SocialServiceActivators(socialService);
   }
 
   @Test
   public void addFriend() throws Exception {
-    instance.addFriend(new AddFriendRequest(10), clientConnection);
+    instance.addFriend(new AddFriendRequest(10), clientConnection.getAuthentication());
     verify(socialService).addFriend(player, 10);
   }
 
   @Test
   public void addFoe() throws Exception {
-    instance.addFoe(new AddFoeRequest(10), clientConnection);
+    instance.addFoe(new AddFoeRequest(10), clientConnection.getAuthentication());
     verify(socialService).addFoe(player, 10);
   }
 
   @Test
   public void removeFriend() throws Exception {
-    instance.removeFriend(new RemoveFriendRequest(10), clientConnection);
+    instance.removeFriend(new RemoveFriendRequest(10), clientConnection.getAuthentication());
     verify(socialService).removeFriend(player, 10);
   }
 
   @Test
   public void removeFoe() throws Exception {
-    instance.removeFoe(new RemoveFoeRequest(10), clientConnection);
+    instance.removeFoe(new RemoveFoeRequest(10), clientConnection.getAuthentication());
     verify(socialService).removeFoe(player, 10);
   }
 }

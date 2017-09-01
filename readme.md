@@ -71,6 +71,7 @@ based server.
 | Produces very clear, well readable and helpful logs. | Produces a lot of unreadable, messy and useless log messages. |
 | Follows [Clean Code](https://dzone.com/articles/clean-code-principles?edition=154263&utm_source=Weekly%20Digest&utm_medium=email&utm_campaign=wd%202017-01-11) principles to assure high quality and maintainability. | Was built by "[Hackers](https://danielmiessler.com/study/programmer_hacker_developer/#gs.vEWu9K4)" with no greater design in mind, with focus on "getting the job done". |
 | Is actively maintained by me, and various other people are (interested in) contributing. | Hasn't had a committed maintainer for over a year, and nobody is willing take over. Many unfinished PRs are lying around as the original authors lost interest, and nobody is taking care. |
+| Uses a database abstraction technology so that the application is decoupled from the underlying database, which allows easy switching to another database. | Uses hardcoded SQL syntax that makes it expensive to switch to another database. |
 
 ## Solved problems of the current server
 
@@ -94,8 +95,6 @@ The following issues that exist in the Python server are not present in this Jav
 
 The following features of the Python server have not yet been implemented in this Java server:
 
-* Accepting "mutually agreed draw"
-* Timeout unstarted games
 * Send clan channels
 
 ## Additional features

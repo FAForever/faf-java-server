@@ -1,24 +1,23 @@
 package com.faforever.server.chat;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Chat;
 import com.faforever.server.entity.GroupAssociation;
+import com.faforever.server.entity.User;
 import com.faforever.server.error.ProgrammingError;
-import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.BadSqlGrammarException;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
-@Component
+@Service
 @Slf4j
 public class ChatService {
 
@@ -43,14 +42,14 @@ public class ChatService {
   }
 
   @EventListener
-  public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-    FafUserDetails userDetails = (FafUserDetails) event.getAuthentication().getPrincipal();
+  public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
     Chat chat = properties.getChat();
 
     Set<String> channels = new HashSet<>(3, 1);
     channels.addAll(chat.getDefaultChannels());
 
-    GroupAssociation groupAssociation = userDetails.getUser().getGroupAssociation();
+    User user = event.getPlayer().getUser();
+    GroupAssociation groupAssociation = user.getGroupAssociation();
     if (groupAssociation != null) {
       switch (groupAssociation.getGroup()) {
         case ADMIN:
@@ -63,10 +62,7 @@ public class ChatService {
           throw new ProgrammingError("Uncovered group: " + groupAssociation.getGroup());
       }
     }
-    // FIXME send clan channels as well (related to FAForever/faf-java-server#2)
 
-    // FafUserDetails is only made connection-aware after authentication. Instead, the the authentication details
-    // contains a ConnectionAware
-    clientService.sendChatChannels(channels, (ConnectionAware) event.getAuthentication().getDetails());
+    clientService.sendChatChannels(channels, event.getPlayer());
   }
 }

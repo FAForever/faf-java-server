@@ -1,15 +1,18 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.client.ClientConnection;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.teamkill.TeamKillService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.security.core.Authentication;
 
-import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
+import static com.faforever.server.integration.MessageHeaders.USER_HEADER;
 
-
+/**
+ * Message endpoint that takes team kill messages and calls the respective methods on the {@link TeamKillService}.
+ */
 @MessageEndpoint
 public class TeamKillServiceActivator {
   private final TeamKillService teamKillService;
@@ -19,7 +22,7 @@ public class TeamKillServiceActivator {
   }
 
   @ServiceActivator(inputChannel = ChannelNames.TEAM_KILL_REPORT)
-  public void reportTeamKill(TeamKillReport report, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    teamKillService.reportTeamKill(clientConnection.getUserDetails().getPlayer(), report.getTime(), report.getKillerId(), report.getVictimId());
+  public void reportTeamKill(TeamKillReport report, @Header(USER_HEADER) Authentication authentication) {
+    teamKillService.reportTeamKill(((FafUserDetails) authentication.getPrincipal()).getPlayer(), report.getTime(), report.getKillerId(), report.getVictimId());
   }
 }

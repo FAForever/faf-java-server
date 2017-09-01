@@ -7,7 +7,7 @@ spring:
     username: ${DATABASE_USERNAME:faf-server}
     password: ${DATABASE_PASSWORD:banana}
   jpa:
-    show-sql: true
+    show-sql: false
   boot:
     admin:
       url: ${SPRING_BOOT_ADMIN_URL:http://localhost:8030}
@@ -29,4 +29,4 @@ faf-server:
 
 logging:
   level:
-    com.faforever.server: trace
+    com.faforever.server: warn

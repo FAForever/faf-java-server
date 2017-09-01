@@ -15,7 +15,11 @@ before_install:
   - sudo mv /tmp/docker-compose /usr/local/bin
 
 install:
-  - git clone https://github.com/FAForever/faf-stack.git
+  - git clone https://github.com/FAForever/faf-stack.git faf-stack
+      && pushd faf-stack
+      && git checkout 024322dfef9c600f458b91baeb1b4a7326b31580
+      && cp -r config.template config
+      && popd
   - docker-compose -f faf-stack/docker-compose.yml up -d faf-db
 
 script:
@@ -23,7 +27,7 @@ script:
 
 after_success:
   - ./gradlew jacocoTestReport coveralls
-  - if [ "${TRAVIS_BRANCH}" == "master" ]; then
+  - if [ -n "${TRAVIS_TAG}" ]; then
       ./gradlew pushDockerImage;
     fi
   - if [ "${TRAVIS_BRANCH}" == "develop" ]; then

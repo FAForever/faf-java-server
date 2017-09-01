@@ -1,5 +1,5 @@
 faf-server:
-  version:
+  version: #faf-server.version#
   true-skill:
     initial-mean: 1500
     initial-standard-deviation: 500
@@ -16,16 +16,17 @@ faf-server:
     client-secret: ${API_CLIENT_SECRET}
     access-token-uri: ${API_ACCESS_TOKEN_URI}
     max-page-size: 10000
+  game:
+    stale-game-timeout-seconds: ${STALE_GAME_TIMEOUT_SECONDS:60}
 
 spring:
   application:
     name: FAF Java Server Prototype
   datasource:
-    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      connection-test-query: SELECT 1 FROM DUAL
       minimum-idle: 2
-      maximum-pool-size: 8
+      maximum-pool-size: 4
   jpa:
     hibernate:
       naming:
@@ -37,11 +38,12 @@ spring:
   profiles:
     active: ${SERVER_PROFILE:dev}
   main:
-    banner-mode: off
+    banner-mode: console
 
 logging:
   level:
-    org.springframework: warn
+    org.springframework: info
+    org.springframework.integration: warn
     com.faforever.server: info
     com.zaxxer.hikari: warn
     org.hibernate: warn
@@ -51,3 +53,7 @@ logging:
 
 server:
   port: ${WEB_PORT:8088}
+
+management:
+  security:
+    enabled: false

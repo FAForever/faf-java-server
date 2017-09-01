@@ -151,13 +151,13 @@ public class ArmyStatisticsService {
     lowestAcuHealth(count(unitStats, ArmyStatistics.UnitStats::getLowestHealth, Unit.ACUS), survived, achievementUpdates, playerId);
     highscore(scoredHighest, numberOfHumans, achievementUpdates, playerId);
 
-    eventService.executeBatchUpdate(player, eventUpdates)
+    eventService.executeBatchUpdate(eventUpdates)
       .exceptionally(throwable -> {
         log.warn("Could not report '" + eventUpdates.size() + "' event updates for player '" + player + "'", throwable);
         return null;
       });
 
-    achievementService.executeBatchUpdate(player, achievementUpdates)
+    achievementService.executeBatchUpdate(achievementUpdates)
       .thenAccept(playerAchievements -> clientService.reportUpdatedAchievements(playerAchievements, player))
       .exceptionally(throwable -> {
         log.warn("Could not report '" + achievementUpdates.size() + "' achievement updates for player '" + player + "'", throwable);
@@ -237,8 +237,8 @@ public class ArmyStatisticsService {
     achievementUpdates.add(new AchievementUpdate(playerId, achievementId, AchievementUpdate.UpdateType.SET_STEPS_AT_LEAST, steps));
   }
 
-  private void recordEvent(EventId eventId, int count, List<EventUpdate> eventUpdates) {
-    eventUpdates.add(new EventUpdate(eventId, count));
+  private void recordEvent(EventId eventId, int count, List<EventUpdate> eventUpdates, int playerId) {
+    eventUpdates.add(new EventUpdate(playerId, eventId, count));
   }
 
   private int countBuiltUnits(Map<String, ArmyStatistics.UnitStats> unitStats, Unit... units) {
@@ -260,23 +260,23 @@ public class ArmyStatisticsService {
     int builtNaval = categoryStats.getNaval().getBuilt();
     int builtExperimentals = categoryStats.getExperimental().getBuilt();
 
-    recordEvent(EventId.EVENT_BUILT_AIR_UNITS, builtAir, eventUpdates);
-    recordEvent(EventId.EVENT_LOST_AIR_UNITS, categoryStats.getAir().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_LAND_UNITS, builtLand, eventUpdates);
-    recordEvent(EventId.EVENT_LOST_LAND_UNITS, categoryStats.getLand().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_NAVAL_UNITS, builtNaval, eventUpdates);
-    recordEvent(EventId.EVENT_LOST_NAVAL_UNITS, categoryStats.getNaval().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_LOST_ACUS, categoryStats.getCdr().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_TECH_1_UNITS, categoryStats.getTech1().getBuilt(), eventUpdates);
-    recordEvent(EventId.EVENT_LOST_TECH_1_UNITS, categoryStats.getTech1().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_TECH_2_UNITS, categoryStats.getTech2().getBuilt(), eventUpdates);
-    recordEvent(EventId.EVENT_LOST_TECH_2_UNITS, categoryStats.getTech2().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_TECH_3_UNITS, categoryStats.getTech3().getBuilt(), eventUpdates);
-    recordEvent(EventId.EVENT_LOST_TECH_3_UNITS, categoryStats.getTech3().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_EXPERIMENTALS, builtExperimentals, eventUpdates);
-    recordEvent(EventId.EVENT_LOST_EXPERIMENTALS, categoryStats.getExperimental().getLost(), eventUpdates);
-    recordEvent(EventId.EVENT_BUILT_ENGINEERS, categoryStats.getEngineer().getBuilt(), eventUpdates);
-    recordEvent(EventId.EVENT_LOST_ENGINEERS, categoryStats.getEngineer().getLost(), eventUpdates);
+    recordEvent(EventId.EVENT_BUILT_AIR_UNITS, builtAir, eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_AIR_UNITS, categoryStats.getAir().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_LAND_UNITS, builtLand, eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_LAND_UNITS, categoryStats.getLand().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_NAVAL_UNITS, builtNaval, eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_NAVAL_UNITS, categoryStats.getNaval().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_ACUS, categoryStats.getCdr().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_TECH_1_UNITS, categoryStats.getTech1().getBuilt(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_TECH_1_UNITS, categoryStats.getTech1().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_TECH_2_UNITS, categoryStats.getTech2().getBuilt(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_TECH_2_UNITS, categoryStats.getTech2().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_TECH_3_UNITS, categoryStats.getTech3().getBuilt(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_TECH_3_UNITS, categoryStats.getTech3().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_EXPERIMENTALS, builtExperimentals, eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_EXPERIMENTALS, categoryStats.getExperimental().getLost(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_BUILT_ENGINEERS, categoryStats.getEngineer().getBuilt(), eventUpdates, playerId);
+    recordEvent(EventId.EVENT_LOST_ENGINEERS, categoryStats.getEngineer().getLost(), eventUpdates, playerId);
 
     if (survived) {
       if (builtAir > builtLand && builtAir > builtNaval) {
@@ -308,37 +308,37 @@ public class ArmyStatisticsService {
   @VisibleForTesting
   void factionPlayed(Faction faction, boolean survived, List<AchievementUpdate> achievementUpdates, List<EventUpdate> eventUpdates, int playerId) {
     if (faction == Faction.AEON) {
-      recordEvent(EventId.EVENT_AEON_PLAYS, 1, eventUpdates);
+      recordEvent(EventId.EVENT_AEON_PLAYS, 1, eventUpdates, playerId);
 
       if (survived) {
-        recordEvent(EventId.EVENT_AEON_WINS, 1, eventUpdates);
+        recordEvent(EventId.EVENT_AEON_WINS, 1, eventUpdates, playerId);
         increment(AchievementId.ACH_AURORA, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_BLAZE, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_SERENITY, 1, achievementUpdates, playerId);
       }
     } else if (faction == Faction.CYBRAN) {
-      recordEvent(EventId.EVENT_CYBRAN_PLAYS, 1, eventUpdates);
+      recordEvent(EventId.EVENT_CYBRAN_PLAYS, 1, eventUpdates, playerId);
 
       if (survived) {
-        recordEvent(EventId.EVENT_CYBRAN_WINS, 1, eventUpdates);
+        recordEvent(EventId.EVENT_CYBRAN_WINS, 1, eventUpdates, playerId);
         increment(AchievementId.ACH_MANTIS, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_WAGNER, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_TREBUCHET, 1, achievementUpdates, playerId);
       }
     } else if (faction == Faction.UEF) {
-      recordEvent(EventId.EVENT_UEF_PLAYS, 1, eventUpdates);
+      recordEvent(EventId.EVENT_UEF_PLAYS, 1, eventUpdates, playerId);
 
       if (survived) {
-        recordEvent(EventId.EVENT_UEF_WINS, 1, eventUpdates);
+        recordEvent(EventId.EVENT_UEF_WINS, 1, eventUpdates, playerId);
         increment(AchievementId.ACH_MA12_STRIKER, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_RIPTIDE, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_DEMOLISHER, 1, achievementUpdates, playerId);
       }
     } else if (faction == Faction.SERAPHIM) {
-      recordEvent(EventId.EVENT_SERAPHIM_PLAYS, 1, eventUpdates);
+      recordEvent(EventId.EVENT_SERAPHIM_PLAYS, 1, eventUpdates, playerId);
 
       if (survived) {
-        recordEvent(EventId.EVENT_SERAPHIM_WINS, 1, eventUpdates);
+        recordEvent(EventId.EVENT_SERAPHIM_WINS, 1, eventUpdates, playerId);
         increment(AchievementId.ACH_THAAM, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_YENZYNE, 1, achievementUpdates, playerId);
         increment(AchievementId.ACH_SUTHANUS, 1, achievementUpdates, playerId);

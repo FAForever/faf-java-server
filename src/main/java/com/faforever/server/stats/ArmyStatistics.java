@@ -4,6 +4,7 @@ import com.faforever.server.game.Faction;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
 import java.util.Map;
@@ -15,6 +16,7 @@ public class ArmyStatistics {
   private String name;
   private BrainType type;
   @JsonProperty("blueprints")
+  @JsonDeserialize(using = MapOfUnitStatsDeserializer.class)
   private Map<String, UnitStats> unitStats;
   @JsonProperty("units")
   private CategoryStats categoryStats;

@@ -14,12 +14,12 @@ import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
-import com.faforever.server.integration.response.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.UserDetailsResponse;
+import com.faforever.server.player.PlayerInformationResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,14 +31,19 @@ import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
+import static java.util.Collections.emptyList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -125,7 +130,7 @@ public class ClientServiceTest {
 
   @Test
   public void reportUpdatedAchievements() throws Exception {
-    List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", true, AchievementState.UNLOCKED));
+    List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", "1", null, AchievementState.UNLOCKED, true));
 
     instance.reportUpdatedAchievements(list, player);
 
@@ -151,12 +156,12 @@ public class ClientServiceTest {
       .setLogin("JUnit")
       .setId(5);
 
-    instance.sendPlayerDetails(player, player);
+    instance.sendLoginDetails(player, player);
 
-    ArgumentCaptor<UserDetailsResponse> captor = ArgumentCaptor.forClass(UserDetailsResponse.class);
+    ArgumentCaptor<PlayerInformationResponse> captor = ArgumentCaptor.forClass(PlayerInformationResponse.class);
     verify(clientGateway).send(captor.capture(), any());
 
-    UserDetailsResponse response = captor.getValue();
+    PlayerInformationResponse response = captor.getValue();
     assertThat(response.getUserId(), is(5));
     assertThat(response.getUsername(), is("JUnit"));
     assertThat(response.getPlayer().getAvatar().getTooltip(), is("Tooltip"));
@@ -196,29 +201,37 @@ public class ClientServiceTest {
   public void disconnectPlayerSendsToAllPlayersInGame() throws Exception {
     List<Player> recipients = Arrays.asList(player, new Player(), new Player(), new Player());
 
-    instance.disconnectPlayer(12, recipients);
+    instance.disconnectPlayerFromGame(12, recipients);
 
-    verify(clientGateway, times(4)).send(any(DisconnectPlayerResponse.class), any());
+    verify(clientGateway, times(4)).send(any(DisconnectPlayerFromGameResponse.class), any());
   }
 
   @Test
   public void sendOnlinePlayerList() throws Exception {
-    List<UserDetailsResponse> players = Arrays.asList(
-      new UserDetailsResponse(1, "JUnit", "CH", null),
-      new UserDetailsResponse(2, "JUnit2", "CH", null)
+    List<Player> players = Arrays.asList(
+      (Player) new Player().setAvailableAvatars(emptyList()).setId(1).setLogin("JUnit").setCountry("CH"),
+      (Player) new Player().setAvailableAvatars(emptyList()).setId(2).setLogin("JUnit").setCountry("CH")
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
-    instance.sendOnlinePlayerList(players, connectionAware);
+    CompletableFuture<PlayerInformationResponses> sent = new CompletableFuture<>();
+    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerInformationResponses.class)))
+      .when(clientGateway).send(any(PlayerInformationResponses.class), eq(clientConnection));
 
-    verify(clientGateway).send(players.get(0), clientConnection);
-    verify(clientGateway).send(players.get(1), clientConnection);
+    instance.sendPlayerInformation(players, connectionAware);
+
+    PlayerInformationResponses responses = sent.get(10, TimeUnit.SECONDS);
+    assertThat(responses.getResponses(), hasSize(2));
+
+    Iterator<PlayerInformationResponse> iterator = responses.getResponses().iterator();
+    assertThat(iterator.next().getUserId(), is(1));
+    assertThat(iterator.next().getUserId(), is(2));
   }
 
   @Test
   public void sendIceServers() throws Exception {
     List<IceServerList> iceServers = Collections.singletonList(
-      new IceServerList(60, Instant.now(), Collections.emptyList())
+      new IceServerList(60, Instant.now(), emptyList())
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 

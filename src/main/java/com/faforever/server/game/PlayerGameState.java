@@ -51,6 +51,13 @@ public enum PlayerGameState {
    * {@link IllegalStateException} is thrown.
    */
   public static void verifyTransition(@NotNull PlayerGameState oldState, @NotNull PlayerGameState newState) {
-    Assert.state(newState == NONE || newState.transitionsFrom.contains(oldState), "Can't transition from " + oldState + " to " + newState);
+    Assert.state(canTransition(oldState, newState), "Can't transition from " + oldState + " to " + newState);
+  }
+
+  /**
+   * Checks whether a player's game is allowed to transition from an old state into a new state.
+   */
+  public static boolean canTransition(@NotNull PlayerGameState oldState, @NotNull PlayerGameState newState) {
+    return newState == NONE || newState.transitionsFrom.contains(oldState);
   }
 }

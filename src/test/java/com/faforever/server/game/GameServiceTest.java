@@ -1,7 +1,6 @@
 package com.faforever.server.game;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.config.ServerProperties;
@@ -20,11 +19,13 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
+import com.faforever.server.stats.Metrics;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,12 +34,11 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
 import javax.persistence.EntityManager;
 import java.net.InetAddress;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -108,6 +108,8 @@ public class GameServiceTest {
   private PlayerService playerService;
   @Mock
   private EntityManager entityManager;
+  @Mock
+  private CounterService counterService;
 
   private Player player1;
   private Player player2;
@@ -124,7 +126,7 @@ public class GameServiceTest {
       .setMap(map)
       .setFeaturedMod(new FeaturedMod())
       .setVictoryCondition(VictoryCondition.DEMORALIZATION)
-      .setStartTime(Timestamp.from(Instant.now().plusSeconds(999)));
+      .setStartTime(Instant.now().plusSeconds(999));
     game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
     game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
     game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "Off");
@@ -154,14 +156,15 @@ public class GameServiceTest {
     serverProperties = new ServerProperties();
     serverProperties.getGame().setRankedMinTimeMultiplicator(-1);
 
-    instance = new GameService(gameRepository, clientService, mapService, modService, playerService, ratingService, serverProperties, entityManager, armyStatisticsService);
+    instance = new GameService(gameRepository, counterService, clientService, mapService, modService, playerService, ratingService,
+      serverProperties, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
   }
 
   @Test
   public void createGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
 
     Optional<Game> optional = instance.getActiveGame(NEXT_GAME_ID);
     assertThat(optional.isPresent(), is(true));
@@ -329,6 +332,59 @@ public class GameServiceTest {
     assertThat(game.getReportedArmyScores().get(player2.getId()), hasSize(2));
   }
 
+  /**
+   * Tests whether the service correctly chooses the scores reported by the majority of connected players and ignores
+   * the results reported by a "cheater" (that is, someone who reports different results).
+   */
+  @Test
+  public void reportArmyScoreWithCheater() throws Exception {
+    Player player3 = (Player) new Player().setId(3);
+    addPlayer(game, player1, 2);
+    addPlayer(game, player2, 3);
+    addPlayer(game, player3, 3);
+
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_ARMY, 3);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.reportArmyScore(player1, 1, 10);
+    instance.reportArmyScore(player1, 2, -1);
+    instance.reportArmyScore(player1, 3, -1);
+
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player1, 3, Outcome.DEFEAT);
+
+    instance.reportArmyScore(player2, 1, 10);
+    instance.reportArmyScore(player2, 2, -1);
+    instance.reportArmyScore(player2, 3, -1);
+
+    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player2, 3, Outcome.DEFEAT);
+
+    instance.reportArmyScore(player3, 1, -1);
+    instance.reportArmyScore(player3, 2, -1);
+    instance.reportArmyScore(player3, 3, 10);
+
+    instance.reportArmyOutcome(player3, 1, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player3, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player3, 3, Outcome.VICTORY);
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player3);
+
+    assertThat(game.getPlayerStats().values(), hasSize(3));
+    assertThat(game.getPlayerStats().get(player1.getId()).getScore(), is(10));
+    assertThat(game.getPlayerStats().get(player2.getId()).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(player3.getId()).getScore(), is(-1));
+  }
+
   @Test
   public void reportArmyScoreAiScore() throws Exception {
     addPlayer(game, player1, 2);
@@ -356,6 +412,13 @@ public class GameServiceTest {
   public void reportArmyOutcome() throws Exception {
     addPlayer(game, player1, 2);
     addPlayer(game, player2, 3);
+
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
@@ -388,7 +451,7 @@ public class GameServiceTest {
   @Test
   public void endGameIfNoPlayerConnected() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
@@ -467,11 +530,11 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     assertThat(game.getState(), is(GameState.PLAYING));
-    assertThat(game.getStartTime(), is(lessThan(Timestamp.from(Instant.now().plusSeconds(1)))));
-    assertThat(game.getStartTime(), is(greaterThan(Timestamp.from(Instant.now().minusSeconds(10)))));
+    assertThat(game.getStartTime(), is(lessThan(Instant.now().plusSeconds(1))));
+    assertThat(game.getStartTime(), is(greaterThan(Instant.now().minusSeconds(10))));
 
     verify(entityManager).persist(game);
-    verify(clientService, atLeastOnce()).sendDelayed(any(GameResponse.class), any(), any(), any());
+    verify(clientService, atLeastOnce()).broadcastDelayed(any(GameResponse.class), any(), any(), any());
   }
 
   @Test
@@ -612,7 +675,7 @@ public class GameServiceTest {
 
     instance.updateGameValidity(game);
 
-    assertThat(game.getValidity(), is(Validity.RANKED));
+    assertThat(game.getValidity(), is(Validity.VALID));
   }
 
   @Test
@@ -735,9 +798,7 @@ public class GameServiceTest {
     user.setLogin("JUnit");
     user.setPlayer(player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
-      .setUserDetails(new FafUserDetails(user));
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, clientConnection));
+    instance.removePlayer(player1);
 
     assertThat(player1.getGameBeingJoined(), is(nullValue()));
     assertThat(player1.getCurrentGame(), is(nullValue()));
@@ -751,11 +812,10 @@ public class GameServiceTest {
     player1.setCurrentGame(null);
     instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
 
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
-    authentication.setDetails(player2.setClientConnection(clientConnection));
+    authentication.setDetails(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
 
-    instance.onAuthenticationSuccess(new AuthenticationSuccessEvent(authentication));
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player2));
 
     ArgumentCaptor<Collection<GameResponse>> captor = ArgumentCaptor.forClass((Class) Collection.class);
     verify(clientService).sendGameList(captor.capture(), eq(player2));
@@ -783,10 +843,10 @@ public class GameServiceTest {
 
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(player3));
 
-    instance.disconnectPlayerFromGame(new User(), 3);
+    instance.disconnectPlayerFromGame(player1, 3);
 
     ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
-    verify(clientService).disconnectPlayer(eq(3), captor.capture());
+    verify(clientService).disconnectPlayerFromGame(eq(3), captor.capture());
     List<ConnectionAware> recipients = captor.getValue();
 
     assertThat(recipients, hasSize(3));
@@ -797,21 +857,21 @@ public class GameServiceTest {
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerUnknown() throws Exception {
-    instance.disconnectPlayerFromGame(new User(), 412312);
+    instance.disconnectPlayerFromGame(player1, 412312);
     verifyZeroInteractions(clientService);
   }
 
   @Test
   public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(new Player()));
-    instance.disconnectPlayerFromGame(new User(), 3);
+    instance.disconnectPlayerFromGame(player1, 3);
     verifyZeroInteractions(clientService);
   }
 
   @Test
   public void restoreGameSessionWasNeverInGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     launchGame();
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -824,7 +884,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionOpenGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -837,9 +897,9 @@ public class GameServiceTest {
     assertThat(player2.getCurrentGame(), is(game));
 
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
-    clientConnection.setUserDetails(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")));
+    clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
     player2.setClientConnection(clientConnection);
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, player2.getClientConnection()));
+    instance.removePlayer(player2);
     assertThat(player2.getGameBeingJoined(), is(nullValue()));
     assertThat(player2.getCurrentGame(), is(nullValue()));
 
@@ -850,7 +910,7 @@ public class GameServiceTest {
   @Test
   public void restoreGameSessionPlayingGame() throws Exception {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    createDefaultGame();
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     Game game = instance.getActiveGame(NEXT_GAME_ID).get();
@@ -861,18 +921,108 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
 
     ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
-    clientConnection.setUserDetails(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")));
+    clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
     player2.setClientConnection(clientConnection);
-    instance.onClientDisconnect(new ClientDisconnectedEvent(this, player2.getClientConnection()));
+    instance.removePlayer(player2);
     assertThat(player2.getCurrentGame(), is(nullValue()));
 
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
   }
 
+  @Test
+  public void mutualDrawRequestedByPlayerWithoutGame() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    launchGame();
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.NOT_IN_A_GAME));
+
+    instance.mutuallyAgreeDraw(player2);
+  }
+
+  @Test
+  public void mutualDrawRequestedByPlayerInNonPlayingGameState() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_GAME_STATE));
+
+    instance.mutuallyAgreeDraw(player1);
+  }
+
+  @Test
+  public void mutualDrawRequestedByObserver() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+
+    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.mutuallyAgreeDraw(player1);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(false));
+  }
+
+  @Test
+  public void mutualDrawRequestedByPlayer() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.NO_TEAM_ID);
+
+    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.mutuallyAgreeDraw(player1);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(true));
+  }
+
+  @Test
+  public void mutualDrawRequestedByAllPlayers() throws Exception {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
+
+    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+
+    instance.joinGame(game.getId(), player2);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
+
+    Player player3 = new Player();
+    player3.setId(3);
+
+    instance.joinGame(game.getId(), player3);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player3);
+    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+
+    instance.mutuallyAgreeDraw(player1);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(false));
+
+    instance.mutuallyAgreeDraw(player2);
+
+    assertThat(game.isMutuallyAgreedDraw(), is(true));
+  }
+
+  private void createDefaultGame() {
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+  }
+
   private void launchGame() {
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    verify(counterService).increment(Metrics.PLAYING_GAMES);
   }
 
   private void addPlayer(Game game, Player player, int team) {

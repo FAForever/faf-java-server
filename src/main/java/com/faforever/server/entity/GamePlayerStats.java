@@ -14,7 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Table(name = "game_player_stats")
@@ -62,10 +62,10 @@ public class GamePlayerStats {
   private Double afterDeviation;
 
   @Column(name = "score")
-  private int score;
+  private Integer score;
 
   @Column(name = "scoreTime")
-  private Timestamp scoreTime;
+  private Instant scoreTime;
 
   @ManyToOne
   @JoinColumn(name = "gameId")

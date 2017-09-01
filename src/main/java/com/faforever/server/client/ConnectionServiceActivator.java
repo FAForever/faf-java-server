@@ -21,6 +21,6 @@ public class ConnectionServiceActivator {
 
   @ServiceActivator(inputChannel = ChannelNames.DISCONNECT_CLIENT_REQUEST)
   public void disconnectClientRequest(DisconnectClientRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    clientConnectionManager.disconnectClient(clientConnection.getUserDetails().getUser(), request.getUserId());
+    clientConnectionManager.disconnectClient(clientConnection.getAuthentication(), request.getUserId());
   }
 }

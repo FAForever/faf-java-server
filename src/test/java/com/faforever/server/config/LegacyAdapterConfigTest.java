@@ -3,12 +3,12 @@ package com.faforever.server.config;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientConnectionManager;
 import com.faforever.server.client.CloseConnectionEvent;
+import com.faforever.server.config.integration.LegacyAdapterConfig;
 import com.faforever.server.integration.Protocol;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.ip.tcp.connection.TcpConnection;
@@ -25,22 +25,23 @@ public class LegacyAdapterConfigTest {
   private LegacyAdapterConfig instance;
 
   @Mock
-  private ServerProperties serverProperties;
-  @Mock
   private ApplicationEventPublisher applicationEventPublisher;
   @Mock
   private ClientConnectionManager clientConnectionManager;
+  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
+    serverProperties = new ServerProperties();
+
     instance = new LegacyAdapterConfig(serverProperties, applicationEventPublisher, clientConnectionManager);
   }
 
   @Test
   public void onConnectionClosed() throws Exception {
-    TcpConnection connection = Mockito.mock(TcpConnection.class);
+    TcpConnection connection = mock(TcpConnection.class);
     when(connection.getConnectionId()).thenReturn("1");
-    when(serverProperties.getPort()).thenReturn(0);
+    serverProperties.setPort(0);
 
     instance.onConnectionClosed(new TcpConnectionCloseEvent(connection, null));
 

@@ -64,6 +64,7 @@ public enum LegacyClientMessageType {
   ENFORCE_RATING("EnforceRating"),
   TEAMKILL_REPORT("TeamkillReport"),
   AI_OPTION("AIOption"),
+  MUTUAL_DRAW("MutualDraw"),
   ICE_MESSAGE("IceMsg");
 
   private static Map<String, LegacyClientMessageType> fromString;
