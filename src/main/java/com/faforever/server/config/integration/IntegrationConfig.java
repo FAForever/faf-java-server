@@ -50,8 +50,6 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.AbstractTransformer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.Collections;
 import java.util.List;
@@ -81,13 +79,6 @@ public class IntegrationConfig {
       .from(ChannelNames.INBOUND_DISPATCH)
       .route(inboundRouter())
       .get();
-  }
-
-  @Bean
-  public TaskScheduler inboundDispatchTaskScheduler() {
-    ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-    taskScheduler.setThreadNamePrefix("inbound-dispatch-");
-    return taskScheduler;
   }
 
   /**
