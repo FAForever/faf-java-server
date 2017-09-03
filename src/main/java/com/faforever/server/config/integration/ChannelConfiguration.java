@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Creates Spring Integration channels. Bean names must match their entry in {@link
@@ -73,12 +74,13 @@ public class ChannelConfiguration {
    */
   @Bean(name = ChannelNames.LEGACY_TCP_OUTBOUND)
   public MessageChannel legacyTcpOutbound(ServerProperties properties) {
+    AtomicInteger counter = new AtomicInteger();
     ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
       1,
-      1,
-      0L, TimeUnit.MILLISECONDS,
+      4,
+      30, TimeUnit.SECONDS,
       new LinkedBlockingQueue<>(properties.getMessaging().getLegacyAdapterOutboundQueueSize()),
-      runnable -> new Thread(runnable, "legacy-tcp-out"));
+      runnable -> new Thread(runnable, "legacy-tcp-out-" + counter.incrementAndGet()));
 
     return MessageChannels.executor(threadPoolExecutor).get();
   }
