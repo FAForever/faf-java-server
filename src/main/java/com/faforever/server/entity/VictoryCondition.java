@@ -1,5 +1,7 @@
 package com.faforever.server.entity;
 
+import lombok.Getter;
+
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.util.HashMap;
@@ -22,6 +24,7 @@ public enum VictoryCondition {
     }
   }
 
+  @Getter
   private final String string;
 
   VictoryCondition(String string) {

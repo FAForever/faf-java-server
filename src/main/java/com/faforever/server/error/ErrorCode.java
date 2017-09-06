@@ -19,10 +19,9 @@ public enum ErrorCode {
   CANT_RESTORE_GAME_DOESNT_EXIST(112, "Can't restore game connection", "The game you were connected to does no longer exist."),
   CANT_RESTORE_GAME_NOT_PARTICIPANT(113, "Can't restore game connection", "You have never been part of this game."),
   USER_ALREADY_CONNECTED(114, "User '{0}' is already connected", "Please close any other client, that is still connected to the server."),
-  INVALID_GAME_STATE(115, "Invalid game state", "Game is in unexpected state. Expected state: {0}."),
+  INVALID_GAME_STATE(115, "Invalid game state", "The requested operation is not allowed for games in state '{0}', only in '{1}'."),
   INVALID_COMMAND(116, "Invalid command", "The command '{0}' is not known by the server."),
-  INVALID_PLAYER_GAME_STATE_TRANSITION(117, "Invalid player game state", "Can't transition player from state '{0}' to '{1}'.")
-  ;
+  INVALID_PLAYER_GAME_STATE_TRANSITION(117, "Invalid player game state", "Can't transition player from state '{0}' to '{1}'.");
 
   private final int code;
   private final String title;
