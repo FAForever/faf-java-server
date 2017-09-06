@@ -1,13 +1,13 @@
 package com.faforever.server.player;
 
-public class LoginDetailsResponse extends PlayerInformationResponse {
+public class LoginDetailsResponse extends PlayerResponse {
 
-  public LoginDetailsResponse(PlayerInformationResponse playerInformationResponse) {
+  public LoginDetailsResponse(PlayerResponse playerResponse) {
     super(
-      playerInformationResponse.getUserId(),
-      playerInformationResponse.getUsername(),
-      playerInformationResponse.getCountry(),
-      playerInformationResponse.getPlayer()
+      playerResponse.getUserId(),
+      playerResponse.getUsername(),
+      playerResponse.getCountry(),
+      playerResponse.getPlayer()
     );
   }
 }

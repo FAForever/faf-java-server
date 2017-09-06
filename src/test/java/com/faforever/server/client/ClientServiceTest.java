@@ -20,7 +20,7 @@ import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.PlayerInformationResponse;
+import com.faforever.server.player.PlayerResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -160,10 +160,10 @@ public class ClientServiceTest {
 
     instance.sendLoginDetails(player, player);
 
-    ArgumentCaptor<PlayerInformationResponse> captor = ArgumentCaptor.forClass(PlayerInformationResponse.class);
+    ArgumentCaptor<PlayerResponse> captor = ArgumentCaptor.forClass(PlayerResponse.class);
     verify(clientGateway).send(captor.capture(), any());
 
-    PlayerInformationResponse response = captor.getValue();
+    PlayerResponse response = captor.getValue();
     assertThat(response.getUserId(), is(5));
     assertThat(response.getUsername(), is("JUnit"));
     assertThat(response.getPlayer().getAvatar().getTooltip(), is("Tooltip"));
@@ -216,16 +216,16 @@ public class ClientServiceTest {
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
-    CompletableFuture<PlayerInformationResponses> sent = new CompletableFuture<>();
-    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerInformationResponses.class)))
-      .when(clientGateway).send(any(PlayerInformationResponses.class), eq(clientConnection));
+    CompletableFuture<PlayerResponses> sent = new CompletableFuture<>();
+    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerResponses.class)))
+      .when(clientGateway).send(any(PlayerResponses.class), eq(clientConnection));
 
     instance.sendPlayerInformation(players, connectionAware);
 
-    PlayerInformationResponses responses = sent.get(10, TimeUnit.SECONDS);
+    PlayerResponses responses = sent.get(10, TimeUnit.SECONDS);
     assertThat(responses.getResponses(), hasSize(2));
 
-    Iterator<PlayerInformationResponse> iterator = responses.getResponses().iterator();
+    Iterator<PlayerResponse> iterator = responses.getResponses().iterator();
     assertThat(iterator.next().getUserId(), is(1));
     assertThat(iterator.next().getUserId(), is(2));
   }

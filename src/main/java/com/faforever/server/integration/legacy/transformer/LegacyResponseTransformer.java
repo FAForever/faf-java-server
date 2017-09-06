@@ -5,7 +5,7 @@ import com.faforever.server.client.ConnectToPlayerResponse;
 import com.faforever.server.client.DisconnectPlayerFromGameResponse;
 import com.faforever.server.client.IceServersResponse;
 import com.faforever.server.client.InfoResponse;
-import com.faforever.server.client.PlayerInformationResponses;
+import com.faforever.server.client.PlayerResponses;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.client.UpdatedAchievementsResponse;
 import com.faforever.server.common.ServerMessage;
@@ -38,7 +38,7 @@ public final class LegacyResponseTransformer implements GenericTransformer<Serve
     transformers = ImmutableMap.<Class<? extends ServerMessage>, GenericTransformer<? extends ServerMessage, Map<String, Serializable>>>builder()
       .put(StartGameProcessResponse.class, LaunchGameResponseTransformer.INSTANCE)
       .put(SessionResponse.class, SessionResponseTransformer.INSTANCE)
-      .put(PlayerInformationResponses.class, PlayerInformationResponsesTransformer.INSTANCE)
+      .put(PlayerResponses.class, PlayerResponsesTransformer.INSTANCE)
       .put(LoginDetailsResponse.class, LoginDetailsResponseTransformer.INSTANCE)
       .put(ErrorResponse.class, ErrorResponseTransformer.INSTANCE)
       .put(InfoResponse.class, InfoResponseTransformer.INSTANCE)

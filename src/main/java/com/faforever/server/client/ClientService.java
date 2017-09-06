@@ -23,9 +23,9 @@ import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.matchmaker.MatchMakerResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.LoginDetailsResponse;
-import com.faforever.server.player.PlayerInformationResponse;
-import com.faforever.server.player.PlayerInformationResponse.Player.Avatar;
-import com.faforever.server.player.PlayerInformationResponse.Player.Rating;
+import com.faforever.server.player.PlayerResponse;
+import com.faforever.server.player.PlayerResponse.Player.Avatar;
+import com.faforever.server.player.PlayerResponse.Player.Rating;
 import com.faforever.server.social.SocialRelationListResponse;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
@@ -246,13 +246,13 @@ public class ClientService {
     send(response, recipient);
   }
 
-  private CompletableFuture<PlayerInformationResponses> toPlayerInformationResponses(Collection<Player> players) {
-    return CompletableFuture.supplyAsync((() -> new PlayerInformationResponses(players.stream()
+  private CompletableFuture<PlayerResponses> toPlayerInformationResponses(Collection<Player> players) {
+    return CompletableFuture.supplyAsync((() -> new PlayerResponses(players.stream()
       .map(this::toPlayerInformationResponse)
       .collect(Collectors.toList()))), executorService);
   }
 
-  private PlayerInformationResponse toPlayerInformationResponse(Player player) {
+  private PlayerResponse toPlayerInformationResponse(Player player) {
     Optional<Avatar> avatar = player.getAvailableAvatars().stream()
       .filter(AvatarAssociation::isSelected)
       .findFirst()
@@ -266,11 +266,11 @@ public class ClientService {
     Optional<Rating> ladder1v1Rating = Optional.ofNullable(player.getLadder1v1Rating())
       .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
 
-    return new PlayerInformationResponse(
+    return new PlayerResponse(
       player.getId(),
       player.getLogin(),
       player.getCountry(),
-      new PlayerInformationResponse.Player(
+      new PlayerResponse.Player(
         globalRating.orElse(null),
         ladder1v1Rating.orElse(null),
         Optional.ofNullable(player.getGlobalRating()).map(GlobalRating::getNumGames).orElse(0),

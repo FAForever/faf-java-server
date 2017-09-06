@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class PlayerInformationResponse implements ServerMessage {
+public class PlayerResponse implements ServerMessage {
   private final int userId;
   private final String username;
   private final String country;

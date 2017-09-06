@@ -1,9 +1,9 @@
 package com.faforever.server.integration.legacy.transformer;
 
-import com.faforever.server.client.PlayerInformationResponses;
-import com.faforever.server.player.PlayerInformationResponse;
-import com.faforever.server.player.PlayerInformationResponse.Player.Avatar;
-import com.faforever.server.player.PlayerInformationResponse.Player.Rating;
+import com.faforever.server.client.PlayerResponses;
+import com.faforever.server.player.PlayerResponse;
+import com.faforever.server.player.PlayerResponse.Player.Avatar;
+import com.faforever.server.player.PlayerResponse.Player.Rating;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -15,19 +15,19 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-public class PlayerInformationResponsesTransformerTest {
+public class PlayerResponsesTransformerTest {
 
   private static final String TEST_USERNAME = "JUnit";
 
   @Test
   @SuppressWarnings("unchecked")
   public void transformFull() throws Exception {
-    Map<String, Serializable> result = PlayerInformationResponsesTransformer.INSTANCE.transform(new PlayerInformationResponses(
-      Collections.singletonList(new PlayerInformationResponse(
+    Map<String, Serializable> result = PlayerResponsesTransformer.INSTANCE.transform(new PlayerResponses(
+      Collections.singletonList(new PlayerResponse(
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerInformationResponse.Player(
+        new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
           12,
@@ -60,12 +60,12 @@ public class PlayerInformationResponsesTransformerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void transformHandleAvatarNull() throws Exception {
-    Map<String, Serializable> result = PlayerInformationResponsesTransformer.INSTANCE.transform(new PlayerInformationResponses(
-      Collections.singletonList(new PlayerInformationResponse(
+    Map<String, Serializable> result = PlayerResponsesTransformer.INSTANCE.transform(new PlayerResponses(
+      Collections.singletonList(new PlayerResponse(
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerInformationResponse.Player(
+        new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
           12,
@@ -81,12 +81,12 @@ public class PlayerInformationResponsesTransformerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void transformHandleGlobalRatingNull() throws Exception {
-    Map<String, Serializable> result = PlayerInformationResponsesTransformer.INSTANCE.transform(new PlayerInformationResponses(
-      Collections.singletonList(new PlayerInformationResponse(
+    Map<String, Serializable> result = PlayerResponsesTransformer.INSTANCE.transform(new PlayerResponses(
+      Collections.singletonList(new PlayerResponse(
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerInformationResponse.Player(
+        new PlayerResponse.Player(
           null,
           new Rating(900d, 100d),
           12,
@@ -102,12 +102,12 @@ public class PlayerInformationResponsesTransformerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void transformHandleLadder1v1RatingNull() throws Exception {
-    Map<String, Serializable> result = PlayerInformationResponsesTransformer.INSTANCE.transform(new PlayerInformationResponses(
-      Collections.singletonList(new PlayerInformationResponse(
+    Map<String, Serializable> result = PlayerResponsesTransformer.INSTANCE.transform(new PlayerResponses(
+      Collections.singletonList(new PlayerResponse(
         1,
         TEST_USERNAME,
         "CH",
-        new PlayerInformationResponse.Player(
+        new PlayerResponse.Player(
           new Rating(900d, 100d),
           null,
           12,
@@ -123,12 +123,12 @@ public class PlayerInformationResponsesTransformerTest {
   @Test
   @SuppressWarnings("unchecked")
   public void transformHandleCountryNull() throws Exception {
-    Map<String, Serializable> result = PlayerInformationResponsesTransformer.INSTANCE.transform(new PlayerInformationResponses(
-      Collections.singletonList(new PlayerInformationResponse(
+    Map<String, Serializable> result = PlayerResponsesTransformer.INSTANCE.transform(new PlayerResponses(
+      Collections.singletonList(new PlayerResponse(
         1,
         TEST_USERNAME,
         null,
-        new PlayerInformationResponse.Player(
+        new PlayerResponse.Player(
           new Rating(1200d, 200d),
           new Rating(900d, 100d),
           12,

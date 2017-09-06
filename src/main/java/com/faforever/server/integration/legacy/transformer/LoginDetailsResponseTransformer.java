@@ -17,7 +17,7 @@ public enum LoginDetailsResponseTransformer implements GenericTransformer<LoginD
       "command", "welcome",
       "id", source.getUserId(),
       "login", source.getUsername(),
-      "me", PlayerInformationResponsesTransformer.player(source)
+      "me", PlayerResponsesTransformer.player(source)
     );
   }
 }
