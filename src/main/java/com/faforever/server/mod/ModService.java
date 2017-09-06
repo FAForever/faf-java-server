@@ -5,9 +5,8 @@ import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.player.PlayerOnlineEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -21,8 +20,6 @@ import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
 
 @Service
-// Required for inner calls to cached methods
-@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Slf4j
 public class ModService {
   private static final String COOP_MOD_NAME = "coop";
@@ -32,6 +29,11 @@ public class ModService {
   private final ClientService clientService;
   private FeaturedMod coopFeaturedMod;
   private FeaturedMod ladder1v1FeaturedMod;
+
+  @Autowired
+  @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+  // Required for access to @Cacheable methods since inner calls do not go through proxy object.
+  private ModService modService;
 
   public ModService(ModRepository modRepository, FeaturedModRepository featuredModRepository, ClientService clientService) {
     this.modRepository = modRepository;
@@ -71,7 +73,7 @@ public class ModService {
 
   @EventListener
   public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
-    List<FeaturedMod> mods = getFeaturedMods().stream()
+    List<FeaturedMod> mods = modService.getFeaturedMods().stream()
       .filter(FeaturedMod::isPublish)
       .collect(Collectors.toList());
 
