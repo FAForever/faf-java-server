@@ -1022,7 +1022,7 @@ public class GameServiceTest {
   private void launchGame() {
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
-    verify(counterService).increment(Metrics.PLAYING_GAMES);
+    verify(counterService).increment(Metrics.GAMES_STATE_FORMAT);
   }
 
   private void addPlayer(Game game, Player player, int team) {

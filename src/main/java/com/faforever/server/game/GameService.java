@@ -125,6 +125,7 @@ public class GameService {
     this.armyStatisticsService = armyStatisticsService;
     nextGameId = new AtomicInteger(1);
     activeGamesById = new ConcurrentHashMap<>();
+    Stream.of(GameState.values()).forEach(state -> counterService.reset(String.format(Metrics.GAMES_STATE_FORMAT, state)));
 
     validityVoters = Arrays.asList(
       ValidityVoter.isRankedVoter(modService),
@@ -189,6 +190,7 @@ public class GameService {
     game.setMaxRating(maxRating);
 
     activeGamesById.put(game.getId(), game);
+    counterService.increment(String.format(Metrics.GAMES_STATE_FORMAT, game.getState()));
 
     log.debug("Player '{}' created game '{}'", player, game);
 
@@ -235,7 +237,7 @@ public class GameService {
     Requests.verify(PlayerGameState.canTransition(playerGameState, newState), ErrorCode.INVALID_PLAYER_GAME_STATE_TRANSITION,
       playerGameState, newState);
 
-    player.setGameState(newState);
+    changePlayerGameState(player, newState);
     switch (newState) {
       case LOBBY:
         onLobbyEntered(player, game);
@@ -549,6 +551,12 @@ public class GameService {
       });
   }
 
+  private void changePlayerGameState(Player player, PlayerGameState newState) {
+    counterService.decrement(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, player.getGameState()));
+    player.setGameState(newState);
+    counterService.increment(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, newState));
+  }
+
   /**
    * Checks whether every connected player reported outcomes for all armies (human and AI). If so, the game is set to
    * {@link GameState#CLOSED}.
@@ -595,7 +603,7 @@ public class GameService {
     log.debug("Removing player '{}' from game '{}'", player, game);
 
     int playerId = player.getId();
-    player.setGameState(PlayerGameState.NONE);
+    changePlayerGameState(player, PlayerGameState.NONE);
     player.setCurrentGame(null);
     player.setGameBeingJoined(null);
     game.getConnectedPlayers().remove(playerId, player);
@@ -649,9 +657,10 @@ public class GameService {
   }
 
   private void removeGame(Game game) {
-    activeGamesById.remove(game.getId());
-    counterService.decrement(Metrics.PLAYING_GAMES);
-    game.setState(GameState.CLOSED);
+    if (activeGamesById.remove(game.getId()) != null) {
+      changeGameState(game, GameState.CLOSED);
+      counterService.decrement(String.format(Metrics.GAMES_STATE_FORMAT, game.getState()));
+    }
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
 
@@ -713,9 +722,8 @@ public class GameService {
       log.warn("Player '{}' reported launch for game: {}", reporter, game);
       return;
     }
-    game.setState(GameState.PLAYING);
+    changeGameState(game, GameState.PLAYING);
     game.setStartTime(Instant.now());
-    counterService.increment(Metrics.PLAYING_GAMES);
 
     createGamePlayerStats(game);
 
@@ -723,6 +731,12 @@ public class GameService {
     entityManager.persist(game);
     log.debug("Game launched: {}", game);
     markDirty(game, Duration.ZERO, Duration.ZERO);
+  }
+
+  private void changeGameState(Game game, GameState newState) {
+    counterService.decrement(String.format(Metrics.GAMES_STATE_FORMAT, game.getState()));
+    game.setState(newState);
+    counterService.increment(String.format(Metrics.GAMES_STATE_FORMAT, newState));
   }
 
   private void createGamePlayerStats(Game game) {
@@ -803,7 +817,7 @@ public class GameService {
     log.debug("Player '{}' entered state: {}", player, PlayerGameState.LOBBY);
     addPlayer(game, player);
     if (Objects.equals(game.getHost(), player)) {
-      game.setState(GameState.OPEN);
+      changeGameState(game, GameState.OPEN);
       clientService.hostGame(game, player);
 
       // TODO send only to players allowed to see

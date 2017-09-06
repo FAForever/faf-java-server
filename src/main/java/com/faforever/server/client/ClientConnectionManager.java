@@ -43,7 +43,7 @@ public class ClientConnectionManager {
 
   @PostConstruct
   public void postConstruct() {
-    counterService.reset(Metrics.ACTIVE_CONNECTIONS);
+    counterService.reset(Metrics.CLIENTS_CONNECTED);
   }
 
   /**
@@ -56,8 +56,8 @@ public class ClientConnectionManager {
       Assert.state(!connections.containsKey(connectionId), "A connection with ID " + connectionId + " already exists");
 
       connections.put(connectionId, new ClientConnection(connectionId, protocol, inetAddress));
-      counterService.increment(Metrics.ACTIVE_CONNECTIONS);
-      counterService.increment(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol));
+      counterService.increment(Metrics.CLIENTS_CONNECTED);
+      counterService.increment(String.format("%s.%s", Metrics.CLIENTS_CONNECTED, protocol));
 
       return connections.get(connectionId);
     }
@@ -80,8 +80,8 @@ public class ClientConnectionManager {
       Optional.ofNullable(connections.remove(connectionId)).ifPresent(clientConnection -> {
         log.debug("Removing connection '{}' with protocol '{}'", connectionId, protocol);
         eventPublisher.publishEvent(new ClientDisconnectedEvent(clientConnection, clientConnection));
-        counterService.decrement(Metrics.ACTIVE_CONNECTIONS);
-        counterService.decrement(String.format("%s.%s", Metrics.ACTIVE_CONNECTIONS, protocol));
+        counterService.decrement(Metrics.CLIENTS_CONNECTED);
+        counterService.decrement(String.format("%s.%s", Metrics.CLIENTS_CONNECTED, protocol));
       });
     }
   }

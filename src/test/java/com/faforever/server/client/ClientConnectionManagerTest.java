@@ -47,24 +47,24 @@ public class ClientConnectionManagerTest {
   public void updateConnections() throws Exception {
     InetAddress inetAddress = mock(InetAddress.class);
     instance.createClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(counterService).increment(Metrics.ACTIVE_CONNECTIONS);
+    verify(counterService).increment(Metrics.CLIENTS_CONNECTED);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.createClientConnection("2", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(counterService, times(2)).increment(Metrics.ACTIVE_CONNECTIONS);
+    verify(counterService, times(2)).increment(Metrics.CLIENTS_CONNECTED);
     assertThat(instance.getConnections(), hasSize(2));
 
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(counterService).decrement(Metrics.ACTIVE_CONNECTIONS);
+    verify(counterService).decrement(Metrics.CLIENTS_CONNECTED);
     assertThat(instance.getConnections(), hasSize(1));
 
     // This connection has already been removed, so expect no change
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(counterService).decrement(Metrics.ACTIVE_CONNECTIONS);
+    verify(counterService).decrement(Metrics.CLIENTS_CONNECTED);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.removeConnection("2", Protocol.LEGACY_UTF_16);
-    verify(counterService, times(2)).decrement(Metrics.ACTIVE_CONNECTIONS);
+    verify(counterService, times(2)).decrement(Metrics.CLIENTS_CONNECTED);
     assertThat(instance.getConnections(), hasSize(0));
   }
 

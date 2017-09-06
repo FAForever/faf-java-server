@@ -30,7 +30,7 @@ public class PlayerServiceTest {
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
     player.setLogin("JUnit");
-    instance = new PlayerService(clientService);
+    instance = new PlayerService(clientService, counterService);
   }
 
   @Test

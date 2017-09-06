@@ -2,7 +2,10 @@ package com.faforever.server.player;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
+import com.faforever.server.game.PlayerGameState;
+import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -23,10 +27,13 @@ public class PlayerService {
 
   private final Map<Integer, Player> onlinePlayersById;
   private final ClientService clientService;
+  private final CounterService counterService;
 
-  public PlayerService(ClientService clientService) {
+  public PlayerService(ClientService clientService, CounterService counterService) {
     this.clientService = clientService;
+    this.counterService = counterService;
     onlinePlayersById = new ConcurrentHashMap<>();
+    Stream.of(PlayerGameState.values()).forEach(state -> counterService.reset(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, state)));
   }
 
   @EventListener
@@ -34,6 +41,7 @@ public class PlayerService {
     Player player = event.getPlayer();
 
     onlinePlayersById.put(player.getId(), player);
+    counterService.increment(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, player.getGameState()));
 
     List<Player> otherOnlinePlayers = getOtherOnlinePlayers(player);
     clientService.sendLoginDetails(player, player);
@@ -43,7 +51,9 @@ public class PlayerService {
 
   public void removePlayer(Player player) {
     log.debug("Removing player '{}'", player);
-    onlinePlayersById.remove(player.getId());
+    if (onlinePlayersById.remove(player.getId()) != null) {
+      counterService.decrement(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, player.getGameState()));
+    }
   }
 
   public Optional<Player> getOnlinePlayer(int id) {
