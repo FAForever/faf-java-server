@@ -163,6 +163,6 @@ public class ServerProperties {
     /**
      * Size of the outbound message queue. Outgoing messages will be discarded as long as the queue is full.
      */
-    private int legacyAdapterOutboundQueueSize = 50_000;
+    private int legacyAdapterOutboundQueueSize = 100_000;
   }
 }

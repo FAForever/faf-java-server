@@ -173,7 +173,7 @@ public class ClientService {
       clientGateway.send(new DisconnectPlayerFromGameResponse(playerId), connectionAware.getClientConnection()));
   }
 
-  @Scheduled(fixedDelay = 1000)
+  @Scheduled(fixedDelay = 200)
   public void broadcastDirtyObjects() {
     List<Object> objectIds = dirtyObjects.entrySet().stream()
       .filter(entry -> {
