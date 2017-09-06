@@ -1,5 +1,6 @@
 package com.faforever.server.client;
 
+import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.config.ServerProperties;
@@ -44,6 +45,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -57,14 +59,14 @@ public class ClientServiceTest {
   private ClientGateway clientGateway;
   @Mock
   private CoopService coopService;
-  @Mock
-  private ServerProperties serverProperties;
 
   private ClientConnection clientConnection;
   private Player player;
+  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
+    serverProperties = new ServerProperties();
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
 
@@ -238,5 +240,28 @@ public class ClientServiceTest {
     instance.sendIceServers(iceServers, connectionAware);
 
     verify(clientGateway).send(new IceServersResponse(iceServers), clientConnection);
+  }
+
+  @Test
+  public void onServerShutdown() throws Exception {
+    serverProperties.getShutdown().setMessage("Shutdown test message");
+    instance.onServerShutdown(ApplicationShutdownEvent.INSTANCE);
+
+    ArgumentCaptor<InfoResponse> captor = ArgumentCaptor.forClass(InfoResponse.class);
+    verify(clientGateway).broadcast(captor.capture());
+
+    InfoResponse value = captor.getValue();
+    assertThat(value.getMessage(), is("Shutdown test message"));
+  }
+
+  @Test
+  public void onServerShutdownExceptionDoesntPropagate() throws Exception {
+    doThrow(new RuntimeException("This exception should be logged but not thrown"))
+      .when(clientGateway).broadcast(any());
+
+    instance.onServerShutdown(ApplicationShutdownEvent.INSTANCE);
+
+    verify(clientGateway).broadcast(any());
+    // Expect no exception to be thrown
   }
 }

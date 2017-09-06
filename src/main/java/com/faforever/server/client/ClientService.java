@@ -27,6 +27,7 @@ import com.faforever.server.player.PlayerInformationResponse;
 import com.faforever.server.player.PlayerInformationResponse.Player.Avatar;
 import com.faforever.server.player.PlayerInformationResponse.Player.Rating;
 import com.faforever.server.social.SocialRelationListResponse;
+import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;
@@ -280,7 +281,8 @@ public class ClientService {
   }
 
   @EventListener
-  private void onServerShutdown(ApplicationShutdownEvent event) {
+  @VisibleForTesting
+  void onServerShutdown(ApplicationShutdownEvent event) {
     try {
       clientGateway.broadcast(new InfoResponse(serverProperties.getShutdown().getMessage()));
     } catch (Exception e) {

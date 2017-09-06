@@ -20,11 +20,12 @@ public class FafServerApplication {
       .run(args);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      context.publishEvent(new ApplicationShutdownEvent());
+      context.publishEvent(ApplicationShutdownEvent.INSTANCE);
       context.close();
     }));
   }
 
-  public static class ApplicationShutdownEvent {
+  public enum ApplicationShutdownEvent {
+    INSTANCE
   }
 }
