@@ -1,4 +1,4 @@
-package com.faforever.server.game;
+package com.faforever.server.client;
 
 import com.faforever.server.common.ServerMessage;
 import lombok.Getter;
@@ -44,6 +44,11 @@ public class DelayedResponse<T extends ServerMessage> {
 
   public void onUpdated(T object) {
     updateTime = Instant.now();
-    this.response = (T) object;
+    this.response = object;
+  }
+
+  @SuppressWarnings("unchecked")
+  public Class<T> getType() {
+    return (Class<T>) response.getClass();
   }
 }

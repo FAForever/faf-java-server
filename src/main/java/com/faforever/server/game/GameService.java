@@ -2,6 +2,7 @@ package com.faforever.server.game;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.ArmyOutcome;
 import com.faforever.server.entity.ArmyScore;
@@ -469,7 +470,7 @@ public class GameService {
   @EventListener
   public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
     clientService.sendGameList(
-      activeGamesById.values().stream().map(this::toResponse).collect(Collectors.toList()),
+      new GameResponses(activeGamesById.values().stream().map(this::toResponse).collect(Collectors.toList())),
       event.getPlayer()
     );
   }

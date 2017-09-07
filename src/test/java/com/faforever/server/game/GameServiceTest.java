@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.ArmyOutcome;
 import com.faforever.server.entity.ArmyScore;
@@ -819,12 +820,12 @@ public class GameServiceTest {
 
     instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player2));
 
-    ArgumentCaptor<Collection<GameResponse>> captor = ArgumentCaptor.forClass((Class) Collection.class);
+    ArgumentCaptor<GameResponses> captor = ArgumentCaptor.forClass((Class) Collection.class);
     verify(clientService).sendGameList(captor.capture(), eq(player2));
-    Collection<GameResponse> games = captor.getValue();
+    GameResponses games = captor.getValue();
 
-    assertThat(games, hasSize(1));
-    assertThat(games.iterator().next().getTitle(), is("Test game"));
+    assertThat(games.getResponses(), hasSize(1));
+    assertThat(games.getResponses().iterator().next().getTitle(), is("Test game"));
   }
 
   /**

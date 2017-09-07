@@ -13,7 +13,6 @@ import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Player;
-import com.faforever.server.game.DelayedResponse;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
@@ -28,6 +27,7 @@ import com.faforever.server.player.PlayerResponse.Player.Avatar;
 import com.faforever.server.player.PlayerResponse.Player.Rating;
 import com.faforever.server.social.SocialRelationListResponse;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.event.EventListener;
@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,9 +59,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ClientService {
 
+  private static final Map<Class<?>, DelayedResponseAggregator<?, ?>> RESPONSE_AGGREGATORS = ImmutableMap.of(
+    GameResponse.class, GameResponseAggregator.INSTANCE,
+    PlayerResponse.class, PlayerResponseAggregator.INSTANCE
+  );
+
   private final ClientGateway clientGateway;
   private final CoopService coopService;
-  private final ConcurrentMap<Object, DelayedResponse> dirtyObjects;
+  private final ConcurrentMap<Object, DelayedResponse> delayedResponses;
   private final ServerProperties serverProperties;
   private final ExecutorService executorService;
 
@@ -68,7 +74,7 @@ public class ClientService {
     this.clientGateway = clientGateway;
     this.coopService = coopService;
     this.serverProperties = serverProperties;
-    dirtyObjects = new ConcurrentHashMap<>();
+    delayedResponses = new ConcurrentHashMap<>();
 
     AtomicInteger threadCount = new AtomicInteger();
     executorService = Executors.newFixedThreadPool(1, runnable -> new Thread(runnable, "client-service-" + threadCount.incrementAndGet()));
@@ -131,8 +137,8 @@ public class ClientService {
     ), connectionAware));
   }
 
-  public void sendGameList(Collection<GameResponse> games, ConnectionAware connectionAware) {
-    games.forEach(game -> send(game, connectionAware));
+  public void sendGameList(GameResponses games, ConnectionAware connectionAware) {
+    send(games, connectionAware);
   }
 
   /**
@@ -152,7 +158,7 @@ public class ClientService {
   @SuppressWarnings("unchecked")
   public <T extends ServerMessage> void broadcastDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
     log.trace("Received object to send delayed: {}", object);
-    dirtyObjects.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
+    delayedResponses.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
       .onUpdated(object);
   }
 
@@ -175,8 +181,8 @@ public class ClientService {
   }
 
   @Scheduled(fixedDelay = 200)
-  public void broadcastDirtyObjects() {
-    List<Object> objectIds = dirtyObjects.entrySet().stream()
+  public void broadcastDelayedResponses() {
+    List<Object> objectIds = delayedResponses.entrySet().stream()
       .filter(entry -> {
         DelayedResponse<?> delayedResponse = entry.getValue();
         Instant now = Instant.now();
@@ -192,10 +198,31 @@ public class ClientService {
     }
 
     log.trace("Sending '{}' delayed responses", objectIds.size());
-    objectIds.forEach(id -> {
-      DelayedResponse<?> delayedResponse = dirtyObjects.remove(id);
-      clientGateway.broadcast(delayedResponse.getResponse());
-    });
+    objectIds.stream()
+      .map(delayedResponses::remove)
+      .collect(Collectors.groupingBy(DelayedResponse::getType)).entrySet().stream()
+      .map(entry -> aggregateToServerMessages(entry.getKey(), entry.getValue()))
+      .flatMap(Collection::stream)
+      .forEach(clientGateway::broadcast);
+  }
+
+  /**
+   * Aggregates a list of delayed responses if matching aggregator is available. For instance, this will convert a list
+   * of {@link PlayerResponse} into a list with a single {@link PlayerResponses} object. If no aggregator is available,
+   * the original list will be returned.
+   *
+   * @param type the type of the list to aggregate
+   * @param delayedResponses a list of responses, containing objects of the specified type
+   * @return a list of server messages
+   */
+  @SuppressWarnings("unchecked")
+  private List<ServerMessage> aggregateToServerMessages(Class<?> type, List delayedResponses) {
+    return Optional.ofNullable(RESPONSE_AGGREGATORS.get(type))
+      .map(aggregator -> Collections.singletonList(aggregator.apply(delayedResponses)))
+      .orElse((List<ServerMessage>) delayedResponses.stream()
+        .map(response -> ((DelayedResponse) response).getResponse())
+        .collect(Collectors.toList())
+      );
   }
 
   /**
@@ -211,7 +238,7 @@ public class ClientService {
    * Sends a list of player information to the specified recipient.
    */
   public void sendPlayerInformation(Collection<Player> players, ConnectionAware recipient) {
-    toPlayerInformationResponses(players)
+    toPlayerResponses(players)
       .thenAccept(responses -> send(responses, recipient));
   }
 
@@ -219,7 +246,7 @@ public class ClientService {
    * Sends a list of player information to all authenticated clients.
    */
   public void broadcastPlayerInformation(Collection<Player> players) {
-    toPlayerInformationResponses(players)
+    toPlayerResponses(players)
       .thenAccept(responses -> broadcastDelayed(responses, Duration.ofSeconds(2), Duration.ofSeconds(5), o -> "players"));
   }
 
@@ -246,7 +273,7 @@ public class ClientService {
     send(response, recipient);
   }
 
-  private CompletableFuture<PlayerResponses> toPlayerInformationResponses(Collection<Player> players) {
+  private CompletableFuture<PlayerResponses> toPlayerResponses(Collection<Player> players) {
     return CompletableFuture.supplyAsync((() -> new PlayerResponses(players.stream()
       .map(this::toPlayerInformationResponse)
       .collect(Collectors.toList()))), executorService);
@@ -279,6 +306,7 @@ public class ClientService {
       )
     );
   }
+
 
   @EventListener
   @VisibleForTesting

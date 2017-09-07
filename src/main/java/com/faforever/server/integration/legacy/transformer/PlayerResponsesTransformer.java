@@ -28,7 +28,7 @@ public enum PlayerResponsesTransformer implements GenericTransformer<PlayerRespo
     );
   }
 
-  private ArrayList<ImmutableMap<Object, Object>> players(Collection<PlayerResponse> source) {
+  private ArrayList<ImmutableMap<Object, Serializable>> players(Collection<PlayerResponse> source) {
     return source.stream()
       .map(PlayerResponsesTransformer::player)
       .collect(Collectors.toCollection(ArrayList::new));
@@ -38,13 +38,13 @@ public enum PlayerResponsesTransformer implements GenericTransformer<PlayerRespo
     return globalRating != null ? new double[]{globalRating.getMean(), globalRating.getDeviation()} : new double[2];
   }
 
-  static ImmutableMap<Object, Object> player(PlayerResponse source) {
+  static ImmutableMap<Object, Serializable> player(PlayerResponse source) {
     Player player = source.getPlayer();
     Rating globalRating = player.getGlobalRating();
     Rating ladder1v1Rating = player.getLadder1v1Rating();
     Avatar avatar = player.getAvatar();
 
-    Builder<Object, Object> builder = ImmutableMap.builder()
+    Builder<Object, Serializable> builder = ImmutableMap.<Object, Serializable>builder()
       .put("id", source.getUserId())
       .put("login", source.getUsername())
       .put("global_rating", ratingToDoubleArray(globalRating))

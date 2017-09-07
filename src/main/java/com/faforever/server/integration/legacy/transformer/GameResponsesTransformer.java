@@ -1,24 +1,40 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.client.GameResponses;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameResponse;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import org.springframework.integration.transformer.GenericTransformer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-public enum GameResponseTransformer implements GenericTransformer<GameResponse, Map<String, Serializable>> {
+public enum GameResponsesTransformer implements GenericTransformer<GameResponses, Map<String, Serializable>> {
   INSTANCE;
 
   @Override
-  public Map<String, Serializable> transform(GameResponse source) {
-    final ImmutableMap.Builder<String, Serializable> response = ImmutableMap.<String, Serializable>builder()
-      .put("command", "game_info")
+  public Map<String, Serializable> transform(GameResponses source) {
+    return ImmutableMap.of(
+      "command", "game_info",
+      "games", games(source.getResponses()));
+  }
+
+  private ArrayList<ImmutableMap<Object, Serializable>> games(Collection<GameResponse> source) {
+    return source.stream()
+      .map(GameResponsesTransformer::game)
+      .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  static ImmutableMap<Object, Serializable> game(GameResponse source) {
+    Builder<Object, Serializable> builder = ImmutableMap.<Object, Serializable>builder()
       .put("visibility", source.getGameVisibility().getString())
       .put("password_protected", source.getPassword() != null)
       .put("uid", source.getId())
@@ -36,16 +52,13 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
       // FIXME implement this nightmare
       .put("featured_mod_versions", ImmutableMap.of());
 
-    if (source.getMinRating() != null) {
-      response.put("min_rating", source.getMinRating());
-    }
-    if (source.getMaxRating() != null) {
-      response.put("max_rating", source.getMaxRating());
-    }
-    return response.build();
+    Optional.ofNullable(source.getMinRating()).ifPresent(minRating -> builder.put("min_rating", minRating));
+    Optional.ofNullable(source.getMaxRating()).ifPresent(maxRating -> builder.put("max_rating", maxRating));
+
+    return builder.build();
   }
 
-  private String clientGameState(GameState gameState) {
+  static String clientGameState(GameState gameState) {
     switch (gameState) {
       case INITIALIZING:
         return "unknown";
@@ -60,7 +73,7 @@ public enum GameResponseTransformer implements GenericTransformer<GameResponse, 
     }
   }
 
-  private HashMap<String, List<String>> teams(GameResponse game) {
+  static HashMap<String, List<String>> teams(GameResponse game) {
     HashMap<String, List<String>> playerNamesByTeamId = new HashMap<>();
     game.getPlayers().forEach(player ->
       playerNamesByTeamId.computeIfAbsent(String.valueOf(player.getTeam()),

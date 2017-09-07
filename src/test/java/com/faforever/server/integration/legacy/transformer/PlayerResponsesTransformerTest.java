@@ -38,9 +38,9 @@ public class PlayerResponsesTransformerTest {
 
     assertThat(result.get("command"), is("player_info"));
 
-    List<Map<Object, Object>> players = (List<Map<Object, Object>>) result.get("players");
+    List<Map<String, Serializable>> players = (List<Map<String, Serializable>>) result.get("players");
     assertThat(players.size(), is(1));
-    Map<Object, Object> player = players.get(0);
+    Map<String, Serializable> player = players.get(0);
     assertThat(player.get("id"), is(1));
     assertThat(player.get("login"), is(TEST_USERNAME));
     assertThat(player.get("login"), is(TEST_USERNAME));

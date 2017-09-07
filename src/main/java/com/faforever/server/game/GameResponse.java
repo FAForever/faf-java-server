@@ -8,7 +8,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Sends game information to the client.
+ * Sends game information to the client. Multiple objects should be wrapped in a {@link
+ * com.faforever.server.client.GameResponses}.
  */
 @Data
 public class GameResponse implements ServerMessage {
