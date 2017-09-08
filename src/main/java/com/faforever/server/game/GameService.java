@@ -6,6 +6,7 @@ import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.ArmyOutcome;
 import com.faforever.server.entity.ArmyScore;
+import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
@@ -19,6 +20,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
+import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
@@ -865,8 +867,15 @@ public class GameService {
       game.getMaxPlayers(),
       Optional.ofNullable(game.getStartTime()).orElse(null),
       game.getMinRating(),
-      game.getMaxRating()
+      game.getMaxRating(),
+      toFeaturedModFileVersions(game.getFeaturedMod())
     );
+  }
+
+  private List<FeaturedModFileVersion> toFeaturedModFileVersions(FeaturedMod featuredMod) {
+    return modService.getLatestFileVersions(featuredMod).stream()
+      .map(featuredModFile -> new FeaturedModFileVersion(featuredModFile.getFileId(), featuredModFile.getVersion()))
+      .collect(Collectors.toList());
   }
 
   private List<SimMod> toSimMods(List<ModVersion> simMods) {

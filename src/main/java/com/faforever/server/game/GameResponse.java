@@ -27,6 +27,7 @@ public class GameResponse implements ServerMessage {
   private final Instant startTime;
   private final Integer minRating;
   private final Integer maxRating;
+  private final List<FeaturedModFileVersion> featuredModFileVersions;
 
   @Data
   public static class Player {
@@ -38,5 +39,12 @@ public class GameResponse implements ServerMessage {
   public static class SimMod {
     private final String uid;
     private final String displayName;
+  }
+
+
+  @Data
+  public static class FeaturedModFileVersion {
+    private final short id;
+    private final int version;
   }
 }

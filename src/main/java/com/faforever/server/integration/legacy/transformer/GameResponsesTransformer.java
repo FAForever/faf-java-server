@@ -4,6 +4,7 @@ import com.faforever.server.client.GameResponses;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameResponse;
+import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 public enum GameResponsesTransformer implements GenericTransformer<GameResponses, Map<String, Serializable>> {
   INSTANCE;
@@ -50,8 +53,7 @@ public enum GameResponsesTransformer implements GenericTransformer<GameResponses
       .put("max_players", source.getMaxPlayers())
       .put("launched_at", source.getStartTime() != null ? source.getStartTime().toEpochMilli() / 1000d : 0d)
       .put("teams", teams(source))
-      // FIXME implement this nightmare
-      .put("featured_mod_versions", ImmutableMap.of());
+      .put("featured_mod_versions", mapFileIdToVersion(source.getFeaturedModFileVersions()));
 
     Optional.ofNullable(source.getMinRating()).ifPresent(minRating -> builder.put("min_rating", minRating));
     Optional.ofNullable(source.getMaxRating()).ifPresent(maxRating -> builder.put("max_rating", maxRating));
@@ -59,9 +61,18 @@ public enum GameResponsesTransformer implements GenericTransformer<GameResponses
     return builder.build();
   }
 
+  /**
+   * Returns a map of {@code fileId -> version}. Let's hope that we can get rid of the legacy patcher soon so we can
+   * remove this.
+   */
+  private static HashMap<Short, Integer> mapFileIdToVersion(List<FeaturedModFileVersion> featuredModFileVersion) {
+    return (HashMap<Short, Integer>) featuredModFileVersion.stream()
+      .collect(toMap(FeaturedModFileVersion::getId, FeaturedModFileVersion::getVersion));
+  }
+
   private static HashMap<String, String> simMods(List<SimMod> simMods) {
     return (HashMap<String, String>) simMods.stream()
-      .collect(Collectors.toMap(SimMod::getUid, SimMod::getDisplayName));
+      .collect(toMap(SimMod::getUid, SimMod::getDisplayName));
   }
 
   static String clientGameState(GameState gameState) {

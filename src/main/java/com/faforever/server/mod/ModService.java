@@ -25,6 +25,7 @@ public class ModService {
   private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
   private final ModVersionRepository modVersionRepository;
   private final FeaturedModRepository featuredModRepository;
+  private final FeaturedModFileRepository featuredModFileRepository;
   private final ClientService clientService;
   private FeaturedMod coopFeaturedMod;
   private FeaturedMod ladder1v1FeaturedMod;
@@ -34,9 +35,11 @@ public class ModService {
   // Required for access to @Cacheable methods since inner calls do not go through proxy object.
   private ModService modService;
 
-  public ModService(ModVersionRepository modVersionRepository, FeaturedModRepository featuredModRepository, ClientService clientService) {
+  public ModService(ModVersionRepository modVersionRepository, FeaturedModRepository featuredModRepository,
+                    FeaturedModFileRepository featuredModFileRepository, ClientService clientService) {
     this.modVersionRepository = modVersionRepository;
     this.featuredModRepository = featuredModRepository;
+    this.featuredModFileRepository = featuredModFileRepository;
     this.clientService = clientService;
   }
 
@@ -97,5 +100,9 @@ public class ModService {
 
   public Optional<FeaturedMod> getFeaturedMod(String featuredModName) {
     return featuredModRepository.findOneByTechnicalName(featuredModName);
+  }
+
+  public List<FeaturedModFile> getLatestFileVersions(FeaturedMod featuredMod) {
+    return featuredModFileRepository.getLatestFileVersions(featuredMod.getTechnicalName());
   }
 }

@@ -3,6 +3,7 @@ package com.faforever.server.integration.legacy.transformer;
 import com.faforever.server.client.GameResponses;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.game.GameResponse;
+import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
 import com.faforever.server.game.GameVisibility;
 import com.google.common.collect.ImmutableMap;
@@ -28,8 +29,10 @@ public class GameResponsesTransformerTest {
   public void transform() throws Exception {
     Map<String, Serializable> result = GameResponsesTransformer.INSTANCE.transform(createSingleResponses(GameState.OPEN));
     assertThat(result.get("command"), is("game_info"));
+
     List<Map<String, Serializable>> games = (List<Map<String, Serializable>>) result.get("games");
     assertThat(games.size(), is(1));
+
     Map<String, Serializable> game = games.get(0);
 
     assertThat(game.get("visibility"), is(GameVisibility.PUBLIC.getString()));
@@ -38,7 +41,7 @@ public class GameResponsesTransformerTest {
     assertThat(game.get("title"), is("Test"));
     assertThat(game.get("state"), is("open"));
     assertThat(game.get("featured_mod"), is("faf"));
-    assertThat(game.get("featured_mod_versions"), is(ImmutableMap.of()));
+    assertThat(game.get("featured_mod_versions"), is(ImmutableMap.of((short) 1, 1111, (short) 2, 2222)));
     assertThat(game.get("sim_mods"), is(ImmutableMap.of("1-1-1-1", "Mod #1", "2-2-2-2", "Mod #2")));
     assertThat(game.get("mapname"), is("SCMP_001"));
     assertThat(game.get("map_file_path"), is("maps/SCMP_001.zip"));
@@ -119,7 +122,11 @@ public class GameResponsesTransformerTest {
       6,
       Instant.now(),
       1500,
-      null
+      null,
+      Arrays.asList(
+        new FeaturedModFileVersion((short) 1, 1111),
+        new FeaturedModFileVersion((short) 2, 2222)
+      )
     );
   }
 }
