@@ -27,9 +27,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ClientConnectionManagerTest {
+public class ClientConnectionServiceTest {
 
-  private ClientConnectionManager instance;
+  private ClientConnectionService instance;
 
   @Mock
   private CounterService counterService;
@@ -40,31 +40,31 @@ public class ClientConnectionManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    instance = new ClientConnectionManager(counterService, playerService, eventPublisher);
+    instance = new ClientConnectionService(counterService, playerService, eventPublisher);
   }
 
   @Test
   public void updateConnections() throws Exception {
     InetAddress inetAddress = mock(InetAddress.class);
     instance.createClientConnection("1", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(counterService).increment(Metrics.CLIENTS_CONNECTED);
+    verify(counterService).increment(Metrics.CLIENTS_CONNECTED_FORMAT);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.createClientConnection("2", Protocol.LEGACY_UTF_16, inetAddress);
-    verify(counterService, times(2)).increment(Metrics.CLIENTS_CONNECTED);
+    verify(counterService, times(2)).increment(Metrics.CLIENTS_CONNECTED_FORMAT);
     assertThat(instance.getConnections(), hasSize(2));
 
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(counterService).decrement(Metrics.CLIENTS_CONNECTED);
+    verify(counterService).decrement(Metrics.CLIENTS_CONNECTED_FORMAT);
     assertThat(instance.getConnections(), hasSize(1));
 
     // This connection has already been removed, so expect no change
     instance.removeConnection("1", Protocol.LEGACY_UTF_16);
-    verify(counterService).decrement(Metrics.CLIENTS_CONNECTED);
+    verify(counterService).decrement(Metrics.CLIENTS_CONNECTED_FORMAT);
     assertThat(instance.getConnections(), hasSize(1));
 
     instance.removeConnection("2", Protocol.LEGACY_UTF_16);
-    verify(counterService, times(2)).decrement(Metrics.CLIENTS_CONNECTED);
+    verify(counterService, times(2)).decrement(Metrics.CLIENTS_CONNECTED_FORMAT);
     assertThat(instance.getConnections(), hasSize(0));
   }
 

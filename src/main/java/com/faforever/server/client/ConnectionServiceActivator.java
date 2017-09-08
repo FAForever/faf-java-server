@@ -12,15 +12,15 @@ import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 @MessageEndpoint
 public class ConnectionServiceActivator {
 
-  private final ClientConnectionManager clientConnectionManager;
+  private final ClientConnectionService clientConnectionService;
 
   @Inject
-  public ConnectionServiceActivator(ClientConnectionManager clientConnectionManager) {
-    this.clientConnectionManager = clientConnectionManager;
+  public ConnectionServiceActivator(ClientConnectionService clientConnectionService) {
+    this.clientConnectionService = clientConnectionService;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.DISCONNECT_CLIENT_REQUEST)
   public void disconnectClientRequest(DisconnectClientRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
-    clientConnectionManager.disconnectClient(clientConnection.getAuthentication(), request.getUserId());
+    clientConnectionService.disconnectClient(clientConnection.getAuthentication(), request.getUserId());
   }
 }

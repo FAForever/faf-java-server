@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 @Slf4j
-public class ClientConnectionManager {
+public class ClientConnectionService {
 
   /**
    * Client connections by connection ID.
@@ -34,7 +34,7 @@ public class ClientConnectionManager {
   private final PlayerService playerService;
   private final ApplicationEventPublisher eventPublisher;
 
-  public ClientConnectionManager(CounterService counterService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
+  public ClientConnectionService(CounterService counterService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
     this.counterService = counterService;
     this.playerService = playerService;
     this.eventPublisher = eventPublisher;
@@ -43,7 +43,7 @@ public class ClientConnectionManager {
 
   @PostConstruct
   public void postConstruct() {
-    counterService.reset(Metrics.CLIENTS_CONNECTED);
+    counterService.reset(Metrics.CLIENTS_CONNECTED_FORMAT);
   }
 
   /**
@@ -56,8 +56,7 @@ public class ClientConnectionManager {
       Assert.state(!connections.containsKey(connectionId), "A connection with ID " + connectionId + " already exists");
 
       connections.put(connectionId, new ClientConnection(connectionId, protocol, inetAddress));
-      counterService.increment(Metrics.CLIENTS_CONNECTED);
-      counterService.increment(String.format("%s.%s", Metrics.CLIENTS_CONNECTED, protocol));
+      counterService.increment(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, protocol));
 
       return connections.get(connectionId);
     }
@@ -80,8 +79,7 @@ public class ClientConnectionManager {
       Optional.ofNullable(connections.remove(connectionId)).ifPresent(clientConnection -> {
         log.debug("Removing connection '{}' with protocol '{}'", connectionId, protocol);
         eventPublisher.publishEvent(new ClientDisconnectedEvent(clientConnection, clientConnection));
-        counterService.decrement(Metrics.CLIENTS_CONNECTED);
-        counterService.decrement(String.format("%s.%s", Metrics.CLIENTS_CONNECTED, protocol));
+        counterService.decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, protocol));
       });
     }
   }

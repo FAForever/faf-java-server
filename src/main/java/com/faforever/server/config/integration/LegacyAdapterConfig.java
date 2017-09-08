@@ -1,7 +1,7 @@
 package com.faforever.server.config.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.ClientConnectionService;
 import com.faforever.server.client.CloseConnectionEvent;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.integration.ChannelNames;
@@ -59,13 +59,13 @@ public class LegacyAdapterConfig {
 
   private final ServerProperties serverProperties;
   private final ApplicationEventPublisher applicationEventPublisher;
-  private final ClientConnectionManager clientConnectionManager;
+  private final ClientConnectionService clientConnectionService;
 
   @Inject
-  public LegacyAdapterConfig(ServerProperties serverProperties, ApplicationEventPublisher applicationEventPublisher, ClientConnectionManager clientConnectionManager) {
+  public LegacyAdapterConfig(ServerProperties serverProperties, ApplicationEventPublisher applicationEventPublisher, ClientConnectionService clientConnectionService) {
     this.serverProperties = serverProperties;
     this.applicationEventPublisher = applicationEventPublisher;
-    this.clientConnectionManager = clientConnectionManager;
+    this.clientConnectionService = clientConnectionService;
   }
 
   /**
@@ -184,14 +184,14 @@ public class LegacyAdapterConfig {
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
       TcpNioConnection connection = (TcpNioConnection) event.getSource();
       InetAddress inetAddress = connection.getSocketInfo().getInetAddress();
-      clientConnectionManager.createClientConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16, inetAddress);
+      clientConnectionService.createClientConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16, inetAddress);
     }
   }
 
   @EventListener
   public void onConnectionClosed(TcpConnectionCloseEvent event) {
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
-      clientConnectionManager.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
+      clientConnectionService.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
     }
   }
 
@@ -218,7 +218,7 @@ public class LegacyAdapterConfig {
           return message;
         }
 
-        return clientConnectionManager.getConnections().stream()
+        return clientConnectionService.getConnections().stream()
           .filter(clientConnection -> clientConnection.getProtocol() == Protocol.LEGACY_UTF_16)
           .map(clientConnection -> MessageBuilder.fromMessage(message)
             .setHeader(MessageHeaders.CLIENT_CONNECTION, clientConnection)
