@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -47,6 +48,10 @@ public class ChatService {
 
     Set<String> channels = new HashSet<>(3, 1);
     channels.addAll(chat.getDefaultChannels());
+
+    Optional.ofNullable(event.getPlayer().getClan())
+      .map(clan -> (String.format(chat.getClanChannelFormat(), clan.getTag())))
+      .ifPresent(channels::add);
 
     User user = event.getPlayer().getUser();
     GroupAssociation groupAssociation = user.getGroupAssociation();
