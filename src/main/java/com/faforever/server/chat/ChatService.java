@@ -37,7 +37,6 @@ public class ChatService {
     try {
       nickCoreRepository.updatePassword(username, Hashing.md5().hashString(password, StandardCharsets.UTF_8).toString());
     } catch (BadSqlGrammarException e) {
-      // TODO remove this as soon as faf-stacks' anope sets up all tables correctly
       log.warn("IRC password for user '{}' could not be updated ({})", username, e.getMessage());
     }
   }

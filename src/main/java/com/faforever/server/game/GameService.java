@@ -823,7 +823,6 @@ public class GameService {
       changeGameState(game, GameState.OPEN);
       clientService.hostGame(game, player);
 
-      // TODO send only to players allowed to see
       markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     } else {
       clientService.connectToHost(game, player);
