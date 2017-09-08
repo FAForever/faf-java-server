@@ -83,7 +83,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case JOIN_GAME:
         return new JoinGameRequest(((Double) source.get("uid")).intValue(), (String) source.get("password"));
       case ASK_SESSION:
-        return SessionRequest.INSTANCE;
+        String userAgent = (String) source.get("user_agent");
+        return SessionRequest.forUserAgent(userAgent);
       case SOCIAL_ADD:
         return handleSocialAdd(source);
       case SOCIAL_REMOVE:

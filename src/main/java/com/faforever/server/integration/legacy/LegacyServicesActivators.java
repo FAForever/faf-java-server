@@ -2,9 +2,11 @@ package com.faforever.server.integration.legacy;
 
 import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginMessage;
+import com.faforever.server.client.SessionRequest;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
@@ -16,7 +18,9 @@ import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
+import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -43,9 +47,13 @@ public class LegacyServicesActivators {
   private final PlayerService playerService;
   private final ChatService chatService;
   private final ApplicationEventPublisher eventPublisher;
+  private final CounterService counterService;
 
   @Inject
-  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService, UniqueIdService uniqueIdService, GeoIpService geoIpService, PlayerService playerService, ChatService chatService, ApplicationEventPublisher eventPublisher) {
+  public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
+                                  UniqueIdService uniqueIdService, GeoIpService geoIpService,
+                                  PlayerService playerService, ChatService chatService,
+                                  ApplicationEventPublisher eventPublisher, CounterService counterService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
@@ -53,16 +61,22 @@ public class LegacyServicesActivators {
     this.playerService = playerService;
     this.chatService = chatService;
     this.eventPublisher = eventPublisher;
+    this.counterService = counterService;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
-  public SessionResponse askSession() {
+  public SessionResponse askSession(SessionRequest sessionRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    // TODO this method shouldn't do anything but call a service
+    String userAgent = sessionRequest.getUserAgent();
+    clientConnection.setUserAgent(userAgent);
+    counterService.increment(String.format(Metrics.CLIENTS_USER_AGENT_FORMAT, userAgent));
     return SessionResponse.INSTANCE;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
   @Transactional
   public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+    // TODO this method shouldn't do anything but call a service
     Requests.verify(!playerService.isPlayerOnline(loginRequest.getLogin()), ErrorCode.USER_ALREADY_CONNECTED, loginRequest.getLogin());
 
     log.debug("Processing login request from user: {}", loginRequest.getLogin());
@@ -89,5 +103,10 @@ public class LegacyServicesActivators {
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_COOP_LIST)
   public void listCoopMissions(ListCoopRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     clientService.sendCoopList(clientConnection);
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.CLIENT_DISCONNECTED_EVENT)
+  public void onClientDisconnected(ClientDisconnectedEvent event) {
+    counterService.decrement(String.format(Metrics.CLIENTS_USER_AGENT_FORMAT, event.getClientConnection().getUserAgent()));
   }
 }
