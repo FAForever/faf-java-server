@@ -4,4 +4,5 @@ public class CacheNames {
   public static final String FEATURED_MODS = "featuredMods";
   public static final String RANKED_MODS = "rankedMods";
   public static final String MAP_VERSIONS = "mapVersions";
+  public static final String MOD_VERSIONS = "modVersions";
 }

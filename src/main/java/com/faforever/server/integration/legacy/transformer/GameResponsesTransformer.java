@@ -4,6 +4,7 @@ import com.faforever.server.client.GameResponses;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameResponse;
+import com.faforever.server.game.GameResponse.SimMod;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import org.springframework.integration.transformer.GenericTransformer;
@@ -41,7 +42,7 @@ public enum GameResponsesTransformer implements GenericTransformer<GameResponses
       .put("title", source.getTitle())
       .put("state", clientGameState(source.getState()))
       .put("featured_mod", source.getFeaturedModTechnicalName())
-      .put("sim_mods", source.getSimMods().toArray())
+      .put("sim_mods", simMods(source.getSimMods()))
       .put("mapname", source.getTechnicalMapName())
       .put("map_file_path", String.format("maps/%s.zip", source.getTechnicalMapName()))
       .put("host", source.getHostUsername())
@@ -56,6 +57,11 @@ public enum GameResponsesTransformer implements GenericTransformer<GameResponses
     Optional.ofNullable(source.getMaxRating()).ifPresent(maxRating -> builder.put("max_rating", maxRating));
 
     return builder.build();
+  }
+
+  private static HashMap<String, String> simMods(List<SimMod> simMods) {
+    return (HashMap<String, String>) simMods.stream()
+      .collect(Collectors.toMap(SimMod::getUid, SimMod::getDisplayName));
   }
 
   static String clientGameState(GameState gameState) {

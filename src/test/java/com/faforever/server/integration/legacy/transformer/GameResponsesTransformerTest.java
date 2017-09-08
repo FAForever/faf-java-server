@@ -3,6 +3,7 @@ package com.faforever.server.integration.legacy.transformer;
 import com.faforever.server.client.GameResponses;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.game.GameResponse;
+import com.faforever.server.game.GameResponse.SimMod;
 import com.faforever.server.game.GameVisibility;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
@@ -38,7 +39,7 @@ public class GameResponsesTransformerTest {
     assertThat(game.get("state"), is("open"));
     assertThat(game.get("featured_mod"), is("faf"));
     assertThat(game.get("featured_mod_versions"), is(ImmutableMap.of()));
-    assertThat(game.get("sim_mods"), is(new Object[0]));
+    assertThat(game.get("sim_mods"), is(ImmutableMap.of("1-1-1-1", "Mod #1", "2-2-2-2", "Mod #2")));
     assertThat(game.get("mapname"), is("SCMP_001"));
     assertThat(game.get("map_file_path"), is("maps/SCMP_001.zip"));
     assertThat(game.get("host"), is("Player 1"));
@@ -103,7 +104,10 @@ public class GameResponsesTransformerTest {
       null,
       state,
       "faf",
-      Collections.emptyList(),
+      Arrays.asList(
+        new SimMod("1-1-1-1", "Mod #1"),
+        new SimMod("2-2-2-2", "Mod #2")
+      ),
       "SCMP_001",
       "Player 1",
       Arrays.asList(

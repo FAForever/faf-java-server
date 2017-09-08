@@ -11,6 +11,7 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
+import com.faforever.server.entity.ModVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Validity;
 import com.faforever.server.entity.VictoryCondition;
@@ -18,6 +19,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
+import com.faforever.server.game.GameResponse.SimMod;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerOnlineEvent;
@@ -234,8 +236,6 @@ public class GameService {
     PlayerGameState oldState = player.getGameState();
     log.debug("Player '{}' updated his game state from '{}' to '{}' (game: '{}')", player, oldState, newState, game);
 
-    // FIXME figure out how leaving/closing a game is detected and clean up player options and stats
-
     Requests.verify(PlayerGameState.canTransition(oldState, newState), ErrorCode.INVALID_PLAYER_GAME_STATE_TRANSITION, oldState, newState);
 
     changePlayerGameState(player, newState);
@@ -387,14 +387,15 @@ public class GameService {
   }
 
   /**
-   * Updates the list of activated mod UIDs. Not all UIDs may be known to the server.
+   * Updates the list of activated mod UIDs. Not all UIDs may be known to the server. This is the list of mods user see
+   * in the client.
    */
   public void updateGameMods(Game game, List<String> modUids) {
-    modService.getMods(modUids);
-    // FIXME lookup mod names
+    List<ModVersion> modVersions = modService.findModVersionsByUids(modUids);
 
     game.getSimMods().clear();
-    game.getSimMods().addAll(modUids);
+    game.getSimMods().addAll(modVersions);
+
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
@@ -857,23 +858,33 @@ public class GameService {
       game.getPassword(),
       game.getState(),
       game.getFeaturedMod().getTechnicalName(),
-      game.getSimMods(),
+      toSimMods(game.getSimMods()),
       game.getMapName(),
       game.getHost().getLogin(),
-      game.getConnectedPlayers().values().stream()
-        .map(player -> {
-          int team = (int) Optional.ofNullable(game.getPlayerOptions().get(player.getId()))
-            .map(options -> options.get(OPTION_TEAM))
-            .orElse(NO_TEAM_ID);
-
-          return new GameResponse.Player(team, player.getLogin());
-        })
-        .collect(Collectors.toList()),
+      toPlayers(game),
       game.getMaxPlayers(),
       Optional.ofNullable(game.getStartTime()).orElse(null),
       game.getMinRating(),
       game.getMaxRating()
     );
+  }
+
+  private List<SimMod> toSimMods(List<ModVersion> simMods) {
+    return simMods.stream()
+      .map(modVersion -> new SimMod(modVersion.getUid(), modVersion.getMod().getDisplayName()))
+      .collect(Collectors.toList());
+  }
+
+  private List<GameResponse.Player> toPlayers(Game game) {
+    return game.getConnectedPlayers().values().stream()
+      .map(player -> {
+        int team = (int) Optional.ofNullable(game.getPlayerOptions().get(player.getId()))
+          .map(options -> options.get(OPTION_TEAM))
+          .orElse(NO_TEAM_ID);
+
+        return new GameResponse.Player(team, player.getLogin());
+      })
+      .collect(Collectors.toList());
   }
 
   private Optional<Integer> getPlayerTeamId(Player player) {

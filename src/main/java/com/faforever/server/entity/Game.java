@@ -88,7 +88,7 @@ public class Game {
   private final Map<String, Map<String, Object>> aiOptions;
 
   @Transient
-  private final List<String> simMods;
+  private final List<ModVersion> simMods;
 
   @Transient
   private Integer minRating;

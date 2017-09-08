@@ -12,6 +12,8 @@ import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.MapVersion;
+import com.faforever.server.entity.Mod;
+import com.faforever.server.entity.ModVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.entity.Validity;
@@ -50,7 +52,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -262,18 +263,33 @@ public class GameServiceTest {
 
   @Test
   public void updateGameMods() throws Exception {
-    Game game = hostGame(player1);
-    instance.updateGameMods(game, Arrays.asList("1-2-3-4", "5-6-7-8"));
+    List<String> modUids = Arrays.asList("1-1-1-1", "2-2-2-2");
+    when(modService.findModVersionsByUids(modUids)).thenReturn(Arrays.asList(
+      new ModVersion().setUid("1-1-1-1").setMod(new Mod().setDisplayName("Mod #1")),
+      new ModVersion().setUid("2-2-2-2").setMod(new Mod().setDisplayName("Mod #2"))
+    ));
 
-    List<String> simMods = game.getSimMods();
-    assertThat(simMods, hasItem("1-2-3-4"));
-    assertThat(simMods, hasItem("5-6-7-8"));
+    Game game = hostGame(player1);
+    instance.updateGameMods(game, modUids);
+
+    List<ModVersion> simMods = game.getSimMods();
+    assertThat(simMods, hasSize(2));
+    assertThat(simMods.get(0).getUid(), is("1-1-1-1"));
+    assertThat(simMods.get(0).getMod().getDisplayName(), is("Mod #1"));
+    assertThat(simMods.get(1).getUid(), is("2-2-2-2"));
+    assertThat(simMods.get(1).getMod().getDisplayName(), is("Mod #2"));
   }
 
   @Test
   public void updateGameModsCountClearsIfZero() throws Exception {
+    List<String> modUids = Arrays.asList("1-1-1-1", "2-2-2-2");
+    when(modService.findModVersionsByUids(modUids)).thenReturn(Arrays.asList(
+      new ModVersion().setUid("1-1-1-1").setMod(new Mod().setDisplayName("Mod #1")),
+      new ModVersion().setUid("2-2-2-2").setMod(new Mod().setDisplayName("Mod #2"))
+    ));
+
     Game game = hostGame(player1);
-    instance.updateGameMods(game, Arrays.asList("1-2-3-4", "5-6-7-8"));
+    instance.updateGameMods(game, Arrays.asList("1-1-1-1", "2-2-2-2"));
     instance.updateGameModsCount(game, 0);
 
     assertThat(game.getSimMods(), is(empty()));
@@ -281,11 +297,22 @@ public class GameServiceTest {
 
   @Test
   public void updateGameModsCountDoesntClearIfNonZero() throws Exception {
+    List<String> modUids = Arrays.asList("1-1-1-1", "2-2-2-2");
+    when(modService.findModVersionsByUids(modUids)).thenReturn(Arrays.asList(
+      new ModVersion().setUid("1-1-1-1").setMod(new Mod().setDisplayName("Mod #1")),
+      new ModVersion().setUid("2-2-2-2").setMod(new Mod().setDisplayName("Mod #2"))
+    ));
+
     Game game = hostGame(player1);
-    instance.updateGameMods(game, Arrays.asList("1-2-3-4", "5-6-7-8"));
+    instance.updateGameMods(game, Arrays.asList("1-1-1-1", "2-2-2-2"));
     instance.updateGameModsCount(game, 1);
 
-    assertThat(game.getSimMods(), hasItems("1-2-3-4", "5-6-7-8"));
+    List<ModVersion> simMods = game.getSimMods();
+    assertThat(simMods, hasSize(2));
+    assertThat(simMods.get(0).getUid(), is("1-1-1-1"));
+    assertThat(simMods.get(0).getMod().getDisplayName(), is("Mod #1"));
+    assertThat(simMods.get(1).getUid(), is("2-2-2-2"));
+    assertThat(simMods.get(1).getMod().getDisplayName(), is("Mod #2"));
   }
 
   @Test
@@ -523,9 +550,7 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityUnrankedMod() throws Exception {
     Game game = hostGame(player1);
-
-    game.getSimMods().add("1-2-3-4");
-    when(modService.isModRanked("1-2-3-4")).thenReturn(false);
+    game.getSimMods().add(new ModVersion().setRanked(false).setMod(new Mod().setDisplayName("Mod")));
 
     launchGame(game);
 

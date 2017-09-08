@@ -19,7 +19,7 @@ public class GameResponse implements ServerMessage {
   private final Object password;
   private final GameState state;
   private final String featuredModTechnicalName;
-  private final List<String> simMods;
+  private final List<SimMod> simMods;
   private final String technicalMapName;
   private final String hostUsername;
   private final List<Player> players;
@@ -32,5 +32,11 @@ public class GameResponse implements ServerMessage {
   public static class Player {
     private final int team;
     private final String name;
+  }
+
+  @Data
+  public static class SimMod {
+    private final String uid;
+    private final String displayName;
   }
 }

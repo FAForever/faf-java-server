@@ -41,4 +41,5 @@ public class Mod {
 
   @Column(name = "update_time")
   private Timestamp updateTime;
+
 }

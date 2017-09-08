@@ -3,6 +3,7 @@ package com.faforever.server.mod;
 import com.faforever.server.cache.CacheNames;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.FeaturedMod;
+import com.faforever.server.entity.ModVersion;
 import com.faforever.server.player.PlayerOnlineEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +18,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
-
 @Service
 @Slf4j
 public class ModService {
   private static final String COOP_MOD_NAME = "coop";
   private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
-  private final ModRepository modRepository;
+  private final ModVersionRepository modVersionRepository;
   private final FeaturedModRepository featuredModRepository;
   private final ClientService clientService;
   private FeaturedMod coopFeaturedMod;
@@ -35,8 +34,8 @@ public class ModService {
   // Required for access to @Cacheable methods since inner calls do not go through proxy object.
   private ModService modService;
 
-  public ModService(ModRepository modRepository, FeaturedModRepository featuredModRepository, ClientService clientService) {
-    this.modRepository = modRepository;
+  public ModService(ModVersionRepository modVersionRepository, FeaturedModRepository featuredModRepository, ClientService clientService) {
+    this.modVersionRepository = modVersionRepository;
     this.featuredModRepository = featuredModRepository;
     this.clientService = clientService;
   }
@@ -61,14 +60,14 @@ public class ModService {
     return Collections.unmodifiableList(featuredModRepository.findAll());
   }
 
-  public List<Object> getMods(List<String> modUids) {
-    // FIXME implement
-    return emptyList();
+  // TODO cache
+  public List<ModVersion> findModVersionsByUids(List<String> uids) {
+    return modVersionRepository.findByUidIn(uids);
   }
 
   @Cacheable(CacheNames.RANKED_MODS)
   public boolean isModRanked(String simModId) {
-    return modRepository.findOneByUidAndRankedTrue(simModId).isPresent();
+    return modVersionRepository.findOneByUidAndRankedTrue(simModId).isPresent();
   }
 
   @EventListener
