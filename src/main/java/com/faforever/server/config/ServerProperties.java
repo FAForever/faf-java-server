@@ -19,6 +19,7 @@ public class ServerProperties {
   private TrueSkill trueSkill = new TrueSkill();
   private Uid uid = new Uid();
   private MatchMaker matchMaker = new MatchMaker();
+  private Ladder ladder = new Ladder();
   private Game game = new Game();
   private GeoIp geoIp = new GeoIp();
   private Shutdown shutdown = new Shutdown();
@@ -78,6 +79,30 @@ public class ServerProperties {
      * The transition time between requiring {@link #desiredGameQuality} to {@link #acceptableGameQuality} in seconds.
      */
     private long acceptableQualityWaitTime = Duration.ofMinutes(2).getSeconds();
+  }
+
+  @Data
+  public static class Ladder {
+    /**
+     * Current season of ladder in which scores are changed in database (previous seasons are kept for historic
+     * reasons).
+     */
+    private int season;
+
+    /** Score gain if both players are in the same league. */
+    private float regularGain = 1.0f;
+    /** Score loss if both players are in the same league. */
+    private float regularLoss = 0.5f;
+
+    /** Score gain if the winner is in an inferior league. */
+    private float increasedGain = 1.5f;
+    /** Score loss if the winner is in an inferior league. */
+    private float increasedLoss = 1.0f;
+
+    /** Score gain if the winner is in a superior league. */
+    private float reducedGain = 0.5f;
+    /** Score loss if the winner is in a superior league. */
+    private float reducedLoss = 0.5f;
   }
 
   @Data
