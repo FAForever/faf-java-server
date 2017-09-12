@@ -131,7 +131,7 @@ public class GameServiceActivators {
       .ifPresent(authentication -> gameService.removePlayer(((FafUserDetails) authentication.getPrincipal()).getPlayer()));
   }
 
-  private Player getPlayer(@Header(USER_HEADER) Authentication authentication) {
+  private Player getPlayer( Authentication authentication) {
     return ((FafUserDetails) authentication.getPrincipal()).getPlayer();
   }
 }

@@ -1,6 +1,7 @@
 package com.faforever.server.config.integration;
 
-import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.avatar.ListAvatarsMessage;
+import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.DisconnectClientRequest;
@@ -181,9 +182,10 @@ public class IntegrationConfig {
     router.setChannelMapping(RestoreGameSessionRequest.class.getName(), ChannelNames.RESTORE_GAME_SESSION_REQUEST);
     router.setChannelMapping(MutuallyAgreedDrawRequest.class.getName(), ChannelNames.MUTUALLY_AGREED_DRAW_REQUEST);
     router.setChannelMapping(ClientDisconnectedEvent.class.getName(), ChannelNames.CLIENT_DISCONNECTED_EVENT);
+    router.setChannelMapping(ListAvatarsMessage.class.getName(), ChannelNames.LIST_AVATAR);
+    router.setChannelMapping(SelectAvatarRequest.class.getName(), ChannelNames.SELECT_AVATAR);
     router.setChannelMapping(LoginMessage.class.getName(), ChannelNames.LEGACY_LOGIN_REQUEST);
     router.setChannelMapping(SessionRequest.class.getName(), ChannelNames.LEGACY_SESSION_REQUEST);
-    router.setChannelMapping(AvatarMessage.class.getName(), ChannelNames.LEGACY_AVATAR_REQUEST);
     router.setChannelMapping(AddFriendRequest.class.getName(), ChannelNames.LEGACY_ADD_FRIEND_REQUEST);
     router.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST);
     return router;

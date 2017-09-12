@@ -58,7 +58,7 @@ public enum PlayerResponsesTransformer implements GenericTransformer<PlayerRespo
       builder
         .put("avatar", ImmutableMap.of(
           "url", avatar.getUrl(),
-          "tooltip", avatar.getTooltip()));
+          "tooltip", avatar.getDescription()));
     }
 
     return builder.build();

@@ -31,7 +31,7 @@ public class Avatar {
   private String url;
 
   @Column(name = "tooltip")
-  private String tooltip;
+  private String description;
 
   @OneToMany(mappedBy = "avatar")
   private Collection<AvatarAssociation> owners;

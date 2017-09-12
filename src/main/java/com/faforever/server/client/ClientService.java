@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
+// TODO decide to which package(s) response classes belong and where they are created
 public class ClientService {
 
   private static final Map<Class<?>, DelayedResponseAggregator<?, ?>> RESPONSE_AGGREGATORS = ImmutableMap.of(
@@ -104,11 +105,11 @@ public class ClientService {
     send(new ConnectToPlayerResponse(otherPlayer.getLogin(), otherPlayer.getId()), player);
   }
 
-  public void hostGame(Game game, @NotNull ConnectionAware connectionAware) {
-    send(new HostGameResponse(game.getMapName()), connectionAware);
+  public void hostGame(Game game, @NotNull ConnectionAware recipient) {
+    send(new HostGameResponse(game.getMapName()), recipient);
   }
 
-  public void reportUpdatedAchievements(List<UpdatedAchievementResponse> playerAchievements, @NotNull ConnectionAware connectionAware) {
+  public void reportUpdatedAchievements(List<UpdatedAchievementResponse> playerAchievements, @NotNull ConnectionAware recipient) {
     send(new UpdatedAchievementsResponse(playerAchievements.stream()
         .map(item -> new UpdatedAchievementsResponse.UpdatedAchievement(
           item.getAchievementId(),
@@ -117,28 +118,28 @@ public class ClientService {
           item.isNewlyUnlocked()
         ))
         .collect(Collectors.toList())),
-      connectionAware);
+      recipient);
   }
 
   /**
    * Send a player his own information, usually called after successful login.
    */
-  public void sendLoginDetails(Player player, @NotNull ConnectionAware connectionAware) {
-    send(new LoginDetailsResponse(toPlayerInformationResponse(player)), connectionAware);
+  public void sendLoginDetails(Player player, @NotNull ConnectionAware recipient) {
+    send(new LoginDetailsResponse(toPlayerInformationResponse(player)), recipient);
   }
 
   /**
    * @deprecated the client should fetch featured mods from the API.
    */
   @Deprecated
-  public void sendModList(List<FeaturedMod> modList, @NotNull ConnectionAware connectionAware) {
+  public void sendModList(List<FeaturedMod> modList, @NotNull ConnectionAware recipient) {
     modList.forEach(mod -> send(new FeaturedModResponse(
       mod.getTechnicalName(), mod.getDisplayName(), mod.getDescription(), mod.getDisplayOrder()
-    ), connectionAware));
+    ), recipient));
   }
 
-  public void sendGameList(GameResponses games, ConnectionAware connectionAware) {
-    send(games, connectionAware);
+  public void sendGameList(GameResponses games, ConnectionAware recipient) {
+    send(games, recipient);
   }
 
   /**
@@ -176,8 +177,8 @@ public class ClientService {
    * Tells the client to drop game connection to the player with the specified ID.
    */
   public void disconnectPlayerFromGame(int playerId, Collection<? extends ConnectionAware> receivers) {
-    receivers.forEach(connectionAware ->
-      clientGateway.send(new DisconnectPlayerFromGameResponse(playerId), connectionAware.getClientConnection()));
+    receivers.forEach(recipient ->
+      clientGateway.send(new DisconnectPlayerFromGameResponse(playerId), recipient.getClientConnection()));
   }
 
   @Scheduled(fixedDelay = 200)
@@ -197,7 +198,7 @@ public class ClientService {
       return;
     }
 
-    log.trace("Sending '{}' delayed responses", objectIds.size());
+    log.trace("Aggregating and broadcasting '{}' messages", objectIds.size());
     objectIds.stream()
       .map(delayedResponses::remove)
       .collect(Collectors.groupingBy(DelayedResponse::getType)).entrySet().stream()
@@ -273,6 +274,13 @@ public class ClientService {
     send(response, recipient);
   }
 
+  public void sendAvatarList(List<com.faforever.server.entity.Avatar> avatars, ConnectionAware recipient) {
+    AvatarsResponse avatarListResponse = new AvatarsResponse(avatars.stream()
+      .map(avatar -> new AvatarsResponse.Avatar(avatar.getUrl(), avatar.getDescription())).collect(Collectors.toList()));
+
+    send(avatarListResponse, recipient);
+  }
+
   private CompletableFuture<PlayerResponses> toPlayerResponses(Collection<Player> players) {
     return CompletableFuture.supplyAsync((() -> new PlayerResponses(players.stream()
       .map(this::toPlayerInformationResponse)
@@ -280,12 +288,12 @@ public class ClientService {
   }
 
   private PlayerResponse toPlayerInformationResponse(Player player) {
-    Optional<Avatar> avatar = player.getAvailableAvatars().stream()
+    Optional<PlayerResponse.Player.Avatar> avatar = player.getAvailableAvatars().stream()
       .filter(AvatarAssociation::isSelected)
       .findFirst()
       .map(association -> {
         com.faforever.server.entity.Avatar avatarEntity = association.getAvatar();
-        return new Avatar(avatarEntity.getUrl(), avatarEntity.getTooltip());
+        return new PlayerResponse.Player.Avatar(avatarEntity.getUrl(), avatarEntity.getDescription());
       });
 
     Optional<Rating> globalRating = Optional.ofNullable(player.getGlobalRating())
@@ -327,11 +335,11 @@ public class ClientService {
     return Arrays.asList("/numgames", String.valueOf(numGames));
   }
 
-  private void send(ServerMessage serverMessage, @NotNull ConnectionAware connectionAware) {
-    ClientConnection clientConnection = connectionAware.getClientConnection();
+  private void send(ServerMessage serverMessage, @NotNull ConnectionAware recipient) {
+    ClientConnection clientConnection = recipient.getClientConnection();
     try {
       if (clientConnection == null) {
-        throw new IllegalStateException("No connection available: " + connectionAware);
+        throw new IllegalStateException("No connection available: " + recipient);
       }
       clientGateway.send(serverMessage, clientConnection);
     } catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.avatar.ListAvatarsMessage;
+import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.ListCoopRequest;
@@ -78,9 +79,9 @@ public final class ChannelNames {
   public static final String LEGACY_OUTBOUND = "legacyOutbound";
 
   /**
-   * Channel for {@link AvatarMessage}.
+   * Channel for {@link ListAvatarsMessage}.
    */
-  public static final String LEGACY_AVATAR_REQUEST = "avatarRequest";
+  public static final String LIST_AVATAR = "listAvatar";
 
   /**
    * Channel for {@link AddFriendRequest}.
@@ -244,4 +245,9 @@ public final class ChannelNames {
    * Channel for raw legacy outbound messages to be written on the TCP socket.
    */
   public static final String LEGACY_TCP_OUTBOUND = "legacyTcpOutbound";
+
+  /**
+   * Channel for {@link SelectAvatarRequest}.
+   */
+  public static final String SELECT_AVATAR = "selectAvatar";
 }

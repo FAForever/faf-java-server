@@ -146,7 +146,7 @@ public class ClientServiceTest {
 
   @Test
   public void sendUserDetails() throws Exception {
-    Avatar avatar = new Avatar().setUrl("http://example.com").setTooltip("Tooltip");
+    Avatar avatar = new Avatar().setUrl("http://example.com").setDescription("Tooltip");
     player
       .setAvailableAvatars(Collections.singletonList(
         new AvatarAssociation().setAvatar(avatar).setPlayer(player).setSelected(true)
@@ -166,7 +166,7 @@ public class ClientServiceTest {
     PlayerResponse response = captor.getValue();
     assertThat(response.getUserId(), is(5));
     assertThat(response.getUsername(), is("JUnit"));
-    assertThat(response.getPlayer().getAvatar().getTooltip(), is("Tooltip"));
+    assertThat(response.getPlayer().getAvatar().getDescription(), is("Tooltip"));
     assertThat(response.getPlayer().getAvatar().getUrl(), is("http://example.com"));
     assertThat(response.getPlayer().getGlobalRating().getMean(), is(1100d));
     assertThat(response.getPlayer().getGlobalRating().getDeviation(), is(100d));
@@ -263,5 +263,24 @@ public class ClientServiceTest {
 
     verify(clientGateway).broadcast(any());
     // Expect no exception to be thrown
+  }
+
+  @Test
+  public void sendAvatarList() throws Exception {
+    List<Avatar> avatars = Arrays.asList(
+      new Avatar().setUrl("http://example.com/foo.bar").setDescription("Foo bar"),
+      new Avatar()
+    );
+
+    ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
+
+    instance.sendAvatarList(avatars, connectionAware);
+
+    ArgumentCaptor<AvatarsResponse> captor = ArgumentCaptor.forClass(AvatarsResponse.class);
+    verify(clientGateway).send(captor.capture(), eq(clientConnection));
+
+    assertThat(captor.getValue().getAvatars(), hasSize(2));
+    assertThat(captor.getValue().getAvatars().get(0).getUrl(), is("http://example.com/foo.bar"));
+    assertThat(captor.getValue().getAvatars().get(0).getDescription(), is("Foo bar"));
   }
 }

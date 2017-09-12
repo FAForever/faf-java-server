@@ -91,7 +91,7 @@ public class ChannelConfiguration {
     return MessageChannels.direct().get();
   }
 
-  @Bean(name = ChannelNames.LEGACY_AVATAR_REQUEST)
+  @Bean(name = ChannelNames.LIST_AVATAR)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel avatarRequest() {
     return MessageChannels.direct().get();

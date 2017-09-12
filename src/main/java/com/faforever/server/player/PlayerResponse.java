@@ -32,7 +32,7 @@ public class PlayerResponse implements ServerMessage {
     @Data
     public static class Avatar {
       private final String url;
-      private final String tooltip;
+      private final String description;
     }
   }
 }

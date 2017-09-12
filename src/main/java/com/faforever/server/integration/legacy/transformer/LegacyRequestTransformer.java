@@ -1,9 +1,10 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.avatar.AddAvatarAdminRequest;
-import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.avatar.GetAvatarsAdminRequest;
+import com.faforever.server.avatar.ListAvatarsMessage;
 import com.faforever.server.avatar.RemoveAvatarAdminRequest;
+import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginMessage;
@@ -50,7 +51,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.integration.transformer.GenericTransformer;
 
 import java.time.Duration;
@@ -94,7 +94,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case GAME_MATCH_MAKING:
         return handleMatchMaking(source);
       case AVATAR:
-        return handleAvatar();
+        return handleAvatar(source);
       case GAME_STATE:
         return new GameStateReport(PlayerGameState.fromString((String) getArgs(source).get(0)));
       case GAME_OPTION:
@@ -145,10 +145,14 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     throw new ProgrammingError("This should never be reached.");
   }
 
-  @NotNull
-  private ClientMessage handleAvatar() {
-    // FIXME implement?
-    return AvatarMessage.INSTANCE;
+  private ClientMessage handleAvatar(Map<String, Object> source) {
+    switch ((String) source.get("action")) {
+      case "list_avatar":
+        return ListAvatarsMessage.INSTANCE;
+      case "select":
+        return new SelectAvatarRequest((String) source.get("avatar"));
+    }
+    return ListAvatarsMessage.INSTANCE;
   }
 
   private ClientMessage handleAdminAction(Map<String, Object> source) {
