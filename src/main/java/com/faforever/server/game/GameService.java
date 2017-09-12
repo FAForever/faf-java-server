@@ -21,6 +21,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
+import com.faforever.server.ladder.DivisionService;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerOnlineEvent;
@@ -48,7 +49,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -105,6 +108,7 @@ public class GameService {
   private final ModService modService;
   private final PlayerService playerService;
   private final RatingService ratingService;
+  private final DivisionService divisionService;
 
   /**
    * Since Spring Data JPA assumes that entities with IDs != 0 (or != null) are already stored in the database, we can't
@@ -117,8 +121,8 @@ public class GameService {
 
   public GameService(GameRepository gameRepository, CounterService counterService, ClientService clientService,
                      MapService mapService, ModService modService, PlayerService playerService,
-                     RatingService ratingService, ServerProperties properties, EntityManager entityManager,
-                     ArmyStatisticsService armyStatisticsService) {
+                     RatingService ratingService, ServerProperties properties, DivisionService divisionService,
+                     EntityManager entityManager, ArmyStatisticsService armyStatisticsService) {
     this.gameRepository = gameRepository;
     this.counterService = counterService;
     this.clientService = clientService;
@@ -126,6 +130,7 @@ public class GameService {
     this.modService = modService;
     this.playerService = playerService;
     this.ratingService = ratingService;
+    this.divisionService = divisionService;
     this.entityManager = entityManager;
     this.armyStatisticsService = armyStatisticsService;
     lastGameId = new AtomicInteger(0);
@@ -670,6 +675,7 @@ public class GameService {
         updateGameValidity(game);
         updateRatingsIfValid(game);
         settlePlayerScores(game);
+        updateDivisionScoresIfValid(game);
         gameRepository.save(game);
       }
     } finally {
@@ -733,6 +739,43 @@ public class GameService {
     }
     RatingType ratingType = modService.isLadder1v1(game.getFeaturedMod()) ? RatingType.LADDER_1V1 : RatingType.GLOBAL;
     ratingService.updateRatings(game.getPlayerStats().values(), NO_TEAM_ID, ratingType);
+  }
+
+  private void updateDivisionScoresIfValid(Game game) {
+    if (game.getValidity() != Validity.VALID && !game.isRatingEnforced()) {
+      log.trace("Skipping update of division scores for invalid game: {}", game);
+      return;
+    }
+
+    if (!modService.isLadder1v1(game.getFeaturedMod())) {
+      log.trace("Skipping update of division scores for non-ladder game: {}", game);
+      return;
+    }
+
+    log.trace("Updating division scores for game: {}", game);
+
+    Assert.state(game.getConnectedPlayers().size() == 2, "A ladder game must have exactly 2 players");
+
+    Iterator<Player> playerIterator = game.getConnectedPlayers().values().iterator();
+    Player playerOne = playerIterator.next();
+    Player playerTwo = playerIterator.next();
+
+    Player winner = null;
+    if (!game.isMutuallyAgreedDraw()) {
+      winner = game.getPlayerStats().values().stream()
+        .max(Comparator.comparingInt(value -> {
+          Integer score = value.getScore();
+          return score;
+        }))
+        .map(GamePlayerStats::getPlayer)
+        .orElse(null);
+      log.trace("Game '{}' did not end with mutual draw, winner is: {}", game, winner);
+    } else {
+      log.trace("Game '{}' ended with mutual draw", game);
+    }
+
+    log.debug("Posting results for game '{}', playerOne: '{}', playerTwo: '{}', winner: '{}'", game, playerOne, playerTwo, winner);
+    divisionService.postResult(playerOne, playerTwo, winner);
   }
 
   private void onGameLaunching(Player reporter, Game game) {

@@ -10,6 +10,7 @@ import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
+import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.Mod;
 import com.faforever.server.entity.ModVersion;
@@ -19,6 +20,7 @@ import com.faforever.server.entity.Validity;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.integration.Protocol;
+import com.faforever.server.ladder.DivisionService;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerOnlineEvent;
@@ -120,6 +122,8 @@ public class GameServiceTest {
   @Mock
   private PlayerService playerService;
   @Mock
+  private DivisionService divisionService;
+  @Mock
   private EntityManager entityManager;
   @Mock
   private CounterService counterService;
@@ -154,10 +158,10 @@ public class GameServiceTest {
       .when(ratingService).initGlobalRating(any());
 
     serverProperties = new ServerProperties();
-    serverProperties.getGame().setRankedMinTimeMultiplicator(-1);
+    serverProperties.getGame().setRankedMinTimeMultiplicator(-10000);
 
     instance = new GameService(gameRepository, counterService, clientService, mapService, modService, playerService, ratingService,
-      serverProperties, entityManager, armyStatisticsService);
+      serverProperties, divisionService, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
   }
 
@@ -487,6 +491,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository, never()).save(any(Game.class));
+    verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
@@ -499,6 +504,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verifyZeroInteractions(armyStatisticsService);
+    verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
@@ -512,6 +518,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
+    verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
@@ -525,8 +532,34 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(armyStatisticsService).process(any(), eq(game), any());
+    verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+  }
+
+  @Test
+  public void onLadder1v1GameEndedProcessedStats() throws Exception {
+    when(modService.isLadder1v1(any())).thenReturn(true);
+    player1.setLadder1v1Rating(mock(Ladder1v1Rating.class));
+    player2.setLadder1v1Rating(mock(Ladder1v1Rating.class));
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
+
+    Stream.of(player1, player2)
+      .forEach(player -> {
+        instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+        instance.reportArmyScore(player, 1, 10);
+        instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+        instance.reportArmyScore(player, 2, -1);
+      });
+
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+
+    assertThat(game.getValidity(), is(Validity.VALID));
+    verify(divisionService).postResult(player1, player2, player1);
   }
 
   @Test
