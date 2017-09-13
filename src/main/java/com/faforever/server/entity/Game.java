@@ -58,7 +58,7 @@ public class Game {
   private final List<ArmyStatistics> armyStatistics;
 
   /**
-   * Returns the list of players who are currently connected to the game (including observers)
+   * Returns the players who are currently connected to the game (including observers), mapped by their player ID.
    */
   @Transient
   private final Map<Integer, Player> connectedPlayers;
