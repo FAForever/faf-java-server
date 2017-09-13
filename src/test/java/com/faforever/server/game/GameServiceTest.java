@@ -55,10 +55,17 @@ import java.util.stream.Stream;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
 import static com.faforever.server.game.GameService.OPTION_ARMY;
+import static com.faforever.server.game.GameService.OPTION_CHEATS_ENABLED;
 import static com.faforever.server.game.GameService.OPTION_COLOR;
 import static com.faforever.server.game.GameService.OPTION_FACTION;
+import static com.faforever.server.game.GameService.OPTION_FOG_OF_WAR;
+import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
+import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
+import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
 import static com.faforever.server.game.GameService.OPTION_SLOT;
 import static com.faforever.server.game.GameService.OPTION_START_SPOT;
+import static com.faforever.server.game.GameService.OPTION_TEAM;
+import static com.faforever.server.game.GameService.OPTION_VICTORY_CONDITION;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -623,7 +630,7 @@ public class GameServiceTest {
     Game game = hostGame(player1);
 
     addPlayer(game, player2);
-    game.getOptions().put(GameService.OPTION_RESTRICTED_CATEGORIES, 1);
+    game.getOptions().put(OPTION_RESTRICTED_CATEGORIES, 1);
 
     launchGame(game);
 
@@ -640,9 +647,9 @@ public class GameServiceTest {
     addPlayer(game, player2);
     addPlayer(game, player3);
 
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
-    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, 4);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, 4);
 
     launchGame(game);
 
@@ -664,9 +671,9 @@ public class GameServiceTest {
     addPlayer(game, player2);
     addPlayer(game, player3);
 
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, 3);
 
     launchGame(game);
 
@@ -695,11 +702,11 @@ public class GameServiceTest {
     Stream.of(player2, player3, player4, player5, player6, player7, player8).forEach(
       player -> addPlayer(game, player));
     Stream.of(player1, player3, player5, player7).forEach(
-      player -> instance.updatePlayerOption(player1, player.getId(), GameService.OPTION_TEAM, 2));
+      player -> instance.updatePlayerOption(player1, player.getId(), OPTION_TEAM, 2));
     Stream.of(player2, player4, player6, player8).forEach(
-      player -> instance.updatePlayerOption(player1, player.getId(), GameService.OPTION_TEAM, 3));
+      player -> instance.updatePlayerOption(player1, player.getId(), OPTION_TEAM, 3));
     Stream.of(player1, player2, player3, player4, player5, player6, player7, player8).forEach(
-      player -> instance.updatePlayerOption(player1, player.getId(), GameService.OPTION_ARMY,  player.getId()));
+      player -> instance.updatePlayerOption(player1, player.getId(), OPTION_ARMY, player.getId()));
 
     launchGame(game);
 
@@ -780,7 +787,7 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityNoFogOfWar() throws Exception {
     Game game = hostGame(player1);
-    game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "foo");
+    game.getOptions().put(OPTION_FOG_OF_WAR, "foo");
     launchGame(game);
 
     instance.updateGameValidity(game);
@@ -791,7 +798,7 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityCheatsEnabled() throws Exception {
     Game game = hostGame(player1);
-    game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "true");
+    game.getOptions().put(OPTION_CHEATS_ENABLED, "true");
 
     launchGame(game);
 
@@ -803,7 +810,7 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityPrebuiltEnabled() throws Exception {
     Game game = hostGame(player1);
-    game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "On");
+    game.getOptions().put(OPTION_PREBUILT_UNITS, "On");
 
     launchGame(game);
 
@@ -815,7 +822,7 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityNoRushEnabled() throws Exception {
     Game game = hostGame(player1);
-    game.getOptions().put(GameService.OPTION_NO_RUSH, "On");
+    game.getOptions().put(OPTION_NO_RUSH, "On");
 
     launchGame(game);
 
@@ -1045,7 +1052,7 @@ public class GameServiceTest {
   @Test
   public void mutualDrawRequestedByObserver() throws Exception {
     Game game = hostGame(player1);
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
     launchGame(game);
 
     instance.mutuallyAgreeDraw(player1);
@@ -1056,7 +1063,7 @@ public class GameServiceTest {
   @Test
   public void mutualDrawRequestedByPlayer() throws Exception {
     Game game = hostGame(player1);
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.NO_TEAM_ID);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
     launchGame(game);
 
     instance.mutuallyAgreeDraw(player1);
@@ -1067,18 +1074,18 @@ public class GameServiceTest {
   @Test
   public void mutualDrawRequestedByAllPlayers() throws Exception {
     Game game = hostGame(player1);
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
 
     instance.joinGame(game.getId(), player2);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
-    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 3);
 
     Player player3 = new Player();
     player3.setId(3);
 
     instance.joinGame(game.getId(), player3);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player3);
-    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
 
     launchGame(game);
 
@@ -1112,12 +1119,12 @@ public class GameServiceTest {
 
     game = joinable.get();
 
-    instance.updateGameOption(host, GameService.OPTION_VICTORY_CONDITION, VictoryCondition.DEMORALIZATION.getString());
-    instance.updateGameOption(host, GameService.OPTION_FOG_OF_WAR, "explored");
-    instance.updateGameOption(host, GameService.OPTION_CHEATS_ENABLED, "false");
-    instance.updateGameOption(host, GameService.OPTION_PREBUILT_UNITS, "Off");
-    instance.updateGameOption(host, GameService.OPTION_NO_RUSH, "Off");
-    instance.updateGameOption(host, GameService.OPTION_RESTRICTED_CATEGORIES, 0);
+    instance.updateGameOption(host, OPTION_VICTORY_CONDITION, VictoryCondition.DEMORALIZATION.getString());
+    instance.updateGameOption(host, OPTION_FOG_OF_WAR, "explored");
+    instance.updateGameOption(host, OPTION_CHEATS_ENABLED, "false");
+    instance.updateGameOption(host, OPTION_PREBUILT_UNITS, "Off");
+    instance.updateGameOption(host, OPTION_NO_RUSH, "Off");
+    instance.updateGameOption(host, OPTION_RESTRICTED_CATEGORIES, 0);
 
     instance.updatePlayerOption(host, host.getId(), OPTION_FACTION, 1);
     instance.updatePlayerOption(host, host.getId(), OPTION_COLOR, host.getId());
