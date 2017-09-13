@@ -691,31 +691,15 @@ public class GameServiceTest {
     Player player8 = (Player) new Player().setId(8);
 
     Game game = hostGame(player1);
-    addPlayer(game, player2);
-    addPlayer(game, player3);
-    addPlayer(game, player4);
-    addPlayer(game, player5);
-    addPlayer(game, player6);
-    addPlayer(game, player7);
-    addPlayer(game, player8);
 
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
-    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player4.getId(), GameService.OPTION_TEAM, 3);
-    instance.updatePlayerOption(player1, player5.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player6.getId(), GameService.OPTION_TEAM, 3);
-    instance.updatePlayerOption(player1, player7.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player8.getId(), GameService.OPTION_TEAM, 3);
-
-    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
-    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
-    instance.updatePlayerOption(player1, player3.getId(), OPTION_ARMY, 3);
-    instance.updatePlayerOption(player1, player4.getId(), OPTION_ARMY, 4);
-    instance.updatePlayerOption(player1, player5.getId(), OPTION_ARMY, 5);
-    instance.updatePlayerOption(player1, player6.getId(), OPTION_ARMY, 6);
-    instance.updatePlayerOption(player1, player7.getId(), OPTION_ARMY, 7);
-    instance.updatePlayerOption(player1, player8.getId(), OPTION_ARMY, 8);
+    Stream.of(player2, player3, player4, player5, player6, player7, player8).forEach(
+      player -> addPlayer(game, player));
+    Stream.of(player1, player3, player5, player7).forEach(
+      player -> instance.updatePlayerOption(player1, player.getId(), GameService.OPTION_TEAM, 2));
+    Stream.of(player2, player4, player6, player8).forEach(
+      player -> instance.updatePlayerOption(player1, player.getId(), GameService.OPTION_TEAM, 3));
+    Stream.of(player1, player2, player3, player4, player5, player6, player7, player8).forEach(
+      player -> instance.updatePlayerOption(player1, player.getId(), GameService.OPTION_ARMY,  player.getId()));
 
     launchGame(game);
 

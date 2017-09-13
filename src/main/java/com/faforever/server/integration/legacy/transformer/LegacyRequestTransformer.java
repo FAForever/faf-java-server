@@ -135,7 +135,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case RESTORE_GAME_SESSION:
         return new RestoreGameSessionRequest((int) source.get("game_id"));
       case CREATE_ACCOUNT:
-        Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
+        Requests.fail(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
         break;
       case ADMIN:
         return handleAdminAction(source);
@@ -151,6 +151,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return ListAvatarsMessage.INSTANCE;
       case "select":
         return new SelectAvatarRequest((String) source.get("avatar"));
+      default:
+        Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
     }
     return ListAvatarsMessage.INSTANCE;
   }
@@ -170,7 +172,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "broadcast":
         return new BroadcastRequest((String) source.get("message"));
       default:
-        Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
+        Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
         return null;
     }
   }
@@ -271,7 +273,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
     }
-    Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
+    Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
     return null;
   }
 
@@ -281,7 +283,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new AddFoeRequest(((Double) source.get("foe")).intValue());
     }
-    Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
+    Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
     return null;
   }
 

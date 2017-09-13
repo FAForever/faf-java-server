@@ -1,7 +1,6 @@
 package com.faforever.server.config;
 
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.springframework.boot.actuate.autoconfigure.ManagementServerProperties;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,12 +9,9 @@ import javax.inject.Inject;
 @Configuration
 public class JettyConfig {
 
-  private final ManagementServerProperties springServerProperties;
   private final ServerProperties fafServerProperties;
 
-  public JettyConfig(ManagementServerProperties springServerProperties,
-                     ServerProperties fafServerProperties) {
-    this.springServerProperties = springServerProperties;
+  public JettyConfig(ServerProperties fafServerProperties) {
     this.fafServerProperties = fafServerProperties;
   }
 

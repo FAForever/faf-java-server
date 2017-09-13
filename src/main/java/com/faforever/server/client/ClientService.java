@@ -23,7 +23,6 @@ import com.faforever.server.matchmaker.MatchMakerResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.LoginDetailsResponse;
 import com.faforever.server.player.PlayerResponse;
-import com.faforever.server.player.PlayerResponse.Player.Avatar;
 import com.faforever.server.player.PlayerResponse.Player.Rating;
 import com.faforever.server.social.SocialRelationListResponse;
 import com.google.common.annotations.VisibleForTesting;
