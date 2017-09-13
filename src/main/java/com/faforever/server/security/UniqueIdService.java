@@ -8,21 +8,19 @@ import com.faforever.server.error.Requests;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.crypto.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.bouncycastle.crypto.encodings.PKCS1Encoding;
 import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.engines.RSAEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.inject.Inject;
@@ -32,6 +30,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Base64;
@@ -50,7 +49,8 @@ public class UniqueIdService {
   private final boolean enabled;
   private final HardwareInformationRepository hardwareInformationRepository;
   private final String linkToSteamUrl;
-  private AsymmetricKeyParameter privateKey;
+  private final RSAPrivateCrtKey privateKey;
+  private final int aesKeyBase64Size;
 
   @Inject
   public UniqueIdService(ServerProperties properties, ObjectMapper objectMapper, HardwareInformationRepository hardwareInformationRepository) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
@@ -60,10 +60,21 @@ public class UniqueIdService {
     this.hardwareInformationRepository = hardwareInformationRepository;
 
     if (enabled) {
-      Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-      privateKey = PrivateKeyFactory.createKey(Base64.getDecoder().decode(properties.getUid().getPrivateKey().getBytes(UTF_8)));
+      if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+        Security.addProvider(new BouncyCastleProvider());
+      }
+      privateKey = RsaHelper.readPkcs1(properties.getUid().getPrivateKey());
+
+      // Mostly copied from the legacy server, didn't try to understand.
+      int aesModulusBitLength = privateKey.getModulus().bitLength();
+      int aesKeyBase64Size = aesModulusBitLength / 6;
+      this.aesKeyBase64Size = aesModulusBitLength / 6 + 3 - ((aesKeyBase64Size + 3) % 4);
+    } else {
+      privateKey = null;
+      aesKeyBase64Size = -1;
     }
   }
+
 
   public void verify(Player player, String uid) {
     if (!enabled) {
@@ -109,6 +120,7 @@ public class UniqueIdService {
         uidPayload.getMachine().getDisks().getVSerial(),
         Sets.newHashSet(player)
       )));
+    player.getHardwareInformations().add(information);
 
     Set<Player> players = information.getPlayers();
     int count = players.size();
@@ -129,11 +141,10 @@ public class UniqueIdService {
 
     byte[] bytes = b64Decoder.decode(uid.getBytes(UTF_8));
 
-    // Because someone thought manual padding would be necessary
-    int trailLength = bytes[0];
+    // First byte is the number of trailing bytes the plaintext has. Not sure why, but this doesn't seem to be needed
     byte[] initVector = b64Decoder.decode(Arrays.copyOfRange(bytes, 1, 25));
-    byte[] aesEncryptedJson = b64Decoder.decode(Arrays.copyOfRange(bytes, 25, bytes.length - 40));
-    byte[] rsaEncryptedAesKey = b64Decoder.decode(Arrays.copyOfRange(bytes, bytes.length - 40, bytes.length));
+    byte[] aesEncryptedJson = b64Decoder.decode(Arrays.copyOfRange(bytes, 25, bytes.length - aesKeyBase64Size));
+    byte[] rsaEncryptedAesKey = b64Decoder.decode(Arrays.copyOfRange(bytes, bytes.length - aesKeyBase64Size, bytes.length));
 
     // The JSON string is AES encrypted. Decrypt the AES key with our RSA key.
     byte[] aesKey = rsaDecrypt(rsaEncryptedAesKey);
@@ -142,7 +153,7 @@ public class UniqueIdService {
     byte[] plaintext = aesDecrypt(initVector, aesEncryptedJson, aesKey);
 
     // The JSON string is prefixed with the magic byte "2", meaning version 2 of the UID's JSON
-    String json = new String(plaintext, 1, plaintext.length - trailLength, UTF_8);
+    String json = new String(plaintext, 1, plaintext.length - 1, UTF_8);
     return objectMapper.readValue(json, UidPayload.class);
   }
 
@@ -155,9 +166,10 @@ public class UniqueIdService {
     return Arrays.copyOf(aesEncryptedJson, plaintextSize);
   }
 
+  @SneakyThrows
   private byte[] rsaDecrypt(byte[] encryptedData) throws IOException, InvalidCipherTextException {
-    AsymmetricBlockCipher engine = new PKCS1Encoding(new RSAEngine());
-    engine.init(false, privateKey);
-    return engine.processBlock(encryptedData, 0, encryptedData.length);
+    Cipher rsa = Cipher.getInstance("RSA");
+    rsa.init(Cipher.DECRYPT_MODE, privateKey);
+    return rsa.doFinal(encryptedData);
   }
 }

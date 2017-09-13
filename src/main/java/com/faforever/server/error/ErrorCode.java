@@ -13,7 +13,7 @@ public enum ErrorCode {
   HOST_ONLY_OPTION(106, "Invalid operation", "The option '{0}' can only be set by the host of the game"),
   UID_USED_BY_MULTIPLE_USERS(107, "Login denied", "Your computer is associated with too many FAF accounts.<br>To continue using them, you have to link them to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
   UID_USED_BY_ANOTHER_USER(108, "Login denied", "Your computer is already associated with another FAF account.<br><br>To log in with a new account, you have to link it to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
-  UNKNOWN_MESSAGE(109, "Unknown message", "The server received an unknown request from your client: {0}"),
+  UNSUPPORTED_REQUEST(109, "Unsupported request", "The server received an unsupported request from your client: {0}"),
   BANNED_FROM_MATCH_MAKER(110, "Banned from match maker", "You have been banned from the match maker."),
   MATCH_MAKER_POOL_DOESNT_EXIST(111, "No such match maker pool", "Match maker pool with name '{0}' does not exist."),
   CANT_RESTORE_GAME_DOESNT_EXIST(112, "Can't restore game connection", "The game you were connected to does no longer exist."),

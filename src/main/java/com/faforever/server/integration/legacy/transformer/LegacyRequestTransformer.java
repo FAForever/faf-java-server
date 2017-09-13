@@ -126,8 +126,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case AI_OPTION:
         return handleAiOption(source);
       case INITIATE_TEST:
-        log.warn("Ignoring " + messageType);
-        return null;
+        throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
       case ICE_SERVERS:
         return IceServersRequest.INSTANCE;
       case ICE_MESSAGE:
@@ -151,7 +150,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "select":
         return new SelectAvatarRequest((String) source.get("avatar"));
       default:
-        throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
+        throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
     }
   }
 
@@ -170,7 +169,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "broadcast":
         return new BroadcastRequest((String) source.get("message"));
       default:
-        throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
+        throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
     }
   }
 
@@ -270,7 +269,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
     }
-    throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
+    throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
   }
 
   private ClientMessage handleSocialAdd(Map<String, Object> source) {
@@ -279,7 +278,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new AddFoeRequest(((Double) source.get("foe")).intValue());
     }
-    throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
+    throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
   }
 
   private ClientMessage handleHostGame(Map<String, Object> source) {

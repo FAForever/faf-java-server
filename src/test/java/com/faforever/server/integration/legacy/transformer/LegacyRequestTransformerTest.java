@@ -173,7 +173,7 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void invalidSocialRemove() throws Exception {
-    expectedException.expect(requestExceptionWithCode(ErrorCode.UNKNOWN_MESSAGE));
+    expectedException.expect(requestExceptionWithCode(ErrorCode.UNSUPPORTED_REQUEST));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_remove",
       "foo", "bar" // Because JSON deserializes untyped integer values to Double
@@ -182,7 +182,7 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void invalidSocialAdd() throws Exception {
-    expectedException.expect(requestExceptionWithCode(ErrorCode.UNKNOWN_MESSAGE));
+    expectedException.expect(requestExceptionWithCode(ErrorCode.UNSUPPORTED_REQUEST));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_add",
       "foo", "bar"
@@ -450,7 +450,7 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void unknownAdminAction() throws Exception {
-    expectedException.expect(requestExceptionWithCode(ErrorCode.UNKNOWN_MESSAGE));
+    expectedException.expect(requestExceptionWithCode(ErrorCode.UNSUPPORTED_REQUEST));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "something"

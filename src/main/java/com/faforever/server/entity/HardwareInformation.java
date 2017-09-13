@@ -24,11 +24,13 @@ import java.util.Set;
 @EqualsAndHashCode(of = "id")
 public class HardwareInformation {
 
-  @Id
+  // TODO make this @Id as soon as the DB relations have been fixed
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
+  // TODO This isn't actually the ID, but it's used as the join column by the shitty DB schema
+  @Id
   @Column(name = "hash")
   private String hash;
 
@@ -61,7 +63,8 @@ public class HardwareInformation {
 
   @ManyToMany
   @JoinTable(name = "unique_id_users",
-    joinColumns = @JoinColumn(name = "uniqueid_hash", referencedColumnName = "id"),
+    // TODO make DB tables use "id" as a foreign key instead of "hash"
+    joinColumns = @JoinColumn(name = "uniqueid_hash", referencedColumnName = "hash"),
     inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
   private Set<Player> players;
 }

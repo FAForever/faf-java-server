@@ -84,9 +84,7 @@ public class ServerProperties {
   public static class Uid {
     private boolean enabled = true;
     /**
-     * PKCS#8 private key without decoration and newlines. Use the following command to convert from PKCS#1: <p>
-     * <code>openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in pkcs1.key -out pkcs8.key</code> </p> Note that
-     * the key currently has to be a 224 bit key.
+     * PKCS#1 private key without decoration and newlines - just like it's been configured in the legacy server.
      */
     private String privateKey;
     private String linkToSteamUrl;
