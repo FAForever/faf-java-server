@@ -785,6 +785,41 @@ public class GameServiceTest {
   }
 
   @Test
+  public void simpleValidGameWithEnded() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
+
+    Stream.of(player1, player2).forEach(player -> {
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyScore(player, 1, 10);
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyScore(player, 2, -1);
+    });
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+
+    assertThat(game.getValidity(), is(Validity.VALID));
+  }
+
+  @Test
+  public void simpleValidGameWithoutEnded() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
+
+    Stream.of(player1, player2).forEach(player -> {
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyScore(player, 2, -1);
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyScore(player, 1, 10);
+    });
+
+    assertThat(game.getValidity(), is(Validity.VALID));
+  }
+
+  @Test
   public void updateGameValidityNoFogOfWar() throws Exception {
     Game game = hostGame(player1);
     game.getOptions().put(OPTION_FOG_OF_WAR, "foo");
@@ -1126,6 +1161,7 @@ public class GameServiceTest {
     instance.updateGameOption(host, OPTION_NO_RUSH, "Off");
     instance.updateGameOption(host, OPTION_RESTRICTED_CATEGORIES, 0);
 
+    instance.updatePlayerOption(host, host.getId(), OPTION_ARMY, host.getId());
     instance.updatePlayerOption(host, host.getId(), OPTION_FACTION, 1);
     instance.updatePlayerOption(host, host.getId(), OPTION_COLOR, host.getId());
     instance.updatePlayerOption(host, host.getId(), OPTION_START_SPOT, host.getId());
