@@ -69,7 +69,7 @@ class ValidityVoter {
   }
 
   Function<Game, Validity> gameResultVoter() {
-    return game -> game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty() ? Validity.UNKNOWN_RESULT : Validity.VALID;
+    return game -> game.getReportedArmyResults().isEmpty() || game.getReportedArmyResults().isEmpty() ? Validity.UNKNOWN_RESULT : Validity.VALID;
   }
 
   Function<Game, Validity> singlePlayerVoter() {

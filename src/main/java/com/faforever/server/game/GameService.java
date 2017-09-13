@@ -4,8 +4,7 @@ import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.ArmyOutcome;
-import com.faforever.server.entity.ArmyScore;
+import com.faforever.server.entity.ArmyResult;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
@@ -423,7 +422,14 @@ public class GameService {
     }
 
     log.debug("Player '{}' reported score '{}' for army '{}' in game '{}'", reporter, score, armyId, game);
-    game.getReportedArmyScores().computeIfAbsent(reporter.getId(), playerId -> new ArrayList<>()).add(new ArmyScore(armyId, score));
+    game.getReportedArmyResults()
+      .computeIfAbsent(reporter.getId(), playerId -> new HashMap<>())
+      .compute(armyId, (integer, armyResult) -> {
+        if (armyResult == null) {
+          return ArmyResult.of(armyId, Outcome.UNKNOWN, score);
+        }
+        return ArmyResult.of(armyId, armyResult.getOutcome(), score);
+      });
   }
 
   public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome) {
@@ -439,7 +445,14 @@ public class GameService {
     }
 
     log.debug("Player '{}' reported result for army '{}' in game '{}': {}", reporter, armyId, game, outcome);
-    game.getReportedArmyOutcomes().computeIfAbsent(reporter.getId(), playerId -> new ArrayList<>()).add(new ArmyOutcome(armyId, outcome));
+    game.getReportedArmyResults()
+      .computeIfAbsent(reporter.getId(), playerId -> new HashMap<>())
+      .compute(armyId, (integer, armyResult) -> {
+        if (armyResult == null) {
+          return ArmyResult.of(armyId, outcome, null);
+        }
+        return ArmyResult.of(armyId, outcome, armyResult.getScore());
+      });
 
     endGameIfArmyOutcomesComplete(game);
   }
@@ -575,16 +588,18 @@ public class GameService {
       .collect(Collectors.toList());
 
     Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
-    Map<Integer, List<ArmyOutcome>> reportedArmyOutcomes = game.getReportedArmyOutcomes();
+    Map<Integer, Map<Integer, ArmyResult>> reportedArmyOutcomes = game.getReportedArmyResults();
 
     for (Integer playerId : connectedPlayers.keySet()) {
-      List<ArmyOutcome> reportedOutcomes = reportedArmyOutcomes.get(playerId);
+      Map<Integer, ArmyResult> reportedOutcomes = reportedArmyOutcomes.get(playerId);
       if (reportedOutcomes == null) {
         return;
       }
       Collection<Integer> armiesWithoutOutcomeReport = new ArrayList<>(armies);
-      for (ArmyOutcome outcome : reportedOutcomes) {
-        armiesWithoutOutcomeReport.remove(outcome.getArmyId());
+      for (ArmyResult armyResult : reportedOutcomes.values()) {
+        if (armyResult.getOutcome() != Outcome.UNKNOWN) {
+          armiesWithoutOutcomeReport.remove(armyResult.getArmyId());
+        }
       }
       if (!armiesWithoutOutcomeReport.isEmpty()) {
         if (log.isTraceEnabled()) {
@@ -614,7 +629,7 @@ public class GameService {
     player.setGameBeingJoined(null);
     game.getConnectedPlayers().remove(playerId, player);
     // Discard reports of disconnected players since their report may not reflect the end result
-    game.getReportedArmyScores().remove(playerId);
+    game.getReportedArmyResults().remove(playerId);
 
     if (game.getConnectedPlayers().isEmpty()) {
       if (game.getState() == GameState.INITIALIZING) {
@@ -654,7 +669,7 @@ public class GameService {
         game.setEndTime(Instant.now());
         updateGameValidity(game);
         updateRatingsIfValid(game);
-        updateScores(game);
+        settlePlayerScores(game);
         gameRepository.save(game);
       }
     } finally {
@@ -671,18 +686,18 @@ public class GameService {
   }
 
   /**
-   * Sets the score of each player according to the reported score of his army.
+   * Determines the final army results and updates the players' scores with them.
    */
-  private void updateScores(Game game) {
-    Map<Integer, ArmyScore> armyIdsToMostReportedScore = findMostReportedArmyScores(game);
+  private void settlePlayerScores(Game game) {
+    Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
 
     for (Entry<Integer, GamePlayerStats> entry : game.getPlayerStats().entrySet()) {
       Integer playerId = entry.getKey();
       Integer armyScore = Optional.ofNullable(game.getPlayerOptions())
         .map(playerOptions -> playerOptions.get(playerId))
         .map(options -> (Integer) options.get(OPTION_ARMY))
-        .map(armyIdsToMostReportedScore::get)
-        .map(ArmyScore::getScore)
+        .map(armyIdToResult::get)
+        .map(ArmyResult::getScore)
         .orElse(null);
 
       entry.getValue().setScore(armyScore).setScoreTime(Instant.now());
@@ -690,27 +705,25 @@ public class GameService {
   }
 
   /**
-   * Finds the {@link ArmyScore ArmyScores} that have been reported the most, per army ID.
+   * Finds the {@link ArmyResult ArmyOutcomes} that have been reported most often, mappyed by army ID. Only respects
+   * reports of players who are still connected and have reported a score as well as an outcome.
    */
-  private Map<Integer, ArmyScore> findMostReportedArmyScores(Game game) {
-    Map<ArmyScore, Long> armyScoreToOccurrence = game.getReportedArmyScores().values().stream()
-      .flatMap(Collection::stream)
+  private Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
+    Map<ArmyResult, Long> completeArmyResultToOccurrence = game.getReportedArmyResults().entrySet().stream()
+      .flatMap(integerMapEntry -> integerMapEntry.getValue().values().stream())
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-    Map<Integer, ArmyScore> armyIdsToMostReportedScore = new HashMap<>();
+    Map<Integer, ArmyResult> armyIdsToMostReportedScore = new HashMap<>();
     Map<Integer, Long> mostOccurrencesByArmyId = new HashMap<>();
 
-    for (Entry<ArmyScore, Long> entry : armyScoreToOccurrence.entrySet()) {
-      ArmyScore armyScore = entry.getKey();
-      Long occurrence = entry.getValue();
-
+    completeArmyResultToOccurrence.forEach((armyScore, occurrence) -> {
       int armyId = armyScore.getArmyId();
       Long mostOccurrence = mostOccurrencesByArmyId.get(armyId);
       if (mostOccurrence == null || occurrence > mostOccurrence) {
         mostOccurrencesByArmyId.put(armyId, occurrence);
         armyIdsToMostReportedScore.put(armyId, armyScore);
       }
-    }
+    });
     return armyIdsToMostReportedScore;
   }
 
@@ -820,8 +833,11 @@ public class GameService {
    * to only the players who are in the game and then persisted.</p>
    */
   private void onLobbyEntered(Player player, Game game) {
+    if (game.getConnectedPlayers().containsKey(player.getId())) {
+      log.warn("Player '{}' entered state '{}' but is already connected", player, PlayerGameState.LOBBY);
+      return;
+    }
     log.debug("Player '{}' entered state: {}", player, PlayerGameState.LOBBY);
-    addPlayer(game, player);
     if (Objects.equals(game.getHost(), player)) {
       changeGameState(game, GameState.OPEN);
       clientService.hostGame(game, player);
@@ -831,6 +847,7 @@ public class GameService {
       clientService.connectToHost(game, player);
       game.getConnectedPlayers().values().forEach(otherPlayer -> connectPeers(player, otherPlayer));
     }
+    addPlayer(game, player);
   }
 
   private void connectPeers(Player player, Player otherPlayer) {

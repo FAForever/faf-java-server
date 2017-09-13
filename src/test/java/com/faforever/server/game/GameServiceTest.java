@@ -5,8 +5,7 @@ import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.ArmyOutcome;
-import com.faforever.server.entity.ArmyScore;
+import com.faforever.server.entity.ArmyResult;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GameState;
@@ -29,6 +28,7 @@ import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,8 +50,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
+import static com.faforever.server.game.GameService.OPTION_ARMY;
+import static com.faforever.server.game.GameService.OPTION_COLOR;
+import static com.faforever.server.game.GameService.OPTION_FACTION;
+import static com.faforever.server.game.GameService.OPTION_SLOT;
+import static com.faforever.server.game.GameService.OPTION_START_SPOT;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -83,9 +90,6 @@ public class GameServiceTest {
   private static final String FAF_TECHNICAL_NAME = "faf";
   private static final String QAI = "QAI";
   private static final String AIX = "AIX";
-  private static final String OPTION_FACTION = "Faction";
-  private static final String OPTION_SLOT = "Slot";
-  private static final String OPTION_ARMY = "Army";
   private static final int GAME_MIN_RATING = 1000;
   private static final int GAME_MAX_RATING = 1500;
 
@@ -213,7 +217,7 @@ public class GameServiceTest {
   @Test
   public void clearSlot() throws Exception {
     Game game = hostGame(player1);
-    instance.updatePlayerOption(game.getHost(), player1.getId(), GameService.OPTION_SLOT, 2);
+    instance.updatePlayerOption(game.getHost(), player1.getId(), OPTION_SLOT, 2);
     addPlayer(game, player2);
 
     instance.updateAiOption(player1, QAI, OPTION_FACTION, 1);
@@ -328,9 +332,9 @@ public class GameServiceTest {
     instance.reportArmyScore(player2, 1, 10);
     instance.reportArmyScore(player2, 2, -1);
 
-    assertThat(game.getReportedArmyScores().values(), hasSize(2));
-    assertThat(game.getReportedArmyScores().get(player1.getId()), hasSize(2));
-    assertThat(game.getReportedArmyScores().get(player2.getId()), hasSize(2));
+    assertThat(game.getReportedArmyResults().values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
   }
 
   /**
@@ -394,8 +398,8 @@ public class GameServiceTest {
     instance.reportArmyScore(player1, 1, 10);
     instance.reportArmyScore(player1, 2, -1);
 
-    assertThat(game.getReportedArmyScores().values(), hasSize(1));
-    assertThat(game.getReportedArmyScores().get(player1.getId()), hasSize(2));
+    assertThat(game.getReportedArmyResults().values(), hasSize(1));
+    assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
   }
 
   @Test
@@ -405,7 +409,7 @@ public class GameServiceTest {
 
     instance.reportArmyScore(player2, 1, 10);
 
-    assertThat(game.getReportedArmyScores().values(), is(empty()));
+    assertThat(game.getReportedArmyResults().values(), is(empty()));
   }
 
   @Test
@@ -423,9 +427,9 @@ public class GameServiceTest {
     instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
     instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
 
-    assertThat(game.getReportedArmyOutcomes().values(), hasSize(2));
-    assertThat(game.getReportedArmyOutcomes().get(player1.getId()), hasSize(2));
-    assertThat(game.getReportedArmyOutcomes().get(player2.getId()), hasSize(2));
+    assertThat(game.getReportedArmyResults().values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
   }
 
   @Test
@@ -642,10 +646,10 @@ public class GameServiceTest {
 
     launchGame(game);
 
-    game.getReportedArmyScores().put(1, Collections.emptyList());
-    game.getReportedArmyScores().put(2, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(1, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(2, Collections.emptyList());
+    game.getReportedArmyResults().put(1, Collections.emptyMap());
+    game.getReportedArmyResults().put(2, Collections.emptyMap());
+    game.getReportedArmyResults().put(1, Collections.emptyMap());
+    game.getReportedArmyResults().put(2, Collections.emptyMap());
 
     instance.updateGameValidity(game);
 
@@ -671,36 +675,122 @@ public class GameServiceTest {
     assertThat(game.getValidity(), is(Validity.UNEVEN_TEAMS));
   }
 
+  /**
+   * Tests that scores are calculated based on the reports of the majority of players that are still connected when the
+   * game ends, even if there are kiddies trying to trick the system. The only case they are able to do so is if they
+   * stay until the end of the game and share the majority of the result reports. The only way to prevent this would be
+   * a neutral referee who can always be trusted.
+   */
   @Test
-  public void updateGameValidityRankedEvenTeams() throws Exception {
+  public void scoresCalculatedCorrectly() throws Exception {
     Player player3 = (Player) new Player().setId(3);
     Player player4 = (Player) new Player().setId(4);
+    Player player5 = (Player) new Player().setId(5);
+    Player player6 = (Player) new Player().setId(6);
+    Player player7 = (Player) new Player().setId(7);
+    Player player8 = (Player) new Player().setId(8);
 
     Game game = hostGame(player1);
     addPlayer(game, player2);
     addPlayer(game, player3);
     addPlayer(game, player4);
+    addPlayer(game, player5);
+    addPlayer(game, player6);
+    addPlayer(game, player7);
+    addPlayer(game, player8);
 
     instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 2);
-    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, 2);
     instance.updatePlayerOption(player1, player4.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player5.getId(), GameService.OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player6.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player7.getId(), GameService.OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player8.getId(), GameService.OPTION_TEAM, 3);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_ARMY, 3);
+    instance.updatePlayerOption(player1, player4.getId(), OPTION_ARMY, 4);
+    instance.updatePlayerOption(player1, player5.getId(), OPTION_ARMY, 5);
+    instance.updatePlayerOption(player1, player6.getId(), OPTION_ARMY, 6);
+    instance.updatePlayerOption(player1, player7.getId(), OPTION_ARMY, 7);
+    instance.updatePlayerOption(player1, player8.getId(), OPTION_ARMY, 8);
 
     launchGame(game);
 
-    game.getReportedArmyOutcomes().put(1, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(2, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(3, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(4, Collections.emptyList());
+    Stream.of(player2, player3, player4, player5, player6, player7)
+      .forEach(player -> instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player));
 
-    game.getReportedArmyScores().put(1, Collections.emptyList());
-    game.getReportedArmyScores().put(2, Collections.emptyList());
-    game.getReportedArmyScores().put(3, Collections.emptyList());
-    game.getReportedArmyScores().put(4, Collections.emptyList());
+    // 6 of 8 players got killed, player 1 - 3 are the only ones who report the correct result
+    Stream.of(player1, player2, player3)
+      .forEach(reporter -> {
+        // Army 3-8 have been defeated
+        IntStream.range(3, 9)
+          .forEach(armyId -> {
+            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT);
+            instance.reportArmyScore(reporter, armyId, -1);
+          });
 
-    instance.updateGameValidity(game);
+        // Army 1 and 2 scored and are still in game
+        IntStream.range(1, 3)
+          .forEach(armyId -> instance.reportArmyScore(reporter, armyId, 3));
+      });
+
+    // Players 4 - 8 are kiddies who try to trick the score system by reporting everybody but players 1 and 2 lost
+    Stream.of(player4, player5, player6, player7, player8)
+      .forEach(reporter -> {
+        // Army 1 and 2 have allegedly been defeated
+        IntStream.range(1, 3)
+          .forEach(armyId -> {
+            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT);
+            instance.reportArmyScore(reporter, armyId, -1);
+          });
+
+        // Armies 3 - 8 allegedly won
+        IntStream.range(3, 9)
+          .forEach(armyId -> {
+            instance.reportArmyOutcome(reporter, armyId, Outcome.VICTORY);
+            instance.reportArmyScore(reporter, armyId, 10);
+          });
+      });
+
+    // All but players 1, 2, and 3 disconnect
+    Stream.of(player4, player5, player6, player7, player8)
+      .forEach(player -> instance.removePlayer(player));
+
+    // Player 1 claims to have defeated player 2, but player 2 and 3 claim that player 1 has been defeated.
+    instance.reportArmyScore(player1, 1, 4);
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
+    instance.reportArmyScore(player1, 2, 2);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+
+    Stream.of(player2, player3).forEach(reporter -> {
+      instance.reportArmyScore(reporter, 1, 4);
+      instance.reportArmyOutcome(reporter, 1, Outcome.DEFEAT);
+
+      instance.reportArmyScore(reporter, 2, 2);
+      instance.reportArmyOutcome(reporter, 2, Outcome.VICTORY);
+    });
+
+    /* Even though the intermediate results are the ones reported most often, the results to be considered are the ones
+    with an outcome, since only those players saw the end of the game. */
 
     assertThat(game.getValidity(), is(Validity.VALID));
+    // Expect that reports of all disconnected players have been discarded
+    assertThat(game.getReportedArmyResults().values(), hasSize(3));
+    // Expect all remaining players to have reported army results for all players
+    game.getReportedArmyResults()
+      .forEach((playerId, resultMap) -> assertThat("Player " + playerId + " did not report all results", resultMap.size(), is(8)));
+
+    assertThat(game.getPlayerStats().get(1).getScore(), is(4));
+    assertThat(game.getPlayerStats().get(2).getScore(), is(2));
+    assertThat(game.getPlayerStats().get(3).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(4).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(5).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(6).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(7).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(8).getScore(), is(-1));
   }
 
   @Test
@@ -801,8 +891,7 @@ public class GameServiceTest {
 
     launchGame(game);
 
-    game.getReportedArmyScores().put(1, Collections.singletonList(new ArmyScore(1, 10)));
-    game.getReportedArmyOutcomes().put(1, Collections.singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
+    game.getReportedArmyResults().put(1, ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, 10)));
 
     serverProperties.getGame().setRankedMinTimeMultiplicator(10_000);
     instance.updateGameValidity(game);
@@ -1046,6 +1135,10 @@ public class GameServiceTest {
     instance.updateGameOption(host, GameService.OPTION_NO_RUSH, "Off");
     instance.updateGameOption(host, GameService.OPTION_RESTRICTED_CATEGORIES, 0);
 
+    instance.updatePlayerOption(host, host.getId(), OPTION_FACTION, 1);
+    instance.updatePlayerOption(host, host.getId(), OPTION_COLOR, host.getId());
+    instance.updatePlayerOption(host, host.getId(), OPTION_START_SPOT, host.getId());
+
     verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
     verify(clientService).startGameProcess(game, player1);
     assertThat(game.getTitle(), is("Game title"));
@@ -1073,5 +1166,10 @@ public class GameServiceTest {
   private void addPlayer(Game game, Player player) {
     instance.joinGame(game.getId(), player);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player);
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_FACTION, 1);
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_SLOT, player.getId());
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_ARMY, player.getId());
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_COLOR, player.getId());
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_START_SPOT, player.getId());
   }
 }

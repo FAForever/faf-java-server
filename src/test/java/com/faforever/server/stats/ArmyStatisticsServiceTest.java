@@ -1,7 +1,7 @@
 package com.faforever.server.stats;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.ArmyOutcome;
+import com.faforever.server.entity.ArmyResult;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +30,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -103,7 +103,7 @@ public class ArmyStatisticsServiceTest {
     String file = "/stats/game_stats_full_example.json";
     List<ArmyStatistics> stats = readStats(file);
 
-    game.getReportedArmyOutcomes().put(player.getId(), singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
+    game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
     instance.process(player, game, stats);
 
@@ -195,7 +195,7 @@ public class ArmyStatisticsServiceTest {
     when(modService.isLadder1v1(ladder1v1FeaturedMod)).thenReturn(true);
 
     game.setFeaturedMod(ladder1v1FeaturedMod);
-    game.getReportedArmyOutcomes().put(player.getId(), singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
+    game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
     List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
 
@@ -491,7 +491,7 @@ public class ArmyStatisticsServiceTest {
   public void testProcessAbortProcessingIfNoArmyResult() throws Exception {
     List<ArmyStatistics> stats = readStats("/stats/game_stats_full_example.json");
 
-    game.getReportedArmyOutcomes().clear();
+    game.getReportedArmyResults().clear();
 
     instance.process(player, game, stats);
     verifyZeroInteractions(achievementService);

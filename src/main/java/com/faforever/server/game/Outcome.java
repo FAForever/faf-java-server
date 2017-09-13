@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum Outcome {
+  UNKNOWN(null),
   DEFEAT("defeat"),
   VICTORY("victory"),
   DRAW("draw");
