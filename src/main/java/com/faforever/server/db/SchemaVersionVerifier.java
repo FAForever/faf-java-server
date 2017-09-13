@@ -1,5 +1,6 @@
 package com.faforever.server.db;
 
+import com.faforever.server.config.ServerProperties;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -10,21 +11,22 @@ import java.util.Objects;
 @Component
 public class SchemaVersionVerifier implements PriorityOrdered {
 
-  private static final String DB_COMPATIBILITY_VERSION = "43";
-
   private final SchemaVersionRepository schemaVersionRepository;
+  private final ServerProperties properties;
 
-  public SchemaVersionVerifier(SchemaVersionRepository schemaVersionRepository) {
+  public SchemaVersionVerifier(SchemaVersionRepository schemaVersionRepository, ServerProperties properties) {
     this.schemaVersionRepository = schemaVersionRepository;
+    this.properties = properties;
   }
 
   @PostConstruct
   public void postConstruct() {
-    String maxVersion = schemaVersionRepository.findMaxVersion()
+    String requiredVersion = properties.getDatabase().getSchemaVersion();
+    String actualVersion = schemaVersionRepository.findMaxVersion()
       .orElseThrow(() -> new IllegalStateException("No database version is available"));
 
-    Assert.state(Objects.equals(DB_COMPATIBILITY_VERSION, maxVersion),
-      String.format("Database version is '%s' but this software requires '%s'", maxVersion, DB_COMPATIBILITY_VERSION));
+    Assert.state(Objects.equals(requiredVersion, actualVersion),
+      String.format("Database version is '%s' but this software requires '%s'", actualVersion, requiredVersion));
   }
 
   @Override

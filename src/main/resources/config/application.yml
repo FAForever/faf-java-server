@@ -18,6 +18,8 @@ faf-server:
     max-page-size: 10000
   game:
     stale-game-timeout-seconds: ${STALE_GAME_TIMEOUT_SECONDS:60}
+  database:
+    schema-version: ${43:DATABASE_SCHEMA_VERSION}
 
 spring:
   application:
