@@ -13,6 +13,7 @@ import com.faforever.server.common.ClientMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
+import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
@@ -135,14 +136,12 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case RESTORE_GAME_SESSION:
         return new RestoreGameSessionRequest((int) source.get("game_id"));
       case CREATE_ACCOUNT:
-        Requests.fail(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
-        break;
+        throw new RequestException(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
       case ADMIN:
         return handleAdminAction(source);
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
-    throw new ProgrammingError("This should never be reached.");
   }
 
   private ClientMessage handleAvatar(Map<String, Object> source) {
@@ -152,9 +151,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "select":
         return new SelectAvatarRequest((String) source.get("avatar"));
       default:
-        Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
+        throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
     }
-    return ListAvatarsMessage.INSTANCE;
   }
 
   private ClientMessage handleAdminAction(Map<String, Object> source) {
@@ -172,8 +170,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "broadcast":
         return new BroadcastRequest((String) source.get("message"));
       default:
-        Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
-        return null;
+        throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
     }
   }
 
@@ -273,8 +270,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
     }
-    Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
-    return null;
+    throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
   }
 
   private ClientMessage handleSocialAdd(Map<String, Object> source) {
@@ -283,8 +279,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new AddFoeRequest(((Double) source.get("foe")).intValue());
     }
-    Requests.fail(ErrorCode.UNKNOWN_MESSAGE, source);
-    return null;
+    throw new RequestException(ErrorCode.UNKNOWN_MESSAGE, source);
   }
 
   private ClientMessage handleHostGame(Map<String, Object> source) {

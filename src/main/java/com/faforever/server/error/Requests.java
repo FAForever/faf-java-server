@@ -10,9 +10,4 @@ public final class Requests {
       throw new RequestException(errorCode, args);
     }
   }
-
-  public static void fail(ErrorCode errorCode, Object... args) {
-    //noinspection ConstantConditions
-    verify(false, errorCode, args);
-  }
 }

@@ -96,7 +96,7 @@ public class LegacyServicesActivators {
 
       eventPublisher.publishEvent(new PlayerOnlineEvent(this, player));
     } catch (BadCredentialsException e) {
-      throw new RequestException(ErrorCode.INVALID_LOGIN, e);
+      throw new RequestException(e, ErrorCode.INVALID_LOGIN);
     }
   }
 
