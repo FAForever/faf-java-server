@@ -19,7 +19,7 @@ public class ServerProperties {
   private TrueSkill trueSkill = new TrueSkill();
   private Uid uid = new Uid();
   private MatchMaker matchMaker = new MatchMaker();
-  private Ladder ladder = new Ladder();
+  private Ladder1v1 ladder1v1 = new Ladder1v1();
   private Game game = new Game();
   private GeoIp geoIp = new GeoIp();
   private Shutdown shutdown = new Shutdown();
@@ -82,9 +82,9 @@ public class ServerProperties {
   }
 
   @Data
-  public static class Ladder {
+  public static class Ladder1v1 {
     /**
-     * Current season of ladder in which scores are changed in database (previous seasons are kept for historic
+     * Current season of ladder1v1 in which scores are changed in database (previous seasons are kept for historic
      * reasons).
      */
     private int season;

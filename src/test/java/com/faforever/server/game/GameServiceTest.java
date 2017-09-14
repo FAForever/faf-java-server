@@ -20,7 +20,7 @@ import com.faforever.server.entity.Validity;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.integration.Protocol;
-import com.faforever.server.ladder.DivisionService;
+import com.faforever.server.ladder1v1.DivisionService;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerOnlineEvent;
@@ -553,10 +553,6 @@ public class GameServiceTest {
         instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
         instance.reportArmyScore(player, 2, -1);
       });
-
-
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
 
     assertThat(game.getValidity(), is(Validity.VALID));
     verify(divisionService).postResult(player1, player2, player1);

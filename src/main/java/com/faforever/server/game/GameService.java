@@ -21,7 +21,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
-import com.faforever.server.ladder.DivisionService;
+import com.faforever.server.ladder1v1.DivisionService;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerOnlineEvent;
@@ -750,13 +750,13 @@ public class GameService {
     }
 
     if (!modService.isLadder1v1(game.getFeaturedMod())) {
-      log.trace("Skipping update of division scores for non-ladder game: {}", game);
+      log.trace("Skipping update of division scores for non-ladder1v1 game: {}", game);
       return;
     }
 
     log.trace("Updating division scores for game: {}", game);
 
-    Assert.state(game.getConnectedPlayers().size() == 2, "A ladder game must have exactly 2 players");
+    Assert.state(game.getConnectedPlayers().size() == 2, "A ladder1v1 game must have exactly 2 players");
 
     Iterator<Player> playerIterator = game.getConnectedPlayers().values().iterator();
     Player playerOne = playerIterator.next();

@@ -1,4 +1,4 @@
-package com.faforever.server.ladder;
+package com.faforever.server.ladder1v1;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.Division;
@@ -41,7 +41,7 @@ public class DivisionService {
   }
 
   public Optional<Division> getCurrentPlayerDivision(Player player) {
-    int season = properties.getLadder().getSeason();
+    int season = properties.getLadder1v1().getSeason();
 
     PlayerDivisionInfo info = playerDivisionInfoRepository.findByPlayerAndSeason(player, season);
 
@@ -60,8 +60,8 @@ public class DivisionService {
 
   @Transactional
   public void postResult(@NotNull Player playerOne, @NotNull Player playerTwo, @Nullable Player winner) {
-    PlayerDivisionInfo playerOneInfo = getPlayerDivisionInfo(playerOne, properties.getLadder().getSeason());
-    PlayerDivisionInfo playerTwoInfo = getPlayerDivisionInfo(playerTwo, properties.getLadder().getSeason());
+    PlayerDivisionInfo playerOneInfo = getPlayerDivisionInfo(playerOne, properties.getLadder1v1().getSeason());
+    PlayerDivisionInfo playerTwoInfo = getPlayerDivisionInfo(playerTwo, properties.getLadder1v1().getSeason());
 
     playerOneInfo.setGames(playerOneInfo.getGames() + 1);
     playerTwoInfo.setGames(playerTwoInfo.getGames() + 1);
@@ -84,15 +84,15 @@ public class DivisionService {
       throw new IllegalArgumentException(MessageFormat.format("Winner does not match any of the players (player one: '{0}', player two: '{1}', winner: '{2}'", playerOne, playerTwo, winner));
     }
 
-    float gain = properties.getLadder().getRegularGain();
-    float loss = properties.getLadder().getRegularLoss();
+    float gain = properties.getLadder1v1().getRegularGain();
+    float loss = properties.getLadder1v1().getRegularLoss();
 
     if (winnerInfo.isInInferiorLeague(loserInfo)) {
-      gain = properties.getLadder().getIncreasedGain();
-      loss = properties.getLadder().getIncreasedLoss();
+      gain = properties.getLadder1v1().getIncreasedGain();
+      loss = properties.getLadder1v1().getIncreasedLoss();
     } else if (winnerInfo.isInSuperiorLeague(loserInfo)) {
-      gain = properties.getLadder().getReducedGain();
-      loss = properties.getLadder().getReducedLoss();
+      gain = properties.getLadder1v1().getReducedGain();
+      loss = properties.getLadder1v1().getReducedLoss();
     }
 
     log.debug("Player '{}' won against player '{}', gain: '{}', loss: '{}'", winner, loserInfo.getPlayer(), gain, loss);

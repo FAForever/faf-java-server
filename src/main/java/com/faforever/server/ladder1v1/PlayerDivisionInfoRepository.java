@@ -1,4 +1,4 @@
-package com.faforever.server.ladder;
+package com.faforever.server.ladder1v1;
 
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.PlayerDivisionInfo;

@@ -1,4 +1,4 @@
-package com.faforever.server.ladder;
+package com.faforever.server.ladder1v1;
 
 import com.faforever.server.entity.Division;
 import org.springframework.data.jpa.repository.JpaRepository;

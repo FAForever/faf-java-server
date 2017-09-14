@@ -1,4 +1,4 @@
-package com.faforever.server.ladder;
+package com.faforever.server.ladder1v1;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.Division;
@@ -53,15 +53,15 @@ public class DivisionServiceTest {
   @Before
   public void setUp() throws Exception {
     serverProperties = new ServerProperties();
-    serverProperties.getLadder().setSeason(1);
+    serverProperties.getLadder1v1().setSeason(1);
 
     info1 = new PlayerDivisionInfo();
     info1.setPlayer(player1);
-    info1.setSeason(serverProperties.getLadder().getSeason());
+    info1.setSeason(serverProperties.getLadder1v1().getSeason());
 
     info2 = new PlayerDivisionInfo();
     info2.setPlayer(player2);
-    info2.setSeason(serverProperties.getLadder().getSeason());
+    info2.setSeason(serverProperties.getLadder1v1().getSeason());
 
     Division[] divisions = new Division[]{
       createDivision(1, "League 1 - Division A", 1, 10),
@@ -97,7 +97,7 @@ public class DivisionServiceTest {
     info.setLeague(league);
     info.setScore(score);
 
-    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder().getSeason())).thenReturn(info);
+    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder1v1().getSeason())).thenReturn(info);
 
     Division result = instance.getCurrentPlayerDivision(player1).get();
 
@@ -111,7 +111,7 @@ public class DivisionServiceTest {
     info.setLeague(1);
     info.setScore(99999);
 
-    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder().getSeason())).thenReturn(info);
+    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder1v1().getSeason())).thenReturn(info);
 
     instance.getCurrentPlayerDivision(player1);
   }
@@ -124,8 +124,8 @@ public class DivisionServiceTest {
   @Test
   public void testPostResultWithNewPlayers() throws Exception {
 
-    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder().getSeason())).thenReturn(null);
-    when(playerDivisionInfoRepository.findByPlayerAndSeason(player2, serverProperties.getLadder().getSeason())).thenReturn(null);
+    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder1v1().getSeason())).thenReturn(null);
+    when(playerDivisionInfoRepository.findByPlayerAndSeason(player2, serverProperties.getLadder1v1().getSeason())).thenReturn(null);
 
     instance.postResult(player1, player2, player1);
 
@@ -148,12 +148,12 @@ public class DivisionServiceTest {
     "false,  5, 1, 050.0f,   0, 1, 050.0f,    6, 1, 049.5f,     1, 2, 000.0f", // player two wins and promoted, both in same league
   })
   public void testPostResult(boolean p1Won, int p1StartGames, int p1StartLeague, float p1StartScore, int p2StartGames, int p2StartLeague, float p2StartScore, int p1EndGames, int p1EndLeague, float p1EndScore, int p2EndGames, int p2EndLeague, float p2EndScore) throws Exception {
-    serverProperties.getLadder().setRegularGain(1.0f);
-    serverProperties.getLadder().setRegularLoss(0.5f);
-    serverProperties.getLadder().setIncreasedGain(1.5f);
-    serverProperties.getLadder().setIncreasedLoss(1.0f);
-    serverProperties.getLadder().setReducedGain(0.5f);
-    serverProperties.getLadder().setReducedLoss(0.5f);
+    serverProperties.getLadder1v1().setRegularGain(1.0f);
+    serverProperties.getLadder1v1().setRegularLoss(0.5f);
+    serverProperties.getLadder1v1().setIncreasedGain(1.5f);
+    serverProperties.getLadder1v1().setIncreasedLoss(1.0f);
+    serverProperties.getLadder1v1().setReducedGain(0.5f);
+    serverProperties.getLadder1v1().setReducedLoss(0.5f);
 
     info1.setGames(p1StartGames);
     info1.setLeague(p1StartLeague);
@@ -162,8 +162,8 @@ public class DivisionServiceTest {
     info2.setLeague(p2StartLeague);
     info2.setScore(p2StartScore);
 
-    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder().getSeason())).thenReturn(info1);
-    when(playerDivisionInfoRepository.findByPlayerAndSeason(player2, serverProperties.getLadder().getSeason())).thenReturn(info2);
+    when(playerDivisionInfoRepository.findByPlayerAndSeason(player1, serverProperties.getLadder1v1().getSeason())).thenReturn(info1);
+    when(playerDivisionInfoRepository.findByPlayerAndSeason(player2, serverProperties.getLadder1v1().getSeason())).thenReturn(info2);
 
     instance.postResult(player1, player2, p1Won ? player1 : player2);
 
