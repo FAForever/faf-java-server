@@ -23,6 +23,7 @@ final class RsaHelper {
   @SneakyThrows
   RSAPrivateCrtKeyImpl readPkcs1(String content) {
     ASN1Sequence seq = ASN1Sequence.getInstance(Base64.getDecoder().decode(content.getBytes(StandardCharsets.UTF_8)));
+    Assert.notNull(seq, "RSA private key has not been specified properly. Value is '" + content + "'.");
     Assert.isTrue(seq.size() == 9, "Invalid RSA Private Key ASN1 sequence.");
 
     RSAPrivateKey key = RSAPrivateKey.getInstance(seq);
