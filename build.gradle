@@ -24,7 +24,7 @@ apply plugin: 'propdeps'
 
 
 group = 'faforever'
-version = '0.9.8'
+version = '0.9.9'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
