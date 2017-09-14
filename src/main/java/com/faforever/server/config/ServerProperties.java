@@ -84,7 +84,8 @@ public class ServerProperties {
   public static class Uid {
     private boolean enabled = true;
     /**
-     * PKCS#1 private key without decoration and newlines - just like it's been configured in the legacy server.
+     * PKCS#1 private key without decoration and newlines. To generate, execute {@code openssl genrsa -f4 -out
+     * private.txt 512}, then copy the content of {@code private.txt} without header, footer, and newlines/spaces.
      */
     private String privateKey;
     private String linkToSteamUrl;

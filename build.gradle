@@ -24,7 +24,7 @@ apply plugin: 'propdeps'
 
 
 group = 'faforever'
-version = '0.9.9'
+version = '1.0.0'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -94,7 +94,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 applicationName = rootProject.name
 applicationDistribution.exclude("**/spring-boot-devtools*.jar")
-applicationDefaultJvmArgs = ["-server -Xms64m -Xmx768m -XX:MaxMetaspaceSize=196m -XX:MinHeapFreeRatio=25 -XX:MaxHeapFreeRatio=40 -XX:+UseG1GC -XX:+UseStringDeduplication -XX:-HeapDumpOnOutOfMemoryError"]
+applicationDefaultJvmArgs = ["-server", "-Xms64m", "-Xmx768m", "-XX:MaxMetaspaceSize=196m", "-XX:MinHeapFreeRatio=25", "-XX:MaxHeapFreeRatio=40", "-XX:+UseG1GC", "-XX:+UseStringDeduplication", "-XX:-HeapDumpOnOutOfMemoryError"]
 
 docker {
   if (project.hasProperty('dockerHost')) {

@@ -5,10 +5,10 @@ import lombok.experimental.UtilityClass;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.pkcs.RSAPrivateKey;
 import org.springframework.util.Assert;
-import sun.security.rsa.RSAPrivateCrtKeyImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.Base64;
 
@@ -21,8 +21,9 @@ final class RsaHelper {
    * this method allows to just use the same key string instead of having to convert it.
    */
   @SneakyThrows
-  RSAPrivateCrtKeyImpl readPkcs1(String content) {
+  RSAPrivateCrtKey readPkcs1(String content) {
     ASN1Sequence seq = ASN1Sequence.getInstance(Base64.getDecoder().decode(content.getBytes(StandardCharsets.UTF_8)));
+    Assert.notNull(seq, "RSA private key has not been specified properly. Value is '" + content + "'.");
     Assert.isTrue(seq.size() == 9, "Invalid RSA Private Key ASN1 sequence.");
 
     RSAPrivateKey key = RSAPrivateKey.getInstance(seq);
@@ -37,6 +38,6 @@ final class RsaHelper {
       key.getCoefficient()
     );
 
-    return (RSAPrivateCrtKeyImpl) KeyFactory.getInstance("RSA").generatePrivate(privSpec);
+    return (RSAPrivateCrtKey) KeyFactory.getInstance("RSA").generatePrivate(privSpec);
   }
 }

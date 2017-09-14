@@ -15,8 +15,6 @@ spring:
         enabled: ${SPRING_BOOT_ADMIN_ENABLED:false}
 
 faf-server:
-  uid:
-    enabled: ${UID_ENABLED:false}
   geo-ip:
     database-file: ${GEO_IP_DB_FILE:build/cache/geoIp.mmdb}
   api:
