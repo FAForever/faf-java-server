@@ -435,6 +435,8 @@ public class GameService {
         }
         return ArmyResult.of(armyId, armyResult.getOutcome(), score);
       });
+
+    endGameIfArmyResultsComplete(game);
   }
 
   public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome) {
@@ -459,7 +461,7 @@ public class GameService {
         return ArmyResult.of(armyId, outcome, armyResult.getScore());
       });
 
-    endGameIfArmyOutcomesComplete(game);
+    endGameIfArmyResultsComplete(game);
   }
 
   /**
@@ -585,7 +587,7 @@ public class GameService {
    * Checks whether every connected player reported outcomes for all armies (human and AI). If so, the game is set to
    * {@link GameState#CLOSED}.
    */
-  private void endGameIfArmyOutcomesComplete(Game game) {
+  private void endGameIfArmyResultsComplete(Game game) {
     List<Integer> armies = Streams.concat(
       game.getPlayerOptions().values().stream(),
       game.getAiOptions().values().stream()
@@ -600,16 +602,16 @@ public class GameService {
       if (reportedOutcomes == null) {
         return;
       }
-      Collection<Integer> armiesWithoutOutcomeReport = new ArrayList<>(armies);
+      Collection<Integer> armiesWithIncompleteResult = new ArrayList<>(armies);
       for (ArmyResult armyResult : reportedOutcomes.values()) {
-        if (armyResult.getOutcome() != Outcome.UNKNOWN) {
-          armiesWithoutOutcomeReport.remove(armyResult.getArmyId());
+        if (armyResult.getOutcome() != Outcome.UNKNOWN && armyResult.getScore() != null) {
+          armiesWithIncompleteResult.remove(armyResult.getArmyId());
         }
       }
-      if (!armiesWithoutOutcomeReport.isEmpty()) {
+      if (!armiesWithIncompleteResult.isEmpty()) {
         if (log.isTraceEnabled()) {
           log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
-            playerId, Joiner.on(", ").join(armiesWithoutOutcomeReport));
+            playerId, Joiner.on(", ").join(armiesWithIncompleteResult));
         }
         return;
       }
