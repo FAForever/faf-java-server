@@ -57,13 +57,17 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class UniqueIdServiceTest {
 
-  private static final String PRIVATE_KEY = "MIGuAgEAMA0GCSqGSIb3DQEBAQUABIGZMIGWAgEAAhxKgmLjzUModkCeLHUBD35J" +
-    "VT19nr7oC8ABnrpzAgMBAAECHEDSFCQos89kqSyycowbtRaID4S4krdSQ7PSSjEC" +
-    "DwCN4VaucAaHTvKoY5MF2wIPAIZwp65APMeoO+q9LN1JAg4kRLM02jxBAIR1WSbv" +
-    "OwIOX9d2IupWqjuMI4ejsUkCDma6Pvo7IyhgG07lQDX9";
+  /**
+   * {@code openssl genrsa -f4 -out private.txt 512}, then copy the content of {@code private.txt} without header,
+   * footer, and newlines/spaces.
+   */
+  private static final String PRIVATE_KEY = "MIIBOQIBAAJBALqXMig5oZNlo1zLeOFuINKnFd/79PjTto8D7/4IZUPiOD+2PyPbmO5j5sLt/5uKPfSQ9GVg7xuEuteZbRWoXKUCAwEAAQJAFsJ+kb2F4e7R4G3JTuYaBtfuqSWYmglpCUTXr0ri30axW8hGJbG9GI10WXAPs1JRKietDDvrbhlNLQPOtoECwQIhAOke8l89ytdQqlPg/OKlU4Ky4vb4cxB2ZZoeahGh793JAiEAzOcynayN0Rs9zded8TyaHlLhs8XsyqlTSUFyncu7Rf0CIDS680fnykH51Q00Dv+VNdaScBQ9DonivgimaIekgYVBAiB6N0SXi36jRO5eQsdwRkde4uzAv8N3Nfv5a9IjkItJOQIgWluLPWBOJV/GsvAXaiFdy4KMS3kWx0hsZdgCBaz9600=";
 
-  private static final String PUBLIC_KEY = "MDcwDQYJKoZIhvcNAQEBBQADJgAwIwIcSoJi481DKHZAnix1AQ9+SVU9fZ6+6AvA" +
-    "AZ66cwIDAQAB";
+  /**
+   * {@code openssl rsa -in private.txt -outform PEM -pubout -out public.txt}, then copy the content of {@code
+   * public.txt} without header, footer, and newlines/spaces.
+   */
+  private static final String PUBLIC_KEY = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALqXMig5oZNlo1zLeOFuINKnFd/79PjTto8D7/4IZUPiOD+2PyPbmO5j5sLt/5uKPfSQ9GVg7xuEuteZbRWoXKUCAwEAAQ==";
 
   private static final String JSON = "{\n" +
     "  \"session\": \"\",\n" +
@@ -295,6 +299,6 @@ public class UniqueIdServiceTest {
 
   @NotNull
   private static Player newPlayer(int id) {
-    return (Player) new Player().setId(id);
+    return (Player) new Player().setHardwareInformations(new HashSet<>()).setId(id);
   }
 }

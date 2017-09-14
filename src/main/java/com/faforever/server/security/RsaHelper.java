@@ -22,7 +22,6 @@ final class RsaHelper {
    */
   @SneakyThrows
   RSAPrivateCrtKeyImpl readPkcs1(String content) {
-    KeyFactory fact = KeyFactory.getInstance("RSA");
     ASN1Sequence seq = ASN1Sequence.getInstance(Base64.getDecoder().decode(content.getBytes(StandardCharsets.UTF_8)));
     Assert.isTrue(seq.size() == 9, "Invalid RSA Private Key ASN1 sequence.");
 
@@ -38,6 +37,6 @@ final class RsaHelper {
       key.getCoefficient()
     );
 
-    return (RSAPrivateCrtKeyImpl) fact.generatePrivate(privSpec);
+    return (RSAPrivateCrtKeyImpl) KeyFactory.getInstance("RSA").generatePrivate(privSpec);
   }
 }
