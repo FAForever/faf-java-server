@@ -41,7 +41,7 @@ public class SocialServiceActivators {
     socialService.removeFoe(getPlayer(authentication), request.getPlayerId());
   }
 
-  private Player getPlayer(@Header(USER_HEADER) Authentication authentication) {
+  private Player getPlayer(Authentication authentication) {
     return ((FafUserDetails) authentication.getPrincipal()).getPlayer();
   }
 }

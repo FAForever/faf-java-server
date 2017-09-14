@@ -1,7 +1,6 @@
 package com.faforever.server.stats.achievements;
 
 import com.faforever.server.api.ApiAccessor;
-import com.faforever.server.entity.Player;
 import com.faforever.server.stats.achievements.AchievementUpdate.UpdateType;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +28,6 @@ public class AchievementServiceTest {
 
   @Test
   public void executeBatchUpdate() throws Exception {
-    Player player = (Player) new Player().setId(1);
     List<AchievementUpdate> achievementUpdates = Arrays.asList(
       new AchievementUpdate(1, AchievementId.ACH_ADDICT, UpdateType.INCREMENT, 1),
       new AchievementUpdate(1, AchievementId.ACH_AURORA, UpdateType.INCREMENT, 1)

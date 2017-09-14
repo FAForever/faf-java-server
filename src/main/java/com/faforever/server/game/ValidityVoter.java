@@ -3,6 +3,7 @@ package com.faforever.server.game;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GamePlayerStats;
+import com.faforever.server.entity.ModVersion;
 import com.faforever.server.entity.Validity;
 import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.mod.ModService;
@@ -68,7 +69,7 @@ class ValidityVoter {
   }
 
   Function<Game, Validity> gameResultVoter() {
-    return game -> game.getReportedArmyOutcomes().isEmpty() || game.getReportedArmyScores().isEmpty() ? Validity.UNKNOWN_RESULT : Validity.VALID;
+    return game -> game.getReportedArmyResults().isEmpty() || game.getReportedArmyResults().isEmpty() ? Validity.UNKNOWN_RESULT : Validity.VALID;
   }
 
   Function<Game, Validity> singlePlayerVoter() {
@@ -122,6 +123,6 @@ class ValidityVoter {
   }
 
   Function<Game, Validity> isRankedVoter(ModService modService) {
-    return game -> !game.getSimMods().stream().allMatch(modService::isModRanked) ? Validity.BAD_MOD : Validity.VALID;
+    return game -> !game.getSimMods().stream().allMatch(ModVersion::isRanked) ? Validity.BAD_MOD : Validity.VALID;
   }
 }

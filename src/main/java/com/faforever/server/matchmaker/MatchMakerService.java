@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +48,7 @@ public class MatchMakerService {
 
   private static final double DESIRED_MIN_GAME_QUALITY = 0.8d;
   private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
+  private static final Pattern MAP_FILENAME_PATTERN = Pattern.compile("maps/(.*)\\.zip");
   private final ModService modService;
   private final ServerProperties properties;
   private final RatingService ratingService;
@@ -227,8 +230,7 @@ public class MatchMakerService {
     gameService.createGame(
       host.getLogin() + " vs. " + opponent.getLogin(),
       technicalModName,
-      // TODO filename is probably the wrong parameter
-      mapService.getRandomLadderMap().getFilename(),
+      randomMap(),
       null,
       GameVisibility.PRIVATE,
       null,
@@ -252,6 +254,15 @@ public class MatchMakerService {
 
       gameService.joinGame(game.getId(), opponent);
     });
+  }
+
+  private String randomMap() {
+    String mapFilename = mapService.getRandomLadderMap().getFilename();
+    Matcher matcher = MAP_FILENAME_PATTERN.matcher(mapFilename);
+    if (!matcher.matches()) {
+      throw new IllegalStateException("Map filename is not valid: " + mapFilename + ". Expected to match pattern: " + MAP_FILENAME_PATTERN);
+    }
+    return matcher.group(1);
   }
 
   /**

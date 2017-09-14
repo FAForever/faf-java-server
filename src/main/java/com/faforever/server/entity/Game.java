@@ -49,22 +49,16 @@ public class Game {
   private final AtomicInteger desyncCounter;
 
   /**
-   * Maps player IDs to army scores reported by this player.
+   * Maps player IDs to a map of {@code armyId -> result} reported by this player.
    */
   @Transient
-  private final Map<Integer, List<ArmyScore>> reportedArmyScores;
-
-  /**
-   * Maps player IDs to army outcomes reported by this player.
-   */
-  @Transient
-  private final Map<Integer, List<ArmyOutcome>> reportedArmyOutcomes;
+  private final Map<Integer, Map<Integer, ArmyResult>> reportedArmyResults;
 
   @Transient
   private final List<ArmyStatistics> armyStatistics;
 
   /**
-   * Returns the list of players who are currently connected to the game (including observers)
+   * Returns the players who are currently connected to the game (including observers), mapped by their player ID.
    */
   @Transient
   private final Map<Integer, Player> connectedPlayers;
@@ -88,7 +82,7 @@ public class Game {
   private final Map<String, Map<String, Object>> aiOptions;
 
   @Transient
-  private final List<String> simMods;
+  private final List<ModVersion> simMods;
 
   @Transient
   private Integer minRating;
@@ -184,8 +178,7 @@ public class Game {
     playerOptions = new HashMap<>();
     options = new HashMap<>();
     aiOptions = new HashMap<>();
-    reportedArmyScores = new HashMap<>();
-    reportedArmyOutcomes = new HashMap<>();
+    reportedArmyResults = new HashMap<>();
     mutuallyAcceptedDrawPlayerIds = new HashSet<>();
     armyStatistics = new ArrayList<>();
     playerStats = new HashMap<>();

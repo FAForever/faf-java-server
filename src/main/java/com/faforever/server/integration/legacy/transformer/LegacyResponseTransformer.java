@@ -3,15 +3,15 @@ package com.faforever.server.integration.legacy.transformer;
 import com.faforever.server.chat.JoinChatChannelResponse;
 import com.faforever.server.client.ConnectToPlayerResponse;
 import com.faforever.server.client.DisconnectPlayerFromGameResponse;
+import com.faforever.server.client.GameResponses;
 import com.faforever.server.client.IceServersResponse;
 import com.faforever.server.client.InfoResponse;
-import com.faforever.server.client.PlayerInformationResponses;
+import com.faforever.server.client.PlayerResponses;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.client.UpdatedAchievementsResponse;
 import com.faforever.server.common.ServerMessage;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.error.ErrorResponse;
-import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.mod.FeaturedModResponse;
@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Transforms responses into legacy response formats.
  */
-public class LegacyResponseTransformer implements GenericTransformer<ServerMessage, Map<String, Serializable>> {
+public final class LegacyResponseTransformer implements GenericTransformer<ServerMessage, Map<String, Serializable>> {
 
   // Can't convert to enum singleton since otherwise spring integration throws some "ambiguous parameter type" exception
   public static final LegacyResponseTransformer INSTANCE = new LegacyResponseTransformer();
@@ -38,14 +38,14 @@ public class LegacyResponseTransformer implements GenericTransformer<ServerMessa
     transformers = ImmutableMap.<Class<? extends ServerMessage>, GenericTransformer<? extends ServerMessage, Map<String, Serializable>>>builder()
       .put(StartGameProcessResponse.class, LaunchGameResponseTransformer.INSTANCE)
       .put(SessionResponse.class, SessionResponseTransformer.INSTANCE)
-      .put(PlayerInformationResponses.class, PlayerInformationResponsesTransformer.INSTANCE)
+      .put(PlayerResponses.class, PlayerResponsesTransformer.INSTANCE)
       .put(LoginDetailsResponse.class, LoginDetailsResponseTransformer.INSTANCE)
       .put(ErrorResponse.class, ErrorResponseTransformer.INSTANCE)
       .put(InfoResponse.class, InfoResponseTransformer.INSTANCE)
       .put(HostGameResponse.class, HostGameResponseTransformer.INSTANCE)
       .put(ConnectToPlayerResponse.class, ConnectToPlayerResponseTransformer.INSTANCE)
       .put(FeaturedModResponse.class, FeaturedModResponseTransformer.INSTANCE)
-      .put(GameResponse.class, GameResponseTransformer.INSTANCE)
+      .put(GameResponses.class, GameResponsesTransformer.INSTANCE)
       .put(CoopMissionResponse.class, CoopMissionsResponseTransformer.INSTANCE)
       .put(DisconnectPlayerFromGameResponse.class, DisconnectPeerResponseTransformer.INSTANCE)
       .put(UpdatedAchievementsResponse.class, UpdatedAchievementsResponseTransformer.INSTANCE)

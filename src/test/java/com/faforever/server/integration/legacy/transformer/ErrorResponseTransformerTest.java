@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ErrorResponseTransformerTest {
   @Test
   public void transform() throws Exception {
-    ErrorCode errorCode = ErrorCode.UNKNOWN_MESSAGE;
+    ErrorCode errorCode = ErrorCode.UNSUPPORTED_REQUEST;
     ErrorResponse errorResponse = new ErrorResponse(errorCode, new Object[]{"foobar"});
 
     Map<String, Serializable> result = ErrorResponseTransformer.INSTANCE.transform(errorResponse);

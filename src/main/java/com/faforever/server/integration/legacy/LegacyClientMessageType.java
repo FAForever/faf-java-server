@@ -10,6 +10,7 @@ public enum LegacyClientMessageType {
   JOIN_GAME("game_join"),
   /**
    * @deprecated Poor man's session handling is deprecated even in the legacy protocol, but still used by some clients.
+   * Same information could be sent in the login message instead.
    */
   @Deprecated
   ASK_SESSION("ask_session"),
@@ -31,14 +32,13 @@ public enum LegacyClientMessageType {
   @Deprecated
   AVATAR("avatar"),
   /**
-   * @deprecated the legacy client still sends this message, however it will be superseded
-   * once ICE is implemented.
+   * @deprecated the legacy client still sends this message, however it will be superseded once ICE is implemented.
    */
   @Deprecated
   INITIATE_TEST("InitiateTest"),
   /**
-   * @deprecated the legacy client still sends this message, however creating accounts is already handled by the API
-   * and the website now and should no longer be done by the server.
+   * @deprecated the legacy client still sends this message, however creating accounts is already handled by the API and
+   * the website now and should no longer be done by the server.
    */
   @Deprecated
   CREATE_ACCOUNT("create_account"),

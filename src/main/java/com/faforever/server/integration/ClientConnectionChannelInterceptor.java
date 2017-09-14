@@ -1,7 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.ClientConnectionService;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -18,10 +18,10 @@ import static org.springframework.integration.IntegrationMessageHeaderAccessor.C
  */
 @Component
 public class ClientConnectionChannelInterceptor extends ChannelInterceptorAdapter {
-  private final ClientConnectionManager clientConnectionManager;
+  private final ClientConnectionService clientConnectionService;
 
-  public ClientConnectionChannelInterceptor(ClientConnectionManager clientConnectionManager) {
-    this.clientConnectionManager = clientConnectionManager;
+  public ClientConnectionChannelInterceptor(ClientConnectionService clientConnectionService) {
+    this.clientConnectionService = clientConnectionService;
   }
 
   @Override
@@ -29,7 +29,7 @@ public class ClientConnectionChannelInterceptor extends ChannelInterceptorAdapte
     org.springframework.messaging.MessageHeaders messageHeaders = message.getHeaders();
 
     String connectionId = (String) messageHeaders.get(CORRELATION_ID);
-    ClientConnection clientConnection = clientConnectionManager.getClientConnection(connectionId)
+    ClientConnection clientConnection = clientConnectionService.getClientConnection(connectionId)
       .orElseThrow(() -> new IllegalStateException("There is no connection with ID: " + connectionId));
 
     SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor.wrap(message);

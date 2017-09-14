@@ -3,6 +3,8 @@ package com.faforever.server.chat;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Chat;
+import com.faforever.server.entity.Clan;
+import com.faforever.server.entity.ClanMembership;
 import com.faforever.server.entity.GroupAssociation;
 import com.faforever.server.entity.GroupAssociation.Group;
 import com.faforever.server.entity.Player;
@@ -43,6 +45,7 @@ public class ChatServiceTest {
     chat.setAdminChannels(Collections.singletonList("#admins"));
     chat.setModeratorChannels(Collections.singletonList("#moderators"));
     chat.setDefaultChannels(Arrays.asList("#foo", "#bar"));
+    chat.setClanChannelFormat("#clan_%s");
 
     instance = new ChatService(nickCoreRepository, properties, clientService);
   }
@@ -57,18 +60,18 @@ public class ChatServiceTest {
   @Test
   @SuppressWarnings("unchecked")
   public void onAuthenticationSuccessJoinsChannels() throws Exception {
-    testJoinChannels(null, "#foo", "#bar");
+    testJoinChannels(null, "#foo", "#bar", "#clan_junit");
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void onAuthenticationSuccessJoinsAdminChannels() throws Exception {
-    testJoinChannels(Group.ADMIN, "#admins", "#foo", "#bar");
+    testJoinChannels(Group.ADMIN, "#admins", "#foo", "#bar", "#clan_junit");
   }
 
   @Test
   public void onAuthenticationSuccessJoinsModeratorChannels() throws Exception {
-    testJoinChannels(Group.MODERATOR, "#moderators", "#foo", "#bar");
+    testJoinChannels(Group.MODERATOR, "#moderators", "#foo", "#bar", "#clan_junit");
   }
 
   @SuppressWarnings("unchecked")
@@ -78,7 +81,11 @@ public class ChatServiceTest {
       .setGroupAssociation(group == null ? null : new GroupAssociation().setGroup(group))
       .setLogin("junit");
 
-    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, new Player().setUser(user)));
+    Player player = new Player()
+      .setUser(user)
+      .setClanMemberships(Collections.singletonList(new ClanMembership().setClan(new Clan().setTag("junit"))));
+
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player));
 
     ArgumentCaptor<Set<String>> captor = ArgumentCaptor.forClass((Class) Set.class);
     verify(clientService).sendChatChannels(captor.capture(), any());
@@ -86,6 +93,4 @@ public class ChatServiceTest {
     Set<String> channels = captor.getValue();
     assertThat(channels, containsInAnyOrder(expectedChannels));
   }
-
-  // TODO test clan channel as well
 }

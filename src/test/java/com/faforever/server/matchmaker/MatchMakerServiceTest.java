@@ -66,7 +66,7 @@ public class MatchMakerServiceTest {
     when(modService.getFeaturedMod(ladder1v1Mod.getTechnicalName())).thenReturn(Optional.of(ladder1v1Mod));
     when(modService.getLadder1v1()).thenReturn(Optional.of(ladder1v1Mod));
     when(modService.isLadder1v1(ladder1v1Mod)).thenReturn(true);
-    when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("SCMP_001"));
+    when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
     when(gameService.createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(CompletableFuture.completedFuture(new Game()));
 
     RatingService ratingService = new RatingService(properties);

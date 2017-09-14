@@ -1,5 +1,6 @@
 package com.faforever.server.client;
 
+import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.config.ServerProperties;
@@ -19,7 +20,7 @@ import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.mod.FeaturedModResponse;
-import com.faforever.server.player.PlayerInformationResponse;
+import com.faforever.server.player.PlayerResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +45,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -57,14 +59,14 @@ public class ClientServiceTest {
   private ClientGateway clientGateway;
   @Mock
   private CoopService coopService;
-  @Mock
-  private ServerProperties serverProperties;
 
   private ClientConnection clientConnection;
   private Player player;
+  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
+    serverProperties = new ServerProperties();
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
 
@@ -144,7 +146,7 @@ public class ClientServiceTest {
 
   @Test
   public void sendUserDetails() throws Exception {
-    Avatar avatar = new Avatar().setUrl("http://example.com").setTooltip("Tooltip");
+    Avatar avatar = new Avatar().setUrl("http://example.com").setDescription("Tooltip");
     player
       .setAvailableAvatars(Collections.singletonList(
         new AvatarAssociation().setAvatar(avatar).setPlayer(player).setSelected(true)
@@ -158,13 +160,13 @@ public class ClientServiceTest {
 
     instance.sendLoginDetails(player, player);
 
-    ArgumentCaptor<PlayerInformationResponse> captor = ArgumentCaptor.forClass(PlayerInformationResponse.class);
+    ArgumentCaptor<PlayerResponse> captor = ArgumentCaptor.forClass(PlayerResponse.class);
     verify(clientGateway).send(captor.capture(), any());
 
-    PlayerInformationResponse response = captor.getValue();
+    PlayerResponse response = captor.getValue();
     assertThat(response.getUserId(), is(5));
     assertThat(response.getUsername(), is("JUnit"));
-    assertThat(response.getPlayer().getAvatar().getTooltip(), is("Tooltip"));
+    assertThat(response.getPlayer().getAvatar().getDescription(), is("Tooltip"));
     assertThat(response.getPlayer().getAvatar().getUrl(), is("http://example.com"));
     assertThat(response.getPlayer().getGlobalRating().getMean(), is(1100d));
     assertThat(response.getPlayer().getGlobalRating().getDeviation(), is(100d));
@@ -214,16 +216,16 @@ public class ClientServiceTest {
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
-    CompletableFuture<PlayerInformationResponses> sent = new CompletableFuture<>();
-    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerInformationResponses.class)))
-      .when(clientGateway).send(any(PlayerInformationResponses.class), eq(clientConnection));
+    CompletableFuture<PlayerResponses> sent = new CompletableFuture<>();
+    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerResponses.class)))
+      .when(clientGateway).send(any(PlayerResponses.class), eq(clientConnection));
 
     instance.sendPlayerInformation(players, connectionAware);
 
-    PlayerInformationResponses responses = sent.get(10, TimeUnit.SECONDS);
+    PlayerResponses responses = sent.get(10, TimeUnit.SECONDS);
     assertThat(responses.getResponses(), hasSize(2));
 
-    Iterator<PlayerInformationResponse> iterator = responses.getResponses().iterator();
+    Iterator<PlayerResponse> iterator = responses.getResponses().iterator();
     assertThat(iterator.next().getUserId(), is(1));
     assertThat(iterator.next().getUserId(), is(2));
   }
@@ -238,5 +240,47 @@ public class ClientServiceTest {
     instance.sendIceServers(iceServers, connectionAware);
 
     verify(clientGateway).send(new IceServersResponse(iceServers), clientConnection);
+  }
+
+  @Test
+  public void onServerShutdown() throws Exception {
+    serverProperties.getShutdown().setMessage("Shutdown test message");
+    instance.onServerShutdown(ApplicationShutdownEvent.INSTANCE);
+
+    ArgumentCaptor<InfoResponse> captor = ArgumentCaptor.forClass(InfoResponse.class);
+    verify(clientGateway).broadcast(captor.capture());
+
+    InfoResponse value = captor.getValue();
+    assertThat(value.getMessage(), is("Shutdown test message"));
+  }
+
+  @Test
+  public void onServerShutdownExceptionDoesntPropagate() throws Exception {
+    doThrow(new RuntimeException("This exception should be logged but not thrown"))
+      .when(clientGateway).broadcast(any());
+
+    instance.onServerShutdown(ApplicationShutdownEvent.INSTANCE);
+
+    verify(clientGateway).broadcast(any());
+    // Expect no exception to be thrown
+  }
+
+  @Test
+  public void sendAvatarList() throws Exception {
+    List<Avatar> avatars = Arrays.asList(
+      new Avatar().setUrl("http://example.com/foo.bar").setDescription("Foo bar"),
+      new Avatar()
+    );
+
+    ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
+
+    instance.sendAvatarList(avatars, connectionAware);
+
+    ArgumentCaptor<AvatarsResponse> captor = ArgumentCaptor.forClass(AvatarsResponse.class);
+    verify(clientGateway).send(captor.capture(), eq(clientConnection));
+
+    assertThat(captor.getValue().getAvatars(), hasSize(2));
+    assertThat(captor.getValue().getAvatars().get(0).getUrl(), is("http://example.com/foo.bar"));
+    assertThat(captor.getValue().getAvatars().get(0).getDescription(), is("Foo bar"));
   }
 }

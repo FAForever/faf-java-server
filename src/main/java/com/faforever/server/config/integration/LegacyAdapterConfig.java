@@ -1,7 +1,7 @@
 package com.faforever.server.config.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.ClientConnectionService;
 import com.faforever.server.client.CloseConnectionEvent;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.integration.ChannelNames;
@@ -47,8 +47,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -57,13 +59,13 @@ public class LegacyAdapterConfig {
 
   private final ServerProperties serverProperties;
   private final ApplicationEventPublisher applicationEventPublisher;
-  private final ClientConnectionManager clientConnectionManager;
+  private final ClientConnectionService clientConnectionService;
 
   @Inject
-  public LegacyAdapterConfig(ServerProperties serverProperties, ApplicationEventPublisher applicationEventPublisher, ClientConnectionManager clientConnectionManager) {
+  public LegacyAdapterConfig(ServerProperties serverProperties, ApplicationEventPublisher applicationEventPublisher, ClientConnectionService clientConnectionService) {
     this.serverProperties = serverProperties;
     this.applicationEventPublisher = applicationEventPublisher;
-    this.clientConnectionManager = clientConnectionManager;
+    this.clientConnectionService = clientConnectionService;
   }
 
   /**
@@ -71,7 +73,14 @@ public class LegacyAdapterConfig {
    */
   @Bean(name = ChannelNames.LEGACY_INBOUND)
   public MessageChannel legacyInbound() {
-    return MessageChannels.executor(Executors.newFixedThreadPool(1, r -> new Thread(r, "legacy-in"))).get();
+    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+      1,
+      1,
+      0L, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<>(serverProperties.getMessaging().getLegacyAdapterInboundQueueSize()),
+      runnable -> new Thread(runnable, "legacy-in"));
+
+    return MessageChannels.executor(threadPoolExecutor).get();
   }
 
   /**
@@ -164,7 +173,7 @@ public class LegacyAdapterConfig {
       .split(broadcastSplitter())
       // Handle each message in a single task so that one failing message does not prevent others from being sent.
       // A message may fail if the receiving client is no longer connected
-      .channel(MessageChannels.executor(Executors.newSingleThreadExecutor(runnable -> new Thread(runnable, "legacy-tcp-out"))))
+      .channel(ChannelNames.LEGACY_TCP_OUTBOUND)
       .enrichHeaders(connectionIdEnricher())
       .handle(tcpSendingMessageHandler())
       .get();
@@ -175,14 +184,14 @@ public class LegacyAdapterConfig {
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
       TcpNioConnection connection = (TcpNioConnection) event.getSource();
       InetAddress inetAddress = connection.getSocketInfo().getInetAddress();
-      clientConnectionManager.createClientConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16, inetAddress);
+      clientConnectionService.createClientConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16, inetAddress);
     }
   }
 
   @EventListener
   public void onConnectionClosed(TcpConnectionCloseEvent event) {
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
-      clientConnectionManager.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
+      clientConnectionService.removeConnection(event.getConnectionId(), Protocol.LEGACY_UTF_16);
     }
   }
 
@@ -209,7 +218,7 @@ public class LegacyAdapterConfig {
           return message;
         }
 
-        return clientConnectionManager.getConnections().stream()
+        return clientConnectionService.getConnections().stream()
           .filter(clientConnection -> clientConnection.getProtocol() == Protocol.LEGACY_UTF_16)
           .map(clientConnection -> MessageBuilder.fromMessage(message)
             .setHeader(MessageHeaders.CLIENT_CONNECTION, clientConnection)

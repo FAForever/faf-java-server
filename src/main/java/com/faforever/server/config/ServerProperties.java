@@ -27,6 +27,7 @@ public class ServerProperties {
   private Jwt jwt = new Jwt();
   private Jetty jetty = new Jetty();
   private Messaging messaging = new Messaging();
+  private Database database = new Database();
 
   @Data
   public static class Shutdown {
@@ -48,11 +49,6 @@ public class ServerProperties {
      * How many seconds a game needs to run per participating player in order to be ranked.
      */
     private int rankedMinTimeMultiplicator = 60;
-    /**
-     * How many seconds a game may be in state {@link com.faforever.server.entity.GameState#INITIALIZING} before it's
-     * being terminated.
-     */
-    private int staleGameTimeoutSeconds = 45;
   }
 
   @Data
@@ -72,9 +68,9 @@ public class ServerProperties {
     private double desiredGameQuality = 0.8d;
 
     /**
-     * The minimum calculated game quality two or more players have to have in order to be matched. Any lower than
-     * this will be considered unacceptable so that the players will not be matched. This should be no larger than
-     * the quality two new players with initial ratings get to ensure such players get matches.
+     * The minimum calculated game quality two or more players have to have in order to be matched. Any lower than this
+     * will be considered unacceptable so that the players will not be matched. This should be no larger than the
+     * quality two new players with initial ratings get to ensure such players get matches.
      */
     private double acceptableGameQuality = 0.4d;
 
@@ -88,11 +84,7 @@ public class ServerProperties {
   public static class Uid {
     private boolean enabled = true;
     /**
-     * PKCS#8 private key without decoration and newlines. Use the following command to convert from PKCS#1:
-     * <p>
-     * <code>openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in pkcs1.key -out pkcs8.key</code>
-     * </p>
-     * Note that the key currently has to be a 224 bit key.
+     * PKCS#1 private key without decoration and newlines - just like it's been configured in the legacy server.
      */
     private String privateKey;
     private String linkToSteamUrl;
@@ -150,7 +142,7 @@ public class ServerProperties {
   @Data
   public static class Jetty {
     private int minThreads = 1;
-    private int maxThreads = 16;
+    private int maxThreads = 10;
     private int idleTimeoutMillis = 60000;
   }
 
@@ -159,10 +151,18 @@ public class ServerProperties {
     /**
      * Size of the inbound message queue. Incoming messages will be discarded as long as the queue is full.
      */
-    private int legacyAdapterInboundQueueSize = 100_000;
+    private int legacyAdapterInboundQueueSize = 10_000;
     /**
      * Size of the outbound message queue. Outgoing messages will be discarded as long as the queue is full.
      */
     private int legacyAdapterOutboundQueueSize = 100_000;
+  }
+
+  @Data
+  public static class Database {
+    /**
+     * The database schema version required to run this application.
+     */
+    private String schemaVersion;
   }
 }

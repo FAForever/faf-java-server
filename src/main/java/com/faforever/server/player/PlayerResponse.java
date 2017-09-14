@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @ToString
-public class PlayerInformationResponse implements ServerMessage {
+public class PlayerResponse implements ServerMessage {
   private final int userId;
   private final String username;
   private final String country;
@@ -32,7 +32,7 @@ public class PlayerInformationResponse implements ServerMessage {
     @Data
     public static class Avatar {
       private final String url;
-      private final String tooltip;
+      private final String description;
     }
   }
 }

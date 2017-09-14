@@ -5,11 +5,12 @@ import lombok.Getter;
 import lombok.ToString;
 
 /**
- * @deprecated session IDs are deprecated even in the legacy protocol, but clients may still read it.
+ * @deprecated there is no need to send a session ID to the client as they make no sense in stateless protocols like the
+ * legacy protocol.
  */
-@Deprecated
 @Getter
 @ToString
+@Deprecated
 public enum SessionResponse implements ServerMessage {
 
   INSTANCE;

@@ -1,6 +1,7 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.avatar.AvatarMessage;
+import com.faforever.server.avatar.ListAvatarsMessage;
+import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.ListCoopRequest;
@@ -8,7 +9,6 @@ import com.faforever.server.client.LoginMessage;
 import com.faforever.server.client.SessionRequest;
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.common.ServerMessage;
-import com.faforever.server.config.integration.ChannelConfiguration;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
@@ -38,7 +38,7 @@ import com.faforever.server.stats.ArmyStatisticsReport;
 
 /**
  * Holds the names of all channel. A channel's name is also the name of its bean. Channels can be configured in {@link
- * ChannelConfiguration ChannelConfiguration}.
+ * com.faforever.server.config.integration.ChannelConfiguration}.
  */
 public final class ChannelNames {
 
@@ -79,9 +79,9 @@ public final class ChannelNames {
   public static final String LEGACY_OUTBOUND = "legacyOutbound";
 
   /**
-   * Channel for {@link AvatarMessage}.
+   * Channel for {@link ListAvatarsMessage}.
    */
-  public static final String LEGACY_AVATAR_REQUEST = "avatarRequest";
+  public static final String LIST_AVATAR = "listAvatar";
 
   /**
    * Channel for {@link AddFriendRequest}.
@@ -240,4 +240,14 @@ public final class ChannelNames {
    * client.
    */
   public static final String LEGACY_INBOUND = "legacyInbound";
+
+  /**
+   * Channel for raw legacy outbound messages to be written on the TCP socket.
+   */
+  public static final String LEGACY_TCP_OUTBOUND = "legacyTcpOutbound";
+
+  /**
+   * Channel for {@link SelectAvatarRequest}.
+   */
+  public static final String SELECT_AVATAR = "selectAvatar";
 }

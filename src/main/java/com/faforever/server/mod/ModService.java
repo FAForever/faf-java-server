@@ -3,11 +3,11 @@ package com.faforever.server.mod;
 import com.faforever.server.cache.CacheNames;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.FeaturedMod;
+import com.faforever.server.entity.ModVersion;
 import com.faforever.server.player.PlayerOnlineEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -18,24 +18,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
-
 @Service
-// Required for inner calls to cached methods
-@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Slf4j
 public class ModService {
   private static final String COOP_MOD_NAME = "coop";
   private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
-  private final ModRepository modRepository;
+  private final ModVersionRepository modVersionRepository;
   private final FeaturedModRepository featuredModRepository;
+  private final FeaturedModFileRepository featuredModFileRepository;
   private final ClientService clientService;
   private FeaturedMod coopFeaturedMod;
   private FeaturedMod ladder1v1FeaturedMod;
 
-  public ModService(ModRepository modRepository, FeaturedModRepository featuredModRepository, ClientService clientService) {
-    this.modRepository = modRepository;
+  @Autowired
+  @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
+  // Required for access to @Cacheable methods since inner calls do not go through proxy object.
+  private ModService modService;
+
+  public ModService(ModVersionRepository modVersionRepository, FeaturedModRepository featuredModRepository,
+                    FeaturedModFileRepository featuredModFileRepository, ClientService clientService) {
+    this.modVersionRepository = modVersionRepository;
     this.featuredModRepository = featuredModRepository;
+    this.featuredModFileRepository = featuredModFileRepository;
     this.clientService = clientService;
   }
 
@@ -59,19 +63,19 @@ public class ModService {
     return Collections.unmodifiableList(featuredModRepository.findAll());
   }
 
-  public List<Object> getMods(List<String> modUids) {
-    // FIXME implement
-    return emptyList();
+  // TODO cache
+  public List<ModVersion> findModVersionsByUids(List<String> uids) {
+    return modVersionRepository.findByUidIn(uids);
   }
 
   @Cacheable(CacheNames.RANKED_MODS)
   public boolean isModRanked(String simModId) {
-    return modRepository.findOneByUidAndRankedTrue(simModId).isPresent();
+    return modVersionRepository.findOneByUidAndRankedTrue(simModId).isPresent();
   }
 
   @EventListener
   public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
-    List<FeaturedMod> mods = getFeaturedMods().stream()
+    List<FeaturedMod> mods = modService.getFeaturedMods().stream()
       .filter(FeaturedMod::isPublish)
       .collect(Collectors.toList());
 
@@ -96,5 +100,9 @@ public class ModService {
 
   public Optional<FeaturedMod> getFeaturedMod(String featuredModName) {
     return featuredModRepository.findOneByTechnicalName(featuredModName);
+  }
+
+  public List<FeaturedModFile> getLatestFileVersions(FeaturedMod featuredMod) {
+    return featuredModFileRepository.getLatestFileVersions(featuredMod.getTechnicalName());
   }
 }

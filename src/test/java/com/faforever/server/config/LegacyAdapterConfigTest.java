@@ -1,7 +1,7 @@
 package com.faforever.server.config;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientConnectionManager;
+import com.faforever.server.client.ClientConnectionService;
 import com.faforever.server.client.CloseConnectionEvent;
 import com.faforever.server.config.integration.LegacyAdapterConfig;
 import com.faforever.server.integration.Protocol;
@@ -27,14 +27,14 @@ public class LegacyAdapterConfigTest {
   @Mock
   private ApplicationEventPublisher applicationEventPublisher;
   @Mock
-  private ClientConnectionManager clientConnectionManager;
+  private ClientConnectionService clientConnectionService;
   private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
     serverProperties = new ServerProperties();
 
-    instance = new LegacyAdapterConfig(serverProperties, applicationEventPublisher, clientConnectionManager);
+    instance = new LegacyAdapterConfig(serverProperties, applicationEventPublisher, clientConnectionService);
   }
 
   @Test
@@ -45,7 +45,7 @@ public class LegacyAdapterConfigTest {
 
     instance.onConnectionClosed(new TcpConnectionCloseEvent(connection, null));
 
-    verify(clientConnectionManager).removeConnection("1", Protocol.LEGACY_UTF_16);
+    verify(clientConnectionService).removeConnection("1", Protocol.LEGACY_UTF_16);
   }
 
   @Test

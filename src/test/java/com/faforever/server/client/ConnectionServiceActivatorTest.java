@@ -20,7 +20,7 @@ public class ConnectionServiceActivatorTest {
   private ConnectionServiceActivator instance;
 
   @Mock
-  private ClientConnectionManager clientConnectionManager;
+  private ClientConnectionService clientConnectionService;
 
   private ClientConnection clientConnection;
   private User user;
@@ -34,7 +34,7 @@ public class ConnectionServiceActivatorTest {
     clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
       .setAuthentication(new TestingAuthenticationToken(user, null));
 
-    instance = new ConnectionServiceActivator(clientConnectionManager);
+    instance = new ConnectionServiceActivator(clientConnectionService);
   }
 
   @Test
@@ -43,6 +43,6 @@ public class ConnectionServiceActivatorTest {
 
     instance.disconnectClientRequest(request, clientConnection);
 
-    verify(clientConnectionManager).disconnectClient(new TestingAuthenticationToken(user, null), 1);
+    verify(clientConnectionService).disconnectClient(new TestingAuthenticationToken(user, null), 1);
   }
 }

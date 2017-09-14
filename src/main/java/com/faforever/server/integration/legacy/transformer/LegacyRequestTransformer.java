@@ -1,9 +1,10 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.avatar.AddAvatarAdminRequest;
-import com.faforever.server.avatar.AvatarMessage;
 import com.faforever.server.avatar.GetAvatarsAdminRequest;
+import com.faforever.server.avatar.ListAvatarsMessage;
 import com.faforever.server.avatar.RemoveAvatarAdminRequest;
+import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginMessage;
@@ -12,6 +13,7 @@ import com.faforever.server.common.ClientMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
+import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
@@ -50,7 +52,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.integration.transformer.GenericTransformer;
 
 import java.time.Duration;
@@ -83,7 +84,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case JOIN_GAME:
         return new JoinGameRequest(((Double) source.get("uid")).intValue(), (String) source.get("password"));
       case ASK_SESSION:
-        return SessionRequest.INSTANCE;
+        String userAgent = (String) source.get("user_agent");
+        return SessionRequest.forUserAgent(userAgent);
       case SOCIAL_ADD:
         return handleSocialAdd(source);
       case SOCIAL_REMOVE:
@@ -93,7 +95,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case GAME_MATCH_MAKING:
         return handleMatchMaking(source);
       case AVATAR:
-        return handleAvatar();
+        return handleAvatar(source);
       case GAME_STATE:
         return new GameStateReport(PlayerGameState.fromString((String) getArgs(source).get(0)));
       case GAME_OPTION:
@@ -124,8 +126,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case AI_OPTION:
         return handleAiOption(source);
       case INITIATE_TEST:
-        log.warn("Ignoring " + messageType);
-        return null;
+        throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
       case ICE_SERVERS:
         return IceServersRequest.INSTANCE;
       case ICE_MESSAGE:
@@ -134,20 +135,23 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case RESTORE_GAME_SESSION:
         return new RestoreGameSessionRequest((int) source.get("game_id"));
       case CREATE_ACCOUNT:
-        Requests.verify(false, ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
-        break;
+        throw new RequestException(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED);
       case ADMIN:
         return handleAdminAction(source);
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
-    throw new ProgrammingError("This should never be reached.");
   }
 
-  @NotNull
-  private ClientMessage handleAvatar() {
-    // FIXME implement?
-    return AvatarMessage.INSTANCE;
+  private ClientMessage handleAvatar(Map<String, Object> source) {
+    switch ((String) source.get("action")) {
+      case "list_avatar":
+        return ListAvatarsMessage.INSTANCE;
+      case "select":
+        return new SelectAvatarRequest((String) source.get("avatar"));
+      default:
+        throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
+    }
   }
 
   private ClientMessage handleAdminAction(Map<String, Object> source) {
@@ -165,8 +169,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case "broadcast":
         return new BroadcastRequest((String) source.get("message"));
       default:
-        Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
-        return null;
+        throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
     }
   }
 
@@ -266,8 +269,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new RemoveFoeRequest(((Double) source.get("foe")).intValue());
     }
-    Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
-    return null;
+    throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
   }
 
   private ClientMessage handleSocialAdd(Map<String, Object> source) {
@@ -276,8 +278,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     } else if (source.containsKey("foe")) {
       return new AddFoeRequest(((Double) source.get("foe")).intValue());
     }
-    Requests.verify(false, ErrorCode.UNKNOWN_MESSAGE, source);
-    return null;
+    throw new RequestException(ErrorCode.UNSUPPORTED_REQUEST, source);
   }
 
   private ClientMessage handleHostGame(Map<String, Object> source) {

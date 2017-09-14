@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.boot.actuate.metrics.CounterService;
 
 import java.net.InetAddress;
 
@@ -25,12 +26,14 @@ public class PlayerServiceTest {
 
   @Mock
   private ClientService clientService;
+  @Mock
+  private CounterService counterService;
 
   @Before
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
     player.setLogin("JUnit");
-    instance = new PlayerService(clientService);
+    instance = new PlayerService(clientService, counterService);
   }
 
   @Test

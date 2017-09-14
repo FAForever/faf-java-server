@@ -33,10 +33,7 @@ public class Player extends Login implements ConnectionAware {
   @Nullable
   private GlobalRating globalRating;
 
-  @ManyToMany(fetch = FetchType.LAZY)
-  @JoinTable(name = "unique_id_users",
-    joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-    inverseJoinColumns = @JoinColumn(name = "uniqueid_hash", referencedColumnName = "id"))
+  @ManyToMany(mappedBy = "players", fetch = FetchType.LAZY)
   private Set<HardwareInformation> hardwareInformations;
 
   @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)

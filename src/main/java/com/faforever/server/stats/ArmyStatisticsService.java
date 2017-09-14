@@ -1,7 +1,7 @@
 package com.faforever.server.stats;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.ArmyOutcome;
+import com.faforever.server.entity.ArmyResult;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.Faction;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +90,8 @@ public class ArmyStatisticsService {
     }
 
     int finalArmyId = playerArmyId;
-    Optional<ArmyOutcome> armyOutcome = game.getReportedArmyOutcomes().values().stream()
-      .flatMap(Collection::stream)
+    Optional<ArmyResult> armyOutcome = game.getReportedArmyResults().values().stream()
+      .flatMap(map -> map.values().stream())
       .filter(item -> item.getArmyId() == finalArmyId)
       .findFirst();
     if (!armyOutcome.isPresent()) {

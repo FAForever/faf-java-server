@@ -3,14 +3,16 @@ package com.faforever.server.game;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
+import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.ArmyOutcome;
-import com.faforever.server.entity.ArmyScore;
+import com.faforever.server.entity.ArmyResult;
 import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.MapVersion;
+import com.faforever.server.entity.Mod;
+import com.faforever.server.entity.ModVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.entity.Validity;
@@ -26,6 +28,7 @@ import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +36,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -43,12 +47,25 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
-import static org.hamcrest.CoreMatchers.hasItem;
+import static com.faforever.server.game.GameService.OPTION_ARMY;
+import static com.faforever.server.game.GameService.OPTION_CHEATS_ENABLED;
+import static com.faforever.server.game.GameService.OPTION_COLOR;
+import static com.faforever.server.game.GameService.OPTION_FACTION;
+import static com.faforever.server.game.GameService.OPTION_FOG_OF_WAR;
+import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
+import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
+import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
+import static com.faforever.server.game.GameService.OPTION_SLOT;
+import static com.faforever.server.game.GameService.OPTION_START_SPOT;
+import static com.faforever.server.game.GameService.OPTION_TEAM;
+import static com.faforever.server.game.GameService.OPTION_VICTORY_CONDITION;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -78,12 +95,8 @@ public class GameServiceTest {
   private static final String PLAYER_NAME_2 = "player2";
   private static final String MAP_NAME = "SCMP_001";
   private static final String FAF_TECHNICAL_NAME = "faf";
-  private static final int NEXT_GAME_ID = 1;
   private static final String QAI = "QAI";
   private static final String AIX = "AIX";
-  private static final String OPTION_FACTION = "Faction";
-  private static final String OPTION_SLOT = "Slot";
-  private static final String OPTION_ARMY = "Army";
   private static final int GAME_MIN_RATING = 1000;
   private static final int GAME_MAX_RATING = 1500;
 
@@ -113,7 +126,6 @@ public class GameServiceTest {
 
   private Player player1;
   private Player player2;
-  private Game game;
   private ServerProperties serverProperties;
 
   @Before
@@ -121,23 +133,10 @@ public class GameServiceTest {
     MapVersion map = new MapVersion();
     map.setRanked(true);
 
-    game = new Game()
-      .setId(1)
-      .setMap(map)
-      .setFeaturedMod(new FeaturedMod())
-      .setVictoryCondition(VictoryCondition.DEMORALIZATION)
-      .setStartTime(Instant.now().plusSeconds(999));
-    game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "explored");
-    game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "false");
-    game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "Off");
-    game.getOptions().put(GameService.OPTION_NO_RUSH, "Off");
-    game.getOptions().put(GameService.OPTION_RESTRICTED_CATEGORIES, 0);
 
     player1 = new Player();
     player1.setId(1);
     player1.setLogin(PLAYER_NAME_1);
-    game.setHost(player1);
-    addPlayer(game, player1, 2);
 
     player2 = new Player();
     player2.setId(2);
@@ -146,8 +145,9 @@ public class GameServiceTest {
     FeaturedMod fafFeaturedMod = new FeaturedMod();
     fafFeaturedMod.setTechnicalName(FAF_TECHNICAL_NAME);
 
-    when(gameRepository.findMaxId()).thenReturn(Optional.of(NEXT_GAME_ID - 1));
+    when(gameRepository.findMaxId()).thenReturn(Optional.empty());
     when(mapService.findMap(anyString())).thenReturn(Optional.empty());
+    when(mapService.findMap(MAP_NAME)).thenReturn(Optional.of(map));
     when(modService.getFeaturedMod(FAF_TECHNICAL_NAME)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
     doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
@@ -162,51 +162,31 @@ public class GameServiceTest {
   }
 
   @Test
-  public void createGame() throws Exception {
-    player1.setCurrentGame(null);
-    createDefaultGame();
-
-    Optional<Game> optional = instance.getActiveGame(NEXT_GAME_ID);
-    assertThat(optional.isPresent(), is(true));
-    Game game = optional.get();
-
-    verify(clientService).startGameProcess(game, player1);
-    assertThat(game.getTitle(), is("Game title"));
-    assertThat(game.getHost(), is(player1));
-    assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
-    assertThat(game.getMap(), is(nullValue()));
-    assertThat(game.getMapName(), is(MAP_NAME));
-    assertThat(game.getPassword(), is("secret"));
-    assertThat(game.getState(), is(GameState.INITIALIZING));
-    assertThat(game.getGameVisibility(), is(GameVisibility.PUBLIC));
-    assertThat(game.getMinRating(), is(GAME_MIN_RATING));
-    assertThat(game.getMaxRating(), is(GAME_MAX_RATING));
-    assertThat(player1.getCurrentGame(), is(nullValue()));
-    assertThat(player1.getGameBeingJoined(), is(game));
-  }
-
-  @Test
   public void joinGame() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-    instance.joinGame(NEXT_GAME_ID, player2);
+    Game game = hostGame(player1);
 
-    Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("Game not found"));
+    instance.joinGame(game.getId(), player2);
+    verify(clientService).startGameProcess(game, player2);
+    assertThat(player2.getGameBeingJoined(), is(game));
 
-    verify(clientService).startGameProcess(game, player1);
-    assertThat(player1.getCurrentGame(), is(game));
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    assertThat(player2.getCurrentGame(), is(game));
   }
 
   @Test
   public void updateGameStateIdle() throws Exception {
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
+      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.IDLE, player1);
 
-    assertThat(game.getState(), is(GameState.OPEN));
+    Game game = instance.getActiveGame(1).get();
+
+    assertThat(game.getState(), is(GameState.INITIALIZING));
   }
 
   @Test
   public void updateGameOption() throws Exception {
+    Game game = hostGame(player1);
     assertThat(game.getOptions().containsKey("GameSpeed"), is(false));
 
     instance.updateGameOption(player1, "GameSpeed", "normal");
@@ -222,7 +202,7 @@ public class GameServiceTest {
 
   @Test
   public void updatePlayerOption() throws Exception {
-    addPlayer(game, player1, 2);
+    Game game = hostGame(player1);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_FACTION, 1);
     assertThat(game.getPlayerOptions().get(player1.getId()).get(OPTION_FACTION), is(1));
@@ -233,6 +213,7 @@ public class GameServiceTest {
 
   @Test
   public void updateAiOption() throws Exception {
+    Game game = hostGame(player1);
     assertThat(game.getAiOptions().containsKey(QAI), is(false));
 
     instance.updateAiOption(player1, QAI, OPTION_FACTION, 2);
@@ -242,8 +223,9 @@ public class GameServiceTest {
 
   @Test
   public void clearSlot() throws Exception {
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
+    Game game = hostGame(player1);
+    instance.updatePlayerOption(game.getHost(), player1.getId(), OPTION_SLOT, 2);
+    addPlayer(game, player2);
 
     instance.updateAiOption(player1, QAI, OPTION_FACTION, 1);
     instance.updateAiOption(player1, QAI, OPTION_SLOT, 1);
@@ -282,6 +264,7 @@ public class GameServiceTest {
 
   @Test
   public void reportDesync() throws Exception {
+    Game game = hostGame(player1);
     assertThat(game.getDesyncCounter().intValue(), is(0));
     instance.reportDesync(player1);
     instance.reportDesync(player1);
@@ -291,16 +274,33 @@ public class GameServiceTest {
 
   @Test
   public void updateGameMods() throws Exception {
-    instance.updateGameMods(game, Arrays.asList("1-2-3-4", "5-6-7-8"));
+    List<String> modUids = Arrays.asList("1-1-1-1", "2-2-2-2");
+    when(modService.findModVersionsByUids(modUids)).thenReturn(Arrays.asList(
+      new ModVersion().setUid("1-1-1-1").setMod(new Mod().setDisplayName("Mod #1")),
+      new ModVersion().setUid("2-2-2-2").setMod(new Mod().setDisplayName("Mod #2"))
+    ));
 
-    List<String> simMods = game.getSimMods();
-    assertThat(simMods, hasItem("1-2-3-4"));
-    assertThat(simMods, hasItem("5-6-7-8"));
+    Game game = hostGame(player1);
+    instance.updateGameMods(game, modUids);
+
+    List<ModVersion> simMods = game.getSimMods();
+    assertThat(simMods, hasSize(2));
+    assertThat(simMods.get(0).getUid(), is("1-1-1-1"));
+    assertThat(simMods.get(0).getMod().getDisplayName(), is("Mod #1"));
+    assertThat(simMods.get(1).getUid(), is("2-2-2-2"));
+    assertThat(simMods.get(1).getMod().getDisplayName(), is("Mod #2"));
   }
 
   @Test
   public void updateGameModsCountClearsIfZero() throws Exception {
-    instance.updateGameMods(game, Arrays.asList("1-2-3-4", "5-6-7-8"));
+    List<String> modUids = Arrays.asList("1-1-1-1", "2-2-2-2");
+    when(modService.findModVersionsByUids(modUids)).thenReturn(Arrays.asList(
+      new ModVersion().setUid("1-1-1-1").setMod(new Mod().setDisplayName("Mod #1")),
+      new ModVersion().setUid("2-2-2-2").setMod(new Mod().setDisplayName("Mod #2"))
+    ));
+
+    Game game = hostGame(player1);
+    instance.updateGameMods(game, Arrays.asList("1-1-1-1", "2-2-2-2"));
     instance.updateGameModsCount(game, 0);
 
     assertThat(game.getSimMods(), is(empty()));
@@ -308,16 +308,28 @@ public class GameServiceTest {
 
   @Test
   public void updateGameModsCountDoesntClearIfNonZero() throws Exception {
-    instance.updateGameMods(game, Arrays.asList("1-2-3-4", "5-6-7-8"));
+    List<String> modUids = Arrays.asList("1-1-1-1", "2-2-2-2");
+    when(modService.findModVersionsByUids(modUids)).thenReturn(Arrays.asList(
+      new ModVersion().setUid("1-1-1-1").setMod(new Mod().setDisplayName("Mod #1")),
+      new ModVersion().setUid("2-2-2-2").setMod(new Mod().setDisplayName("Mod #2"))
+    ));
+
+    Game game = hostGame(player1);
+    instance.updateGameMods(game, Arrays.asList("1-1-1-1", "2-2-2-2"));
     instance.updateGameModsCount(game, 1);
 
-    assertThat(game.getSimMods(), hasItems("1-2-3-4", "5-6-7-8"));
+    List<ModVersion> simMods = game.getSimMods();
+    assertThat(simMods, hasSize(2));
+    assertThat(simMods.get(0).getUid(), is("1-1-1-1"));
+    assertThat(simMods.get(0).getMod().getDisplayName(), is("Mod #1"));
+    assertThat(simMods.get(1).getUid(), is("2-2-2-2"));
+    assertThat(simMods.get(1).getMod().getDisplayName(), is("Mod #2"));
   }
 
   @Test
   public void reportArmyScore() throws Exception {
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
@@ -327,9 +339,9 @@ public class GameServiceTest {
     instance.reportArmyScore(player2, 1, 10);
     instance.reportArmyScore(player2, 2, -1);
 
-    assertThat(game.getReportedArmyScores().values(), hasSize(2));
-    assertThat(game.getReportedArmyScores().get(player1.getId()), hasSize(2));
-    assertThat(game.getReportedArmyScores().get(player2.getId()), hasSize(2));
+    assertThat(game.getReportedArmyResults().values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
   }
 
   /**
@@ -338,18 +350,16 @@ public class GameServiceTest {
    */
   @Test
   public void reportArmyScoreWithCheater() throws Exception {
+    Game game = hostGame(player1);
     Player player3 = (Player) new Player().setId(3);
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
-    addPlayer(game, player3, 3);
-
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    addPlayer(game, player2);
+    addPlayer(game, player3);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
     instance.updatePlayerOption(player1, player3.getId(), OPTION_ARMY, 3);
 
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    launchGame(game);
 
     instance.reportArmyScore(player1, 1, 10);
     instance.reportArmyScore(player1, 2, -1);
@@ -387,7 +397,7 @@ public class GameServiceTest {
 
   @Test
   public void reportArmyScoreAiScore() throws Exception {
-    addPlayer(game, player1, 2);
+    Game game = hostGame(player1);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
     instance.updateAiOption(player1, "QAI", OPTION_ARMY, 2);
@@ -395,46 +405,44 @@ public class GameServiceTest {
     instance.reportArmyScore(player1, 1, 10);
     instance.reportArmyScore(player1, 2, -1);
 
-    assertThat(game.getReportedArmyScores().values(), hasSize(1));
-    assertThat(game.getReportedArmyScores().get(player1.getId()), hasSize(2));
+    assertThat(game.getReportedArmyResults().values(), hasSize(1));
+    assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
   }
 
   @Test
   public void reportArmyScoreNotInGame() throws Exception {
+    Game game = hostGame(player1);
     assertThat(player2.getCurrentGame(), is(nullValue()));
 
     instance.reportArmyScore(player2, 1, 10);
 
-    assertThat(game.getReportedArmyScores().values(), is(empty()));
+    assertThat(game.getReportedArmyResults().values(), is(empty()));
   }
 
   @Test
   public void reportArmyOutcome() throws Exception {
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
-
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
 
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
-
-    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
-    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+    launchGame(game);
 
     instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
     instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
     instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
     instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
 
-    assertThat(game.getReportedArmyOutcomes().values(), hasSize(2));
-    assertThat(game.getReportedArmyOutcomes().get(player1.getId()), hasSize(2));
-    assertThat(game.getReportedArmyOutcomes().get(player2.getId()), hasSize(2));
+    assertThat(game.getReportedArmyResults().values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
+    assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
   }
 
   @Test
   public void reportArmyStatistics() throws Exception {
+    Game game = hostGame(player1);
+
     assertThat(game.getArmyStatistics(), is(empty()));
     instance.reportArmyStatistics(player1, Arrays.asList(new ArmyStatistics(), new ArmyStatistics()));
     assertThat(game.getArmyStatistics(), is(notNullValue()));
@@ -443,6 +451,8 @@ public class GameServiceTest {
 
   @Test
   public void enforceRating() throws Exception {
+    Game game = hostGame(player1);
+
     assertThat(game.isRatingEnforced(), is(false));
     instance.enforceRating(player1);
     assertThat(game.isRatingEnforced(), is(true));
@@ -450,15 +460,11 @@ public class GameServiceTest {
 
   @Test
   public void endGameIfNoPlayerConnected() throws Exception {
-    player1.setCurrentGame(null);
-    createDefaultGame();
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    Game game = hostGame(player1);
 
-    Game game = instance.getActiveGame(NEXT_GAME_ID).orElseThrow(() -> new IllegalStateException("No game found"));
     assertThat(game.getState(), is(GameState.OPEN));
 
-    instance.joinGame(NEXT_GAME_ID, player2);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+    addPlayer(game, player2);
     assertThat(game.getState(), is(GameState.OPEN));
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
@@ -475,6 +481,8 @@ public class GameServiceTest {
 
   @Test
   public void onGameEndedDoesntSaveGameIfGameDidntStart() throws Exception {
+    Game game = hostGame(player1);
+
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
@@ -485,6 +493,8 @@ public class GameServiceTest {
 
   @Test
   public void onGameEndedDoesntProcessArmyStatsIfGameDidntStart() throws Exception {
+    Game game = hostGame(player1);
+
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
@@ -495,8 +505,8 @@ public class GameServiceTest {
 
   @Test
   public void onGameEndedSavesGameIfGameStarted() throws Exception {
-    game.setState(GameState.OPEN);
-    game.setState(GameState.PLAYING);
+    Game game = hostGame(player1);
+    launchGame(game);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
@@ -508,7 +518,8 @@ public class GameServiceTest {
 
   @Test
   public void onGameEndedProcessesStatsIfGameStarted() throws Exception {
-    launchGame();
+    Game game = hostGame(player1);
+    launchGame(game);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
@@ -520,11 +531,7 @@ public class GameServiceTest {
 
   @Test
   public void onGameLaunching() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+    Game game = hostGame(player1);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_FACTION, 1);
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
@@ -539,9 +546,10 @@ public class GameServiceTest {
 
   @Test
   public void onGameLaunchingSentByNonHostIsIgnored() throws Exception {
-    player2.setCurrentGame(game);
-    player2.setGameState(PlayerGameState.LOBBY);
-    game.setState(GameState.OPEN);
+    Game game = hostGame(player1);
+
+    addPlayer(game, player2);
+    Mockito.reset(clientService);
 
     instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player2);
 
@@ -552,10 +560,10 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityUnrankedMod() throws Exception {
-    game.getSimMods().add("1-2-3-4");
-    when(modService.isModRanked("1-2-3-4")).thenReturn(false);
+    Game game = hostGame(player1);
+    game.getSimMods().add(new ModVersion().setRanked(false).setMod(new Mod().setDisplayName("Mod")));
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -564,9 +572,11 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityUnrankedMap() throws Exception {
+    Game game = hostGame(player1);
+
     game.getMap().setRanked(false);
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -575,10 +585,12 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityWrongVictoryConditionDominationNotCoop() throws Exception {
+    Game game = hostGame(player1);
+
     game.setVictoryCondition(VictoryCondition.DOMINATION);
     when(modService.isCoop(any())).thenReturn(false);
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -587,10 +599,12 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityWrongVictoryConditionEradicationNotCoop() throws Exception {
+    Game game = hostGame(player1);
+
     game.setVictoryCondition(VictoryCondition.ERADICATION);
     when(modService.isCoop(any())).thenReturn(false);
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -599,10 +613,12 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityWrongVictoryConditionSandboxNotCoop() throws Exception {
+    Game game = hostGame(player1);
+
     game.setVictoryCondition(VictoryCondition.SANDBOX);
     when(modService.isCoop(any())).thenReturn(false);
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -611,11 +627,12 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityUnitRestriction() throws Exception {
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
-    game.getOptions().put(GameService.OPTION_RESTRICTED_CATEGORIES, 1);
+    Game game = hostGame(player1);
 
-    launchGame();
+    addPlayer(game, player2);
+    game.getOptions().put(OPTION_RESTRICTED_CATEGORIES, 1);
+
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -624,17 +641,22 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityFreeForAll() throws Exception {
-    // Every player is in a different team.
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
-    addPlayer(game, new Player(), 4);
+    Player player3 = (Player) new Player().setId(3);
 
-    launchGame();
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    addPlayer(game, player3);
 
-    game.getReportedArmyScores().put(1, Collections.emptyList());
-    game.getReportedArmyScores().put(2, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(1, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(2, Collections.emptyList());
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, 4);
+
+    launchGame(game);
+
+    game.getReportedArmyResults().put(1, Collections.emptyMap());
+    game.getReportedArmyResults().put(2, Collections.emptyMap());
+    game.getReportedArmyResults().put(1, Collections.emptyMap());
+    game.getReportedArmyResults().put(2, Collections.emptyMap());
 
     instance.updateGameValidity(game);
 
@@ -643,45 +665,165 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityUnevenTeams() throws Exception {
-    // player1 is already in team 2
-    addPlayer(game, player2, 2);
-    addPlayer(game, new Player(), 3);
+    Player player3 = (Player) new Player().setId(3);
 
-    launchGame();
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    addPlayer(game, player3);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, 3);
+
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
     assertThat(game.getValidity(), is(Validity.UNEVEN_TEAMS));
   }
 
+  /**
+   * Tests that scores are calculated based on the reports of the majority of players that are still connected when the
+   * game ends, even if there are kiddies trying to trick the system. The only case they are able to do so is if they
+   * stay until the end of the game and share the majority of the result reports. The only way to prevent this would be
+   * a neutral referee who can always be trusted.
+   */
   @Test
-  public void updateGameValidityRankedEvenTeams() throws Exception {
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 2);
-    addPlayer(game, (Player) new Player().setId(3), 3);
-    addPlayer(game, (Player) new Player().setId(4), 3);
+  public void scoresCalculatedCorrectly() throws Exception {
+    Player player3 = (Player) new Player().setId(3);
+    Player player4 = (Player) new Player().setId(4);
+    Player player5 = (Player) new Player().setId(5);
+    Player player6 = (Player) new Player().setId(6);
+    Player player7 = (Player) new Player().setId(7);
+    Player player8 = (Player) new Player().setId(8);
 
-    launchGame();
+    Game game = hostGame(player1);
 
-    game.getReportedArmyOutcomes().put(1, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(2, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(3, Collections.emptyList());
-    game.getReportedArmyOutcomes().put(4, Collections.emptyList());
+    Stream.of(player2, player3, player4, player5, player6, player7, player8).forEach(
+      player -> addPlayer(game, player));
+    Stream.of(player1, player3, player5, player7).forEach(
+      player -> instance.updatePlayerOption(player1, player.getId(), OPTION_TEAM, 2));
+    Stream.of(player2, player4, player6, player8).forEach(
+      player -> instance.updatePlayerOption(player1, player.getId(), OPTION_TEAM, 3));
+    Stream.of(player1, player2, player3, player4, player5, player6, player7, player8).forEach(
+      player -> instance.updatePlayerOption(player1, player.getId(), OPTION_ARMY, player.getId()));
 
-    game.getReportedArmyScores().put(1, Collections.emptyList());
-    game.getReportedArmyScores().put(2, Collections.emptyList());
-    game.getReportedArmyScores().put(3, Collections.emptyList());
-    game.getReportedArmyScores().put(4, Collections.emptyList());
+    launchGame(game);
 
-    instance.updateGameValidity(game);
+    Stream.of(player2, player3, player4, player5, player6, player7)
+      .forEach(player -> instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player));
+
+    // 6 of 8 players got killed, player 1 - 3 are the only ones who report the correct result
+    Stream.of(player1, player2, player3)
+      .forEach(reporter -> {
+        // Army 3-8 have been defeated
+        IntStream.range(3, 9)
+          .forEach(armyId -> {
+            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT);
+            instance.reportArmyScore(reporter, armyId, -1);
+          });
+
+        // Army 1 and 2 scored and are still in game
+        IntStream.range(1, 3)
+          .forEach(armyId -> instance.reportArmyScore(reporter, armyId, 3));
+      });
+
+    // Players 4 - 8 are kiddies who try to trick the score system by reporting everybody but players 1 and 2 lost
+    Stream.of(player4, player5, player6, player7, player8)
+      .forEach(reporter -> {
+        // Army 1 and 2 have allegedly been defeated
+        IntStream.range(1, 3)
+          .forEach(armyId -> {
+            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT);
+            instance.reportArmyScore(reporter, armyId, -1);
+          });
+
+        // Armies 3 - 8 allegedly won
+        IntStream.range(3, 9)
+          .forEach(armyId -> {
+            instance.reportArmyOutcome(reporter, armyId, Outcome.VICTORY);
+            instance.reportArmyScore(reporter, armyId, 10);
+          });
+      });
+
+    // All but players 1, 2, and 3 disconnect
+    Stream.of(player4, player5, player6, player7, player8)
+      .forEach(player -> instance.removePlayer(player));
+
+    // Player 1 claims to have defeated player 2, but player 2 and 3 claim that player 1 has been defeated.
+    instance.reportArmyScore(player1, 1, 4);
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
+    instance.reportArmyScore(player1, 2, 2);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+
+    Stream.of(player2, player3).forEach(reporter -> {
+      instance.reportArmyScore(reporter, 1, 4);
+      instance.reportArmyOutcome(reporter, 1, Outcome.DEFEAT);
+
+      instance.reportArmyScore(reporter, 2, 2);
+      instance.reportArmyOutcome(reporter, 2, Outcome.VICTORY);
+    });
+
+    /* Even though the intermediate results are the ones reported most often, the results to be considered are the ones
+    with an outcome, since only those players saw the end of the game. */
+
+    assertThat(game.getValidity(), is(Validity.VALID));
+    // Expect that reports of all disconnected players have been discarded
+    assertThat(game.getReportedArmyResults().values(), hasSize(3));
+    // Expect all remaining players to have reported army results for all players
+    game.getReportedArmyResults()
+      .forEach((playerId, resultMap) -> assertThat("Player " + playerId + " did not report all results", resultMap.size(), is(8)));
+
+    assertThat(game.getPlayerStats().get(1).getScore(), is(4));
+    assertThat(game.getPlayerStats().get(2).getScore(), is(2));
+    assertThat(game.getPlayerStats().get(3).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(4).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(5).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(6).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(7).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(8).getScore(), is(-1));
+  }
+
+  @Test
+  public void simpleValidGameWithEnded() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
+
+    Stream.of(player1, player2).forEach(player -> {
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyScore(player, 1, 10);
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyScore(player, 2, -1);
+    });
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+
+    assertThat(game.getValidity(), is(Validity.VALID));
+  }
+
+  @Test
+  public void simpleValidGameWithoutEnded() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
+
+    Stream.of(player1, player2).forEach(player -> {
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyScore(player, 2, -1);
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyScore(player, 1, 10);
+    });
 
     assertThat(game.getValidity(), is(Validity.VALID));
   }
 
   @Test
   public void updateGameValidityNoFogOfWar() throws Exception {
-    game.getOptions().put(GameService.OPTION_FOG_OF_WAR, "foo");
-    launchGame();
+    Game game = hostGame(player1);
+    game.getOptions().put(OPTION_FOG_OF_WAR, "foo");
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -690,9 +832,10 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityCheatsEnabled() throws Exception {
-    game.getOptions().put(GameService.OPTION_CHEATS_ENABLED, "true");
+    Game game = hostGame(player1);
+    game.getOptions().put(OPTION_CHEATS_ENABLED, "true");
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -701,9 +844,10 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityPrebuiltEnabled() throws Exception {
-    game.getOptions().put(GameService.OPTION_PREBUILT_UNITS, "On");
+    Game game = hostGame(player1);
+    game.getOptions().put(OPTION_PREBUILT_UNITS, "On");
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -712,9 +856,10 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityNoRushEnabled() throws Exception {
-    game.getOptions().put(GameService.OPTION_NO_RUSH, "On");
+    Game game = hostGame(player1);
+    game.getOptions().put(OPTION_NO_RUSH, "On");
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -723,8 +868,9 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityTooManyDesyncs() throws Exception {
+    Game game = hostGame(player1);
     game.getDesyncCounter().set(5);
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -733,9 +879,10 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityMutualDraw() throws Exception {
+    Game game = hostGame(player1);
     game.setMutuallyAgreedDraw(true);
 
-    launchGame();
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -744,7 +891,8 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValiditySinglePlayer() throws Exception {
-    launchGame();
+    Game game = hostGame(player1);
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -753,9 +901,9 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityUnknownResult() throws Exception {
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
-    launchGame();
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
 
     instance.updateGameValidity(game);
 
@@ -764,13 +912,12 @@ public class GameServiceTest {
 
   @Test
   public void updateGameValidityTooShort() throws Exception {
-    addPlayer(game, player1, 1);
-    addPlayer(game, player2, 2);
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
 
-    launchGame();
+    launchGame(game);
 
-    game.getReportedArmyScores().put(1, Collections.singletonList(new ArmyScore(1, 10)));
-    game.getReportedArmyOutcomes().put(1, Collections.singletonList(new ArmyOutcome(1, Outcome.VICTORY)));
+    game.getReportedArmyResults().put(1, ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, 10)));
 
     serverProperties.getGame().setRankedMinTimeMultiplicator(10_000);
     instance.updateGameValidity(game);
@@ -780,30 +927,26 @@ public class GameServiceTest {
 
   @Test(expected = IllegalStateException.class)
   public void updateGameValidityAlreadySetThrowsException() throws Exception {
+    Game game = hostGame(player1);
     game.setValidity(Validity.UNKNOWN_RESULT);
     instance.updateGameValidity(game);
   }
 
   @Test
   public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    assertThat(player1.getGameBeingJoined(), is(notNullValue()));
-    assertThat(player1.getCurrentGame(), is(nullValue()));
-    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
-    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(true));
+    Game game = hostGame(player1);
 
-    User user = new User();
-    user.setPassword("pw");
-    user.setLogin("JUnit");
-    user.setPlayer(player1);
+    assertThat(player1.getGameBeingJoined(), is(nullValue()));
+    assertThat(player1.getCurrentGame(), is(game));
+    assertThat(player1.getGameState(), is(PlayerGameState.LOBBY));
+    assertThat(instance.getActiveGame(game.getId()).isPresent(), is(true));
 
     instance.removePlayer(player1);
 
     assertThat(player1.getGameBeingJoined(), is(nullValue()));
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
-    assertThat(instance.getActiveGame(NEXT_GAME_ID).isPresent(), is(false));
+    assertThat(instance.getActiveGame(game.getId()).isPresent(), is(false));
   }
 
   @Test
@@ -817,12 +960,12 @@ public class GameServiceTest {
 
     instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player2));
 
-    ArgumentCaptor<Collection<GameResponse>> captor = ArgumentCaptor.forClass((Class) Collection.class);
+    ArgumentCaptor<GameResponses> captor = ArgumentCaptor.forClass((Class) Collection.class);
     verify(clientService).sendGameList(captor.capture(), eq(player2));
-    Collection<GameResponse> games = captor.getValue();
+    GameResponses games = captor.getValue();
 
-    assertThat(games, hasSize(1));
-    assertThat(games.iterator().next().getTitle(), is("Test game"));
+    assertThat(games.getResponses(), hasSize(1));
+    assertThat(games.getResponses().iterator().next().getTitle(), is("Test game"));
   }
 
   /**
@@ -831,15 +974,14 @@ public class GameServiceTest {
   @Test
   @SuppressWarnings("unchecked")
   public void disconnectFromGame() throws Exception {
-    Player player4 = new Player();
-    Player player3 = (Player) new Player()
-      .setCurrentGame(game)
-      .setId(3);
+    Game game = hostGame(player1);
 
-    addPlayer(game, player1, 2);
-    addPlayer(game, player2, 3);
-    addPlayer(game, player3, 2);
-    addPlayer(game, player4, 3);
+    Player player3 = (Player) new Player().setId(3);
+    Player player4 = (Player) new Player().setId(4);
+
+    addPlayer(game, player2);
+    addPlayer(game, player3);
+    addPlayer(game, player4);
 
     when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(player3));
 
@@ -870,11 +1012,8 @@ public class GameServiceTest {
 
   @Test
   public void restoreGameSessionWasNeverInGame() throws Exception {
-    player1.setCurrentGame(null);
-    createDefaultGame();
-    launchGame();
-
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+    Game game = hostGame(player1);
+    launchGame(game);
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.CANT_RESTORE_GAME_NOT_PARTICIPANT));
 
@@ -883,11 +1022,8 @@ public class GameServiceTest {
 
   @Test
   public void restoreGameSessionOpenGame() throws Exception {
-    player1.setCurrentGame(null);
-    createDefaultGame();
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    Game game = hostGame(player1);
 
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
     instance.joinGame(game.getId(), player2);
     assertThat(player2.getGameBeingJoined(), is(game));
     assertThat(player2.getCurrentGame(), is(nullValue()));
@@ -909,11 +1045,8 @@ public class GameServiceTest {
 
   @Test
   public void restoreGameSessionPlayingGame() throws Exception {
-    player1.setCurrentGame(null);
-    createDefaultGame();
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+    Game game = hostGame(player1);
 
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
     instance.joinGame(game.getId(), player2);
     assertThat(player2.getGameBeingJoined(), is(game));
 
@@ -932,9 +1065,8 @@ public class GameServiceTest {
 
   @Test
   public void mutualDrawRequestedByPlayerWithoutGame() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    launchGame();
+    Game game = hostGame(player1);
+    launchGame(game);
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.NOT_IN_A_GAME));
 
@@ -954,14 +1086,9 @@ public class GameServiceTest {
 
   @Test
   public void mutualDrawRequestedByObserver() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
-
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
-
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    Game game = hostGame(player1);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+    launchGame(game);
 
     instance.mutuallyAgreeDraw(player1);
 
@@ -970,14 +1097,9 @@ public class GameServiceTest {
 
   @Test
   public void mutualDrawRequestedByPlayer() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, GameService.NO_TEAM_ID);
-
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
-
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    Game game = hostGame(player1);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
+    launchGame(game);
 
     instance.mutuallyAgreeDraw(player1);
 
@@ -986,25 +1108,21 @@ public class GameServiceTest {
 
   @Test
   public void mutualDrawRequestedByAllPlayers() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-    instance.updatePlayerOption(player1, player1.getId(), GameService.OPTION_TEAM, 2);
-
-    Game game = instance.getActiveGame(NEXT_GAME_ID).get();
+    Game game = hostGame(player1);
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
 
     instance.joinGame(game.getId(), player2);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
-    instance.updatePlayerOption(player1, player2.getId(), GameService.OPTION_TEAM, 3);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 3);
 
     Player player3 = new Player();
     player3.setId(3);
 
     instance.joinGame(game.getId(), player3);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player3);
-    instance.updatePlayerOption(player1, player3.getId(), GameService.OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, GameService.OBSERVERS_TEAM_ID);
 
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
+    launchGame(game);
 
     instance.mutuallyAgreeDraw(player1);
 
@@ -1015,19 +1133,70 @@ public class GameServiceTest {
     assertThat(game.isMutuallyAgreedDraw(), is(true));
   }
 
-  private void createDefaultGame() {
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-  }
+  private Game hostGame(Player host) throws Exception {
+    player1.setCurrentGame(null);
 
-  private void launchGame() {
+    CompletableFuture<Game> joinable = instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
+      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, host);
+
+    assertThat(joinable.isDone(), is(false));
+    assertThat(joinable.isCancelled(), is(false));
+    assertThat(joinable.isCompletedExceptionally(), is(false));
+    verify(counterService, never()).decrement(anyString());
+    verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
+
+    Game game = instance.getActiveGame(1).get();
+    assertThat(game.getState(), is(GameState.INITIALIZING));
+    assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameBeingJoined(), is(game));
+
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player1);
-    verify(counterService).increment(Metrics.PLAYING_GAMES);
+
+    game = joinable.get();
+
+    instance.updateGameOption(host, OPTION_VICTORY_CONDITION, VictoryCondition.DEMORALIZATION.getString());
+    instance.updateGameOption(host, OPTION_FOG_OF_WAR, "explored");
+    instance.updateGameOption(host, OPTION_CHEATS_ENABLED, "false");
+    instance.updateGameOption(host, OPTION_PREBUILT_UNITS, "Off");
+    instance.updateGameOption(host, OPTION_NO_RUSH, "Off");
+    instance.updateGameOption(host, OPTION_RESTRICTED_CATEGORIES, 0);
+
+    instance.updatePlayerOption(host, host.getId(), OPTION_ARMY, host.getId());
+    instance.updatePlayerOption(host, host.getId(), OPTION_FACTION, 1);
+    instance.updatePlayerOption(host, host.getId(), OPTION_COLOR, host.getId());
+    instance.updatePlayerOption(host, host.getId(), OPTION_START_SPOT, host.getId());
+
+    verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
+    verify(clientService).startGameProcess(game, player1);
+    assertThat(game.getTitle(), is("Game title"));
+    assertThat(game.getHost(), is(player1));
+    assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
+    assertThat(game.getMap(), is(notNullValue()));
+    assertThat(game.getMapName(), is(MAP_NAME));
+    assertThat(game.getPassword(), is("secret"));
+    assertThat(game.getState(), is(GameState.OPEN));
+    assertThat(game.getGameVisibility(), is(GameVisibility.PUBLIC));
+    assertThat(game.getMinRating(), is(GAME_MIN_RATING));
+    assertThat(game.getMaxRating(), is(GAME_MAX_RATING));
+    assertThat(player1.getCurrentGame(), is(game));
+    assertThat(player1.getGameBeingJoined(), is(nullValue()));
+
+    return game;
   }
 
-  private void addPlayer(Game game, Player player, int team) {
-    player.setCurrentGame(game);
-    game.getConnectedPlayers().put(player.getId(), player);
-    game.getPlayerOptions().computeIfAbsent(player.getId(), integer -> new HashMap<>()).put(GameService.OPTION_TEAM, team);
+  private void launchGame(Game game) {
+    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, game.getHost());
+    verify(counterService).decrement(String.format(Metrics.GAMES_STATE_FORMAT, GameState.OPEN));
+    verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.PLAYING));
+  }
+
+  private void addPlayer(Game game, Player player) {
+    instance.joinGame(game.getId(), player);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player);
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_FACTION, 1);
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_SLOT, player.getId());
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_ARMY, player.getId());
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_COLOR, player.getId());
+    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_START_SPOT, player.getId());
   }
 }
