@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.github.nocatch.NoCatch.noCatch;
@@ -63,10 +64,11 @@ public class UniqueIdService {
       if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
         Security.addProvider(new BouncyCastleProvider());
       }
-      privateKey = RsaHelper.readPkcs1(properties.getUid().getPrivateKey());
+      privateKey = RsaHelper.readPkcs1(Optional.ofNullable(properties.getUid().getPrivateKey())
+        .orElseThrow(() -> new IllegalStateException("UID check has been enabled but no private key has been specified")));
 
       // Mostly copied from the legacy server, didn't try to understand.
-      int aesModulusBitLength = privateKey.getModulus().bitLength();
+      int aesModulusBitLength = this.privateKey.getModulus().bitLength();
       int aesKeyBase64Size = aesModulusBitLength / 6;
       this.aesKeyBase64Size = aesModulusBitLength / 6 + 3 - ((aesKeyBase64Size + 3) % 4);
     } else {
