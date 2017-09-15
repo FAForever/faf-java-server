@@ -24,6 +24,8 @@ faf-server:
     access-token-uri: ${API_ACCESS_TOKEN_URI:http://localhost:8010/oauth/token}
   jwt:
     secret: ${JWT_SECRET:banana}
+  ladder1v1:
+    season: ${LADDER1V1_SEASON:1}
 
 logging:
   level:

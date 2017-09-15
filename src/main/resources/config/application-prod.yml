@@ -10,6 +10,9 @@ spring:
     admin:
       url: ${SPRING_BOOT_ADMIN_URL:http://faf-spring-boot-admin:8030}
 
+logging:
+  path: ${LOG_FILE_DIRECTORY:/tmp}
+
 faf-server:
   uid:
     enabled: ${UID_ENABLED:true}
@@ -21,4 +24,5 @@ faf-server:
       auth-token: ${TWILIO_AUTH_TOKEN}
   jwt:
     secret: ${JWT_SECRET}
-
+  ladder1v1:
+    season: ${LADDER1V1_SEASON}

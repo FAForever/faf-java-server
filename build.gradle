@@ -24,7 +24,7 @@ apply plugin: 'propdeps'
 
 
 group = 'faforever'
-version = '1.0.0'
+version = '1.0.1'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -196,6 +196,7 @@ dependencies {
   optional("org.springframework.boot:spring-boot-configuration-processor")
 
   testCompile("org.springframework.boot:spring-boot-starter-test")
+  testCompile("com.googlecode.zohhak:zohhak:1.1.1")
 
   codacy("com.github.codacy:codacy-coverage-reporter:-SNAPSHOT")
 }
