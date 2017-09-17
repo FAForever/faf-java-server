@@ -5,6 +5,7 @@ import com.faforever.server.entity.MapVersion;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -29,6 +30,12 @@ public class MapService {
   public MapVersion getRandomLadderMap() {
     List<MapVersion> ladder1v1Maps = getLadder1v1Maps();
     return ladder1v1Maps.get(random.nextInt(ladder1v1Maps.size() - 1));
+  }
+
+  @Transactional
+  public void increaseTimesPlayed(MapVersion map) {
+    map.getMapFeatures().incrementTimesPlayed();
+    mapVersionRepository.save(map);
   }
 
   private List<MapVersion> getLadder1v1Maps() {

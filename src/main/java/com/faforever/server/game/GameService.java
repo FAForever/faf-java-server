@@ -11,6 +11,7 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
+import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.ModVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Validity;
@@ -674,8 +675,10 @@ public class GameService {
           armyStatisticsService.process(player, game, game.getArmyStatistics());
         });
         game.setEndTime(Instant.now());
+
         updateGameValidity(game);
         updateRatingsIfValid(game);
+        mapService.increaseTimesPlayed(game.getMap());
         settlePlayerScores(game);
         updateDivisionScoresIfValid(game);
         gameRepository.save(game);
