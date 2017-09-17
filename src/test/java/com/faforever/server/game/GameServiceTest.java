@@ -11,6 +11,7 @@ import com.faforever.server.entity.Game;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
+import com.faforever.server.entity.MapFeatures;
 import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.Mod;
 import com.faforever.server.entity.ModVersion;
@@ -81,6 +82,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -136,7 +138,6 @@ public class GameServiceTest {
   public void setUp() throws Exception {
     MapVersion map = new MapVersion();
     map.setRanked(true);
-
 
     player1 = new Player();
     player1.setId(1);
@@ -505,6 +506,8 @@ public class GameServiceTest {
 
     verifyZeroInteractions(armyStatisticsService);
     verifyZeroInteractions(divisionService);
+    verify(mapService, never()).increaseTimesPlayed(any());
+
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
@@ -518,6 +521,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
+    verify(mapService).increaseTimesPlayed(game.getMap());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -1201,6 +1205,7 @@ public class GameServiceTest {
     assertThat(game.getHost(), is(player1));
     assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
     assertThat(game.getMap(), is(notNullValue()));
+    assertThat(game.getMap().getFeatures(), is(notNullValue()));
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
     assertThat(game.getState(), is(GameState.OPEN));

@@ -675,7 +675,6 @@ public class GameService {
           armyStatisticsService.process(player, game, game.getArmyStatistics());
         });
         game.setEndTime(Instant.now());
-
         updateGameValidity(game);
         updateRatingsIfValid(game);
         mapService.increaseTimesPlayed(game.getMap());

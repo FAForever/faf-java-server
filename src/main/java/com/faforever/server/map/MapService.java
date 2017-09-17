@@ -34,7 +34,7 @@ public class MapService {
 
   @Transactional
   public void increaseTimesPlayed(MapVersion map) {
-    map.getMapFeatures().incrementTimesPlayed();
+    map.getFeatures().incrementTimesPlayed();
     mapVersionRepository.save(map);
   }
 

@@ -25,7 +25,6 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
 public class MapVersion {
-
   @Id
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,5 +62,5 @@ public class MapVersion {
 
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @JoinColumn(name = "game_id")
-  private MapFeatures mapFeatures;
+  private MapFeatures features = new MapFeatures();
 }
