@@ -504,7 +504,7 @@ public class GameServiceTest {
 
     verifyZeroInteractions(armyStatisticsService);
     verifyZeroInteractions(divisionService);
-    verify(mapService, never()).increaseTimesPlayed(any());
+    verify(mapService, never()).incrementTimesPlayed(any());
 
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -519,7 +519,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
-    verify(mapService).increaseTimesPlayed(game.getMap().getFilename());
+    verify(mapService).incrementTimesPlayed(game.getMap());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -1203,7 +1203,6 @@ public class GameServiceTest {
     assertThat(game.getHost(), is(player1));
     assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
     assertThat(game.getMap(), is(notNullValue()));
-    assertThat(game.getMap().getFeatures(), is(notNullValue()));
     assertThat(game.getMapName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
     assertThat(game.getState(), is(GameState.OPEN));

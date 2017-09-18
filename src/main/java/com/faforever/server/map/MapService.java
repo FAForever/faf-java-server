@@ -1,6 +1,7 @@
 package com.faforever.server.map;
 
 import com.faforever.server.cache.CacheNames;
+import com.faforever.server.entity.MapFeatures;
 import com.faforever.server.entity.MapVersion;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -14,11 +15,15 @@ import java.util.Random;
 public class MapService {
   private final MapVersionRepository mapVersionRepository;
   private final Ladder1v1MapRepository ladder1v1MapRepository;
+  private MapFeaturesRepository mapFeaturesRepository;
   private final Random random;
 
-  public MapService(MapVersionRepository mapVersionRepository, Ladder1v1MapRepository ladder1v1MapRepository) {
+  public MapService(MapVersionRepository mapVersionRepository,
+                    Ladder1v1MapRepository ladder1v1MapRepository,
+                    MapFeaturesRepository mapFeaturesRepository) {
     this.mapVersionRepository = mapVersionRepository;
     this.ladder1v1MapRepository = ladder1v1MapRepository;
+    this.mapFeaturesRepository = mapFeaturesRepository;
     this.random = new Random();
   }
 
@@ -33,13 +38,19 @@ public class MapService {
   }
 
   @Transactional
-  public void increaseTimesPlayed(String filename) {
-    // pulling it from the repository again in case the given map is not up to date
-    Optional<MapVersion> mapFromRepository = findMap(filename);
-    if(mapFromRepository.isPresent()){
-      mapFromRepository.get().getFeatures().incrementTimesPlayed();
-      mapVersionRepository.save(mapFromRepository.get());
+  public void incrementTimesPlayed(MapVersion map) {
+    MapFeatures features = getMapFeatures(map);
+    features.incrementTimesPlayed();
+    mapFeaturesRepository.save(features);
+  }
+
+  public MapFeatures getMapFeatures(MapVersion map){
+    MapFeatures features = mapFeaturesRepository.findOne(map.getId());
+    if(features == null){
+      features = new MapFeatures().setId(map.getId());
+      mapFeaturesRepository.save(features);
     }
+    return features;
   }
 
   private List<MapVersion> getLadder1v1Maps() {

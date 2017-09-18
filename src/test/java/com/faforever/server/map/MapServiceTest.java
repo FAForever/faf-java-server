@@ -12,8 +12,8 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -28,27 +28,61 @@ public class MapServiceTest {
   @Mock
   private Ladder1v1MapRepository ladder1v1MapRepository;
 
+  @Mock
+  private MapFeaturesRepository mapFeaturesRepository;
+
+  private MapVersion mapVersion;
+
   @Before
   public void setUp(){
-    MapVersion map = new MapVersion();
-    map.setFilename(MAP_NAME);
-    map.setFeatures(new MapFeatures());
-    when(mapVersionRepository.findByFilenameIgnoreCase(MAP_NAME)).thenReturn(Optional.of(map));
+    mapVersion = new MapVersion().setId(1).setFilename(MAP_NAME);
+    when(mapVersionRepository.findByFilenameIgnoreCase(MAP_NAME)).thenReturn(Optional.of(mapVersion));
+    when(mapVersionRepository.findOne(1)).thenReturn(mapVersion);
 
-    instance = new MapService(mapVersionRepository, ladder1v1MapRepository);
+    MapFeatures features = new MapFeatures().setId(1).setTimesPlayed(41);
+    when(mapFeaturesRepository.findOne(1)).thenReturn(features);
+
+    instance = new MapService(mapVersionRepository, ladder1v1MapRepository, mapFeaturesRepository);
   }
 
   @Test
-  public void testIncreasePlayCount(){
-    MapVersion foundMap = instance.findMap(MAP_NAME).get();
+  public void timesPlayedIsIncreasedCorrectly(){
+    MapVersion map = new MapVersion().setId(1);
 
-    assertThat(foundMap.getFeatures().getTimesPlayed(), is(0));
+    MapFeatures features = instance.getMapFeatures(map);
+    assertThat(features.getId(), is(1));
+    assertThat(features.getTimesPlayed(), is(41));
 
-    instance.increaseTimesPlayed(MAP_NAME);
+    instance.incrementTimesPlayed(map);
 
-    assertThat(foundMap.getFeatures().getTimesPlayed(), is(1));
-    // once for the findMap above, once when incrementing the times played
-    verify(mapVersionRepository, times(2)).findByFilenameIgnoreCase(MAP_NAME);
-    verify(mapVersionRepository).save(foundMap);
+    verify(mapFeaturesRepository).save(features);
+
+    features = instance.getMapFeatures(map);
+    assertThat(features.getId(), is(1));
+    assertThat(features.getTimesPlayed(), is(42));
+
+    verifyZeroInteractions(mapVersionRepository);
+    verifyZeroInteractions(ladder1v1MapRepository);
+  }
+
+  @Test
+  public void timesPlayedIsInitializedWithZero(){
+    int newId = 1342342;
+
+    MapVersion map = new MapVersion().setId(newId);
+    MapFeatures features = instance.getMapFeatures(map);
+
+    assertThat(features.getId(), is(newId));
+    assertThat(features.getTimesPlayed(), is(0));
+
+    verify(mapFeaturesRepository).save(features);
+
+    verifyZeroInteractions(mapVersionRepository);
+    verifyZeroInteractions(ladder1v1MapRepository);
+  }
+
+  @Test
+  public void mapIsFoundByName(){
+    assertThat(instance.findMap(MAP_NAME).get(), is(mapVersion));
   }
 }

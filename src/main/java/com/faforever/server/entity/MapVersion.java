@@ -58,8 +58,4 @@ public class MapVersion {
 
   @Column(name = "update_time")
   private Timestamp updateTime;
-
-  @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @JoinColumn(name = "map_id")
-  private MapFeatures features = new MapFeatures();
 }

@@ -3,7 +3,6 @@ package com.faforever.server.entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Immutable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,14 +11,13 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "table_map_features")
-@Immutable
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class MapFeatures {
+public class MapFeatures { //TODO rename to MapStats?
   @Id
   @Column(name = "map_id")
-  private int id;
+  private Integer id;
 
   @Column(name = "times_played")
   private int timesPlayed;
@@ -34,6 +32,8 @@ public class MapFeatures {
   private double rating;
 
   // TODO find out what the 'voters' column is, and model it accordingly
+  @Column(name = "voters")
+  private String voters = "";
 
   public void incrementTimesPlayed(){
     timesPlayed++;
