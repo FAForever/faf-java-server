@@ -11,7 +11,6 @@ import com.faforever.server.entity.GamePlayerStats;
 import com.faforever.server.entity.GameState;
 import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
-import com.faforever.server.entity.MapVersion;
 import com.faforever.server.entity.ModVersion;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Validity;

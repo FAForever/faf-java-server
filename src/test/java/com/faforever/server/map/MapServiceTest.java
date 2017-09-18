@@ -21,7 +21,6 @@ public class MapServiceTest {
   private static final String MAP_NAME = "SCMP_001";
 
   private MapService instance;
-  private MapVersion map;
 
   @Mock
   private MapVersionRepository mapVersionRepository;
@@ -30,8 +29,8 @@ public class MapServiceTest {
   private Ladder1v1MapRepository ladder1v1MapRepository;
 
   @Before
-  public void setup(){
-    map = new MapVersion();
+  public void setUp(){
+    MapVersion map = new MapVersion();
     map.setFilename(MAP_NAME);
     map.setFeatures(new MapFeatures());
     when(mapVersionRepository.findByFilenameIgnoreCase(MAP_NAME)).thenReturn(Optional.of(map));
