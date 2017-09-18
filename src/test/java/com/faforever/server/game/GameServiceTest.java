@@ -521,7 +521,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
-    verify(mapService).increaseTimesPlayed(game.getMap());
+    verify(mapService).increaseTimesPlayed(game.getMap().getFilename());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));

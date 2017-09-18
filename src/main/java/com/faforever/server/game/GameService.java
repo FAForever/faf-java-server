@@ -677,7 +677,7 @@ public class GameService {
         game.setEndTime(Instant.now());
         updateGameValidity(game);
         updateRatingsIfValid(game);
-        mapService.increaseTimesPlayed(game.getMap());
+        mapService.increaseTimesPlayed(game.getMap().getFilename());
         settlePlayerScores(game);
         updateDivisionScoresIfValid(game);
         gameRepository.save(game);

@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,9 +45,11 @@ public class MapServiceTest {
 
     assertThat(foundMap.getFeatures().getTimesPlayed(), is(0));
 
-    instance.increaseTimesPlayed(map);
+    instance.increaseTimesPlayed(MAP_NAME);
 
-    assertThat(map.getFeatures().getTimesPlayed(), is(1));
+    assertThat(foundMap.getFeatures().getTimesPlayed(), is(1));
+    // once for the findMap above, once when incrementing the times played
+    verify(mapVersionRepository, times(2)).findByFilenameIgnoreCase(MAP_NAME);
     verify(mapVersionRepository).save(foundMap);
   }
 }

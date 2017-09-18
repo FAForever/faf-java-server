@@ -33,9 +33,13 @@ public class MapService {
   }
 
   @Transactional
-  public void increaseTimesPlayed(MapVersion map) {
-    map.getFeatures().incrementTimesPlayed();
-    mapVersionRepository.save(map);
+  public void increaseTimesPlayed(String filename) {
+    // pulling it from the repository again in case the given map is not up to date
+    Optional<MapVersion> mapFromRepository = findMap(filename);
+    if(mapFromRepository.isPresent()){
+      mapFromRepository.get().getFeatures().incrementTimesPlayed();
+      mapVersionRepository.save(mapFromRepository.get());
+    }
   }
 
   private List<MapVersion> getLadder1v1Maps() {
