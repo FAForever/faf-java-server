@@ -8,9 +8,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -84,5 +86,14 @@ public class MapServiceTest {
   @Test
   public void mapIsFoundByName(){
     assertThat(instance.findMap(MAP_NAME).get(), is(mapVersion));
+  }
+
+  @Test
+  public void getsLadderMap(){
+    MapVersion oneMap = new MapVersion().setId(2).setRanked(true);
+    MapVersion otherMap = new MapVersion().setId(3).setRanked(true);
+    when(ladder1v1MapRepository.findAll()).thenReturn(Arrays.asList(oneMap, otherMap));
+
+    assertThat(instance.getRandomLadderMap(), isOneOf(oneMap, otherMap));
   }
 }
