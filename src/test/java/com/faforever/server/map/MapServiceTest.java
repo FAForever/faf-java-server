@@ -1,5 +1,6 @@
 package com.faforever.server.map;
 
+import com.faforever.server.entity.Map;
 import com.faforever.server.entity.MapFeatures;
 import com.faforever.server.entity.MapVersion;
 import org.junit.Before;
@@ -49,7 +50,7 @@ public class MapServiceTest {
 
   @Test
   public void timesPlayedIsIncreasedCorrectly(){
-    MapVersion map = new MapVersion().setId(1);
+    Map map = new Map().setId(1);
 
     MapFeatures features = instance.getMapFeatures(map);
     assertThat(features.getId(), is(1));
@@ -71,7 +72,7 @@ public class MapServiceTest {
   public void timesPlayedIsInitializedWithZero(){
     int newId = 1342342;
 
-    MapVersion map = new MapVersion().setId(newId);
+    Map map = new Map().setId(newId);
     MapFeatures features = instance.getMapFeatures(map);
 
     assertThat(features.getId(), is(newId));

@@ -519,7 +519,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
-    verify(mapService).incrementTimesPlayed(game.getMap());
+    verify(mapService).incrementTimesPlayed(game.getMap().getMap());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));

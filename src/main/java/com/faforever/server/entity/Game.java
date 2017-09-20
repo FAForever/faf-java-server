@@ -118,7 +118,7 @@ public class Game {
   @JoinColumn(name = "host")
   private Player host;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @ManyToOne(optional = false, fetch = FetchType.EAGER)
   @JoinColumn(name = "mapId")
   private MapVersion map;
 
