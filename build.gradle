@@ -170,7 +170,7 @@ dependencies {
   compile("org.springframework.integration:spring-integration-security")
   compile("org.springframework.integration:spring-integration-event")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
-  compile("org.jolokia:jolokia-core:${jolokiaVersion}")
+  compile("org.jolokia:jolokia-core")
   compile("com.github.nsp:JSkills:${jSkillsVersion}")
   compile("com.github.nocatch:nocatch:${noCatchVersion}")
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
