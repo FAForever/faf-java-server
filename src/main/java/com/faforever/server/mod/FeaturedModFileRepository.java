@@ -24,7 +24,7 @@ public class FeaturedModFileRepository implements Repository<FeaturedModFile, In
     // The following joke is sponsored by FAF's patcher mechanism which shouldn't even require a DB.
     Query query = entityManager.createNativeQuery(String.format(
       "SELECT\n" +
-        "  id\n" +
+        "  id,\n" +
         "  MAX(file.version) AS `version`,\n" +
         "  file.fileId       AS `fileId`\n" +
         "FROM updates_%1$s_files file\n" +
