@@ -83,6 +83,8 @@ public enum GameResponsesTransformer implements GenericTransformer<GameResponses
         return "open";
       case PLAYING:
         return "playing";
+      case ENDED:
+        // The legacy protocol doesn't know ended", so this falls through to "closed"
       case CLOSED:
         return "closed";
       default:

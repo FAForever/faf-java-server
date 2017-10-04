@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @EqualsAndHashCode(of = "id")
 @Setter
 @Getter
-@ToString(of = {"id", "title"}, includeFieldNames = false)
+@ToString(of = {"id", "title", "state"}, includeFieldNames = false)
 public class Game {
 
   /**
@@ -143,8 +143,8 @@ public class Game {
   private String password;
 
   /**
-   * Since some maps are unknown by the server (e.g. in-develop versions from map creators), the literal map name
-   * is kept.
+   * Since some maps are unknown by the server (e.g. in-develop versions from map creators), the literal map name is
+   * kept.
    */
   @Transient
   private String mapName;
