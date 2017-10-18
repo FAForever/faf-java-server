@@ -14,7 +14,7 @@ import javax.persistence.Table;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class MapFeatures { //TODO rename to MapStats?
+public class MapStats {
   @Id
   @Column(name = "map_id")
   private Integer id;
@@ -31,11 +31,7 @@ public class MapFeatures { //TODO rename to MapStats?
   @Column(name = "rating")
   private double rating;
 
-  // TODO find out what the 'voters' column is, and model it accordingly
-  @Column(name = "voters")
-  private String voters = "";
-
-  public void incrementTimesPlayed(){
+  public void incrementTimesPlayed() {
     timesPlayed++;
   }
 }

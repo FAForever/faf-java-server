@@ -1,7 +1,7 @@
 package com.faforever.server.map;
 
 import com.faforever.server.entity.Map;
-import com.faforever.server.entity.MapFeatures;
+import com.faforever.server.entity.MapStats;
 import com.faforever.server.entity.MapVersion;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,27 +32,27 @@ public class MapServiceTest {
   private Ladder1v1MapRepository ladder1v1MapRepository;
 
   @Mock
-  private MapFeaturesRepository mapFeaturesRepository;
+  private MapStatsRepository mapFeaturesRepository;
 
   private MapVersion mapVersion;
 
   @Before
-  public void setUp(){
+  public void setUp() {
     mapVersion = new MapVersion().setId(1).setFilename(MAP_NAME);
     when(mapVersionRepository.findByFilenameIgnoreCase(MAP_NAME)).thenReturn(Optional.of(mapVersion));
     when(mapVersionRepository.findOne(1)).thenReturn(mapVersion);
 
-    MapFeatures features = new MapFeatures().setId(1).setTimesPlayed(41);
+    MapStats features = new MapStats().setId(1).setTimesPlayed(41);
     when(mapFeaturesRepository.findOne(1)).thenReturn(features);
 
     instance = new MapService(mapVersionRepository, ladder1v1MapRepository, mapFeaturesRepository);
   }
 
   @Test
-  public void timesPlayedIsIncreasedCorrectly(){
+  public void timesPlayedIsIncreasedCorrectly() {
     Map map = new Map().setId(1);
 
-    MapFeatures features = instance.getMapFeatures(map);
+    MapStats features = instance.getMapStats(map);
     assertThat(features.getId(), is(1));
     assertThat(features.getTimesPlayed(), is(41));
 
@@ -60,7 +60,7 @@ public class MapServiceTest {
 
     verify(mapFeaturesRepository).save(features);
 
-    features = instance.getMapFeatures(map);
+    features = instance.getMapStats(map);
     assertThat(features.getId(), is(1));
     assertThat(features.getTimesPlayed(), is(42));
 
@@ -69,11 +69,11 @@ public class MapServiceTest {
   }
 
   @Test
-  public void timesPlayedIsInitializedWithZero(){
+  public void timesPlayedIsInitializedWithZero() {
     int newId = 1342342;
 
     Map map = new Map().setId(newId);
-    MapFeatures features = instance.getMapFeatures(map);
+    MapStats features = instance.getMapStats(map);
 
     assertThat(features.getId(), is(newId));
     assertThat(features.getTimesPlayed(), is(0));
@@ -85,12 +85,12 @@ public class MapServiceTest {
   }
 
   @Test
-  public void mapIsFoundByName(){
+  public void mapIsFoundByName() {
     assertThat(instance.findMap(MAP_NAME).get(), is(mapVersion));
   }
 
   @Test
-  public void getsLadderMap(){
+  public void getRandomLadderMap() {
     MapVersion oneMap = new MapVersion().setId(2).setRanked(true);
     MapVersion otherMap = new MapVersion().setId(3).setRanked(true);
     when(ladder1v1MapRepository.findAll()).thenReturn(Arrays.asList(oneMap, otherMap));

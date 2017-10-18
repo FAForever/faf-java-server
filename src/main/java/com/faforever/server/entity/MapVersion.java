@@ -7,7 +7,6 @@ import org.hibernate.annotations.Immutable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -58,7 +57,7 @@ public class MapVersion {
   @Column(name = "update_time")
   private Timestamp updateTime;
 
-  @ManyToOne(fetch = FetchType.EAGER, optional = false)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "map_id")
   private Map map;
 }

@@ -2,7 +2,7 @@ package com.faforever.server.map;
 
 import com.faforever.server.cache.CacheNames;
 import com.faforever.server.entity.Map;
-import com.faforever.server.entity.MapFeatures;
+import com.faforever.server.entity.MapStats;
 import com.faforever.server.entity.MapVersion;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -16,15 +16,15 @@ import java.util.Random;
 public class MapService {
   private final MapVersionRepository mapVersionRepository;
   private final Ladder1v1MapRepository ladder1v1MapRepository;
-  private MapFeaturesRepository mapFeaturesRepository;
+  private MapStatsRepository mapStatsRepository;
   private final Random random;
 
   public MapService(MapVersionRepository mapVersionRepository,
                     Ladder1v1MapRepository ladder1v1MapRepository,
-                    MapFeaturesRepository mapFeaturesRepository) {
+                    MapStatsRepository mapFeaturesRepository) {
     this.mapVersionRepository = mapVersionRepository;
     this.ladder1v1MapRepository = ladder1v1MapRepository;
-    this.mapFeaturesRepository = mapFeaturesRepository;
+    this.mapStatsRepository = mapFeaturesRepository;
     this.random = new Random();
   }
 
@@ -39,17 +39,17 @@ public class MapService {
   }
 
   public void incrementTimesPlayed(Map map) {
-    MapFeatures features = getMapFeatures(map);
+    MapStats features = getMapStats(map);
     features.incrementTimesPlayed();
-    mapFeaturesRepository.save(features);
+    mapStatsRepository.save(features);
   }
 
   @Transactional
-  public MapFeatures getMapFeatures(Map map){
-    MapFeatures features = mapFeaturesRepository.findOne(map.getId());
-    if(features == null) {
-      features = new MapFeatures().setId(map.getId());
-      mapFeaturesRepository.save(features);
+  public MapStats getMapStats(Map map) {
+    MapStats features = mapStatsRepository.findOne(map.getId());
+    if (features == null) {
+      features = new MapStats().setId(map.getId());
+      features = mapStatsRepository.save(features);
     }
     return features;
   }
