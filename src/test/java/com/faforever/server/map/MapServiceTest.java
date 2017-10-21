@@ -15,6 +15,7 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -32,7 +33,7 @@ public class MapServiceTest {
   private Ladder1v1MapRepository ladder1v1MapRepository;
 
   @Mock
-  private MapStatsRepository mapFeaturesRepository;
+  private MapStatsRepository mapStatsRepository;
 
   private MapVersion mapVersion;
 
@@ -43,9 +44,10 @@ public class MapServiceTest {
     when(mapVersionRepository.findOne(1)).thenReturn(mapVersion);
 
     MapStats features = new MapStats().setId(1).setTimesPlayed(41);
-    when(mapFeaturesRepository.findOne(1)).thenReturn(features);
+    when(mapStatsRepository.findOne(1)).thenReturn(features);
+    when(mapStatsRepository.save(any(MapStats.class))).thenAnswer(context -> context.getArguments()[0]);
 
-    instance = new MapService(mapVersionRepository, ladder1v1MapRepository, mapFeaturesRepository);
+    instance = new MapService(mapVersionRepository, ladder1v1MapRepository, mapStatsRepository);
   }
 
   @Test
@@ -58,7 +60,7 @@ public class MapServiceTest {
 
     instance.incrementTimesPlayed(map);
 
-    verify(mapFeaturesRepository).save(features);
+    verify(mapStatsRepository).save(features);
 
     features = instance.getMapStats(map);
     assertThat(features.getId(), is(1));
@@ -78,7 +80,7 @@ public class MapServiceTest {
     assertThat(features.getId(), is(newId));
     assertThat(features.getTimesPlayed(), is(0));
 
-    verify(mapFeaturesRepository).save(features);
+    verify(mapStatsRepository).save(features);
 
     verifyZeroInteractions(mapVersionRepository);
     verifyZeroInteractions(ladder1v1MapRepository);
