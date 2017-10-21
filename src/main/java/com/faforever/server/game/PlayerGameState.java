@@ -12,11 +12,35 @@ import java.util.Map;
  * The state of a running instance of Forged Alliance.
  */
 public enum PlayerGameState {
+  /** There is no game process, so there is no state. */
   NONE(null),
+
+  /**
+   * The game process has been started and is waiting for instructions.
+   *
+   * @deprecated it's the client's responsibility to tell the game what to do
+   */
+  @Deprecated
   IDLE("Idle", NONE),
+
+  /** The game process opened the game lobby. */
   LOBBY("Lobby", NONE, IDLE),
+
+  /**
+   * The game process has left the lobby and is now launching the game and its simulation. For unknown reasons, the game
+   * doesn't have a state "Playing", so every game that is "Launching" is actually playing. Hopefully, this will follow
+   * in future.
+   */
   LAUNCHING("Launching", LOBBY),
-  ENDED("Ended", NONE, IDLE, LAUNCHING, LOBBY);
+
+  /**
+   * The game simulation has ended but the game process is still running. Currently, the game does not send this command
+   * but the client does when the process closed.
+   */
+  ENDED("Ended", LAUNCHING),
+
+  /** The game process has been closed. */
+  CLOSED("Closed", NONE, IDLE, LOBBY, LAUNCHING, ENDED);
 
   private static final Map<String, PlayerGameState> fromString;
 
@@ -47,8 +71,8 @@ public enum PlayerGameState {
   }
 
   /**
-   * Checks whether a player's game is allowed to transition from an old state into a new state. If not, an
-   * {@link IllegalStateException} is thrown.
+   * Checks whether a player's game is allowed to transition from an old state into a new state. If not, an {@link
+   * IllegalStateException} is thrown.
    */
   public static void verifyTransition(@NotNull PlayerGameState oldState, @NotNull PlayerGameState newState) {
     Assert.state(canTransition(oldState, newState), "Can't transition from " + oldState + " to " + newState);
@@ -58,6 +82,7 @@ public enum PlayerGameState {
    * Checks whether a player's game is allowed to transition from an old state into a new state.
    */
   public static boolean canTransition(@NotNull PlayerGameState oldState, @NotNull PlayerGameState newState) {
-    return newState == NONE || newState.transitionsFrom.contains(oldState);
+    return newState == NONE
+      || newState.transitionsFrom.contains(oldState);
   }
 }

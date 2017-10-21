@@ -24,7 +24,7 @@ apply plugin: 'propdeps'
 
 
 group = 'faforever'
-version = '1.0.0'
+version = '1.0.4'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -170,7 +170,7 @@ dependencies {
   compile("org.springframework.integration:spring-integration-security")
   compile("org.springframework.integration:spring-integration-event")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
-  compile("org.jolokia:jolokia-core:${jolokiaVersion}")
+  compile("org.jolokia:jolokia-core")
   compile("com.github.nsp:JSkills:${jSkillsVersion}")
   compile("com.github.nocatch:nocatch:${noCatchVersion}")
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")

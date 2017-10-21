@@ -347,6 +347,36 @@ public class GameServiceTest {
     assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
   }
 
+  @Test
+  public void simpleTwoPlayerGame() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_ARMY, 1);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_ARMY, 2);
+
+    launchGame(game);
+
+    instance.reportArmyScore(player1, 1, 10);
+    instance.reportArmyScore(player1, 2, -1);
+
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+
+    instance.reportArmyScore(player2, 1, 10);
+    instance.reportArmyScore(player2, 2, -1);
+
+    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
+
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+
+    assertThat(game.getPlayerStats().values(), hasSize(2));
+    assertThat(game.getPlayerStats().get(player1.getId()).getScore(), is(10));
+    assertThat(game.getPlayerStats().get(player2.getId()).getScore(), is(-1));
+  }
+
   /**
    * Tests whether the service correctly chooses the scores reported by the majority of connected players and ignores
    * the results reported by a "cheater" (that is, someone who reports different results).
@@ -470,10 +500,10 @@ public class GameServiceTest {
     addPlayer(game, player2);
     assertThat(game.getState(), is(GameState.OPEN));
 
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
     assertThat(game.getState(), is(GameState.OPEN));
 
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player2);
     assertThat(game.getState(), is(GameState.CLOSED));
 
     assertThat(player1.getCurrentGame(), is(nullValue()));
@@ -483,10 +513,10 @@ public class GameServiceTest {
   }
 
   @Test
-  public void onGameEndedDoesntSaveGameIfGameDidntStart() throws Exception {
+  public void onGameClosedDoesntSaveGameIfGameDidntStart() throws Exception {
     Game game = hostGame(player1);
 
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository, never()).save(any(Game.class));
@@ -496,10 +526,10 @@ public class GameServiceTest {
   }
 
   @Test
-  public void onGameEndedDoesntProcessArmyStatsIfGameDidntStart() throws Exception {
+  public void onGameClosedDoesntProcessArmyStatsIfGameDidntStart() throws Exception {
     Game game = hostGame(player1);
 
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verifyZeroInteractions(armyStatisticsService);
@@ -516,6 +546,20 @@ public class GameServiceTest {
     launchGame(game);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.ENDED));
+
+    verify(gameRepository).save(game);
+    verifyZeroInteractions(divisionService);
+    assertThat(player1.getCurrentGame(), is(game));
+    assertThat(player1.getGameState(), is(PlayerGameState.ENDED));
+  }
+
+  @Test
+  public void onGameClosedSavesGameIfGameStarted() throws Exception {
+    Game game = hostGame(player1);
+    launchGame(game);
+
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
@@ -531,6 +575,20 @@ public class GameServiceTest {
     launchGame(game);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
+    assertThat(game.getState(), is(GameState.ENDED));
+
+    verify(armyStatisticsService).process(any(), eq(game), any());
+    verifyZeroInteractions(divisionService);
+    assertThat(player1.getCurrentGame(), is(game));
+    assertThat(player1.getGameState(), is(PlayerGameState.ENDED));
+  }
+
+  @Test
+  public void onGameClosedProcessesStatsIfGameStarted() throws Exception {
+    Game game = hostGame(player1);
+    launchGame(game);
+
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(armyStatisticsService).process(any(), eq(game), any());
@@ -741,9 +799,6 @@ public class GameServiceTest {
 
     launchGame(game);
 
-    Stream.of(player2, player3, player4, player5, player6, player7)
-      .forEach(player -> instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player));
-
     // 6 of 8 players got killed, player 1 - 3 are the only ones who report the correct result
     Stream.of(player1, player2, player3)
       .forEach(reporter -> {
@@ -827,9 +882,6 @@ public class GameServiceTest {
       instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
       instance.reportArmyScore(player, 2, -1);
     });
-
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
-    instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
 
     assertThat(game.getValidity(), is(Validity.VALID));
   }
@@ -1216,7 +1268,9 @@ public class GameServiceTest {
   }
 
   private void launchGame(Game game) {
-    instance.updatePlayerGameState(PlayerGameState.LAUNCHING, game.getHost());
+    game.getConnectedPlayers().values()
+      .forEach(player -> instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player));
+
     verify(counterService).decrement(String.format(Metrics.GAMES_STATE_FORMAT, GameState.OPEN));
     verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.PLAYING));
   }

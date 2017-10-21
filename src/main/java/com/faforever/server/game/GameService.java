@@ -255,6 +255,9 @@ public class GameService {
       case ENDED:
         onPlayerGameEnded(player, game);
         break;
+      case CLOSED:
+        onPlayerGameClosed(player, game);
+        break;
       case IDLE:
         log.warn("Ignoring state '{}' from player '{}' for game '{}' (should be handled by the client)", newState, player, game);
         break;
@@ -634,62 +637,82 @@ public class GameService {
     changePlayerGameState(player, PlayerGameState.NONE);
     player.setCurrentGame(null);
     player.setGameBeingJoined(null);
-    game.getConnectedPlayers().remove(playerId, player);
+
+    Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
+    connectedPlayers.remove(playerId, player);
     // Discard reports of disconnected players since their report may not reflect the end result
     game.getReportedArmyResults().remove(playerId);
 
-    if (game.getConnectedPlayers().isEmpty()) {
-      if (game.getState() == GameState.INITIALIZING) {
-        onGameCancelled(game);
-      } else if (game.getState() != GameState.CLOSED) {
-        onGameEnded(game);
+    if (connectedPlayers.isEmpty()) {
+      switch (game.getState()) {
+        case INITIALIZING:
+        case OPEN:
+          onGameCancelled(game);
+          break;
+
+        case PLAYING:
+          onGameEnded(game);
+          break;
+
+        default:
+          // Nothing to do
       }
     }
   }
 
-  private void onPlayerGameEnded(Player reporter, Game game) {
-    if (game == null) {
-      // Since this is called repeatedly, throwing exceptions here would not be a good idea. Happens after restarts.
-      log.warn("Received player option for player w/o game: {}", reporter);
-      return;
+  private void onPlayerGameEnded(Player player, Game game) {
+    log.debug("Player '{}' ended game: {}", player, game);
+    if (game.getState() != GameState.ENDED) {
+      onGameEnded(game);
     }
+  }
 
-    log.debug("Player '{}' left game: {}", reporter, game);
-    removePlayer(game, reporter);
+  private void onPlayerGameClosed(Player player, Game game) {
+    log.debug("Player '{}' closed game: {}", player, game);
+    removePlayer(game, player);
   }
 
   private void onGameCancelled(Game game) {
     log.debug("Game cancelled: {}", game);
-    removeGame(game);
+    onGameClosed(game);
   }
 
   private void onGameEnded(Game game) {
     log.debug("Game ended: {}", game);
 
+    GameState previousState = game.getState();
+    game.setEndTime(Instant.now());
     try {
-      // Games can also end before they even started.
-      if (game.getState() == GameState.PLAYING) {
-        game.getPlayerStats().values().forEach(stats -> {
-          Player player = stats.getPlayer();
-          armyStatisticsService.process(player, game, game.getArmyStatistics());
-        });
-        game.setEndTime(Instant.now());
-        updateGameValidity(game);
-        updateRatingsIfValid(game);
-        mapService.incrementTimesPlayed(game.getMap().getMap());
-        settlePlayerScores(game);
-        updateDivisionScoresIfValid(game);
-        gameRepository.save(game);
-      }
-    } finally {
-      removeGame(game);
+      changeGameState(game, GameState.ENDED);
+    } catch (IllegalStateException e) {
+      // Don't prevent a programming error from ending the game, but let us know about it.
+      log.warn("Illegally tried to transition game '{}' from state '{}' to '{}'", game, previousState, GameState.ENDED, e);
+    }
+
+    // Games can also end before they even started, in which case we stop processing it
+    if (previousState != GameState.PLAYING) {
+      return;
+    }
+
+    game.getPlayerStats().values().forEach(stats -> {
+      Player player = stats.getPlayer();
+      armyStatisticsService.process(player, game, game.getArmyStatistics());
+    });
+    updateGameValidity(game);
+    updateRatingsIfValid(game);
+    mapService.incrementTimesPlayed(game.getMap().getMap());
+    settlePlayerScores(game);
+    updateDivisionScoresIfValid(game);
+    gameRepository.save(game);
+
+    if (game.getConnectedPlayers().isEmpty()) {
+      onGameClosed(game);
     }
   }
 
-  private void removeGame(Game game) {
+  private void onGameClosed(Game game) {
     if (activeGamesById.remove(game.getId()) != null) {
       changeGameState(game, GameState.CLOSED);
-      counterService.decrement(String.format(Metrics.GAMES_STATE_FORMAT, game.getState()));
     }
     markDirty(game, Duration.ZERO, Duration.ZERO);
   }
@@ -799,9 +822,14 @@ public class GameService {
   }
 
   private void changeGameState(Game game, GameState newState) {
-    counterService.decrement(String.format(Metrics.GAMES_STATE_FORMAT, game.getState()));
+    GameState oldState = game.getState();
+    if (oldState != GameState.CLOSED) {
+      counterService.decrement(String.format(Metrics.GAMES_STATE_FORMAT, oldState));
+    }
     game.setState(newState);
-    counterService.increment(String.format(Metrics.GAMES_STATE_FORMAT, newState));
+    if (newState != GameState.CLOSED) {
+      counterService.increment(String.format(Metrics.GAMES_STATE_FORMAT, newState));
+    }
   }
 
   private void createGamePlayerStats(Game game) {
@@ -977,7 +1005,8 @@ public class GameService {
     // You'd expect a null check on 'validity' here but since the DB field is not nullable the default value is RANKED.
 
     Assert.state(game.getValidity() == Validity.VALID, "Validity of game '" + game + "' has already been set to: " + game.getValidity());
-    Assert.state(game.getState() == GameState.PLAYING, "Validity of game '" + game + "' can't be set while in state: " + game.getState());
+    Assert.state(game.getState() == GameState.PLAYING || game.getState() == GameState.ENDED,
+      "Validity of game '" + game + "' can't be set while in state: " + game.getState());
 
     validityVoters.stream()
       .map(voter -> voter.apply(game))

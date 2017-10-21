@@ -52,6 +52,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.integration.transformer.GenericTransformer;
 
 import java.time.Duration;
@@ -97,7 +98,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case AVATAR:
         return handleAvatar(source);
       case GAME_STATE:
-        return new GameStateReport(PlayerGameState.fromString((String) getArgs(source).get(0)));
+        return handleGameState(source);
       case GAME_OPTION:
         List<Object> args = getArgs(source);
         return new GameOptionReport((String) args.get(0), args.get(1));
@@ -141,6 +142,16 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
+  }
+
+  @NotNull
+  private ClientMessage handleGameState(Map<String, Object> source) {
+    String string = (String) getArgs(source).get(0);
+    // The legacy client sends "Ended" when the process closes. The game never sends this, yet.
+    if (PlayerGameState.ENDED.getString().equals(string)) {
+      string = PlayerGameState.CLOSED.getString();
+    }
+    return new GameStateReport(PlayerGameState.fromString(string));
   }
 
   private ClientMessage handleAvatar(Map<String, Object> source) {
