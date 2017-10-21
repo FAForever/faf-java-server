@@ -38,6 +38,7 @@ public class MapService {
     return ladder1v1Maps.get(random.nextInt(ladder1v1Maps.size() - 1));
   }
 
+  @Transactional
   public void incrementTimesPlayed(Map map) {
     MapStats features = getMapStats(map);
     features.incrementTimesPlayed();
