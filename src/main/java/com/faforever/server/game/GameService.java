@@ -700,6 +700,7 @@ public class GameService {
     });
     updateGameValidity(game);
     updateRatingsIfValid(game);
+    mapService.incrementTimesPlayed(game.getMap().getMap());
     settlePlayerScores(game);
     updateDivisionScoresIfValid(game);
     gameRepository.save(game);

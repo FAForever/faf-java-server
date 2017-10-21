@@ -10,7 +10,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 @ActiveProfiles("dev")
 public class FafServerApplicationTests {
-
+  
   @Test
   public void contextLoads() {
     // Spring Boot test

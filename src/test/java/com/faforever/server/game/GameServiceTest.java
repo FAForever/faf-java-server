@@ -137,7 +137,6 @@ public class GameServiceTest {
     MapVersion map = new MapVersion();
     map.setRanked(true);
 
-
     player1 = new Player();
     player1.setId(1);
     player1.setLogin(PLAYER_NAME_1);
@@ -535,6 +534,8 @@ public class GameServiceTest {
 
     verifyZeroInteractions(armyStatisticsService);
     verifyZeroInteractions(divisionService);
+    verify(mapService, never()).incrementTimesPlayed(any());
+
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
   }
@@ -562,6 +563,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
+    verify(mapService).incrementTimesPlayed(game.getMap().getMap());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
