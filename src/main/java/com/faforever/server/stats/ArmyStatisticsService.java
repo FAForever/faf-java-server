@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 @Service
 public class ArmyStatisticsService {
   private static final String CIVILIAN_ARMY_NAME = "civilian";
+  private static final int RUSHER_MINUTE_LIMIT = 10;
 
   private final AchievementService achievementService;
   private final EventService eventService;
@@ -116,6 +118,10 @@ public class ArmyStatisticsService {
     int playerId = player.getId();
     if (survived && modService.isLadder1v1(game.getFeaturedMod())) {
       unlock(AchievementId.ACH_FIRST_SUCCESS, achievementUpdates, playerId);
+
+      if (Duration.between(game.getStartTime(), game.getEndTime()).compareTo(Duration.ofMinutes(RUSHER_MINUTE_LIMIT)) < 0) {
+        unlock(AchievementId.ACH_RUSHER, achievementUpdates, playerId);
+      }
     }
 
     increment(AchievementId.ACH_NOVICE, 1, achievementUpdates, playerId);
