@@ -25,17 +25,22 @@ public class IceService {
   }
 
   public void requestIceServers(Player player) {
+    log.trace("Player '{}' requested a list of ICE servers", player);
+
     List<IceServerList> iceServerLists = serversProviders.stream()
       .map(IceServersProvider::getIceServerList)
       .collect(Collectors.toList());
 
+    log.trace("Sending list of ICE servers to player '{}': {}", player, iceServerLists);
+
+    // TODO list of list is questionable. Make flat?
     clientService.sendIceServers(iceServerLists, player);
   }
 
   public void forwardIceMessage(Player sender, int receiverId, Object content) {
     Optional<Player> recipient = playerService.getOnlinePlayer(receiverId);
     if (!recipient.isPresent()) {
-      log.warn("Player '{}' requested to send ICE message to offline player '{}': {}", sender, recipient, content);
+      log.warn("Player '{}' requested to send ICE message to offline player '{}': {}", sender, receiverId, content);
       return;
     }
 

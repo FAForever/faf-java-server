@@ -4,9 +4,9 @@ import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
+import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.ListCoopRequest;
-import com.faforever.server.client.LoginMessage;
-import com.faforever.server.client.SessionRequest;
+import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
@@ -14,14 +14,12 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.ChannelNames;
-import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
 import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.metrics.CounterService;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
@@ -46,26 +44,24 @@ public class LegacyServicesActivators {
   private final GeoIpService geoIpService;
   private final PlayerService playerService;
   private final ChatService chatService;
-  private final ApplicationEventPublisher eventPublisher;
   private final CounterService counterService;
 
   @Inject
   public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
                                   UniqueIdService uniqueIdService, GeoIpService geoIpService,
                                   PlayerService playerService, ChatService chatService,
-                                  ApplicationEventPublisher eventPublisher, CounterService counterService) {
+                                  CounterService counterService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
     this.geoIpService = geoIpService;
     this.playerService = playerService;
     this.chatService = chatService;
-    this.eventPublisher = eventPublisher;
     this.counterService = counterService;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
-  public SessionResponse askSession(SessionRequest sessionRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+  public SessionResponse askSession(LegacySessionRequest sessionRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     // TODO this method shouldn't do anything but call a service
     String userAgent = sessionRequest.getUserAgent();
     clientConnection.setUserAgent(userAgent);
@@ -75,7 +71,7 @@ public class LegacyServicesActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_LOGIN_REQUEST)
   @Transactional
-  public void loginRequest(LoginMessage loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
+  public void loginRequest(LegacyLoginRequest loginRequest, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     // TODO this method shouldn't do anything but call a service
     Requests.verify(!playerService.isPlayerOnline(loginRequest.getLogin()), ErrorCode.USER_ALREADY_CONNECTED, loginRequest.getLogin());
 
@@ -93,8 +89,7 @@ public class LegacyServicesActivators {
 
       uniqueIdService.verify(player, loginRequest.getUniqueId());
       chatService.updateIrcPassword(userDetails.getUsername(), loginRequest.getPassword());
-
-      eventPublisher.publishEvent(new PlayerOnlineEvent(this, player));
+      playerService.setPlayerOnline(player);
     } catch (BadCredentialsException e) {
       throw new RequestException(e, ErrorCode.INVALID_LOGIN);
     }

@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 
+/** Configuration for FAF-API access. */
 @Configuration
 public class ApiConfig {
 

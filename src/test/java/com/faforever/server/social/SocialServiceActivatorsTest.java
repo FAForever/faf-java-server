@@ -31,7 +31,7 @@ public class SocialServiceActivatorsTest {
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
 
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     clientConnection.setAuthentication(new TestingAuthenticationToken(new FafUserDetails((User) new User()
       .setPlayer(player).setPassword("pw").setLogin("JUnit")), null));
 

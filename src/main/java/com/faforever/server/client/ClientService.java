@@ -19,6 +19,7 @@ import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.ForwardedIceMessage;
 import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
+import com.faforever.server.matchmaker.MatchCreatedResponse;
 import com.faforever.server.matchmaker.MatchMakerResponse;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.LoginDetailsResponse;
@@ -42,12 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -64,11 +63,22 @@ public class ClientService {
     PlayerResponse.class, PlayerResponseAggregator.INSTANCE
   );
 
+  private static final BiFunction<PlayerResponses, PlayerResponses, PlayerResponses> PLAYER_RESPONSES_AGGREGATOR = (oldObject, newObject) -> {
+    List<Integer> updatedPlayerIds = newObject.getResponses().stream().map(PlayerResponse::getPlayerId).collect(Collectors.toList());
+    oldObject.getResponses().removeIf(playerResponse -> updatedPlayerIds.contains(playerResponse.getPlayerId()));
+    oldObject.getResponses().addAll(newObject.getResponses());
+    return oldObject;
+  };
+
   private final ClientGateway clientGateway;
   private final CoopService coopService;
   private final ConcurrentMap<Object, DelayedResponse> delayedResponses;
   private final ServerProperties serverProperties;
-  private final ExecutorService executorService;
+
+  @VisibleForTesting
+  Duration broadcastMinDelay;
+  @VisibleForTesting
+  Duration broadcastMaxDelay;
 
   public ClientService(ClientGateway clientGateway, CoopService coopService, ServerProperties serverProperties) {
     this.clientGateway = clientGateway;
@@ -76,8 +86,8 @@ public class ClientService {
     this.serverProperties = serverProperties;
     delayedResponses = new ConcurrentHashMap<>();
 
-    AtomicInteger threadCount = new AtomicInteger();
-    executorService = Executors.newFixedThreadPool(1, runnable -> new Thread(runnable, "client-service-" + threadCount.incrementAndGet()));
+    broadcastMinDelay = Duration.ofSeconds(2);
+    broadcastMaxDelay = Duration.ofSeconds(5);
   }
 
   public void startGameProcess(Game game, Player player) {
@@ -87,10 +97,15 @@ public class ClientService {
 
   /**
    * Tells the client to connect to a host. The game process must have been started before.
+   *
+   * @param player the player to send the message to
+   * @param game the game to whose host to connect to
    */
-  public void connectToHost(Game game, @NotNull Player player) {
-    log.debug("Telling '{}' to connect to '{}'", player, game.getHost());
-    send(new ConnectToHostResponse(game.getHost().getId()), player);
+  public void connectToHost(Player player, Game game) {
+    Player host = game.getHost();
+
+    log.debug("Telling '{}' to connect to host '{}'", player, host);
+    send(new ConnectToHostResponse(host.getLogin(), host.getId()), player);
   }
 
   /**
@@ -98,10 +113,11 @@ public class ClientService {
    *
    * @param player the player to send the message to
    * @param otherPlayer the player to connect to
+   * @param isOffer TODO document this
    */
-  public void connectToPlayer(Player player, Player otherPlayer) {
+  public void connectToPeer(Player player, Player otherPlayer, boolean isOffer) {
     log.debug("Telling '{}' to connect to '{}'", player, otherPlayer);
-    send(new ConnectToPlayerResponse(otherPlayer.getLogin(), otherPlayer.getId()), player);
+    send(new ConnectToPeerResponse(otherPlayer.getLogin(), otherPlayer.getId(), isOffer), player);
   }
 
   public void hostGame(Game game, @NotNull ConnectionAware recipient) {
@@ -142,8 +158,8 @@ public class ClientService {
   }
 
   /**
-   * Sends a response that needs to be send to the client at some point in the future. Responses can be hold back for a
-   * while in order to avoid message flooding if the object is updated frequently in a short amount of time.
+   * Enqueues a message that needs to be broadcast to all clients. Such messages can be hold back for a while in order
+   * to avoid message flooding if the object is updated frequently in a short amount of time.
    *
    * @param object the object to be sent.
    * @param minDelay the minimum time to wait since the object has been updated.
@@ -153,12 +169,13 @@ public class ClientService {
    * @param idFunction the function to use to calculate the object's ID, so that subsequent calls can be associated with
    * previous submissions of the same object. Special care needs to be taken that the generated ID does not clash with
    * IDs generated by other callers, so it's advised to add a prefix like 'game-1' instead of '1'.
+   * @param aggregateFunction the aggregate function to use if an object with the same ID is already queued.
    * @param <T> the type of the submitted object
    */
   @SuppressWarnings("unchecked")
-  public <T extends ServerMessage> void broadcastDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction) {
+  public <T extends ServerMessage> void broadcastDelayed(T object, Duration minDelay, Duration maxDelay, Function<T, Object> idFunction, BiFunction<T, T, T> aggregateFunction) {
     log.trace("Received object to send delayed: {}", object);
-    delayedResponses.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay))
+    delayedResponses.computeIfAbsent(idFunction.apply(object), o -> new DelayedResponse<>(object, minDelay, maxDelay, aggregateFunction))
       .onUpdated(object);
   }
 
@@ -206,6 +223,10 @@ public class ClientService {
       .forEach(clientGateway::broadcast);
   }
 
+  public void sendMatchCreatedNotification(UUID requestId, int gameId, ConnectionAware recipient) {
+    send(new MatchCreatedResponse(requestId, gameId), recipient);
+  }
+
   /**
    * Aggregates a list of delayed responses if matching aggregator is available. For instance, this will convert a list
    * of {@link PlayerResponse} into a list with a single {@link PlayerResponses} object. If no aggregator is available,
@@ -238,16 +259,14 @@ public class ClientService {
    * Sends a list of player information to the specified recipient.
    */
   public void sendPlayerInformation(Collection<Player> players, ConnectionAware recipient) {
-    toPlayerResponses(players)
-      .thenAccept(responses -> send(responses, recipient));
+    send(toPlayerResponses(players), recipient);
   }
 
   /**
    * Sends a list of player information to all authenticated clients.
    */
   public void broadcastPlayerInformation(Collection<Player> players) {
-    toPlayerResponses(players)
-      .thenAccept(responses -> broadcastDelayed(responses, Duration.ofSeconds(2), Duration.ofSeconds(5), o -> "players"));
+    broadcastDelayed(toPlayerResponses(players), broadcastMinDelay, broadcastMaxDelay, o -> "players", PLAYER_RESPONSES_AGGREGATOR);
   }
 
   /**
@@ -280,10 +299,10 @@ public class ClientService {
     send(avatarListResponse, recipient);
   }
 
-  private CompletableFuture<PlayerResponses> toPlayerResponses(Collection<Player> players) {
-    return CompletableFuture.supplyAsync((() -> new PlayerResponses(players.stream()
+  private PlayerResponses toPlayerResponses(Collection<Player> players) {
+    return new PlayerResponses(players.stream()
       .map(this::toPlayerInformationResponse)
-      .collect(Collectors.toList()))), executorService);
+      .collect(Collectors.toList()));
   }
 
   private PlayerResponse toPlayerInformationResponse(Player player) {

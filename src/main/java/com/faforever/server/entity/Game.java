@@ -76,7 +76,9 @@ public class Game {
   private final Set<Integer> mutuallyAcceptedDrawPlayerIds;
 
   /**
-   * Maps AI names to key-value option maps, like {@code "AI: Rufus" -> "Color" -> 1 }
+   * Maps AI names to key-value option maps, like {@code "Julian (AI: Rufus)" -> "Color" -> 1 }. Note that the game
+   * doesn't always send the AI options with the same AI name. During lobby mode, it sends start spot, color etc. for
+   * "AI: Easy" but when the game starts, it sends the Army ID as "Julian (AI: Easy)".
    */
   @Transient
   private final Map<String, Map<String, Object>> aiOptions;
@@ -118,9 +120,9 @@ public class Game {
   @JoinColumn(name = "host")
   private Player host;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "mapId")
-  private MapVersion map;
+  private MapVersion mapVersion;
 
   @Column(name = "gameName")
   private String title;

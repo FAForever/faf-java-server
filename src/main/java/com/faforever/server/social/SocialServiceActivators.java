@@ -21,22 +21,22 @@ public class SocialServiceActivators {
     this.socialService = socialService;
   }
 
-  @ServiceActivator(inputChannel = ChannelNames.LEGACY_ADD_FRIEND_REQUEST)
+  @ServiceActivator(inputChannel = ChannelNames.ADD_FRIEND_REQUEST)
   public void addFriend(AddFriendRequest request, @Header(USER_HEADER) Authentication authentication) {
     socialService.addFriend(getPlayer(authentication), request.getPlayerId());
   }
 
-  @ServiceActivator(inputChannel = ChannelNames.LEGACY_REMOVE_FRIEND_REQUEST)
+  @ServiceActivator(inputChannel = ChannelNames.REMOVE_FRIEND_REQUEST)
   public void removeFriend(RemoveFriendRequest request, @Header(USER_HEADER) Authentication authentication) {
     socialService.removeFriend(getPlayer(authentication), request.getPlayerId());
   }
 
-  @ServiceActivator(inputChannel = ChannelNames.LEGACY_ADD_FOE_REQUEST)
+  @ServiceActivator(inputChannel = ChannelNames.ADD_FOE_REQUEST)
   public void addFoe(AddFoeRequest request, @Header(USER_HEADER) Authentication authentication) {
     socialService.addFoe(getPlayer(authentication), request.getPlayerId());
   }
 
-  @ServiceActivator(inputChannel = ChannelNames.LEGACY_REMOVE_FOE_REQUEST)
+  @ServiceActivator(inputChannel = ChannelNames.REMOVE_FOE_REQUEST)
   public void removeFoe(RemoveFoeRequest request, @Header(USER_HEADER) Authentication authentication) {
     socialService.removeFoe(getPlayer(authentication), request.getPlayerId());
   }

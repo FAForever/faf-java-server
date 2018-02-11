@@ -7,7 +7,8 @@ import com.faforever.server.entity.SocialRelationStatus;
 import com.faforever.server.entity.User;
 import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.social.SocialRelationListResponse.SocialRelation.RelationType;
+import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse;
+import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse.RelationType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +52,7 @@ public class SocialServiceTest {
   public void addFriend() throws Exception {
     instance.addFriend(requester, 5);
 
+    verify(socialRelationRepository).deleteByPlayerIdAndSubjectIdAndStatus(requester.getId(), 5, SocialRelationStatus.FOE);
     verify(socialRelationRepository).save(captor.capture());
     SocialRelation socialRelation = captor.getValue();
 
@@ -62,6 +64,8 @@ public class SocialServiceTest {
   @Test
   public void addFoe() throws Exception {
     instance.addFoe(requester, 5);
+
+    verify(socialRelationRepository).deleteByPlayerIdAndSubjectIdAndStatus(requester.getId(), 5, SocialRelationStatus.FRIEND);
     verify(socialRelationRepository).save(captor.capture());
     SocialRelation socialRelation = captor.getValue();
 
@@ -103,8 +107,8 @@ public class SocialServiceTest {
     assertThat(response, instanceOf(SocialRelationListResponse.class));
 
     assertThat(response.getSocialRelations(), hasSize(2));
-    assertThat(response.getSocialRelations().get(0), is(new SocialRelationListResponse.SocialRelation(10, RelationType.FRIEND)));
-    assertThat(response.getSocialRelations().get(1), is(new SocialRelationListResponse.SocialRelation(11, RelationType.FOE)));
+    assertThat(response.getSocialRelations().get(0), is(new SocialRelationResponse(10, RelationType.FRIEND)));
+    assertThat(response.getSocialRelations().get(1), is(new SocialRelationResponse(11, RelationType.FOE)));
   }
 
   @Test

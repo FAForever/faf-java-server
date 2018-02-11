@@ -85,7 +85,7 @@ class ValidityVoter {
   }
 
   Function<Game, Validity> rankedMapVoter() {
-    return game -> game.getMap() == null || !game.getMap().isRanked() ? Validity.BAD_MAP : Validity.VALID;
+    return game -> game.getMapVersion() == null || !game.getMapVersion().isRanked() ? Validity.BAD_MAP : Validity.VALID;
   }
 
   Function<Game, Validity> restrictedUnitsVoter() {

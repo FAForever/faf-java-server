@@ -47,7 +47,7 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.JOIN_GAME_REQUEST)
   public void joinGameRequest(JoinGameRequest request, @Header(USER_HEADER) Authentication authentication) {
-    gameService.joinGame(request.getId(), getPlayer(authentication));
+    gameService.joinGame(request.getId(), request.getPassword(), getPlayer(authentication));
   }
 
   @ServiceActivator(inputChannel = ChannelNames.UPDATE_GAME_STATE_REQUEST)
@@ -131,7 +131,7 @@ public class GameServiceActivators {
       .ifPresent(authentication -> gameService.removePlayer(((FafUserDetails) authentication.getPrincipal()).getPlayer()));
   }
 
-  private Player getPlayer( Authentication authentication) {
+  private Player getPlayer(Authentication authentication) {
     return ((FafUserDetails) authentication.getPrincipal()).getPlayer();
   }
 }

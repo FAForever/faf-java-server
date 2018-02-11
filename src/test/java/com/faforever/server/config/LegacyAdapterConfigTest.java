@@ -45,12 +45,12 @@ public class LegacyAdapterConfigTest {
 
     instance.onConnectionClosed(new TcpConnectionCloseEvent(connection, null));
 
-    verify(clientConnectionService).removeConnection("1", Protocol.LEGACY_UTF_16);
+    verify(clientConnectionService).removeConnection("1", Protocol.V1_LEGACY_UTF_16);
   }
 
   @Test
   public void onCloseConnection() throws Exception {
-    ClientConnection clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class));
+    ClientConnection clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     instance.onCloseConnection(new CloseConnectionEvent(this, clientConnection));
     // Not much to assert here
   }

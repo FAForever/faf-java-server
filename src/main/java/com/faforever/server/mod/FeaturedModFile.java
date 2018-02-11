@@ -14,17 +14,12 @@ import javax.persistence.Id;
 // a native query instead. This is why the columns here can't be found in any table.
 public class FeaturedModFile {
 
-  private int id;
   private short fileId;
   private int version;
 
+  // This is not actually the primary key, but JPA requires one.
   @Id
   @Column(name = "fileId")
-  public int getId() {
-    return id;
-  }
-
-  @Column(name = "id")
   public short getFileId() {
     return fileId;
   }

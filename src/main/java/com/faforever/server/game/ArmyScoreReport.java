@@ -1,10 +1,14 @@
 package com.faforever.server.game;
 
 import com.faforever.server.common.ClientMessage;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ArmyScoreReport implements ClientMessage {
-  private final int armyId;
-  private final int score;
+  private int armyId;
+  private int score;
 }

@@ -2,7 +2,7 @@ package com.faforever.server.ice;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Ice.Server;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

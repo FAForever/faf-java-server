@@ -7,10 +7,10 @@ import java.util.List;
 
 @Data
 public class SocialRelationListResponse implements ServerMessage {
-  private final List<SocialRelation> socialRelations;
+  private final List<SocialRelationResponse> socialRelations;
 
   @Data
-  public static class SocialRelation {
+  public static class SocialRelationResponse {
     private final Integer playerId;
     private final RelationType type;
 

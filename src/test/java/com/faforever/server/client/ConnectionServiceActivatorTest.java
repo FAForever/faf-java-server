@@ -31,7 +31,7 @@ public class ConnectionServiceActivatorTest {
       .setPassword("password")
       .setLogin("JUnit");
 
-    clientConnection = new ClientConnection("1", Protocol.LEGACY_UTF_16, mock(InetAddress.class))
+    clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class))
       .setAuthentication(new TestingAuthenticationToken(user, null));
 
     instance = new ConnectionServiceActivator(clientConnectionService);

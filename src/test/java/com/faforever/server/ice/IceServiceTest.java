@@ -39,12 +39,12 @@ public class IceServiceTest {
     player = (Player) new Player().setId(1);
     List<IceServersProvider> serverProviders = Arrays.asList(
       () -> new IceServerList(60, Instant.now(), Arrays.asList(
-        new IceServer(URI.create("http://localhost:1234"), "user1", "password1"),
-        new IceServer(URI.create("http://localhost:2345"), "user2", "password2")
+        new IceServer(URI.create("http://localhost:1234"), "user1", "password1", "token"),
+        new IceServer(URI.create("http://localhost:2345"), "user2", "password2", "token")
       )),
       () -> new IceServerList(60, Instant.now(), Arrays.asList(
-        new IceServer(URI.create("http://localhost:3465"), "user3", "password3"),
-        new IceServer(URI.create("http://localhost:4567"), "user4", "password4")
+        new IceServer(URI.create("http://localhost:3465"), "user3", "password3", "token"),
+        new IceServer(URI.create("http://localhost:4567"), "user4", "password4", "token")
       ))
     );
     instance = new IceService(clientService, playerService, serverProviders);

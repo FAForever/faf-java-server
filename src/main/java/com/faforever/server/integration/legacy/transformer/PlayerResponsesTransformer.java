@@ -45,7 +45,7 @@ public enum PlayerResponsesTransformer implements GenericTransformer<PlayerRespo
     Avatar avatar = player.getAvatar();
 
     Builder<Object, Serializable> builder = ImmutableMap.<Object, Serializable>builder()
-      .put("id", source.getUserId())
+      .put("id", source.getPlayerId())
       .put("login", source.getUsername())
       .put("global_rating", ratingToDoubleArray(globalRating))
       .put("ladder_rating", ratingToDoubleArray(ladder1v1Rating))

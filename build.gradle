@@ -15,7 +15,7 @@ buildscript {
 }
 
 plugins {
-  id "io.franzbecker.gradle-lombok" version "1.10"
+  id 'net.ltgt.apt' version '0.9'
 }
 
 apply plugin: 'java'
@@ -24,7 +24,7 @@ apply plugin: 'propdeps'
 
 
 group = 'faforever'
-version = '1.0.3'
+version = '1.1.0'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -40,11 +40,6 @@ configurations {
   compile.exclude module: "spring-boot-starter-tomcat"
   compile.exclude module: "tomcat-jdbc"
   compile.exclude module: "assertj-core"
-}
-
-lombok {
-  version = "1.16.18"
-  sha256 = ""
 }
 
 task wrapper(type: Wrapper) {
@@ -160,14 +155,16 @@ dependencies {
   compile("org.springframework.boot:spring-boot-starter-data-jpa")
   compile("org.springframework.boot:spring-boot-starter-cache")
   compile("org.springframework.boot:spring-boot-starter-integration")
+  compile("org.springframework.boot:spring-boot-starter-websocket")
   compile("org.springframework.boot:spring-boot-starter-security")
-  compile("org.springframework.boot:spring-boot-starter-jetty")
+  compile("org.springframework.boot:spring-boot-starter-undertow")
   compile("org.springframework.security:spring-security-messaging")
   compile("org.springframework.security:spring-security-jwt:${springSecurityJwtVersion}")
   compile("org.springframework.security.oauth:spring-security-oauth2")
   compile("org.springframework:spring-context-support")
   compile("org.springframework.integration:spring-integration-ip")
   compile("org.springframework.integration:spring-integration-security")
+  compile("org.springframework.integration:spring-integration-websocket")
   compile("org.springframework.integration:spring-integration-event")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
   compile("org.jolokia:jolokia-core")
@@ -182,8 +179,10 @@ dependencies {
   compile("io.prometheus:simpleclient_hotspot:${prometheusVersion}")
   compile("io.prometheus:simpleclient_servlet:${prometheusVersion}")
   compile("io.prometheus:simpleclient_spring_boot:${prometheusVersion}")
+  compile("org.mapstruct:mapstruct-jdk8:${mapstructVersion}")
+  compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonDatatypeJsr310Version}")
 
-  compile("com.maxmind.geoip2:geoip2:${geoip2Version}"){
+  compile("com.maxmind.geoip2:geoip2:${geoip2Version}") {
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
   }
   compile("com.zaxxer:HikariCP:${hikariCpVersion}") {
@@ -194,9 +193,14 @@ dependencies {
 
   optional("org.springframework.boot:spring-boot-devtools")
   optional("org.springframework.boot:spring-boot-configuration-processor")
+  optional("org.projectlombok:lombok:${lombokVersion}")
+  optional("org.mapstruct:mapstruct-processor:${mapstructVersion}")
 
   testCompile("org.springframework.boot:spring-boot-starter-test")
   testCompile("com.googlecode.zohhak:zohhak:1.1.1")
 
   codacy("com.github.codacy:codacy-coverage-reporter:-SNAPSHOT")
+
+  apt("org.mapstruct:mapstruct-processor:${mapstructVersion}")
+  apt("org.projectlombok:lombok:${lombokVersion}")
 }

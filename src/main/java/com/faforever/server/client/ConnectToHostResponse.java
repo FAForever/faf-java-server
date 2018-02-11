@@ -1,9 +1,10 @@
 package com.faforever.server.client;
 
 import com.faforever.server.common.ServerMessage;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class ConnectToHostResponse implements ServerMessage {
-  private final int hostId;
+  String hostUsername;
+  int hostId;
 }

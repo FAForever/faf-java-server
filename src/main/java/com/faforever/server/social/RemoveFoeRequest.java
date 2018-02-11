@@ -1,13 +1,12 @@
 package com.faforever.server.social;
 
 import com.faforever.server.common.ClientMessage;
-import lombok.Data;
+import lombok.Value;
 
 /**
- * @deprecated removing foes should directly be requested from the API, not from the server.
+ * Tells the server to remove the specified player from the sending player's foe list.
  */
-@Deprecated
-@Data
+@Value
 public class RemoveFoeRequest implements ClientMessage {
-  private final int playerId;
+  int playerId;
 }

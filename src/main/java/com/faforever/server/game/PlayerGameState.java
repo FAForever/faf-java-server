@@ -15,16 +15,19 @@ public enum PlayerGameState {
   /** There is no game process, so there is no state. */
   NONE(null),
 
+  /** The game process is starting but has not yet started. */
+  INITIALIZING("Initializing", NONE),
+
   /**
    * The game process has been started and is waiting for instructions.
    *
    * @deprecated it's the client's responsibility to tell the game what to do
    */
   @Deprecated
-  IDLE("Idle", NONE),
+  IDLE("Idle", NONE, INITIALIZING),
 
   /** The game process opened the game lobby. */
-  LOBBY("Lobby", NONE, IDLE),
+  LOBBY("Lobby", NONE, INITIALIZING, IDLE),
 
   /**
    * The game process has left the lobby and is now launching the game and its simulation. For unknown reasons, the game
@@ -40,7 +43,7 @@ public enum PlayerGameState {
   ENDED("Ended", LAUNCHING),
 
   /** The game process has been closed. */
-  CLOSED("Closed", NONE, IDLE, LOBBY, LAUNCHING, ENDED);
+  CLOSED("Closed", NONE, INITIALIZING, IDLE, LOBBY, LAUNCHING, ENDED);
 
   private static final Map<String, PlayerGameState> fromString;
 

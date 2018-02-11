@@ -1,12 +1,12 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.avatar.ListAvatarsMessage;
+import com.faforever.server.avatar.ListAvatarsRequest;
 import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.ListCoopRequest;
-import com.faforever.server.client.LoginMessage;
-import com.faforever.server.client.SessionRequest;
+import com.faforever.server.client.LoginRequest;
+import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.common.ServerMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
@@ -15,7 +15,7 @@ import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.EnforceRatingRequest;
+import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -48,9 +48,14 @@ public final class ChannelNames {
   public static final String JOIN_GAME_REQUEST = "joinGameRequest";
 
   /**
-   * Channel for {@link LoginMessage}.
+   * Channel for {@link LoginRequest}.
    */
-  public static final String LEGACY_LOGIN_REQUEST = "loginRequest";
+  public static final String LOGIN_REQUEST = "loginRequest";
+
+  /**
+   * Channel for {@link com.faforever.server.client.LegacyLoginRequest}.
+   */
+  public static final String LEGACY_LOGIN_REQUEST = "legacyLoginRequest";
 
   /**
    * Channel for single-recipient outbound client messages. The payload of messages in this channel is {@link
@@ -69,9 +74,14 @@ public final class ChannelNames {
   public static final String CLIENT_INBOUND = "clientInbound";
 
   /**
-   * Channel for {@link SessionRequest}.
+   * Channel for {@link LegacySessionRequest}.
    */
   public static final String LEGACY_SESSION_REQUEST = "sessionRequest";
+
+  /**
+   * Channel for outbound messages over the standard protocol.
+   */
+  public static final String WEB_OUTBOUND = "webOutbound";
 
   /**
    * Channel for outbound messages to be processed by the legacy adapter.
@@ -79,29 +89,29 @@ public final class ChannelNames {
   public static final String LEGACY_OUTBOUND = "legacyOutbound";
 
   /**
-   * Channel for {@link ListAvatarsMessage}.
+   * Channel for {@link ListAvatarsRequest}.
    */
   public static final String LIST_AVATAR = "listAvatar";
 
   /**
    * Channel for {@link AddFriendRequest}.
    */
-  public static final String LEGACY_ADD_FRIEND_REQUEST = "addFriendRequest";
+  public static final String ADD_FRIEND_REQUEST = "addFriendRequest";
 
   /**
    * Channel for {@link RemoveFriendRequest}.
    */
-  public static final String LEGACY_REMOVE_FRIEND_REQUEST = "removeFriendRequest";
+  public static final String REMOVE_FRIEND_REQUEST = "removeFriendRequest";
 
   /**
    * Channel for {@link AddFoeRequest}.
    */
-  public static final String LEGACY_ADD_FOE_REQUEST = "addFoeRequest";
+  public static final String ADD_FOE_REQUEST = "addFoeRequest";
 
   /**
    * Channel for {@link RemoveFoeRequest}.
    */
-  public static final String LEGACY_REMOVE_FOE_REQUEST = "removeFoeRequest";
+  public static final String REMOVE_FOE_REQUEST = "removeFoeRequest";
 
   /**
    * Channel for {@link HostGameRequest}.
@@ -169,7 +179,7 @@ public final class ChannelNames {
   public static final String GAME_STATISTICS_REPORT = "gameStatisticsReport";
 
   /**
-   * Channel for {@link EnforceRatingRequest}.
+   * Channel for {@link PlayerDefeatedReport}.
    */
   public static final String ENFORCE_RATING_REQUEST = "enforceRatingRequest";
 
@@ -192,6 +202,11 @@ public final class ChannelNames {
    * Channel for {@link MatchMakerCancelRequest}.
    */
   public static final String MATCH_MAKER_CANCEL_REQUEST = "matchMakerCancelRequest";
+
+  /**
+   * Channel for {@link com.faforever.server.matchmaker.CreateMatchRequest}.
+   */
+  public static final String CREATE_MATCH_REQUEST = "createMatchRequest";
 
   /**
    * Channel for {@link DisconnectPeerRequest}
@@ -245,6 +260,11 @@ public final class ChannelNames {
    * Channel for raw legacy outbound messages to be written on the TCP socket.
    */
   public static final String LEGACY_TCP_OUTBOUND = "legacyTcpOutbound";
+
+  /**
+   * Channel for raw outbound messages to be written on the web socket.
+   */
+  public static final String WEB_SOCKET_OUTBOUND = "webSocketOutbound";
 
   /**
    * Channel for {@link SelectAvatarRequest}.

@@ -24,6 +24,7 @@ import com.faforever.server.game.GameResponse.SimMod;
 import com.faforever.server.ladder1v1.DivisionService;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.PlayerOfflineEvent;
 import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
@@ -61,6 +62,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -93,6 +95,7 @@ public class GameService {
   public static final String OPTION_FACTION = "Faction";
   public static final String OPTION_COLOR = "Color";
   public static final String OPTION_ARMY = "Army";
+  private static final BiFunction<GameResponse, GameResponse, GameResponse> GAME_RESPONSE_AGGREGATOR = (oldObject, newObject) -> newObject;
 
   private final Collection<Function<Game, Validity>> validityVoters;
   private final GameRepository gameRepository;
@@ -172,7 +175,7 @@ public class GameService {
    * timeout.
    */
   @Transactional(readOnly = true)
-  public CompletableFuture<Game> createGame(String title, String featuredModName, String mapname,
+  public CompletableFuture<Game> createGame(String title, String featuredModName, String mapFileName,
                                             String password, GameVisibility visibility,
                                             Integer minRating, Integer maxRating, Player player) {
 
@@ -190,10 +193,12 @@ public class GameService {
     int gameId = this.lastGameId.incrementAndGet();
     Game game = new Game(gameId);
     game.setHost(player);
-    modService.getFeaturedMod(featuredModName).ifPresent(game::setFeaturedMod);
+    modService.getFeaturedMod(featuredModName)
+      .map(game::setFeaturedMod)
+      .orElseThrow(() -> new RequestException(ErrorCode.INVALID_FEATURED_MOD, featuredModName));
     game.setTitle(title);
-    mapService.findMap(mapname).ifPresent(game::setMap);
-    game.setMapName(mapname);
+    mapService.findMap(mapFileName).ifPresent(game::setMapVersion);
+    game.setMapName(mapFileName);
     game.setPassword(password);
     game.setGameVisibility(visibility);
     game.setMinRating(minRating);
@@ -205,23 +210,39 @@ public class GameService {
     log.debug("Player '{}' created game '{}'", player, game);
 
     clientService.startGameProcess(game, player);
-    player.setGameBeingJoined(game);
+    player.setCurrentGame(game);
+    changePlayerGameState(player, PlayerGameState.INITIALIZING);
+
+    CompletableFuture<Game> gameJoinedFuture = new CompletableFuture<>();
+    player.setGameFuture(gameJoinedFuture);
 
     return game.getJoinableFuture();
   }
 
   /**
    * Tells the client to start the game process and sets the player's current game to it.
+   *
+   * @return a future that will be completed as soon as the player's game has been started and entered {@link
+   * GameState#OPEN}. Be aware that there are various reasons for the game to never start (crash, disconnect, abort) so
+   * never wait without a timeout.
    */
-  public void joinGame(int gameId, Player player) {
+  public CompletableFuture<Game> joinGame(int gameId, String password, Player player) {
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
 
     Game game = getActiveGame(gameId).orElseThrow(() -> new IllegalArgumentException("No such game: " + gameId));
     Requests.verify(game.getState() == GameState.OPEN, ErrorCode.GAME_NOT_JOINABLE);
+    Requests.verify(game.getPassword() == null || game.getPassword().equals(password), ErrorCode.INVALID_PASSWORD);
 
     log.debug("Player '{}' joins game '{}'", player, gameId);
     clientService.startGameProcess(game, player);
-    player.setGameBeingJoined(game);
+
+    player.setCurrentGame(game);
+    changePlayerGameState(player, PlayerGameState.INITIALIZING);
+
+    CompletableFuture<Game> gameJoinedFuture = new CompletableFuture<>();
+    player.setGameFuture(gameJoinedFuture);
+
+    return gameJoinedFuture;
   }
 
   /**
@@ -229,14 +250,7 @@ public class GameService {
    */
   @Transactional
   public void updatePlayerGameState(PlayerGameState newState, Player player) {
-    Game gameBeingJoined = player.getGameBeingJoined();
-    Game currentGame = player.getCurrentGame();
-    Game game = null;
-    if (gameBeingJoined != null) {
-      game = gameBeingJoined;
-    } else if (currentGame != null) {
-      game = currentGame;
-    }
+    Game game = player.getCurrentGame();
     Requests.verify(game != null, ErrorCode.NOT_IN_A_GAME);
 
     PlayerGameState oldState = player.getGameState();
@@ -326,7 +340,7 @@ public class GameService {
     log.trace("Updating option for player '{}' in game '{}': '{}' = '{}'", playerId, game.getId(), key, value);
     game.getPlayerOptions().computeIfAbsent(playerId, id -> new HashMap<>()).put(key, value);
 
-    markDirty(game, Duration.ofSeconds(1), Duration.ofSeconds(5));
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   /**
@@ -343,6 +357,12 @@ public class GameService {
       return;
     }
     Requests.verify(Objects.equals(reporter.getCurrentGame().getHost(), reporter), ErrorCode.HOST_ONLY_OPTION, key);
+
+    if (!OPTION_ARMY.equals(key)) {
+      log.trace("Ignoring option '{}' = '{}' for AI '{}' in game '{}' because only the option 'Army' is currently sent with the correct, final AI name",
+        key, value, aiName, game.getId());
+      return;
+    }
 
     log.trace("Updating option for AI '{}' in game '{}': '{}' = '{}'", aiName, game.getId(), key, value);
     game.getAiOptions().computeIfAbsent(aiName, s -> new HashMap<>()).put(key, value);
@@ -366,15 +386,6 @@ public class GameService {
       .forEach(playerId -> {
         log.trace("Removing options for player '{}' in game '{}'", playerId, game);
         game.getPlayerOptions().remove(playerId);
-      });
-
-    game.getAiOptions().entrySet().stream()
-      .filter(entry -> Objects.equals(entry.getValue().get(OPTION_SLOT), slotId))
-      .map(Entry::getKey)
-      .collect(Collectors.toList())
-      .forEach(aiName -> {
-        log.trace("Removing options for AI '{}' in game '{}'", aiName, game);
-        game.getAiOptions().remove(aiName);
       });
 
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
@@ -495,16 +506,21 @@ public class GameService {
 
   @EventListener
   public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
+    counterService.increment(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, event.getPlayer().getGameState()));
     clientService.sendGameList(
       new GameResponses(activeGamesById.values().stream().map(this::toResponse).collect(Collectors.toList())),
       event.getPlayer()
     );
   }
 
+  @EventListener
+  public void onPlayerOfflineEvent(PlayerOfflineEvent event) {
+    counterService.decrement(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, event.getPlayer().getGameState()));
+  }
+
   @Transactional
   public void removePlayer(Player player) {
     Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removePlayer(game, player));
-    Optional.ofNullable(player.getGameBeingJoined()).ifPresent(game -> removePlayer(game, player));
   }
 
   /**
@@ -551,7 +567,15 @@ public class GameService {
       || game.getPlayerStats().containsKey(player.getId()), ErrorCode.CANT_RESTORE_GAME_NOT_PARTICIPANT);
 
     log.debug("Reassociating player '{}' with game '{}'", player, game);
+
+    player.setGameFuture(CompletableFuture.completedFuture(game));
     addPlayer(game, player);
+
+    changePlayerGameState(player, PlayerGameState.INITIALIZING);
+    changePlayerGameState(player, PlayerGameState.LOBBY);
+    if (gameState == GameState.PLAYING) {
+      changePlayerGameState(player, PlayerGameState.LAUNCHING);
+    }
   }
 
   public void mutuallyAgreeDraw(Player player) {
@@ -587,14 +611,19 @@ public class GameService {
   }
 
   /**
-   * Checks whether every connected player reported outcomes for all armies (human and AI). If so, the game is set to
-   * {@link GameState#CLOSED}.
+   * Checks whether a game has ended and, if so, calls {@link #onGameEnded(Game)}. As the game doesn't yet send a clear
+   * "game ended" command yet, a game is considered as ended when the following conditions are met: <ol><li>Every
+   * connected player reported an army outcome for all armies</li> <li>Every survivor reported a score for all armies
+   * (defeated players do not send scores)</li></ol>(human and AI).
    */
+  // TODO simplify once https://github.com/FAForever/fa/issues/2378 is implemented
   private void endGameIfArmyResultsComplete(Game game) {
     List<Integer> armies = Streams.concat(
       game.getPlayerOptions().values().stream(),
       game.getAiOptions().values().stream()
-    ).map(options -> (Integer) options.get(OPTION_ARMY))
+    )
+      .filter(options -> options.containsKey(OPTION_ARMY))
+      .map(options -> (Integer) options.get(OPTION_ARMY))
       .collect(Collectors.toList());
 
     Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
@@ -605,27 +634,36 @@ public class GameService {
       if (reportedOutcomes == null) {
         return;
       }
-      Collection<Integer> armiesWithIncompleteResult = new ArrayList<>(armies);
-      for (ArmyResult armyResult : reportedOutcomes.values()) {
-        if (armyResult.getOutcome() != Outcome.UNKNOWN && armyResult.getScore() != null) {
-          armiesWithIncompleteResult.remove(armyResult.getArmyId());
-        }
-      }
-      if (!armiesWithIncompleteResult.isEmpty()) {
-        if (log.isTraceEnabled()) {
-          log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
-            playerId, Joiner.on(", ").join(armiesWithIncompleteResult));
-        }
+      if (!areArmyOutcomesComplete(armies, playerId, reportedOutcomes)) {
         return;
       }
     }
+
     onGameEnded(game);
+  }
+
+  private boolean areArmyOutcomesComplete(List<Integer> armies, Integer playerId, Map<Integer, ArmyResult> reportedOutcomes) {
+    Collection<Integer> armiesWithIncompleteResult = new ArrayList<>(armies);
+    for (ArmyResult armyResult : reportedOutcomes.values()) {
+      // TODO armyResult.getScore() != null isn't correct, see https://github.com/FAForever/fa/issues/2378
+      if (armyResult.getOutcome() != Outcome.UNKNOWN && armyResult.getScore() != null) {
+        armiesWithIncompleteResult.remove(armyResult.getArmyId());
+      }
+    }
+    if (!armiesWithIncompleteResult.isEmpty()) {
+      if (log.isTraceEnabled()) {
+        log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
+          playerId, Joiner.on(", ").join(armiesWithIncompleteResult));
+      }
+      return false;
+    }
+    return true;
   }
 
   private void addPlayer(Game game, Player player) {
     game.getConnectedPlayers().put(player.getId(), player);
     player.setCurrentGame(game);
-    player.setGameBeingJoined(null);
+    player.getGameFuture().complete(game);
 
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
@@ -636,7 +674,7 @@ public class GameService {
     int playerId = player.getId();
     changePlayerGameState(player, PlayerGameState.NONE);
     player.setCurrentGame(null);
-    player.setGameBeingJoined(null);
+    player.getGameFuture().cancel(false);
 
     Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
     connectedPlayers.remove(playerId, player);
@@ -658,6 +696,8 @@ public class GameService {
           // Nothing to do
       }
     }
+
+    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   private void onPlayerGameEnded(Player player, Game game) {
@@ -700,6 +740,7 @@ public class GameService {
     });
     updateGameValidity(game);
     updateRatingsIfValid(game);
+    Optional.ofNullable(game.getMapVersion()).ifPresent(mapVersion -> mapService.incrementTimesPlayed(mapVersion.getMap()));
     settlePlayerScores(game);
     updateDivisionScoresIfValid(game);
     gameRepository.save(game);
@@ -736,7 +777,7 @@ public class GameService {
   }
 
   /**
-   * Finds the {@link ArmyResult ArmyOutcomes} that have been reported most often, mappyed by army ID. Only respects
+   * Finds the {@link ArmyResult ArmyOutcomes} that have been reported most often, mapped by army ID. Only respects
    * reports of players who are still connected and have reported a score as well as an outcome.
    */
   private Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
@@ -788,10 +829,8 @@ public class GameService {
     Player winner = null;
     if (!game.isMutuallyAgreedDraw()) {
       winner = game.getPlayerStats().values().stream()
-        .max(Comparator.comparingInt(value -> {
-          Integer score = value.getScore();
-          return score;
-        }))
+        .filter(gamePlayerStats -> gamePlayerStats.getScore() != null)
+        .max(Comparator.comparingInt(GamePlayerStats::getScore))
         .map(GamePlayerStats::getPlayer)
         .orElse(null);
       log.trace("Game '{}' did not end with mutual draw, winner is: {}", game, winner);
@@ -914,13 +953,18 @@ public class GameService {
     if (Objects.equals(game.getHost(), player)) {
       changeGameState(game, GameState.OPEN);
       clientService.hostGame(game, player);
-
-      markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     } else {
-      clientService.connectToHost(game, player);
-      game.getConnectedPlayers().values().forEach(otherPlayer -> connectPeers(player, otherPlayer));
+      connectToHost(game, player);
+      game.getConnectedPlayers().values().stream()
+        .filter(connectedPlayer -> !Objects.equals(game.getHost(), connectedPlayer))
+        .forEach(otherPlayer -> connectPeers(player, otherPlayer));
     }
     addPlayer(game, player);
+  }
+
+  private void connectToHost(Game game, Player player) {
+    clientService.connectToHost(player, game);
+    clientService.connectToPeer(game.getHost(), player, true);
   }
 
   private void connectPeers(Player player, Player otherPlayer) {
@@ -928,18 +972,19 @@ public class GameService {
       log.warn("Player '{}' should not be told to connect to himself", player);
       return;
     }
-    clientService.connectToPlayer(player, player);
+    clientService.connectToPeer(player, otherPlayer, true);
+    clientService.connectToPeer(otherPlayer, player, false);
   }
 
   private boolean hasArmy(Game game, int armyId) {
     return Stream.concat(game.getPlayerOptions().values().stream(), game.getAiOptions().values().stream())
-      .filter(options -> options.containsKey("Army"))
-      .map(options -> (int) options.get("Army"))
+      .filter(options -> options.containsKey(OPTION_ARMY))
+      .map(options -> (int) options.get(OPTION_ARMY))
       .anyMatch(id -> id == armyId);
   }
 
   private void markDirty(Game game, Duration minDelay, Duration maxDelay) {
-    clientService.broadcastDelayed(toResponse(game), minDelay, maxDelay, gameResponse -> "game-" + gameResponse.getId());
+    clientService.broadcastDelayed(toResponse(game), minDelay, maxDelay, gameResponse -> "game-" + gameResponse.getId(), GAME_RESPONSE_AGGREGATOR);
   }
 
   private GameResponse toResponse(Game game) {

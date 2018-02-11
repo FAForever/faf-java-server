@@ -4,7 +4,7 @@ public class LoginDetailsResponse extends PlayerResponse {
 
   public LoginDetailsResponse(PlayerResponse playerResponse) {
     super(
-      playerResponse.getUserId(),
+      playerResponse.getPlayerId(),
       playerResponse.getUsername(),
       playerResponse.getCountry(),
       playerResponse.getPlayer()

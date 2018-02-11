@@ -1,7 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.avatar.AvatarService;
-import com.faforever.server.avatar.ListAvatarsMessage;
+import com.faforever.server.avatar.ListAvatarsRequest;
 import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
@@ -36,17 +36,26 @@ public class AvatarServiceActivatorTest {
   }
 
   @Test
-  public void selectAvatar() throws Exception {
-    SelectAvatarRequest request = new SelectAvatarRequest("http://example.com/foo.bar");
+  public void selectAvatarByUrl() throws Exception {
+    SelectAvatarRequest request = new SelectAvatarRequest(null, "http://example.com/foo.bar");
 
     instance.selectAvatar(request, authentication);
 
-    verify(avatarService).selectAvatar(player, "http://example.com/foo.bar");
+    verify(avatarService).selectAvatar(player, "http://example.com/foo.bar", request.getAvatarId());
+  }
+
+  @Test
+  public void selectAvatarById() throws Exception {
+    SelectAvatarRequest request = new SelectAvatarRequest(1, null);
+
+    instance.selectAvatar(request, authentication);
+
+    verify(avatarService).selectAvatar(player, null, 1);
   }
 
   @Test
   public void listAvatars() throws Exception {
-    instance.listAvatars(ListAvatarsMessage.INSTANCE, authentication);
+    instance.listAvatars(ListAvatarsRequest.INSTANCE, authentication);
 
     verify(avatarService).sendAvatarList(player);
   }

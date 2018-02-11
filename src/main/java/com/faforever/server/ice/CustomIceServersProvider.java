@@ -2,9 +2,9 @@ package com.faforever.server.ice;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Ice;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import lombok.SneakyThrows;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.jwt.crypto.sign.MacSigner;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class CustomIceServersProvider implements IceServersProvider {
 
     return new IceServerList(ttl, Instant.now(),
       ice.getServers().stream()
-        .map(server -> new IceServer(URI.create(server.getUrl()), UUID.randomUUID().toString(), createToken(ttl)))
+        .map(server -> new IceServer(URI.create(server.getUrl()), UUID.randomUUID().toString(), createToken(ttl), "token"))
         .collect(Collectors.toList())
     );
   }

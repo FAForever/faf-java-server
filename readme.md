@@ -104,3 +104,4 @@ This implementation provides the following additional features over the original
 * Support for min/max rating for games
 * Verification that it's compatible with the underlying database schema version
 * Updating scores for the league & divisions system after each ladder game
+* ICE support

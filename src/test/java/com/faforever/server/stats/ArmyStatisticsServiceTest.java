@@ -25,12 +25,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -196,12 +199,54 @@ public class ArmyStatisticsServiceTest {
 
     game.setFeaturedMod(ladder1v1FeaturedMod);
     game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
+    game.setStartTime(Instant.now().minus(Duration.ofMinutes(90)));
+    game.setEndTime(Instant.now());
 
     List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
 
     instance.process(player, game, stats);
 
     assertThat(this.achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_FIRST_SUCCESS, AchievementUpdate.UpdateType.UNLOCK, 0)));
+  }
+
+  /**
+   * Tests {@link AchievementId#ACH_RUSHER}.
+   */
+  @Test
+  public void testWin1v1Within10Minutes() throws Exception {
+    FeaturedMod ladder1v1FeaturedMod = new FeaturedMod();
+    when(modService.isLadder1v1(ladder1v1FeaturedMod)).thenReturn(true);
+
+    game.setFeaturedMod(ladder1v1FeaturedMod);
+    game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
+    game.setStartTime(Instant.now().minus(Duration.ofMinutes(9)));
+    game.setEndTime(Instant.now());
+
+    List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
+
+    instance.process(player, game, stats);
+
+    assertThat(this.achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_RUSHER, AchievementUpdate.UpdateType.UNLOCK, 0)));
+  }
+
+  /**
+   * Tests {@link AchievementId#ACH_RUSHER} negatively.
+   */
+  @Test
+  public void testWin1v1After10Minutes() throws Exception {
+    FeaturedMod ladder1v1FeaturedMod = new FeaturedMod();
+    when(modService.isLadder1v1(ladder1v1FeaturedMod)).thenReturn(true);
+
+    game.setFeaturedMod(ladder1v1FeaturedMod);
+    game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
+    game.setStartTime(Instant.now().minus(Duration.ofMinutes(11)));
+    game.setEndTime(Instant.now());
+
+    List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
+
+    instance.process(player, game, stats);
+
+    assertThat(this.achievementUpdates, not(hasItem(new AchievementUpdate(42, AchievementId.ACH_RUSHER, AchievementUpdate.UpdateType.UNLOCK, 0))));
   }
 
   @Test

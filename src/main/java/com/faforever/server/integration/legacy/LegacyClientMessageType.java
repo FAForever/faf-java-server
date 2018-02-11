@@ -15,9 +15,8 @@ public enum LegacyClientMessageType {
   @Deprecated
   ASK_SESSION("ask_session"),
   /**
-   * @deprecated Adding friends/foes should be done against the API.
+   * Adds another player as friend/foe.
    */
-  @Deprecated
   SOCIAL_ADD("social_add"),
   /**
    * @deprecated Removing friends/foes should be done against the API.
@@ -65,7 +64,10 @@ public enum LegacyClientMessageType {
   TEAMKILL_REPORT("TeamkillReport"),
   AI_OPTION("AIOption"),
   MUTUAL_DRAW("MutualDraw"),
-  ICE_MESSAGE("IceMsg");
+  ICE_MESSAGE("IceMsg"),
+  DISCONNECTED("Disconnected"),
+  BOTTLENECK("Bottleneck"),
+  BOTTLENECK_CLEARED("BottleneckCleared");
 
   private static Map<String, LegacyClientMessageType> fromString;
 

@@ -1,5 +1,7 @@
 package com.faforever.server.entity;
 
+import com.faforever.server.client.ClientConnection;
+import com.faforever.server.client.ConnectionAware;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,13 +17,13 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User extends Login {
+public class User extends Login implements ConnectionAware {
 
   @Column(name = "password")
   private String password;
 
   @OneToOne
-  @JoinColumn(name = "id", insertable = false, updatable = false)
+  @JoinColumn(name = "id", insertable = false, updatable = false, nullable = false)
   private Player player;
 
   @OneToOne(mappedBy = "user")
@@ -30,5 +32,14 @@ public class User extends Login {
   @Override
   public String toString() {
     return "User(" + (player != null ? player.getId() : null) + ", " + getLogin() + ")";
+  }
+
+  @Override
+  public ClientConnection getClientConnection() {
+    return player.getClientConnection();
+  }
+
+  public void setClientConnection(ClientConnection clientConnection) {
+    player.setClientConnection(clientConnection);
   }
 }

@@ -1,13 +1,12 @@
 package com.faforever.server.social;
 
 import com.faforever.server.common.ClientMessage;
-import lombok.Data;
+import lombok.Value;
 
 /**
- * @deprecated adding friends should directly be requested from the API, not from the server.
+ * Tells the server to add the specified player to the sending player's friend list.
  */
-@Deprecated
-@Data
+@Value
 public class AddFriendRequest implements ClientMessage {
-  private final int playerId;
+  int playerId;
 }
