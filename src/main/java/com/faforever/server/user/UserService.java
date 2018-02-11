@@ -18,7 +18,6 @@ import java.util.Map;
 @MXBean
 public class UserService {
   private static final String KEY_USER_ID = "user_id";
-  private static final String KEY_NON_LOCKED = "nonLocked";
 
   private final PlayerService playerService;
   private final MacSigner macSigner;

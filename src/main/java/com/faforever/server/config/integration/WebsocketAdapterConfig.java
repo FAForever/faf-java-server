@@ -132,7 +132,7 @@ public class WebsocketAdapterConfig {
         return clientConnectionService.getConnections().stream()
           .filter(clientConnection -> clientConnection.getProtocol() == Protocol.V2_JSON_UTF_8)
           .map(clientConnection -> MessageBuilder.fromMessage(message)
-            .setHeader(MessageHeaders.CLIENT_CONNECTION, clientConnection)
+            .setHeader(CLIENT_CONNECTION, clientConnection)
           )
           .collect(Collectors.toList());
       }
@@ -144,7 +144,7 @@ public class WebsocketAdapterConfig {
    * IntegrationMessageHeaderAccessor#CORRELATION_ID}.
    */
   private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
-    return headerEnricherSpec -> headerEnricherSpec.headerFunction(IntegrationMessageHeaderAccessor.CORRELATION_ID,
+    return headerEnricherSpec -> headerEnricherSpec.headerFunction(CORRELATION_ID,
       message -> message.getHeaders().get(MessageHeaders.WS_SESSION_ID));
   }
 
@@ -168,7 +168,7 @@ public class WebsocketAdapterConfig {
    */
   private Consumer<HeaderEnricherSpec> sessionIdEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.headerFunction(MessageHeaders.WS_SESSION_ID,
-      message -> message.getHeaders().get(MessageHeaders.CLIENT_CONNECTION, ClientConnection.class).getId());
+      message -> message.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class).getId());
   }
 
   private static class FafSubProtocolHandler extends PassThruSubProtocolHandler {

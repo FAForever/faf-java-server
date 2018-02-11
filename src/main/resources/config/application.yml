@@ -68,3 +68,4 @@ logging:
     com.faforever.server.matchmaker: trace
     com.faforever.server.game: trace
     com.faforever.server.client: trace
+    com.faforever.server.ice: trace
