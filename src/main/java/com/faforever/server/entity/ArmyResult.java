@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.util.Assert;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -20,6 +21,8 @@ public class ArmyResult {
   private final Integer score;
 
   public static ArmyResult of(int armyId, @NotNull Outcome outcome, @Nullable Integer score) {
+    Assert.notNull(outcome, "'outcome' must not be null");
+
     return new ArmyResult(armyId, outcome, score);
   }
 }

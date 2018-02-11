@@ -21,9 +21,9 @@ import com.faforever.server.rating.RatingService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +39,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +53,6 @@ public class MatchMakerService {
 
   private static final double DESIRED_MIN_GAME_QUALITY = 0.8d;
   private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
-  private static final Pattern MAP_FILENAME_PATTERN = Pattern.compile("maps/(.*)\\.zip");
   private final ModService modService;
   private final ServerProperties properties;
   private final RatingService ratingService;
@@ -183,29 +181,19 @@ public class MatchMakerService {
           throw new RequestException(requestId, ErrorCode.HOST_FAILED_TO_START_GAME, title, host);
         }
 
-        log.trace("Host '{}' for match '{}' is ready", host, title);
-        clientService.sendMatchCreatedNotification(requestId, game.getId(), requester);
-
         AtomicInteger counter = new AtomicInteger();
         Integer hostId = host.getId();
+
+        setPlayerOptionsForMatchParticipant(participants, host, counter, hostId);
+
+        log.trace("Host '{}' for match '{}' is ready", host, title);
+        clientService.sendMatchCreatedNotification(requestId, game.getId(), requester);
 
         List<CompletableFuture<Game>> guestGameFutures = guests.stream()
           .peek(player -> log.trace("Telling player '{}' to start the game process for match '{}'", player, title))
           .map(player -> gameService.joinGame(game.getId(), null, player)
             .thenApply(gameStartedFuture -> {
-
-              MatchParticipant participant = participants.stream()
-                .filter(matchParticipant -> matchParticipant.getId() == player.getId())
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No match participant for player: " + player.getId()));
-
-              gameService.updatePlayerOption(host, hostId, GameService.OPTION_TEAM, participant.getTeam());
-              gameService.updatePlayerOption(host, hostId, GameService.OPTION_FACTION, participant.getFaction().toFaValue());
-              gameService.updatePlayerOption(host, hostId, GameService.OPTION_START_SPOT, participant.getStartSpot());
-              gameService.updatePlayerOption(host, hostId, GameService.OPTION_COLOR, counter.incrementAndGet());
-              // TODO check if enumerating armies makes sense or if the requester needs to specify
-              gameService.updatePlayerOption(host, hostId, GameService.OPTION_ARMY, counter.get());
-
+              setPlayerOptionsForMatchParticipant(participants, host, counter, player.getId());
               return gameStartedFuture;
             })
           )
@@ -218,6 +206,24 @@ public class MatchMakerService {
             return null;
           });
       });
+  }
+
+  private void setPlayerOptionsForMatchParticipant(List<MatchParticipant> participants, Player host, AtomicInteger counter, Integer playerId) {
+    MatchParticipant participant = getMatchParticipant(participants, playerId);
+    gameService.updatePlayerOption(host, playerId, GameService.OPTION_TEAM, participant.getTeam());
+    gameService.updatePlayerOption(host, playerId, GameService.OPTION_FACTION, participant.getFaction().toFaValue());
+    gameService.updatePlayerOption(host, playerId, GameService.OPTION_START_SPOT, participant.getStartSpot());
+    gameService.updatePlayerOption(host, playerId, GameService.OPTION_COLOR, counter.incrementAndGet());
+    // TODO check if enumerating armies makes sense or if the requester needs to specify
+    gameService.updatePlayerOption(host, playerId, GameService.OPTION_ARMY, counter.get());
+  }
+
+  @NotNull
+  private MatchParticipant getMatchParticipant(List<MatchParticipant> participants, int playerId) {
+    return participants.stream()
+      .filter(matchParticipant -> matchParticipant.getId() == playerId)
+      .findFirst()
+      .orElseThrow(() -> new IllegalStateException("No match participant for player: " + playerId));
   }
 
   private void processPool(String poolName, Map<Integer, MatchMakerSearch> pool) {
@@ -360,32 +366,27 @@ public class MatchMakerService {
    * For each submitted search, a {@code PotentialMatch} is calculated against every online player. If the resulting
    * quality is high enough, the affected player will be notified.
    */
-  @RequiredArgsConstructor
-  @ToString
-  @EqualsAndHashCode(of = {"poolName", "rightPlayer"})
+  @Value
   private static class PotentialMatch {
-    private final Player rightPlayer;
-    private final String poolName;
-    private final double quality;
+    Player rightPlayer;
+    String poolName;
+    double quality;
   }
 
   /**
    * Represents a match of two searches. A {@code Match} is only created if a minimum quality is met.
    */
-  @RequiredArgsConstructor
-  @ToString
-  @EqualsAndHashCode(of = {"leftSearch", "rightSearch"})
+  @Value
   private static class Match {
-    private final MatchMakerSearch leftSearch;
-    private final MatchMakerSearch rightSearch;
-    private final double quality;
+    MatchMakerSearch leftSearch;
+    MatchMakerSearch rightSearch;
+    double quality;
   }
 
   /**
    * Represents a search submitted by a player. Two matching searches can result in a {@link Match}.
    */
   @AllArgsConstructor
-  @ToString
   @EqualsAndHashCode(of = {"poolName", "player"})
   private static class MatchMakerSearch {
     private final Instant createdTime;

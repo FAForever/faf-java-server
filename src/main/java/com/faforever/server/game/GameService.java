@@ -611,9 +611,12 @@ public class GameService {
   }
 
   /**
-   * Checks whether every connected player reported outcomes for all armies (human and AI). If so, the game is set to
-   * {@link GameState#CLOSED}.
+   * Checks whether a game has ended and, if so, calls {@link #onGameEnded(Game)}. As the game doesn't yet send a clear
+   * "game ended" command yet, a game is considered as ended when the following conditions are met: <ol><li>Every
+   * connected player reported an army outcome for all armies</li> <li>Every survivor reported a score for all armies
+   * (defeated players do not send scores)</li></ol>(human and AI).
    */
+  // TODO simplify once https://github.com/FAForever/fa/issues/2378 is implemented
   private void endGameIfArmyResultsComplete(Game game) {
     List<Integer> armies = Streams.concat(
       game.getPlayerOptions().values().stream(),
@@ -631,21 +634,30 @@ public class GameService {
       if (reportedOutcomes == null) {
         return;
       }
-      Collection<Integer> armiesWithIncompleteResult = new ArrayList<>(armies);
-      for (ArmyResult armyResult : reportedOutcomes.values()) {
-        if (armyResult.getOutcome() != Outcome.UNKNOWN) {
-          armiesWithIncompleteResult.remove(armyResult.getArmyId());
-        }
-      }
-      if (!armiesWithIncompleteResult.isEmpty()) {
-        if (log.isTraceEnabled()) {
-          log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
-            playerId, Joiner.on(", ").join(armiesWithIncompleteResult));
-        }
+      if (!areArmyOutcomesComplete(armies, playerId, reportedOutcomes)) {
         return;
       }
     }
+
     onGameEnded(game);
+  }
+
+  private boolean areArmyOutcomesComplete(List<Integer> armies, Integer playerId, Map<Integer, ArmyResult> reportedOutcomes) {
+    Collection<Integer> armiesWithIncompleteResult = new ArrayList<>(armies);
+    for (ArmyResult armyResult : reportedOutcomes.values()) {
+      // TODO armyResult.getScore() != null isn't correct, see https://github.com/FAForever/fa/issues/2378
+      if (armyResult.getOutcome() != Outcome.UNKNOWN && armyResult.getScore() != null) {
+        armiesWithIncompleteResult.remove(armyResult.getArmyId());
+      }
+    }
+    if (!armiesWithIncompleteResult.isEmpty()) {
+      if (log.isTraceEnabled()) {
+        log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
+          playerId, Joiner.on(", ").join(armiesWithIncompleteResult));
+      }
+      return false;
+    }
+    return true;
   }
 
   private void addPlayer(Game game, Player player) {
@@ -765,7 +777,7 @@ public class GameService {
   }
 
   /**
-   * Finds the {@link ArmyResult ArmyOutcomes} that have been reported most often, mappyed by army ID. Only respects
+   * Finds the {@link ArmyResult ArmyOutcomes} that have been reported most often, mapped by army ID. Only respects
    * reports of players who are still connected and have reported a score as well as an outcome.
    */
   private Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
@@ -817,10 +829,8 @@ public class GameService {
     Player winner = null;
     if (!game.isMutuallyAgreedDraw()) {
       winner = game.getPlayerStats().values().stream()
-        .max(Comparator.comparingInt(value -> {
-          Integer score = value.getScore();
-          return score;
-        }))
+        .filter(gamePlayerStats -> gamePlayerStats.getScore() != null)
+        .max(Comparator.comparingInt(GamePlayerStats::getScore))
         .map(GamePlayerStats::getPlayer)
         .orElse(null);
       log.trace("Game '{}' did not end with mutual draw, winner is: {}", game, winner);

@@ -3,6 +3,7 @@ package com.faforever.server.client;
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.common.ServerMessage;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.entity.Avatar;
@@ -16,19 +17,25 @@ import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
+import com.faforever.server.ice.ForwardedIceMessage;
+import com.faforever.server.ice.IceServer;
 import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.PlayerResponse;
+import com.faforever.server.social.SocialRelationListResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.net.InetAddress;
+import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +45,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
@@ -59,6 +67,9 @@ public class ClientServiceTest {
   private ClientGateway clientGateway;
   @Mock
   private CoopService coopService;
+
+  @Captor
+  private ArgumentCaptor<ServerMessage> serverMessageCaptor;
 
   private ClientConnection clientConnection;
   private Player player;
@@ -217,13 +228,31 @@ public class ClientServiceTest {
   @Test
   public void sendIceServers() throws Exception {
     List<IceServerList> iceServers = Collections.singletonList(
-      new IceServerList(60, Instant.now(), emptyList())
+      new IceServerList(60, Instant.now(), Arrays.asList(
+        new IceServer(URI.create("turn:test1"), null, null, null),
+        new IceServer(URI.create("turn:test2"), "username", "credential", "credentialType")
+      ))
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
     instance.sendIceServers(iceServers, connectionAware);
 
     verify(clientGateway).send(new IceServersResponse(iceServers), clientConnection);
+  }
+
+  @Test
+  public void sendIceMessage() throws Exception {
+    instance.sendIceMessage(1, Collections.emptyMap(), clientConnection);
+
+    verify(clientGateway).send(new ForwardedIceMessage(1, Collections.emptyMap()), clientConnection);
+  }
+
+  @Test
+  public void sendSocialRelations() throws Exception {
+    SocialRelationListResponse response = new SocialRelationListResponse(emptyList());
+    instance.sendSocialRelations(response, clientConnection);
+
+    verify(clientGateway).send(response, clientConnection);
   }
 
   @Test
@@ -266,5 +295,31 @@ public class ClientServiceTest {
     assertThat(captor.getValue().getAvatars(), hasSize(2));
     assertThat(captor.getValue().getAvatars().get(0).getUrl(), is("http://example.com/foo.bar"));
     assertThat(captor.getValue().getAvatars().get(0).getDescription(), is("Foo bar"));
+  }
+
+  @Test
+  public void connectToHost() throws Exception {
+    Game game = new Game().setHost((Player) new Player().setLogin("JUnit").setId(1));
+
+    instance.connectToHost(player, game);
+
+    verify(clientGateway).send(new ConnectToHostResponse("JUnit", 1), clientConnection);
+  }
+
+  @Test
+  public void broadcastPlayerInformation() throws Exception {
+    instance.broadcastMinDelay = Duration.ofMinutes(-1);
+
+    instance.broadcastPlayerInformation(Arrays.asList(
+      (Player) new Player().setAvailableAvatars(Collections.emptyList()).setId(1),
+      (Player) new Player().setAvailableAvatars(Collections.emptyList()).setId(2),
+      (Player) new Player().setAvailableAvatars(Collections.emptyList()).setId(3)
+    ));
+    instance.broadcastDelayedResponses();
+
+    verify(clientGateway).broadcast(serverMessageCaptor.capture());
+    ServerMessage message = serverMessageCaptor.getValue();
+
+    assertThat(message, instanceOf(PlayerResponses.class));
   }
 }

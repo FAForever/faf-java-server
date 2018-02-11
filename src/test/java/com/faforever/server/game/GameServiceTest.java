@@ -98,7 +98,6 @@ public class GameServiceTest {
   private static final String MAP_NAME = "SCMP_001";
   private static final String FAF_TECHNICAL_NAME = "faf";
   private static final String QAI = "QAI";
-  private static final String AIX = "AIX";
   private static final int GAME_MIN_RATING = 1000;
   private static final int GAME_MAX_RATING = 1500;
 
@@ -623,6 +622,7 @@ public class GameServiceTest {
     when(modService.isLadder1v1(any())).thenReturn(true);
     player1.setLadder1v1Rating(mock(Ladder1v1Rating.class));
     player2.setLadder1v1Rating(mock(Ladder1v1Rating.class));
+
     Game game = hostGame(player1);
     addPlayer(game, player2);
     launchGame(game);
@@ -1276,6 +1276,7 @@ public class GameServiceTest {
     instance.updatePlayerOption(host, host.getId(), OPTION_FACTION, 1);
     instance.updatePlayerOption(host, host.getId(), OPTION_COLOR, host.getId());
     instance.updatePlayerOption(host, host.getId(), OPTION_START_SPOT, host.getId());
+    instance.updatePlayerOption(host, host.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
 
     verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
     verify(clientService).startGameProcess(game, player1);
@@ -1305,10 +1306,13 @@ public class GameServiceTest {
   private void addPlayer(Game game, Player player) {
     instance.joinGame(game.getId(), game.getPassword(), player);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player);
-    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_FACTION, 1);
-    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_SLOT, player.getId());
-    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_ARMY, player.getId());
-    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_COLOR, player.getId());
-    instance.updatePlayerOption(game.getHost(), player.getId(), OPTION_START_SPOT, player.getId());
+
+    Player host = game.getHost();
+    instance.updatePlayerOption(host, player.getId(), OPTION_FACTION, 1);
+    instance.updatePlayerOption(host, player.getId(), OPTION_SLOT, player.getId());
+    instance.updatePlayerOption(host, player.getId(), OPTION_ARMY, player.getId());
+    instance.updatePlayerOption(host, player.getId(), OPTION_COLOR, player.getId());
+    instance.updatePlayerOption(host, player.getId(), OPTION_START_SPOT, player.getId());
+    instance.updatePlayerOption(host, player.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
   }
 }

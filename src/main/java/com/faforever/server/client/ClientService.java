@@ -44,12 +44,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -78,7 +74,11 @@ public class ClientService {
   private final CoopService coopService;
   private final ConcurrentMap<Object, DelayedResponse> delayedResponses;
   private final ServerProperties serverProperties;
-  private final ExecutorService executorService;
+
+  @VisibleForTesting
+  Duration broadcastMinDelay;
+  @VisibleForTesting
+  Duration broadcastMaxDelay;
 
   public ClientService(ClientGateway clientGateway, CoopService coopService, ServerProperties serverProperties) {
     this.clientGateway = clientGateway;
@@ -86,8 +86,8 @@ public class ClientService {
     this.serverProperties = serverProperties;
     delayedResponses = new ConcurrentHashMap<>();
 
-    AtomicInteger threadCount = new AtomicInteger();
-    executorService = Executors.newFixedThreadPool(1, runnable -> new Thread(runnable, "client-service-" + threadCount.incrementAndGet()));
+    broadcastMinDelay = Duration.ofSeconds(2);
+    broadcastMaxDelay = Duration.ofSeconds(5);
   }
 
   public void startGameProcess(Game game, Player player) {
@@ -259,16 +259,14 @@ public class ClientService {
    * Sends a list of player information to the specified recipient.
    */
   public void sendPlayerInformation(Collection<Player> players, ConnectionAware recipient) {
-    toPlayerResponses(players)
-      .thenAccept(responses -> send(responses, recipient));
+    send(toPlayerResponses(players), recipient);
   }
 
   /**
    * Sends a list of player information to all authenticated clients.
    */
   public void broadcastPlayerInformation(Collection<Player> players) {
-    toPlayerResponses(players)
-      .thenAccept(responses -> broadcastDelayed(responses, Duration.ofSeconds(2), Duration.ofSeconds(5), o -> "players", PLAYER_RESPONSES_AGGREGATOR));
+    broadcastDelayed(toPlayerResponses(players), broadcastMinDelay, broadcastMaxDelay, o -> "players", PLAYER_RESPONSES_AGGREGATOR);
   }
 
   /**
@@ -301,10 +299,10 @@ public class ClientService {
     send(avatarListResponse, recipient);
   }
 
-  private CompletableFuture<PlayerResponses> toPlayerResponses(Collection<Player> players) {
-    return CompletableFuture.supplyAsync((() -> new PlayerResponses(players.stream()
+  private PlayerResponses toPlayerResponses(Collection<Player> players) {
+    return new PlayerResponses(players.stream()
       .map(this::toPlayerInformationResponse)
-      .collect(Collectors.toList()))), executorService);
+      .collect(Collectors.toList()));
   }
 
   private PlayerResponse toPlayerInformationResponse(Player player) {
