@@ -30,4 +30,4 @@ faf-server:
 logging:
   path: ${LOG_FILE_DIRECTORY:/tmp}
   level:
-    com.faforever.server: warn
+

@@ -64,12 +64,5 @@ logging:
   level:
     org.springframework.integration: info
     org.springframework: info
-    com.faforever.server: info
-    com.zaxxer.hikari: warn
     org.hibernate: warn
-    com.faforever.server.config.IntegrationConfig: info
-    com.faforever.server.config.LegacyAdapterConfig: info
-    com.faforever.server.matchmaker: trace
-    com.faforever.server.game: trace
-    com.faforever.server.client: trace
-    com.faforever.server.ice: trace
+    com.zaxxer.hikari: warn
