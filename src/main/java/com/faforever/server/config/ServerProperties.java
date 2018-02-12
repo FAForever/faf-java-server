@@ -142,7 +142,7 @@ public class ServerProperties {
     private Twilio twilio = new Twilio();
     private List<Server> servers = Collections.emptyList();
     /** TTL in seconds. */
-    private int ttl = 3600;
+    private int ttl = 24 * 3600;
 
     @Data
     public static class Twilio {
