@@ -51,7 +51,7 @@ public class OAuthResourceServerConfig extends ResourceServerConfigurerAdapter {
 
     public boolean matches(HttpServletRequest request) {
       String auth = request.getHeader("Authorization");
-      boolean hasTokenInHeader = (auth != null) && auth.toLowerCase(Locale.US).startsWith(BEARER_TYPE.toLowerCase());
+      boolean hasTokenInHeader = (auth != null) && auth.toLowerCase(Locale.US).startsWith(BEARER_TYPE.toLowerCase(Locale.US));
       boolean hasTokenInParam = request.getParameter(ACCESS_TOKEN) != null;
       return hasTokenInHeader || hasTokenInParam;
     }

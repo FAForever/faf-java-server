@@ -22,9 +22,10 @@ public final class MessageHeaders {
    */
   public static final String USER_HEADER = SimpMessageHeaderAccessor.USER_HEADER;
 
+  /** Contains the WebSocket session ID. */
+  public static final String WS_SESSION_ID = SimpMessageHeaderAccessor.SESSION_ID_HEADER;
+
   private MessageHeaders() {
     // Not instantiatable
   }
-
-  public static final String WS_SESSION_ID = SimpMessageHeaderAccessor.SESSION_ID_HEADER;
 }

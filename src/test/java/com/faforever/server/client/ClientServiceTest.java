@@ -311,9 +311,9 @@ public class ClientServiceTest {
     instance.broadcastMinDelay = Duration.ofMinutes(-1);
 
     instance.broadcastPlayerInformation(Arrays.asList(
-      (Player) new Player().setAvailableAvatars(Collections.emptyList()).setId(1),
-      (Player) new Player().setAvailableAvatars(Collections.emptyList()).setId(2),
-      (Player) new Player().setAvailableAvatars(Collections.emptyList()).setId(3)
+      (Player) new Player().setAvailableAvatars(emptyList()).setId(1),
+      (Player) new Player().setAvailableAvatars(emptyList()).setId(2),
+      (Player) new Player().setAvailableAvatars(emptyList()).setId(3)
     ));
     instance.broadcastDelayedResponses();
 

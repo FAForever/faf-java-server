@@ -18,10 +18,6 @@ faf-server:
     enabled: ${UID_ENABLED:true}
     private-key: ${UID_PRIVATE_KEY}
     link-to-steam-url: ${STEAM_LINK_URL:http://app.faforever.com/faf/steam.php}
-  ice:
-    twilio:
-      account-sid: ${TWILIO_ACCOUNT_SID}
-      auth-token: ${TWILIO_AUTH_TOKEN}
   jwt:
     secret: ${JWT_SECRET}
   ladder1v1:

@@ -218,7 +218,7 @@ public class LegacyAdapterConfig {
         return clientConnectionService.getConnections().stream()
           .filter(clientConnection -> clientConnection.getProtocol() == Protocol.V1_LEGACY_UTF_16)
           .map(clientConnection -> MessageBuilder.fromMessage(message)
-            .setHeader(MessageHeaders.CLIENT_CONNECTION, clientConnection)
+            .setHeader(CLIENT_CONNECTION, clientConnection)
           )
           .collect(Collectors.toList());
       }
@@ -245,7 +245,7 @@ public class LegacyAdapterConfig {
    */
   private Consumer<HeaderEnricherSpec> connectionIdEnricher() {
     return headerEnricherSpec -> headerEnricherSpec.headerFunction(IpHeaders.CONNECTION_ID,
-      message -> message.getHeaders().get(MessageHeaders.CLIENT_CONNECTION, ClientConnection.class).getId());
+      message -> message.getHeaders().get(CLIENT_CONNECTION, ClientConnection.class).getId());
   }
 
   /**
