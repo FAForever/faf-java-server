@@ -28,5 +28,6 @@ faf-server:
     season: ${LADDER1V1_SEASON:1}
 
 logging:
+  path: ${LOG_FILE_DIRECTORY:/tmp}
   level:
     com.faforever.server: warn
