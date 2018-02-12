@@ -20,6 +20,10 @@ faf-server:
     max-page-size: 10000
   database:
     schema-version: ${DATABASE_SCHEMA_VERSION:48}
+  ice:
+    twilio:
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
 
 spring:
   application:
