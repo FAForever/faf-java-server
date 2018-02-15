@@ -31,6 +31,7 @@ import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
 import com.google.common.collect.ImmutableMap;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -80,6 +81,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -368,6 +370,7 @@ public class GameServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void simpleTwoPlayerGame() throws Exception {
     Game game = hostGame(player1);
     addPlayer(game, player2);
@@ -391,6 +394,12 @@ public class GameServiceTest {
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
+
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
+    verify(clientService).disconnectPlayerFromGame(eq(player1.getId()), (Collection<? extends ConnectionAware>) argThat(Matchers.contains(player2)));
+
+    instance.updatePlayerGameState(PlayerGameState.CLOSED, player2);
+    verify(clientService).disconnectPlayerFromGame(eq(player2.getId()), argThat(Matchers.empty()));
 
     assertThat(game.getPlayerStats().values(), hasSize(2));
     assertThat(game.getPlayerStats().get(player1.getId()).getScore(), is(10));

@@ -677,9 +677,11 @@ public class GameService {
     player.getGameFuture().cancel(false);
 
     Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
-    connectedPlayers.remove(playerId, player);
+    connectedPlayers.remove(playerId);
     // Discard reports of disconnected players since their report may not reflect the end result
     game.getReportedArmyResults().remove(playerId);
+
+    clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
 
     if (connectedPlayers.isEmpty()) {
       switch (game.getState()) {

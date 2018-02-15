@@ -4,9 +4,9 @@ import com.faforever.server.avatar.ListAvatarsRequest;
 import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.DisconnectClientRequest;
+import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LoginRequest;
-import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.common.ServerMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
@@ -15,7 +15,6 @@ import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -23,6 +22,7 @@ import com.faforever.server.game.GameStateReport;
 import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
+import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.ice.IceMessage;
@@ -270,4 +270,9 @@ public final class ChannelNames {
    * Channel for {@link SelectAvatarRequest}.
    */
   public static final String SELECT_AVATAR = "selectAvatar";
+
+  /**
+   * Channel for {@link com.faforever.server.game.DisconnectedReport}.
+   */
+  public static final String DISCONNECTED_REPORT = "disconnectedReport";
 }

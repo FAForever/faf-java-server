@@ -207,8 +207,7 @@ public class IntegrationConfig {
     router.setChannelMapping(AddFoeRequest.class.getName(), ChannelNames.ADD_FOE_REQUEST);
     router.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.REMOVE_FRIEND_REQUEST);
     router.setChannelMapping(RemoveFoeRequest.class.getName(), ChannelNames.REMOVE_FOE_REQUEST);
-    // This is sent by the game but currently, the server has no interest in it.
-    router.setChannelMapping(DisconnectedReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
+    router.setChannelMapping(DisconnectedReport.class.getName(), ChannelNames.DISCONNECTED_REPORT);
     // This is sent by the game but currently, the server has no interest in it.
     router.setChannelMapping(BottleneckReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     // This is sent by the game but currently, the server has no interest in it.
