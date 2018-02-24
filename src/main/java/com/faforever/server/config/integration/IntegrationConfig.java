@@ -20,6 +20,7 @@ import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.DisconnectedReport;
+import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -212,6 +213,8 @@ public class IntegrationConfig {
     router.setChannelMapping(BottleneckReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     // This is sent by the game but currently, the server has no interest in it.
     router.setChannelMapping(BottleneckClearedReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
+    // This is sent by the game but currently, the server has no interest in it.
+    router.setChannelMapping(GameChatMessageReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     return router;
   }
 

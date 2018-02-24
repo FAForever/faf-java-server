@@ -25,6 +25,7 @@ import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
+import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -145,11 +146,17 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return DisconnectedReport.INSTANCE;
       case BOTTLENECK:
         return BottleneckReport.INSTANCE;
+      case CHAT:
+        return handleGameChatMessage((String) getArgs(source).get(0));
       case BOTTLENECK_CLEARED:
         return BottleneckClearedReport.INSTANCE;
       default:
         throw new ProgrammingError("Uncovered message type: " + messageType);
     }
+  }
+
+  private ClientMessage handleGameChatMessage(String message) {
+    return new GameChatMessageReport(message);
   }
 
   @NotNull

@@ -12,6 +12,7 @@ import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
+import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.GameStateReport;
@@ -111,5 +112,9 @@ public interface V2ClientMessageMapper {
 
   default MutuallyAgreedDrawRequest map(@SuppressWarnings("unused") AgreeDrawClientMessage message) {
     return MutuallyAgreedDrawRequest.INSTANCE;
+  }
+
+  default GameChatMessageReport map(GameChatMessageClientMessage message) {
+    return new GameChatMessageReport(message.getMessage());
   }
 }

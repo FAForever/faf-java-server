@@ -78,7 +78,7 @@ public class ClientConnectionService {
     synchronized (connections) {
       Optional.ofNullable(connections.remove(connectionId)).ifPresent(clientConnection -> {
         log.debug("Removing connection '{}' with protocol '{}'", connectionId, protocol);
-        eventPublisher.publishEvent(new ClientDisconnectedEvent(clientConnection, clientConnection));
+        eventPublisher.publishEvent(new ClientDisconnectedEvent(this, clientConnection));
         counterService.decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, protocol));
       });
     }

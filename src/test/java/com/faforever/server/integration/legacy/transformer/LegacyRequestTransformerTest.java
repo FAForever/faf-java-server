@@ -18,6 +18,7 @@ import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
+import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -543,10 +544,20 @@ public class LegacyRequestTransformerTest {
   @Test
   public void restoreGameSession() throws Exception {
     RestoreGameSessionRequest result = (RestoreGameSessionRequest) instance.transform(ImmutableMap.of(
-      "command", "restore_game_session",
+      KEY_COMMAND, "restore_game_session",
       "game_id", 5
     ));
 
     assertThat(result.getGameId(), is(5));
+  }
+
+  @Test
+  public void chat() {
+    GameChatMessageReport result = (GameChatMessageReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "Chat",
+      KEY_ARGS, Collections.singletonList("Message")
+    ));
+
+    assertThat(result.getMessage(), is("Message"));
   }
 }

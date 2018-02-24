@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Transforms messages from the V2 protocol to internal client message objects.
+ * Transforms messages from the v2 protocol to internal client message objects.
  */
 @Slf4j
 @Component

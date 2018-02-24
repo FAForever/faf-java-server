@@ -67,6 +67,7 @@ public enum LegacyClientMessageType {
   ICE_MESSAGE("IceMsg"),
   DISCONNECTED("Disconnected"),
   BOTTLENECK("Bottleneck"),
+  CHAT("Chat"),
   BOTTLENECK_CLEARED("BottleneckCleared");
 
   private static Map<String, LegacyClientMessageType> fromString;
