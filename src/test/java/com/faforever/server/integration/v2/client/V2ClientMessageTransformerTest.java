@@ -14,6 +14,7 @@ import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.Faction;
+import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
 import com.faforever.server.game.GameStateReport;
@@ -211,5 +212,11 @@ public class V2ClientMessageTransformerTest {
   public void teamKill() throws Exception {
     ClientMessage result = instance.transform(write(new TeamKillClientMessage(100, 1, "A", 2, "B")));
     assertThat(result, is(new TeamKillReport(Duration.ofSeconds(100), 1, "A", 2, "B")));
+  }
+
+  @Test
+  public void gameChatMessage() throws Exception {
+    ClientMessage result = instance.transform(write(new GameChatMessageClientMessage("Message")));
+    assertThat(result, is(new GameChatMessageReport("Message")));
   }
 }

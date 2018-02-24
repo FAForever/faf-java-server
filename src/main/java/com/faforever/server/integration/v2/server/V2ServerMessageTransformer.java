@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Transforms responses into legacy response formats.
+ * Transforms messages sent from the server to the client into the v2 message format.
  */
 @Component
 public class V2ServerMessageTransformer implements GenericTransformer<ServerMessage, String> {
