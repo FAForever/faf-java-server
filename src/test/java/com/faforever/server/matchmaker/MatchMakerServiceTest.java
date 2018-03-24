@@ -71,6 +71,7 @@ public class MatchMakerServiceTest {
     FeaturedMod ladder1v1Mod = new FeaturedMod().setTechnicalName("faf");
 
     when(modService.getLadder1v1()).thenReturn(Optional.of(ladder1v1Mod));
+    when(mapService.getRandomLadderMap(any(), any())).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
 
     RatingService ratingService = new RatingService(properties);
     instance = new MatchMakerService(modService, properties, ratingService, clientService, gameService, mapService, playerService);
@@ -133,8 +134,6 @@ public class MatchMakerServiceTest {
    */
   @Test
   public void submitSearchTwoFreshPlayersMatch() {
-    when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
-
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
     when(gameService.createGame(any(), any(), any(), any(), any(), any(), any(), any()))

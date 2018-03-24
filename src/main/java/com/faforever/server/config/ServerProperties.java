@@ -105,6 +105,8 @@ public class ServerProperties {
     private float reducedGain = 0.5f;
     /** Score loss if the winner is in a superior league. */
     private float reducedLoss = 0.5f;
+    /** The number of maps played lately per player that are not chosen for the next match */
+    private int lastMapsNotConsidered = 2;
   }
 
   @Data
