@@ -1,13 +1,19 @@
 package com.faforever.server.map;
 
 import com.faforever.server.cache.CacheNames;
+import com.faforever.server.config.ServerProperties;
+import com.faforever.server.entity.FeaturedMod;
 import com.faforever.server.entity.Map;
 import com.faforever.server.entity.MapStats;
 import com.faforever.server.entity.MapVersion;
+import com.faforever.server.entity.Player;
+import com.faforever.server.mod.ModService;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -16,15 +22,21 @@ import java.util.Random;
 public class MapService {
   private final MapVersionRepository mapVersionRepository;
   private final Ladder1v1MapRepository ladder1v1MapRepository;
-  private MapStatsRepository mapStatsRepository;
+  private final MapStatsRepository mapStatsRepository;
   private final Random random;
+  private final ServerProperties serverProperties;
+  private final ModService modService;
 
   public MapService(MapVersionRepository mapVersionRepository,
                     Ladder1v1MapRepository ladder1v1MapRepository,
-                    MapStatsRepository mapFeaturesRepository) {
+                    MapStatsRepository mapFeaturesRepository,
+                    ServerProperties serverProperties,
+                    ModService modService) {
     this.mapVersionRepository = mapVersionRepository;
     this.ladder1v1MapRepository = ladder1v1MapRepository;
     this.mapStatsRepository = mapFeaturesRepository;
+    this.serverProperties = serverProperties;
+    this.modService = modService;
     this.random = new Random();
   }
 
@@ -38,9 +50,27 @@ public class MapService {
     return mapVersionRepository.findById(mapVersionId);
   }
 
-  public MapVersion getRandomLadderMap() {
-    List<MapVersion> ladder1v1Maps = getLadder1v1Maps();
-    return ladder1v1Maps.get(random.nextInt(ladder1v1Maps.size() - 1));
+  public MapVersion getRandomLadderMap(Player host, Player opponent) {
+    List<MapVersion> originalLadderMapPool = getLadder1v1Maps();
+    List<MapVersion> modifiedLadderMapPool = new ArrayList<>(originalLadderMapPool);
+
+    int lastMapsNotConsidered = serverProperties.getLadder1v1().getLastMapsNotConsidered();
+    modifiedLadderMapPool.removeAll(getRecentlyPlayedLadderMapVersions(host, lastMapsNotConsidered));
+    modifiedLadderMapPool.removeAll(getRecentlyPlayedLadderMapVersions(opponent, lastMapsNotConsidered));
+
+    if (modifiedLadderMapPool.size() > 1) {
+      return modifiedLadderMapPool.get(random.nextInt(modifiedLadderMapPool.size() - 1));
+    }
+    return originalLadderMapPool.get(random.nextInt(originalLadderMapPool.size() - 1));
+  }
+
+  @Transactional
+  public List<MapVersion> getRecentlyPlayedLadderMapVersions(Player player, int limit) {
+    Optional<FeaturedMod> ladder1v1 = modService.getLadder1v1();
+    if (!ladder1v1.isPresent()) {
+      throw new IllegalStateException("Ladder 1v1 mod could not be found");
+    }
+    return ladder1v1MapRepository.findRecentlyPlayedLadderMapVersions(new PageRequest(0, limit), player.getId(), ladder1v1.get().getId()).getContent();
   }
 
   @Transactional

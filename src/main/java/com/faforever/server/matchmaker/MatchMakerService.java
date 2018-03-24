@@ -309,7 +309,7 @@ public class MatchMakerService {
     gameService.createGame(
       host.getLogin() + " vs. " + opponent.getLogin(),
       technicalModName,
-      randomMap(),
+      randomMap(host, opponent),
       null,
       GameVisibility.PRIVATE,
       null,
@@ -334,8 +334,8 @@ public class MatchMakerService {
       });
   }
 
-  private String randomMap() {
-    return mapService.getRandomLadderMap().getFilename();
+  private String randomMap(Player host, Player opponent) {
+    return mapService.getRandomLadderMap(host, opponent).getFilename();
   }
 
   /**
