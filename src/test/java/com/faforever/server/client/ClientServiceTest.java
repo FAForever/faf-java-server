@@ -50,8 +50,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -85,7 +85,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void connectToPeer() throws Exception {
+  public void connectToPeer() {
     Player peer = new Player();
     peer.setId(2);
     peer.setLogin("test");
@@ -102,7 +102,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void startGameProcess() throws Exception {
+  public void startGameProcess() {
     Game game = new Game().setId(1).setFeaturedMod(new FeaturedMod());
 
     instance.startGameProcess(game, player);
@@ -114,7 +114,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void hostGame() throws Exception {
+  public void hostGame() {
     Game game = new Game().setId(1).setMapName("SCMP_001");
 
     instance.hostGame(game, player);
@@ -126,7 +126,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void reportUpdatedAchievements() throws Exception {
+  public void reportUpdatedAchievements() {
     List<UpdatedAchievementResponse> list = Collections.singletonList(new UpdatedAchievementResponse("1", "1", null, AchievementState.UNLOCKED, true));
 
     instance.reportUpdatedAchievements(list, player);
@@ -140,7 +140,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void sendUserDetails() throws Exception {
+  public void sendUserDetails() {
     Avatar avatar = new Avatar().setUrl("http://example.com").setDescription("Tooltip");
     player
       .setAvailableAvatars(Collections.singletonList(
@@ -173,7 +173,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void sendModList() throws Exception {
+  public void sendModList() {
     instance.sendModList(Collections.singletonList(
       new FeaturedMod().setDisplayName("Mod").setTechnicalName("mod").setDisplayOrder(4).setDescription("Description")
     ), player);
@@ -189,13 +189,13 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void sendModListSendsMultiple() throws Exception {
+  public void sendModListSendsMultiple() {
     instance.sendModList(Arrays.asList(new FeaturedMod(), new FeaturedMod()), player);
     verify(clientGateway, times(2)).send(any(FeaturedModResponse.class), eq(clientConnection));
   }
 
   @Test
-  public void disconnectPlayerSendsToAllPlayersInGame() throws Exception {
+  public void disconnectPlayerSendsToAllPlayersInGame() {
     List<Player> recipients = Arrays.asList(player, new Player(), new Player(), new Player());
 
     instance.disconnectPlayerFromGame(12, recipients);
@@ -212,7 +212,7 @@ public class ClientServiceTest {
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
     CompletableFuture<PlayerResponses> sent = new CompletableFuture<>();
-    doAnswer(invocation -> sent.complete(invocation.getArgumentAt(0, PlayerResponses.class)))
+    doAnswer(invocation -> sent.complete(invocation.getArgument(0)))
       .when(clientGateway).send(any(PlayerResponses.class), eq(clientConnection));
 
     instance.sendPlayerInformation(players, connectionAware);
@@ -226,7 +226,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void sendIceServers() throws Exception {
+  public void sendIceServers() {
     List<IceServerList> iceServers = Collections.singletonList(
       new IceServerList(60, Instant.now(), Arrays.asList(
         new IceServer(URI.create("turn:test1"), null, null, null),
@@ -241,14 +241,14 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void sendIceMessage() throws Exception {
+  public void sendIceMessage() {
     instance.sendIceMessage(1, Collections.emptyMap(), clientConnection);
 
     verify(clientGateway).send(new ForwardedIceMessage(1, Collections.emptyMap()), clientConnection);
   }
 
   @Test
-  public void sendSocialRelations() throws Exception {
+  public void sendSocialRelations() {
     SocialRelationListResponse response = new SocialRelationListResponse(emptyList());
     instance.sendSocialRelations(response, clientConnection);
 
@@ -256,7 +256,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void onServerShutdown() throws Exception {
+  public void onServerShutdown() {
     serverProperties.getShutdown().setMessage("Shutdown test message");
     instance.onServerShutdown(ApplicationShutdownEvent.INSTANCE);
 
@@ -268,7 +268,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void onServerShutdownExceptionDoesntPropagate() throws Exception {
+  public void onServerShutdownExceptionDoesntPropagate() {
     doThrow(new RuntimeException("This exception should be logged but not thrown"))
       .when(clientGateway).broadcast(any());
 
@@ -279,7 +279,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void sendAvatarList() throws Exception {
+  public void sendAvatarList() {
     List<Avatar> avatars = Arrays.asList(
       new Avatar().setUrl("http://example.com/foo.bar").setDescription("Foo bar"),
       new Avatar()
@@ -298,7 +298,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void connectToHost() throws Exception {
+  public void connectToHost() {
     Game game = new Game().setHost((Player) new Player().setLogin("JUnit").setId(1));
 
     instance.connectToHost(player, game);
@@ -307,7 +307,7 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void broadcastPlayerInformation() throws Exception {
+  public void broadcastPlayerInformation() {
     instance.broadcastMinDelay = Duration.ofMinutes(-1);
 
     instance.broadcastPlayerInformation(Arrays.asList(

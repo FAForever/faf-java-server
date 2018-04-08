@@ -3,12 +3,14 @@ package com.faforever.server.integration.v2.client;
 import com.faforever.server.game.GameVisibility;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Message sent from the client to the server to request hosting a game.
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 class HostGameClientMessage extends V2ClientMessage {
   /** The name of the map to be hosted. This is the maps directory name. */
   private String mapName;

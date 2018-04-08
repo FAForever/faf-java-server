@@ -31,6 +31,8 @@ import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
 import com.google.common.collect.ImmutableMap;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,8 +42,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.hamcrest.MockitoHamcrest;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import javax.persistence.EntityManager;
@@ -81,7 +83,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -126,15 +127,16 @@ public class GameServiceTest {
   private DivisionService divisionService;
   @Mock
   private EntityManager entityManager;
-  @Mock
-  private CounterService counterService;
 
+  private MeterRegistry meterRegistry;
   private Player player1;
   private Player player2;
   private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
+    meterRegistry = new SimpleMeterRegistry();
+
     MapVersion map = new MapVersion();
     map.setRanked(true);
 
@@ -154,13 +156,13 @@ public class GameServiceTest {
     when(mapService.findMap(MAP_NAME)).thenReturn(Optional.of(map));
     when(modService.getFeaturedMod(FAF_TECHNICAL_NAME)).thenReturn(Optional.of(fafFeaturedMod));
     when(playerService.getOnlinePlayer(anyInt())).thenReturn(Optional.empty());
-    doAnswer(invocation -> invocation.getArgumentAt(0, Player.class).setGlobalRating(new GlobalRating()))
+    doAnswer(invocation -> ((Player) invocation.getArgument(0)).setGlobalRating(new GlobalRating()))
       .when(ratingService).initGlobalRating(any());
 
     serverProperties = new ServerProperties();
     serverProperties.getGame().setRankedMinTimeMultiplicator(-10000);
 
-    instance = new GameService(gameRepository, counterService, clientService, mapService, modService, playerService, ratingService,
+    instance = new GameService(gameRepository, meterRegistry, clientService, mapService, modService, playerService, ratingService,
       serverProperties, divisionService, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
   }
@@ -396,10 +398,10 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
 
     instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
-    verify(clientService).disconnectPlayerFromGame(eq(player1.getId()), (Collection<? extends ConnectionAware>) argThat(Matchers.contains(player2)));
+    verify(clientService).disconnectPlayerFromGame(eq(player1.getId()), (Collection<? extends ConnectionAware>) MockitoHamcrest.argThat(Matchers.contains(player2)));
 
     instance.updatePlayerGameState(PlayerGameState.CLOSED, player2);
-    verify(clientService).disconnectPlayerFromGame(eq(player2.getId()), argThat(Matchers.empty()));
+    verify(clientService).disconnectPlayerFromGame(eq(player2.getId()), MockitoHamcrest.argThat(Matchers.empty()));
 
     assertThat(game.getPlayerStats().values(), hasSize(2));
     assertThat(game.getPlayerStats().get(player1.getId()).getScore(), is(10));
@@ -1080,12 +1082,6 @@ public class GameServiceTest {
     assertThat(instance.getActiveGame(game.getId()).isPresent(), is(false));
   }
 
-  @Test
-  public void disconnectFromGameIgnoredWhenPlayerUnknown() {
-    instance.disconnectPlayerFromGame(player1, 412312);
-    verifyZeroInteractions(clientService);
-  }
-
   /**
    * Tests whether all but the affected player are informed to drop someone.
    */
@@ -1113,6 +1109,12 @@ public class GameServiceTest {
     assertThat(recipients, hasItems(
       player1, player2, player4
     ));
+  }
+
+  @Test
+  public void disconnectFromGameIgnoredWhenPlayerUnknown() {
+    instance.disconnectPlayerFromGame(player1, 412312);
+    verifyZeroInteractions(clientService);
   }
 
   @Test
@@ -1204,16 +1206,6 @@ public class GameServiceTest {
     instance.mutuallyAgreeDraw(player2);
   }
 
-  private void reportPlayerScores() {
-    Stream.of(player1, player2)
-      .forEach(player -> {
-        instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
-        instance.reportArmyScore(player, 1, 10);
-        instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
-        instance.reportArmyScore(player, 2, -1);
-      });
-  }
-
   @Test
   public void mutualDrawRequestedByObserver() throws Exception {
     Game game = hostGame(player1);
@@ -1263,6 +1255,16 @@ public class GameServiceTest {
     assertThat(game.isMutuallyAgreedDraw(), is(true));
   }
 
+  private void reportPlayerScores() {
+    Stream.of(player1, player2)
+      .forEach(player -> {
+        instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+        instance.reportArmyScore(player, 1, 10);
+        instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+        instance.reportArmyScore(player, 2, -1);
+      });
+  }
+
   private Game hostGame(Player host) throws Exception {
     player1.setCurrentGame(null);
 
@@ -1272,8 +1274,9 @@ public class GameServiceTest {
     assertThat(joinable.isDone(), is(false));
     assertThat(joinable.isCancelled(), is(false));
     assertThat(joinable.isCompletedExceptionally(), is(false));
-    verify(counterService, never()).decrement(String.format(Metrics.GAMES_STATE_FORMAT, GameState.CLOSED));
-    verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
+
+    assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, "").gauge().value(), is(1d));
+    assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, GameState.INITIALIZING.name()).gauge().value(), is(1d));
 
     Game game = instance.getActiveGame(1).get();
     assertThat(game.getState(), is(GameState.INITIALIZING));
@@ -1298,7 +1301,9 @@ public class GameServiceTest {
     instance.updatePlayerOption(host, host.getId(), OPTION_START_SPOT, host.getId());
     instance.updatePlayerOption(host, host.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
 
-    verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.INITIALIZING));
+    assertThat(meterRegistry.find(Metrics.GAMES).gauge().value(), is(1d));
+    assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, GameState.OPEN.name()).gauge().value(), is(1d));
+
     verify(clientService).startGameProcess(game, player1);
     assertThat(game.getTitle(), is("Game title"));
     assertThat(game.getHost(), is(player1));
@@ -1319,8 +1324,8 @@ public class GameServiceTest {
     game.getConnectedPlayers().values()
       .forEach(player -> instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player));
 
-    verify(counterService).decrement(String.format(Metrics.GAMES_STATE_FORMAT, GameState.OPEN));
-    verify(counterService).increment(String.format(Metrics.GAMES_STATE_FORMAT, GameState.PLAYING));
+    assertThat(meterRegistry.find(Metrics.GAMES).gauge().value(), is(1d));
+    assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, GameState.PLAYING.name()).gauge().value(), is(1d));
   }
 
   private void addPlayer(Game game, Player player) {

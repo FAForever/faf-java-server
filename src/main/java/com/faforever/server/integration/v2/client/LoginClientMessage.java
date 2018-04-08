@@ -2,12 +2,14 @@ package com.faforever.server.integration.v2.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Message sent from the client to the server in order to log in.
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 class LoginClientMessage extends V2ClientMessage {
   /** The JWT containing the claims, usually issued by the API. */
   private String jwt;

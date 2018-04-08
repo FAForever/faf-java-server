@@ -70,18 +70,14 @@ public class MatchMakerServiceTest {
     properties = new ServerProperties();
     FeaturedMod ladder1v1Mod = new FeaturedMod().setTechnicalName("faf");
 
-    when(modService.getFeaturedMod(ladder1v1Mod.getTechnicalName())).thenReturn(Optional.of(ladder1v1Mod));
     when(modService.getLadder1v1()).thenReturn(Optional.of(ladder1v1Mod));
-    when(modService.isLadder1v1(ladder1v1Mod)).thenReturn(true);
-    when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
-    when(gameService.createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(CompletableFuture.completedFuture(new Game().setId(1)));
 
     RatingService ratingService = new RatingService(properties);
     instance = new MatchMakerService(modService, properties, ratingService, clientService, gameService, mapService, playerService);
   }
 
   @Test
-  public void startSearchAlreadyInGame() throws Exception {
+  public void startSearchAlreadyInGame() {
     Player player = new Player();
     player.setCurrentGame(new Game());
 
@@ -90,7 +86,7 @@ public class MatchMakerServiceTest {
   }
 
   @Test
-  public void startSearchBanned() throws Exception {
+  public void startSearchBanned() {
     Player player = new Player();
     player.setMatchMakerBanDetails(new MatchMakerBanDetails());
 
@@ -99,7 +95,7 @@ public class MatchMakerServiceTest {
   }
 
   @Test
-  public void startSearchModNotAvailable() throws Exception {
+  public void startSearchModNotAvailable() {
     when(modService.getLadder1v1()).thenReturn(Optional.empty());
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST));
@@ -107,11 +103,7 @@ public class MatchMakerServiceTest {
   }
 
   @Test
-  public void startSearchEmptyQueue() throws Exception {
-    FeaturedMod featuredMod = new FeaturedMod();
-    when(modService.getFeaturedMod(1)).thenReturn(Optional.of(featuredMod));
-    when(modService.isLadder1v1(featuredMod)).thenReturn(true);
-
+  public void startSearchEmptyQueue() {
     instance.submitSearch(new Player(), Faction.CYBRAN, QUEUE_NAME);
     instance.processPools();
 
@@ -123,7 +115,7 @@ public class MatchMakerServiceTest {
    * because such players always have a low game quality.
    */
   @Test
-  public void submitSearchTwoFreshPlayersDontMatchImmediately() throws Exception {
+  public void submitSearchTwoFreshPlayersDontMatchImmediately() {
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
@@ -140,7 +132,9 @@ public class MatchMakerServiceTest {
    * Tests whether two players who never played a game (and thus have no rating associated) will be matched.
    */
   @Test
-  public void submitSearchTwoFreshPlayersMatch() throws Exception {
+  public void submitSearchTwoFreshPlayersMatch() {
+    when(mapService.getRandomLadderMap()).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
+
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
     when(gameService.createGame(any(), any(), any(), any(), any(), any(), any(), any()))
@@ -165,7 +159,7 @@ public class MatchMakerServiceTest {
    * Tests whether two players whose ratings are too far apart don't get matched.
    */
   @Test
-  public void submitSearchTwoPlayersDontMatchIfRatingsTooFarApart() throws Exception {
+  public void submitSearchTwoPlayersDontMatchIfRatingsTooFarApart() {
     Player player1 = (Player) new Player()
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(300d).setDeviation(50d))
       .setLogin(LOGIN_PLAYER_1)
@@ -184,7 +178,7 @@ public class MatchMakerServiceTest {
   }
 
   @Test
-  public void cancelSearch() throws Exception {
+  public void cancelSearch() {
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
@@ -204,7 +198,7 @@ public class MatchMakerServiceTest {
   }
 
   @Test
-  public void onClientDisconnect() throws Exception {
+  public void onClientDisconnect() {
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
 
@@ -219,7 +213,7 @@ public class MatchMakerServiceTest {
   }
 
   @Test
-  public void createMatch() throws Exception {
+  public void createMatch() {
     MatchParticipant participant1 = new MatchParticipant().setId(1).setFaction(Faction.UEF).setTeam(1).setSlot(1).setStartSpot(1);
     MatchParticipant participant2 = new MatchParticipant().setId(2).setFaction(Faction.AEON).setTeam(2).setSlot(2).setStartSpot(2);
 
@@ -237,8 +231,8 @@ public class MatchMakerServiceTest {
     when(playerService.getOnlinePlayer(participant2.getId())).thenReturn(Optional.of(player2));
     when(mapService.findMap(mapVersionId)).thenReturn(Optional.of(new MapVersion().setFilename("maps/foo.zip")));
 
-    Game game = new Game();
-    when(gameService.createGame("Test match", "faf", "null", null, GameVisibility.PRIVATE, null, null, player1))
+    Game game = new Game().setId(1);
+    when(gameService.createGame("Test match", "faf", "maps/foo.zip", null, GameVisibility.PRIVATE, null, null, player1))
       .thenReturn(CompletableFuture.completedFuture(game));
 
     when(gameService.joinGame(1, null, player2)).thenReturn(CompletableFuture.completedFuture(game));

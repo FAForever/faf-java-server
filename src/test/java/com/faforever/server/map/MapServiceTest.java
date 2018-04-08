@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -41,10 +41,9 @@ public class MapServiceTest {
   public void setUp() {
     mapVersion = new MapVersion().setId(1).setFilename(MAP_NAME);
     when(mapVersionRepository.findByFilenameIgnoreCase(MAP_NAME)).thenReturn(Optional.of(mapVersion));
-    when(mapVersionRepository.findOne(1)).thenReturn(mapVersion);
 
     MapStats features = new MapStats().setId(1).setTimesPlayed(41);
-    when(mapStatsRepository.findOne(1)).thenReturn(features);
+    when(mapStatsRepository.findById(1)).thenReturn(Optional.ofNullable(features));
     when(mapStatsRepository.save(any(MapStats.class))).thenAnswer(context -> context.getArguments()[0]);
 
     instance = new MapService(mapVersionRepository, ladder1v1MapRepository, mapStatsRepository);

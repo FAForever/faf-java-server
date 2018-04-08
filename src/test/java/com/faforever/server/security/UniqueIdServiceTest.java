@@ -30,7 +30,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -47,8 +47,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -131,7 +131,7 @@ public class UniqueIdServiceTest {
     hardwareInformation.setPlayers(new HashSet<>());
 
     when(hardwareInformationRepository.save(any(HardwareInformation.class)))
-      .thenAnswer(invocation -> invocation.getArgumentAt(0, HardwareInformation.class));
+      .thenAnswer(invocation -> invocation.getArgument(0));
 
     instance = new UniqueIdService(properties, new ObjectMapper(), hardwareInformationRepository);
   }

@@ -1,7 +1,6 @@
 package com.faforever.server.user;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.player.PlayerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +18,10 @@ import java.util.Map;
 public class UserService {
   private static final String KEY_USER_ID = "user_id";
 
-  private final PlayerService playerService;
   private final MacSigner macSigner;
   private final ObjectMapper objectMapper;
 
-  public UserService(PlayerService playerService, ServerProperties properties, ObjectMapper objectMapper) {
-    this.playerService = playerService;
+  public UserService(ServerProperties properties, ObjectMapper objectMapper) {
     this.macSigner = new MacSigner(properties.getJwt().getSecret());
     this.objectMapper = objectMapper;
   }
