@@ -42,6 +42,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -60,43 +61,43 @@ public class V2ServerMessageTransformerTest {
   }
 
   @Test
-  public void infoResponse() throws Exception {
+  public void infoResponse() {
     String response = instance.transform(new InfoResponse("Hello JUnit"));
     assertThat(response, is("{\"data\":{\"message\":\"Hello JUnit\"},\"type\":\"info\"}"));
   }
 
   @Test
-  public void hostGame() throws Exception {
+  public void hostGame() {
     String response = instance.transform(new HostGameResponse("scmp01"));
     assertThat(response, is("{\"data\":{\"mapName\":\"scmp01\"},\"type\":\"hostGame\"}"));
   }
 
   @Test
-  public void joinChatChannel() throws Exception {
+  public void joinChatChannel() {
     String response = instance.transform(new JoinChatChannelResponse(ImmutableSet.of("#one", "#two")));
     assertThat(response, is("{\"data\":{\"channels\":[\"#one\",\"#two\"]},\"type\":\"chatChannel\"}"));
   }
 
   @Test
-  public void connectToPeer() throws Exception {
+  public void connectToPeer() {
     String response = instance.transform(new ConnectToPeerResponse("junit", 123, false));
     assertThat(response, is("{\"data\":{\"playerName\":\"junit\",\"playerId\":123},\"type\":\"connectToPeer\"}"));
   }
 
   @Test
-  public void disconnectFromPlayer() throws Exception {
+  public void disconnectFromPlayer() {
     String response = instance.transform(new DisconnectPlayerFromGameResponse(123));
     assertThat(response, is("{\"data\":{\"playerId\":123},\"type\":\"disconnectFromPeer\"}"));
   }
 
   @Test
-  public void featuredMod() throws Exception {
+  public void featuredMod() {
     String response = instance.transform(new FeaturedModResponse("faf", "Forged Alliance Forever", "Description", 1));
     assertThat(response, is("{\"data\":{\"technicalName\":\"faf\",\"displayName\":\"Forged Alliance Forever\",\"description\":\"Description\",\"displayOrder\":1},\"type\":\"featuredMod\"}"));
   }
 
   @Test
-  public void game() throws Exception {
+  public void game() {
     Instant startTime = Instant.parse("2007-12-03T10:15:30.00Z");
 
     String response = instance.transform(new GameResponse(1, "Title", GameVisibility.PUBLIC, "password", GameState.ENDED, "faf",
@@ -138,11 +139,12 @@ public class V2ServerMessageTransformerTest {
   }
 
   @Test
-  public void loginDetails() throws Exception {
+  public void loginDetails() {
     String response = instance.transform(new LoginDetailsResponse(new PlayerResponse(
       1,
       "A",
       "CH",
+      TimeZone.getTimeZone("Europe/Berlin"),
       new PlayerResponse.Player(
         new Rating(900, 120),
         new Rating(600, 50),
@@ -150,17 +152,17 @@ public class V2ServerMessageTransformerTest {
         new Avatar("http://localhost/avatar.png", "Avatar"),
         "AA"
       ))));
-    assertThat(response, is("{\"data\":{\"playerId\":1,\"username\":\"A\",\"country\":\"CH\",\"player\":{\"globalRating\":{\"mean\":900.0,\"deviation\":120.0},\"ladder1v1Rating\":{\"mean\":600.0,\"deviation\":50.0},\"numberOfGames\":12,\"avatar\":{\"url\":\"http://localhost/avatar.png\",\"description\":\"Avatar\"},\"clanTag\":\"AA\"}},\"type\":\"loginDetails\"}"));
+    assertThat(response, is("{\"data\":{\"playerId\":1,\"username\":\"A\",\"country\":\"CH\",\"timeZone\":\"Europe/Berlin\",\"player\":{\"globalRating\":{\"mean\":900.0,\"deviation\":120.0},\"ladder1v1Rating\":{\"mean\":600.0,\"deviation\":50.0},\"numberOfGames\":12,\"avatar\":{\"url\":\"http://localhost/avatar.png\",\"description\":\"Avatar\"},\"clanTag\":\"AA\"}},\"type\":\"loginDetails\"}"));
   }
 
   @Test
-  public void matchAvailable() throws Exception {
+  public void matchAvailable() {
     String response = instance.transform(new MatchMakerResponse("ladder2v2"));
     assertThat(response, is("{\"data\":{\"pool\":\"ladder2v2\"},\"type\":\"matchAvailable\"}"));
   }
 
   @Test
-  public void socialRelationList() throws Exception {
+  public void socialRelationList() {
     String response = instance.transform(new SocialRelationListResponse(Arrays.asList(
       new SocialRelationResponse(1, RelationType.FRIEND),
       new SocialRelationResponse(2, RelationType.FOE)
@@ -169,13 +171,13 @@ public class V2ServerMessageTransformerTest {
   }
 
   @Test
-  public void startGameProcess() throws Exception {
+  public void startGameProcess() {
     String response = instance.transform(new StartGameProcessResponse("faf", 1, Arrays.asList("/foo", "/bar")));
     assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test
-  public void updatedAchievements() throws Exception {
+  public void updatedAchievements() {
     String response = instance.transform(new UpdatedAchievementsResponse(Arrays.asList(
       new UpdatedAchievement("111", 2, AchievementState.REVEALED, false),
       new UpdatedAchievement("111", 2, AchievementState.REVEALED, false)
@@ -184,11 +186,12 @@ public class V2ServerMessageTransformerTest {
   }
 
   @Test
-  public void player() throws Exception {
+  public void player() {
     String response = instance.transform(new PlayerResponse(
       1,
       "A",
       "CH",
+      TimeZone.getTimeZone("Europe/Berlin"),
       new PlayerResponse.Player(
         new Rating(900, 120),
         new Rating(600, 50),
@@ -196,11 +199,11 @@ public class V2ServerMessageTransformerTest {
         new Avatar("http://localhost/avatar.png", "Avatar"),
         "AA"
       )));
-    assertThat(response, is("{\"data\":{\"playerId\":1,\"username\":\"A\",\"country\":\"CH\",\"player\":{\"globalRating\":{\"mean\":900.0,\"deviation\":120.0},\"ladder1v1Rating\":{\"mean\":600.0,\"deviation\":50.0},\"numberOfGames\":12,\"avatar\":{\"url\":\"http://localhost/avatar.png\",\"description\":\"Avatar\"},\"clanTag\":\"AA\"}},\"type\":\"player\"}"));
+    assertThat(response, is("{\"data\":{\"playerId\":1,\"username\":\"A\",\"country\":\"CH\",\"timeZone\":\"Europe/Berlin\",\"player\":{\"globalRating\":{\"mean\":900.0,\"deviation\":120.0},\"ladder1v1Rating\":{\"mean\":600.0,\"deviation\":50.0},\"numberOfGames\":12,\"avatar\":{\"url\":\"http://localhost/avatar.png\",\"description\":\"Avatar\"},\"clanTag\":\"AA\"}},\"type\":\"player\"}"));
   }
 
   @Test
-  public void errorMessage() throws Exception {
+  public void errorMessage() {
     UUID requestId = UUID.randomUUID();
     String response = instance.transform(new ErrorResponse(ErrorCode.UNSUPPORTED_REQUEST, requestId, new String[]{"{\"foo\": \"bar\"}"}));
     assertThat(response, is("{\"data\":{\"code\":109,\"title\":\"Unsupported request\",\"text\":\"The server received an unsupported request from your client: {\\\"foo\\\": \\\"bar\\\"}\",\"requestId\":\"" + requestId + "\",\"args\":[\"{\\\"foo\\\": \\\"bar\\\"}\"]},\"type\":\"error\"}"));
