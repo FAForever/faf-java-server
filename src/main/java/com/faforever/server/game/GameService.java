@@ -88,6 +88,7 @@ public class GameService {
   public static final String OPTION_SCENARIO_FILE = "ScenarioFile";
   public static final String OPTION_TITLE = "Title";
   public static final String OPTION_TEAM = "Team";
+  public static final String OPTION_TEAM_LOCK = "TeamLock";
   public static final String OPTION_VICTORY_CONDITION = VictoryCondition.GAME_OPTION_NAME;
   public static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
   public static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);
@@ -155,7 +156,8 @@ public class GameService {
       ValidityVoter.mutualDrawVoter(),
       ValidityVoter.singlePlayerVoter(),
       ValidityVoter.gameResultVoter(),
-      ValidityVoter.gameLengthVoter(properties)
+      ValidityVoter.gameLengthVoter(properties),
+      ValidityVoter.teamsUnlockedVoter()
     );
   }
 
