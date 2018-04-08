@@ -2,6 +2,7 @@ package com.faforever.server.integration.v2.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Message sent from the client to the server to restore the current player's game session. When a client loses its
@@ -11,6 +12,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 class RestoreGameSessionClientMessage extends V2ClientMessage {
   /** ID of the game the player previously participated. */
   private int gameId;

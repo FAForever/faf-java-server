@@ -1,5 +1,8 @@
 language: java
 
+jdk:
+  - oraclejdk9
+
 services:
   - docker
 
@@ -30,11 +33,20 @@ script:
 
 after_success:
   - ./gradlew jacocoTestReport coveralls
+  - export IMAGE_TAG=faf-java-server;
+  - export REPO=faforever/faf-java-server;
   - if [ -n "${TRAVIS_TAG}" ]; then
-      ./gradlew pushDockerImage;
+      docker build -t ${IMAGE_TAG} --build-arg .;
+      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
+      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_TAG};
+      docker push ${REPO};
     fi
   - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
       ./gradlew jacocoTestReport sendCoverageToCodacy;
+      docker build -t ${IMAGE_TAG} --build-arg .;
+      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
+      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_BRANCH};
+      docker push ${REPO};
     fi
 
 before_cache:

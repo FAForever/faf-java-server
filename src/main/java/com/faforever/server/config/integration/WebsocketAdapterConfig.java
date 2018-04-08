@@ -19,7 +19,6 @@ import org.springframework.integration.context.IntegrationContextUtils;
 import org.springframework.integration.dsl.HeaderEnricherSpec;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.support.Consumer;
 import org.springframework.integration.splitter.AbstractMessageSplitter;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.websocket.IntegrationWebSocketContainer;
@@ -36,6 +35,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import javax.inject.Inject;
 import java.security.Principal;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
@@ -181,7 +181,7 @@ public class WebsocketAdapterConfig {
     }
 
     @Override
-    public void afterSessionStarted(WebSocketSession session, MessageChannel outputChannel) throws Exception {
+    public void afterSessionStarted(WebSocketSession session, MessageChannel outputChannel) {
       ClientConnection clientConnection = clientConnectionService.createClientConnection(session.getId(), Protocol.V2_JSON_UTF_8, session.getRemoteAddress().getAddress());
 
       Principal sessionPrincipal = session.getPrincipal();
@@ -201,8 +201,7 @@ public class WebsocketAdapterConfig {
     }
 
     @Override
-    public void afterSessionEnded(WebSocketSession session, CloseStatus closeStatus, MessageChannel outputChannel)
-      throws Exception {
+    public void afterSessionEnded(WebSocketSession session, CloseStatus closeStatus, MessageChannel outputChannel) {
       clientConnectionService.removeConnection(session.getId(), Protocol.V2_JSON_UTF_8);
     }
   }

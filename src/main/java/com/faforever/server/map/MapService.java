@@ -35,7 +35,7 @@ public class MapService {
 
   @Cacheable(CacheNames.MAP_VERSIONS)
   public Optional<MapVersion> findMap(int mapVersionId) {
-    return Optional.ofNullable(mapVersionRepository.findOne(mapVersionId));
+    return mapVersionRepository.findById(mapVersionId);
   }
 
   public MapVersion getRandomLadderMap() {
@@ -52,12 +52,11 @@ public class MapService {
 
   @Transactional
   public MapStats getMapStats(Map map) {
-    MapStats features = mapStatsRepository.findOne(map.getId());
-    if (features == null) {
-      features = new MapStats().setId(map.getId());
-      features = mapStatsRepository.save(features);
-    }
-    return features;
+    return mapStatsRepository.findById(map.getId())
+      .orElseGet(() -> {
+        MapStats mapStats = new MapStats().setId(map.getId());
+        return mapStatsRepository.save(mapStats);
+      });
   }
 
   private List<MapVersion> getLadder1v1Maps() {

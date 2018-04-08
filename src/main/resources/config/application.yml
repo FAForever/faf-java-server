@@ -9,7 +9,7 @@ faf-server:
   uid:
     link-to-steam-url: http://app.faforever.com/faf/steam.php
     enabled: ${UID_ENABLED:false}
-    private-key: ${UID_PRIVATE_KEY}
+    private-key: ${UID_PRIVATE_KEY:}
   shutdown:
     message: The server has been shut down for maintenance, but should be back online soon. If you experience any problems, please restart your client. We apologize for this interruption.
   api:
@@ -49,16 +49,19 @@ spring:
 server:
   # Mind that this is configured in the docker compose file as well (that is, in the gradle script that generates it)
   port: ${WEBSOCKET_PORT:8012}
-  context-path: ${CONTEXT_PATH:/}
+  servlet:
+    context-path: ${CONTEXT_PATH:/}
 
 management:
-  port: 8089
-  security:
-    enabled: false
+  server:
+    port: 8089
+  endpoints:
+    prometheus:
+      enabled: true
+    web:
+      exposure:
+        include: ["info", "health", "prometheus", "jolokia"]
 
-security:
-  basic:
-    enabled: false
 
 logging:
   level:

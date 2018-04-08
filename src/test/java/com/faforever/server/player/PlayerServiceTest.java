@@ -6,12 +6,12 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
@@ -28,7 +28,7 @@ public class PlayerServiceTest {
   @Mock
   private ClientService clientService;
   @Mock
-  private CounterService counterService;
+  private MeterRegistry meterRegistry;
   @Mock
   private ApplicationEventPublisher eventPublisher;
 
@@ -36,7 +36,7 @@ public class PlayerServiceTest {
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
     player.setLogin("JUnit");
-    instance = new PlayerService(clientService, counterService, eventPublisher);
+    instance = new PlayerService(clientService, meterRegistry, eventPublisher);
   }
 
   @Test

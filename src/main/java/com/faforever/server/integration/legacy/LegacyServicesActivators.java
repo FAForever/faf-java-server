@@ -1,8 +1,6 @@
 package com.faforever.server.integration.legacy;
 
-import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.LegacySessionRequest;
@@ -17,10 +15,7 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
-import com.google.common.annotations.VisibleForTesting;
-import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.handler.annotation.Header;
@@ -44,21 +39,16 @@ public class LegacyServicesActivators {
   private final UniqueIdService uniqueIdService;
   private final GeoIpService geoIpService;
   private final PlayerService playerService;
-  private final ChatService chatService;
-  private final CounterService counterService;
 
   @Inject
   public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
                                   UniqueIdService uniqueIdService, GeoIpService geoIpService,
-                                  PlayerService playerService, ChatService chatService,
-                                  CounterService counterService) {
+                                  PlayerService playerService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
     this.geoIpService = geoIpService;
     this.playerService = playerService;
-    this.chatService = chatService;
-    this.counterService = counterService;
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_SESSION_REQUEST, outputChannel = ChannelNames.CLIENT_OUTBOUND)
@@ -66,7 +56,7 @@ public class LegacyServicesActivators {
     // TODO this method shouldn't do anything but call a service
     String userAgent = sessionRequest.getUserAgent();
     clientConnection.setUserAgent(userAgent);
-    counterService.increment(String.format(Metrics.CLIENTS_USER_AGENT_FORMAT, userAgent));
+
     return SessionResponse.INSTANCE;
   }
 
@@ -99,10 +89,5 @@ public class LegacyServicesActivators {
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_COOP_LIST)
   public void listCoopMissions(ListCoopRequest request, @Header(CLIENT_CONNECTION) ClientConnection clientConnection) {
     clientService.sendCoopList(clientConnection);
-  }
-
-  @ServiceActivator(inputChannel = ChannelNames.CLIENT_DISCONNECTED_EVENT)
-  public void onClientDisconnected(ClientDisconnectedEvent event) {
-    counterService.decrement(String.format(Metrics.CLIENTS_USER_AGENT_FORMAT, event.getClientConnection().getUserAgent()));
   }
 }

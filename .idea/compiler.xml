@@ -6,8 +6,8 @@
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
-      <module name="faf-java-server_main" target="1.8" />
-      <module name="faf-java-server_test" target="1.8" />
+      <module name="faf-java-server_main" target="1.9" />
+      <module name="faf-java-server_test" target="1.9" />
     </bytecodeTargetLevel>
   </component>
 </project>
