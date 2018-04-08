@@ -2,6 +2,7 @@ package com.faforever.server.integration.v2.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 class GameModsClientMessage extends V2ClientMessage {
   /** The UIDs of the mods that are active. */
   private List<String> uids;

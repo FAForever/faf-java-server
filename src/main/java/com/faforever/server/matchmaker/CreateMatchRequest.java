@@ -30,5 +30,6 @@ public class CreateMatchRequest implements ClientMessage {
     private int slot;
     private int team;
     private String name;
+    private int startSpot;
   }
 }

@@ -6,12 +6,12 @@ import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Rating;
 import com.faforever.server.error.ProgrammingError;
-import jskills.GameInfo;
-import jskills.IPlayer;
-import jskills.ITeam;
-import jskills.Player;
-import jskills.Team;
-import jskills.TrueSkillCalculator;
+import de.gesundkrank.jskills.GameInfo;
+import de.gesundkrank.jskills.IPlayer;
+import de.gesundkrank.jskills.ITeam;
+import de.gesundkrank.jskills.Player;
+import de.gesundkrank.jskills.Team;
+import de.gesundkrank.jskills.TrueSkillCalculator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -53,11 +53,11 @@ public class RatingService {
   }
 
   public double calculateQuality(Rating left, Rating right) {
-    jskills.Rating leftRating = ofNullable(left)
-      .map(rating -> new jskills.Rating(left.getMean(), left.getDeviation()))
+    de.gesundkrank.jskills.Rating leftRating = ofNullable(left)
+      .map(rating -> new de.gesundkrank.jskills.Rating(left.getMean(), left.getDeviation()))
       .orElse(gameInfo.getDefaultRating());
-    jskills.Rating rightRating = ofNullable(left)
-      .map(rating -> new jskills.Rating(right.getMean(), right.getDeviation()))
+    de.gesundkrank.jskills.Rating rightRating = ofNullable(left)
+      .map(rating -> new de.gesundkrank.jskills.Rating(right.getMean(), right.getDeviation()))
       .orElse(gameInfo.getDefaultRating());
 
     Collection<ITeam> teams = Arrays.asList(
@@ -114,7 +114,7 @@ public class RatingService {
     Map<Integer, ScoredTeam> teamsById = new HashMap<>();
     for (GamePlayerStats playerStat : playerStats) {
       IPlayer player = new Player<>(playerStat.getPlayer().getId());
-      jskills.Rating rating = new jskills.Rating(playerStat.getMean(), playerStat.getDeviation());
+      de.gesundkrank.jskills.Rating rating = new de.gesundkrank.jskills.Rating(playerStat.getMean(), playerStat.getDeviation());
 
       int teamId = playerStat.getTeam();
       if (teamId == noTeamId) {
@@ -143,7 +143,7 @@ public class RatingService {
     return teamRanks;
   }
 
-  private void updatePlayerStats(Entry<IPlayer, jskills.Rating> entry, GamePlayerStats stats) {
+  private void updatePlayerStats(Entry<IPlayer, de.gesundkrank.jskills.Rating> entry, GamePlayerStats stats) {
     stats.setAfterMean(entry.getValue().getMean());
     stats.setAfterDeviation(entry.getValue().getStandardDeviation());
   }

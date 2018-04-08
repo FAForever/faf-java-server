@@ -4,20 +4,24 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.stats.Metrics;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Keeps track of client connections.
@@ -26,24 +30,34 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ClientConnectionService {
 
+  @VisibleForTesting
+  static final String TAG_PROTOCOL = "protocol";
+
   /**
    * Client connections by connection ID.
    */
   private final Map<String, ClientConnection> connections;
-  private final CounterService counterService;
   private final PlayerService playerService;
   private final ApplicationEventPublisher eventPublisher;
+  private final Map<Protocol, AtomicInteger> protocolConnectionCounters;
 
-  public ClientConnectionService(CounterService counterService, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
-    this.counterService = counterService;
+  public ClientConnectionService(MeterRegistry meterRegistry, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
     this.playerService = playerService;
     this.eventPublisher = eventPublisher;
     connections = new ConcurrentHashMap<>();
-  }
 
-  @PostConstruct
-  public void postConstruct() {
-    counterService.reset(Metrics.CLIENTS_CONNECTED_FORMAT);
+    Builder<Protocol, AtomicInteger> protocolConnectionCountersBuilder = ImmutableMap.builder();
+    for (Protocol protocol : Protocol.values()) {
+      AtomicInteger atomicInteger = new AtomicInteger();
+      protocolConnectionCountersBuilder.put(protocol, atomicInteger);
+
+      Gauge.builder(Metrics.CLIENTS, atomicInteger, AtomicInteger::get)
+        .description("The number of clients that are currently connected.")
+        .tag(TAG_PROTOCOL, protocol.name())
+        .register(meterRegistry);
+    }
+
+    protocolConnectionCounters = protocolConnectionCountersBuilder.build();
   }
 
   /**
@@ -56,7 +70,7 @@ public class ClientConnectionService {
       Assert.state(!connections.containsKey(connectionId), "A connection with ID " + connectionId + " already exists");
 
       connections.put(connectionId, new ClientConnection(connectionId, protocol, inetAddress));
-      counterService.increment(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, protocol));
+      protocolConnectionCounters.get(protocol).incrementAndGet();
 
       return connections.get(connectionId);
     }
@@ -79,7 +93,7 @@ public class ClientConnectionService {
       Optional.ofNullable(connections.remove(connectionId)).ifPresent(clientConnection -> {
         log.debug("Removing connection '{}' with protocol '{}'", connectionId, protocol);
         eventPublisher.publishEvent(new ClientDisconnectedEvent(this, clientConnection));
-        counterService.decrement(String.format(Metrics.CLIENTS_CONNECTED_FORMAT, protocol));
+        protocolConnectionCounters.get(protocol).decrementAndGet();
       });
     }
   }

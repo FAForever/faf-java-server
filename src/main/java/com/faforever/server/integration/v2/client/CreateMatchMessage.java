@@ -33,5 +33,7 @@ class CreateMatchMessage extends V2ClientMessage {
      * War, the character name.
      */
     String name;
+    /** ID of the slot on the map the player will start in. */
+    int startSpot;
   }
 }

@@ -2,10 +2,10 @@ package com.faforever.server.player;
 
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
-import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.stats.Metrics;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -27,22 +26,25 @@ public class PlayerService {
 
   private final Map<Integer, Player> onlinePlayersById;
   private final ClientService clientService;
-  private final CounterService counterService;
   private final ApplicationEventPublisher eventPublisher;
 
-  public PlayerService(ClientService clientService, CounterService counterService, ApplicationEventPublisher eventPublisher) {
+  public static final String TAG_PLAYER_GAME_STATE = "gameState";
+
+  public PlayerService(ClientService clientService, MeterRegistry meterRegistry, ApplicationEventPublisher eventPublisher) {
     this.clientService = clientService;
-    this.counterService = counterService;
     this.eventPublisher = eventPublisher;
     onlinePlayersById = new ConcurrentHashMap<>();
-    Stream.of(PlayerGameState.values()).forEach(state -> counterService.reset(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, state)));
+
+    Gauge.builder(Metrics.PLAYERS, onlinePlayersById, Map::size)
+      .description("The number of players that are currently online.")
+      .tag(TAG_PLAYER_GAME_STATE, "")
+      .register(meterRegistry);
   }
 
   public void setPlayerOnline(Player player) {
     log.debug("Adding player '{}'", player);
 
     onlinePlayersById.put(player.getId(), player);
-    counterService.increment(String.format(Metrics.PLAYER_GAMES_STATE_FORMAT, player.getGameState()));
 
     List<Player> otherOnlinePlayers = getOtherOnlinePlayers(player);
     clientService.sendLoginDetails(player, player);

@@ -7,7 +7,6 @@ buildscript {
     maven { url 'http://repo.spring.io/plugins-release' }
   }
   dependencies {
-    classpath("com.bmuschko:gradle-docker-plugin:${gradleDockerVersion}")
     classpath("org.springframework.build.gradle:propdeps-plugin:${propdepsVersion}")
     classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
     classpath("org.kt3k.gradle.plugin:coveralls-gradle-plugin:${coverallsGradlePluginVersion}")
@@ -20,30 +19,32 @@ plugins {
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 apply plugin: 'propdeps'
 
 
 group = 'faforever'
 version = '1.1.2'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.9
+targetCompatibility = 1.9
 
 repositories {
   mavenCentral()
   jcenter()
   maven { url 'https://jitpack.io' }
   maven { url "http://dl.bintray.com/typesafe/maven-releases" }
+  // TODO remove when spring-boot-admin-client 2.0.0 has been released
+  maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 configurations {
   compile.exclude module: "spring-boot-starter-tomcat"
-  compile.exclude module: "tomcat-jdbc"
   compile.exclude module: "assertj-core"
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '3.5'
+  gradleVersion = '4.6'
 }
 
 compileJava.dependsOn(processResources)
@@ -77,81 +78,8 @@ task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
   args = ["-l", "Java", "-r", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"]
 }
 
-// DOCKER & APPLICATION
-
-apply plugin: 'com.bmuschko.docker-remote-api'
-apply plugin: 'application'
-
-import com.bmuschko.gradle.docker.DockerRemoteApiPlugin
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
-import com.bmuschko.gradle.docker.tasks.image.Dockerfile
-
-applicationName = rootProject.name
-applicationDistribution.exclude("**/spring-boot-devtools*.jar")
-applicationDefaultJvmArgs = ["-server", "-Xms64m", "-Xmx768m", "-XX:MaxMetaspaceSize=196m", "-XX:MinHeapFreeRatio=25", "-XX:MaxHeapFreeRatio=40", "-XX:+UseG1GC", "-XX:+UseStringDeduplication", "-XX:-HeapDumpOnOutOfMemoryError"]
-
-docker {
-  if (project.hasProperty('dockerHost')) {
-    url = dockerHost
-  }
-
-  registryCredentials {
-    if (project.hasProperty('dockerUsername') && project.hasProperty('dockerPassword')) {
-      username = dockerUsername
-      password = dockerPassword
-    }
-  }
-}
-
-task dockerCopyDistResources(type: Copy, dependsOn: distTar) {
-  group = DockerRemoteApiPlugin.DEFAULT_TASK_GROUP
-  description = "Copies the distribution resources to a temporary directory for image creation."
-
-  from { distTar.archivePath }
-  from 'src/main/docker/default-cmd.sh'
-  into { createDockerfile.destFile.parentFile }
-}
-
-task createDockerfile(type: Dockerfile, dependsOn: dockerCopyDistResources) {
-  group = DockerRemoteApiPlugin.DEFAULT_TASK_GROUP
-  destFile = file("${buildDir}/docker/Dockerfile")
-  from 'frolvlad/alpine-oraclejdk8:slim'
-  maintainer 'Michel Jung "michel.jung89@gmail.com"'
-
-  environmentVariable 'user', 'root'
-
-  user '${user}'
-
-  volume '/tmp'
-  addFile 'default-cmd.sh', 'default-cmd.sh'
-  addFile({ distTar.archivePath.name }, { '/' })
-
-  runCommand 'chmod +x default-cmd.sh'
-
-  exposePort 8080
-
-  defaultCommand './default-cmd.sh', "/${project.name}-${project.version}/bin/${project.name}"
-}
-
-task buildDockerImage(type: DockerBuildImage, dependsOn: createDockerfile) {
-  inputDir file(createDockerfile.destFile.parentFile)
-  tag "${project.group}/${rootProject.name}:${project.version}"
-}
-
-task pushDockerImage(type: DockerPushImage, dependsOn: buildDockerImage) {
-  group = DockerRemoteApiPlugin.DEFAULT_TASK_GROUP
-  description = "Publishes the created docker image tagged with the project's version."
-
-  imageName "${project.group}/${rootProject.name}"
-  tag project.version
-}
-
 dependencies {
   compile("org.springframework.boot:spring-boot-starter-actuator")
-  compile("org.springframework.boot:spring-boot-starter-jdbc")
-//  compile("org.zalando.stups:data-jpa-eclipselink-spring-boot-starter:${eclipseLinkStarterVersion}")
-//  compile("org.eclipse.persistence:org.eclipse.persistence.jpa:${eclipseLinkVersion}")
   compile("org.springframework.boot:spring-boot-starter-data-jpa")
   compile("org.springframework.boot:spring-boot-starter-cache")
   compile("org.springframework.boot:spring-boot-starter-integration")
@@ -160,33 +88,36 @@ dependencies {
   compile("org.springframework.boot:spring-boot-starter-undertow")
   compile("org.springframework.security:spring-security-messaging")
   compile("org.springframework.security:spring-security-jwt:${springSecurityJwtVersion}")
-  compile("org.springframework.security.oauth:spring-security-oauth2")
+  compile("org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:${springSecurityOauth2AutoconfigureVersion}")
   compile("org.springframework:spring-context-support")
   compile("org.springframework.integration:spring-integration-ip")
   compile("org.springframework.integration:spring-integration-security")
   compile("org.springframework.integration:spring-integration-websocket")
   compile("org.springframework.integration:spring-integration-event")
-  compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
+  compile("com.github.ben-manes.caffeine:caffeine")
   compile("org.jolokia:jolokia-core")
-  compile("com.github.nsp:JSkills:${jSkillsVersion}")
+  compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
+  compile("io.micrometer:micrometer-registry-prometheus:${micrometerRegistryPrometheusVersion}")
+  compile("de.gesundkrank.jskills:jskills:${jSkillsVersion}")
   compile("com.github.nocatch:nocatch:${noCatchVersion}")
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
-  compile("com.github.ben-manes.caffeine:caffeine")
   compile("com.google.guava:guava:${guavaVersion}")
+  compile("javax.annotation:javax.annotation-api:${javaxAnnotationApiVersion}")
   compile("javax.inject:javax.inject:${javaxInjectVersion}")
+  // When switching from Java 8 to 9, I got "class file for javax.interceptor.interceptorbinding not found". Adding this fixed it, but IDK what caused it.
+  compile("javax.interceptor:javax.interceptor-api:${javaxInterceptorApiVersion}")
   compile("com.github.jasminb:jsonapi-converter:${jsonApiConverterVersion}")
   compile("com.twilio.sdk:twilio:${twilioVersion}")
-  compile("io.prometheus:simpleclient_hotspot:${prometheusVersion}")
-  compile("io.prometheus:simpleclient_servlet:${prometheusVersion}")
-  compile("io.prometheus:simpleclient_spring_boot:${prometheusVersion}")
   compile("org.mapstruct:mapstruct-jdk8:${mapstructVersion}")
   compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonDatatypeJsr310Version}")
+  compile("javax.xml.bind:jaxb-api:${jaxbVersion}")
+  compile("com.sun.xml.bind:jaxb-ri:${jaxbVersion}")
+  compile("com.sun.xml.bind:jaxb-impl:${jaxbVersion}")
+  compile("com.sun.xml.bind:jaxb-core:${jaxbVersion}")
+  compile("javax.activation:activation:${javaxActivationVersion}")
 
   compile("com.maxmind.geoip2:geoip2:${geoip2Version}") {
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-  }
-  compile("com.zaxxer:HikariCP:${hikariCpVersion}") {
-    exclude(module: 'tools')
   }
 
   runtime("mysql:mysql-connector-java:${mysqlConnectorVersion}")
@@ -197,7 +128,7 @@ dependencies {
   optional("org.mapstruct:mapstruct-processor:${mapstructVersion}")
 
   testCompile("org.springframework.boot:spring-boot-starter-test")
-  testCompile("com.googlecode.zohhak:zohhak:1.1.1")
+  testCompile("com.googlecode.zohhak:zohhak:${zohhakVersion}")
 
   codacy("com.github.codacy:codacy-coverage-reporter:-SNAPSHOT")
 

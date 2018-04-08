@@ -3,6 +3,7 @@ package com.faforever.server.integration.v2.client;
 import com.faforever.server.game.Faction;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Message sent from the client to the server to inform it that the current player would like to participate in a
@@ -10,6 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 class SearchMatchClientMessage extends V2ClientMessage {
   /** The faction the player will be playing. */
   private Faction faction;
