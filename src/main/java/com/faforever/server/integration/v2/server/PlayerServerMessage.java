@@ -3,6 +3,8 @@ package com.faforever.server.integration.v2.server;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.TimeZone;
+
 /**
  * Message sent from the server to the client containing information about a player.
  */
@@ -13,6 +15,7 @@ class PlayerServerMessage extends V2ServerMessage {
   private int playerId;
   private String username;
   private String country;
+  private TimeZone timeZone;
   private Player player;
 
   @Getter
