@@ -2,6 +2,7 @@ package com.faforever.server.entity;
 
 /**
  * Defines whether a game is ranked or - if not - why it isn't ranked.
+ * Identifiers must be kept in sync with the contents of the invalid_game_reasons table.
  */
 public enum Validity {
   // Order sensitive
@@ -21,5 +22,6 @@ public enum Validity {
   SINGLE_PLAYER,
   FREE_FOR_ALL,
   UNEVEN_TEAMS,
-  UNKNOWN_RESULT
+  UNKNOWN_RESULT,
+  TEAMS_UNLOCKED
 }

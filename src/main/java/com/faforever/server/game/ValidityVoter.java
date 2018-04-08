@@ -24,6 +24,7 @@ import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
 import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
 import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
 import static com.faforever.server.game.GameService.OPTION_TEAM;
+import static com.faforever.server.game.GameService.OPTION_TEAM_LOCK;
 
 @UtilityClass
 class ValidityVoter {
@@ -82,6 +83,10 @@ class ValidityVoter {
 
   Function<Game, Validity> desyncVoter() {
     return game -> game.getDesyncCounter().intValue() > game.getPlayerStats().size() ? Validity.TOO_MANY_DESYNCS : Validity.VALID;
+  }
+
+  Function<Game, Validity> teamsUnlockedVoter() {
+    return game -> "unlocked".equals(game.getOptions().get(OPTION_TEAM_LOCK)) ? Validity.TEAMS_UNLOCKED : Validity.VALID;
   }
 
   Function<Game, Validity> rankedMapVoter() {

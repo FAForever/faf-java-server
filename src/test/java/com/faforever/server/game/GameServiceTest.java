@@ -202,7 +202,7 @@ public class GameServiceTest {
   }
 
   @Test
-  public void updateGameStateIdle() throws Exception {
+  public void updateGameStateIdle() {
     instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
       GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
     instance.updatePlayerGameState(PlayerGameState.IDLE, player1);
@@ -223,7 +223,7 @@ public class GameServiceTest {
   }
 
   @Test
-  public void updateGameOptionNotInGameIgnored() throws Exception {
+  public void updateGameOptionNotInGameIgnored() {
     instance.updateGameOption(player2, "GameSpeed", "normal");
     verifyZeroInteractions(clientService);
   }
@@ -636,16 +636,21 @@ public class GameServiceTest {
     addPlayer(game, player2);
     launchGame(game);
 
-    Stream.of(player1, player2)
-      .forEach(player -> {
-        instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
-        instance.reportArmyScore(player, 1, 10);
-        instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
-        instance.reportArmyScore(player, 2, -1);
-      });
+    reportPlayerScores();
 
     assertThat(game.getValidity(), is(Validity.VALID));
     verify(divisionService).postResult(player1, player2, player1);
+  }
+
+  @Test
+  public void simpleValidGameWithEnded() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+    launchGame(game);
+
+    reportPlayerScores();
+
+    assertThat(game.getValidity(), is(Validity.VALID));
   }
 
   @Test
@@ -901,19 +906,15 @@ public class GameServiceTest {
   }
 
   @Test
-  public void simpleValidGameWithEnded() throws Exception {
+  public void updateGameValidityTeamsUnlocked() throws Exception {
     Game game = hostGame(player1);
     addPlayer(game, player2);
+    game.getOptions().put(GameService.OPTION_TEAM_LOCK, "unlocked");
     launchGame(game);
 
-    Stream.of(player1, player2).forEach(player -> {
-      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
-      instance.reportArmyScore(player, 1, 10);
-      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
-      instance.reportArmyScore(player, 2, -1);
-    });
+    reportPlayerScores();
 
-    assertThat(game.getValidity(), is(Validity.VALID));
+    assertThat(game.getValidity(), is(Validity.TEAMS_UNLOCKED));
   }
 
   @Test
@@ -1013,6 +1014,25 @@ public class GameServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  public void onAuthenticationSuccess() {
+    player1.setCurrentGame(null);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+
+    TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
+    authentication.setDetails(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
+
+    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player2));
+
+    ArgumentCaptor<GameResponses> captor = ArgumentCaptor.forClass((Class) Collection.class);
+    verify(clientService).sendGameList(captor.capture(), eq(player2));
+    GameResponses games = captor.getValue();
+
+    assertThat(games.getResponses(), hasSize(1));
+    assertThat(games.getResponses().iterator().next().getTitle(), is("Test game"));
+  }
+
+  @Test
   public void updateGameValidityUnknownResult() throws Exception {
     Game game = hostGame(player1);
     addPlayer(game, player2);
@@ -1061,22 +1081,9 @@ public class GameServiceTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
-  public void onAuthenticationSuccess() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-
-    TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
-    authentication.setDetails(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
-
-    instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player2));
-
-    ArgumentCaptor<GameResponses> captor = ArgumentCaptor.forClass((Class) Collection.class);
-    verify(clientService).sendGameList(captor.capture(), eq(player2));
-    GameResponses games = captor.getValue();
-
-    assertThat(games.getResponses(), hasSize(1));
-    assertThat(games.getResponses().iterator().next().getTitle(), is("Test game"));
+  public void disconnectFromGameIgnoredWhenPlayerUnknown() {
+    instance.disconnectPlayerFromGame(player1, 412312);
+    verifyZeroInteractions(clientService);
   }
 
   /**
@@ -1109,16 +1116,21 @@ public class GameServiceTest {
   }
 
   @Test
-  public void disconnectFromGameIgnoredWhenPlayerUnknown() throws Exception {
-    instance.disconnectPlayerFromGame(player1, 412312);
+  public void disconnectFromGameIgnoredWhenPlayerNotInGame() {
+    when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(new Player()));
+    instance.disconnectPlayerFromGame(player1, 3);
     verifyZeroInteractions(clientService);
   }
 
   @Test
-  public void disconnectFromGameIgnoredWhenPlayerNotInGame() throws Exception {
-    when(playerService.getOnlinePlayer(3)).thenReturn(Optional.of(new Player()));
-    instance.disconnectPlayerFromGame(player1, 3);
-    verifyZeroInteractions(clientService);
+  public void mutualDrawRequestedByPlayerInNonPlayingGameState() {
+    player1.setCurrentGame(null);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
+
+    expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_GAME_STATE));
+
+    instance.mutuallyAgreeDraw(player1);
   }
 
   @Test
@@ -1192,15 +1204,14 @@ public class GameServiceTest {
     instance.mutuallyAgreeDraw(player2);
   }
 
-  @Test
-  public void mutualDrawRequestedByPlayerInNonPlayingGameState() throws Exception {
-    player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
-    instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
-
-    expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_GAME_STATE));
-
-    instance.mutuallyAgreeDraw(player1);
+  private void reportPlayerScores() {
+    Stream.of(player1, player2)
+      .forEach(player -> {
+        instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+        instance.reportArmyScore(player, 1, 10);
+        instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+        instance.reportArmyScore(player, 2, -1);
+      });
   }
 
   @Test
