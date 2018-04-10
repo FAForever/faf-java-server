@@ -69,6 +69,7 @@ public class ClientConnectionService {
     synchronized (connections) {
       Assert.state(!connections.containsKey(connectionId), "A connection with ID " + connectionId + " already exists");
 
+      log.debug("Registering connection '{}' from '{}' using protocol '{}'", connectionId, inetAddress, protocol);
       connections.put(connectionId, new ClientConnection(connectionId, protocol, inetAddress));
       protocolConnectionCounters.get(protocol).incrementAndGet();
 
