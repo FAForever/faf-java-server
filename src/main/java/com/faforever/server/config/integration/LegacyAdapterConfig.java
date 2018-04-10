@@ -26,6 +26,7 @@ import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
 import org.springframework.integration.ip.tcp.TcpSendingMessageHandler;
 import org.springframework.integration.ip.tcp.connection.TcpConnectionCloseEvent;
+import org.springframework.integration.ip.tcp.connection.TcpConnectionExceptionEvent;
 import org.springframework.integration.ip.tcp.connection.TcpConnectionOpenEvent;
 import org.springframework.integration.ip.tcp.connection.TcpNioConnection;
 import org.springframework.integration.ip.tcp.connection.TcpNioServerConnectionFactory;
@@ -182,6 +183,8 @@ public class LegacyAdapterConfig {
 
   @EventListener
   public void onConnectionOpened(TcpConnectionOpenEvent event) {
+    log.debug("Connection opened: {}", event.getConnectionId());
+
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
       TcpNioConnection connection = (TcpNioConnection) event.getSource();
       InetAddress inetAddress = connection.getSocketInfo().getInetAddress();
@@ -191,6 +194,17 @@ public class LegacyAdapterConfig {
 
   @EventListener
   public void onConnectionClosed(TcpConnectionCloseEvent event) {
+    log.debug("Connection closed: {}", event.getConnectionId());
+
+    if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
+      clientConnectionService.removeConnection(event.getConnectionId(), Protocol.V1_LEGACY_UTF_16);
+    }
+  }
+
+  @EventListener
+  public void onConnectionClosed(TcpConnectionExceptionEvent event) {
+    log.debug("Connection exception: {}", event.getConnectionId(), event.getCause());
+
     if (Objects.equals(tcpServerConnectionFactory().getComponentName(), event.getConnectionFactoryName())) {
       clientConnectionService.removeConnection(event.getConnectionId(), Protocol.V1_LEGACY_UTF_16);
     }
