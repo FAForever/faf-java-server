@@ -2,7 +2,6 @@ package com.faforever.server.integration.legacy;
 
 import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.LegacySessionRequest;
