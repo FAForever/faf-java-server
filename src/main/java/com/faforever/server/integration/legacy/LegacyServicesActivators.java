@@ -5,8 +5,8 @@ import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientDisconnectedEvent;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.LegacyLoginRequest;
-import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.LegacySessionRequest;
+import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.SessionResponse;
 import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
@@ -17,6 +17,7 @@ import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.security.UniqueIdService;
+import com.google.common.annotations.VisibleForTesting;
 import com.faforever.server.stats.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.metrics.CounterService;
@@ -89,7 +90,6 @@ public class LegacyServicesActivators {
       geoIpService.lookupTimezone(clientConnection.getClientAddress()).ifPresent(player::setTimeZone);
 
       uniqueIdService.verify(player, loginRequest.getUniqueId());
-      chatService.updateIrcPassword(userDetails.getUsername(), loginRequest.getPassword());
       playerService.setPlayerOnline(player);
     } catch (BadCredentialsException e) {
       throw new RequestException(e, ErrorCode.INVALID_LOGIN);

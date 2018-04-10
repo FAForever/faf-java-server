@@ -10,7 +10,6 @@ import com.faforever.server.entity.GroupAssociation.Group;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.player.PlayerOnlineEvent;
-import com.google.common.hash.Hashing;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -33,8 +31,6 @@ public class ChatServiceTest {
   private ChatService instance;
 
   @Mock
-  private NickCoreRepository nickCoreRepository;
-  @Mock
   private ClientService clientService;
 
   @Before
@@ -47,14 +43,7 @@ public class ChatServiceTest {
     chat.setDefaultChannels(Arrays.asList("#foo", "#bar"));
     chat.setClanChannelFormat("#clan_%s");
 
-    instance = new ChatService(nickCoreRepository, properties, clientService);
-  }
-
-  @Test
-  public void updateIrcPassword() throws Exception {
-    instance.updateIrcPassword("junit", "1234");
-
-    verify(nickCoreRepository).updatePassword("junit", Hashing.md5().hashString("1234", StandardCharsets.UTF_8).toString());
+    instance = new ChatService(properties, clientService);
   }
 
   @Test

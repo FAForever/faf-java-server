@@ -7,13 +7,10 @@ import com.faforever.server.entity.GroupAssociation;
 import com.faforever.server.entity.User;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.player.PlayerOnlineEvent;
-import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -22,23 +19,12 @@ import java.util.Set;
 @Slf4j
 public class ChatService {
 
-  private final NickCoreRepository nickCoreRepository;
   private final ServerProperties properties;
   private final ClientService clientService;
 
-  public ChatService(NickCoreRepository nickCoreRepository, ServerProperties properties, ClientService clientService) {
-    this.nickCoreRepository = nickCoreRepository;
+  public ChatService(ServerProperties properties, ClientService clientService) {
     this.properties = properties;
     this.clientService = clientService;
-  }
-
-  public void updateIrcPassword(String username, String password) {
-    log.debug("Updating IRC password for user: {}", username);
-    try {
-      nickCoreRepository.updatePassword(username, Hashing.md5().hashString(password, StandardCharsets.UTF_8).toString());
-    } catch (BadSqlGrammarException e) {
-      log.warn("IRC password for user '{}' could not be updated ({})", username, e.getMessage());
-    }
   }
 
   @EventListener
