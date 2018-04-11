@@ -36,16 +36,16 @@ after_success:
   - export IMAGE_TAG=faf-java-server;
   - export REPO=faforever/faf-java-server;
   - if [ -n "${TRAVIS_TAG}" ]; then
-      docker build -t ${IMAGE_TAG} --build-arg .;
-      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
-      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_TAG};
+      docker build -t ${IMAGE_TAG} --build-arg . && \
+      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" && \
+      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_TAG} && \
       docker push ${REPO};
     fi
   - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
       ./gradlew jacocoTestReport sendCoverageToCodacy;
-      docker build -t ${IMAGE_TAG} --build-arg .;
-      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
-      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_BRANCH};
+      docker build -t ${IMAGE_TAG} --build-arg . && \
+      docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" && \
+      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_BRANCH} && \
       docker push ${REPO};
     fi
 
