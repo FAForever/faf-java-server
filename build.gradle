@@ -72,6 +72,7 @@ configurations {
   codacy
 }
 
+// TODO Codacy coverage reporter does not yet support Java 9. See https://github.com/codacy/codacy-coverage-reporter/issues/76
 task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
   main = "com.codacy.CodacyCoverageReporter"
   classpath = configurations.codacy
