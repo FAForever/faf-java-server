@@ -27,7 +27,7 @@ faf-server:
 
 spring:
   application:
-    name: FAF Java Server Prototype
+    name: FAF Java Server
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
