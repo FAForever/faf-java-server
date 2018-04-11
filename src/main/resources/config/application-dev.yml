@@ -10,9 +10,10 @@ spring:
     show-sql: false
   boot:
     admin:
-      url: ${SPRING_BOOT_ADMIN_URL:http://localhost:8030}
       client:
-        enabled: ${SPRING_BOOT_ADMIN_ENABLED:false}
+        enabled: ${SPRING_BOOT_ADMIN_CLIENT_ENABLED:false}
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:8030}
+
 
 faf-server:
   geo-ip:
