@@ -14,6 +14,8 @@ import java.util.List;
 public class ServerProperties {
 
   private int port = 8001;
+  /** In milliseconds. */
+  private int socketTimeout = 10_000;
   private String version = "dev";
   private Api api = new Api();
   private TrueSkill trueSkill = new TrueSkill();
