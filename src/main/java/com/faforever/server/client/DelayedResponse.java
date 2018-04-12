@@ -50,6 +50,9 @@ public class DelayedResponse<T extends ServerMessage> {
 
   public void onUpdated(T object) {
     updateTime = Instant.now();
+    if (object == this.response) {
+      return;
+    }
     this.response = aggregateFunction.apply(this.response, object);
   }
 
