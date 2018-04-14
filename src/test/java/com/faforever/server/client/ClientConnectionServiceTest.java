@@ -1,5 +1,6 @@
 package com.faforever.server.client;
 
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.integration.Protocol;
@@ -16,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -35,11 +37,13 @@ public class ClientConnectionServiceTest {
   @Mock
   private PlayerService playerService;
   private SimpleMeterRegistry meterRegistry;
+  private ServerProperties serverProperties;
 
   @Before
   public void setUp() throws Exception {
     meterRegistry = new SimpleMeterRegistry();
-    instance = new ClientConnectionService(meterRegistry, playerService, eventPublisher);
+    serverProperties = new ServerProperties();
+    instance = new ClientConnectionService(meterRegistry, playerService, eventPublisher, serverProperties);
   }
 
   @Test
@@ -82,5 +86,32 @@ public class ClientConnectionServiceTest {
     CloseConnectionEvent value = captor.getValue();
 
     assertThat(value.getClientConnection(), is(clientConnection12));
+  }
+
+  @Test
+  public void disconnectSilentClients() throws Exception {
+    serverProperties.setClientConnectionTimeout(0);
+
+    instance.createClientConnection("junit-1", Protocol.V2_JSON_UTF_8, InetAddress.getByName("127.0.0.1"))
+      .setLastSeen(Instant.now().minusSeconds(1));
+
+    instance.createClientConnection("junit-2", Protocol.V2_JSON_UTF_8, InetAddress.getByName("127.0.0.1"))
+      .setLastSeen(Instant.now().plusSeconds(24 * 3600));
+
+    instance.disconnectSilentClients();
+
+    ArgumentCaptor<CloseConnectionEvent> captor = ArgumentCaptor.forClass(CloseConnectionEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
+  }
+
+  @Test
+  public void updateLastSeen() throws Exception {
+    Instant now = Instant.now();
+    ClientConnection connection = instance.createClientConnection("junit-1", Protocol.V2_JSON_UTF_8, InetAddress.getByName("127.0.0.1"))
+      .setLastSeen(now.minusSeconds(1000));
+
+    instance.updateLastSeen(connection, now);
+
+    assertThat(connection.getLastSeen(), is(now));
   }
 }

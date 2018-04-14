@@ -8,6 +8,7 @@ import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.client.LoginRequest;
+import com.faforever.server.client.PingReport;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.error.RequestException;
@@ -215,6 +216,7 @@ public class IntegrationConfig {
     router.setChannelMapping(BottleneckClearedReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     // This is sent by the game but currently, the server has no interest in it.
     router.setChannelMapping(GameChatMessageReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
+    router.setChannelMapping(PingReport.class.getName(), ChannelNames.PING_REPORT);
     return router;
   }
 

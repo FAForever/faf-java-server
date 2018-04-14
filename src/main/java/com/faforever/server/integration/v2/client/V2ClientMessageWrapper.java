@@ -16,6 +16,7 @@ class V2ClientMessageWrapper {
 
   @JsonTypeInfo(use = Id.NAME, include = As.EXTERNAL_PROPERTY, property = "type")
   @JsonSubTypes({
+    @Type(value = PingClientMessage.class, name = "ping"),
     @Type(value = AgreeDrawClientMessage.class, name = "agreeDraw"),
     @Type(value = AiOptionClientMessage.class, name = "aiOption"),
     @Type(value = ArmyOutcomeClientMessage.class, name = "armyOutcomeReport"),

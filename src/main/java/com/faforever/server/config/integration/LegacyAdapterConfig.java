@@ -119,7 +119,6 @@ public class LegacyAdapterConfig {
     serializer.setApplicationEventPublisher(applicationEventPublisher);
 
     TcpNioServerConnectionFactory connectionFactory = new TcpNioServerConnectionFactory(serverProperties.getPort());
-    connectionFactory.setSoTimeout(serverProperties.getSocketTimeout());
     connectionFactory.setDeserializer(serializer);
     connectionFactory.setSerializer(serializer);
     connectionFactory.setUsingDirectBuffers(true);

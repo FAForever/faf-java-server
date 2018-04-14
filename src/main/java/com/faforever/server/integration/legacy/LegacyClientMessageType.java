@@ -49,6 +49,7 @@ public enum LegacyClientMessageType {
   ADMIN("admin"),
   ICE_SERVERS("ice_servers"),
   RESTORE_GAME_SESSION("restore_game_session"),
+  PING("ping"),
 
   // Game messages
   GAME_STATE("GameState"),

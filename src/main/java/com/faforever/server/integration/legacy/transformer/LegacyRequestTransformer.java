@@ -9,6 +9,7 @@ import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.LegacySessionRequest;
+import com.faforever.server.client.PingReport;
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
@@ -100,6 +101,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return handleMatchMaking(source);
       case AVATAR:
         return handleAvatar(source);
+      case PING:
+        return PingReport.INSTANCE;
       case GAME_STATE:
         return handleGameState(source);
       case GAME_OPTION:
