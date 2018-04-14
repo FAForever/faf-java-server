@@ -5,6 +5,7 @@ import com.faforever.server.avatar.SelectAvatarRequest;
 import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.DisconnectClientRequest;
 import com.faforever.server.client.LoginRequest;
+import com.faforever.server.client.PingReport;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
@@ -96,6 +97,10 @@ public interface V2ClientMessageMapper {
 
   default IceServersRequest map(@SuppressWarnings("unused") ListIceServersClientMessage message) {
     return IceServersRequest.INSTANCE;
+  }
+
+  default PingReport map(@SuppressWarnings("unused") PingClientMessage message) {
+    return PingReport.INSTANCE;
   }
 
   default DesyncReport map(@SuppressWarnings("unused") GameDesyncClientMessage message) {

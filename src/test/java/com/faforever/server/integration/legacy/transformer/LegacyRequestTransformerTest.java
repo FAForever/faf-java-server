@@ -6,6 +6,7 @@ import com.faforever.server.avatar.RemoveAvatarAdminRequest;
 import com.faforever.server.client.BroadcastRequest;
 import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.LegacySessionRequest;
+import com.faforever.server.client.PingReport;
 import com.faforever.server.coop.CoopMissionCompletedReport;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.AiOptionReport;
@@ -385,6 +386,15 @@ public class LegacyRequestTransformerTest {
   public void desync() throws Exception {
     DesyncReport report = (DesyncReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "Desync"
+    ));
+
+    assertThat(report, is(notNullValue()));
+  }
+
+  @Test
+  public void ping() throws Exception {
+    PingReport report = (PingReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "ping"
     ));
 
     assertThat(report, is(notNullValue()));

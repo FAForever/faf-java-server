@@ -1,5 +1,6 @@
 package com.faforever.server.client;
 
+import com.faforever.server.config.ServerProperties;
 import com.faforever.server.entity.Player;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.player.PlayerService;
@@ -11,11 +12,13 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -40,10 +43,13 @@ public class ClientConnectionService {
   private final PlayerService playerService;
   private final ApplicationEventPublisher eventPublisher;
   private final Map<Protocol, AtomicInteger> protocolConnectionCounters;
+  private final ServerProperties serverProperties;
 
-  public ClientConnectionService(MeterRegistry meterRegistry, PlayerService playerService, ApplicationEventPublisher eventPublisher) {
+  public ClientConnectionService(MeterRegistry meterRegistry, PlayerService playerService,
+                                 ApplicationEventPublisher eventPublisher, ServerProperties serverProperties) {
     this.playerService = playerService;
     this.eventPublisher = eventPublisher;
+    this.serverProperties = serverProperties;
     connections = new ConcurrentHashMap<>();
 
     Builder<Protocol, AtomicInteger> protocolConnectionCountersBuilder = ImmutableMap.builder();
@@ -99,6 +105,22 @@ public class ClientConnectionService {
     }
   }
 
+  public void updateLastSeen(ClientConnection connection, Instant time) {
+    connection.setLastSeen(time);
+  }
+
+  @Scheduled(fixedDelay = 10_000)
+  public void disconnectSilentClients() {
+    Instant deadline = Instant.now().minusSeconds(serverProperties.getClientConnectionTimeout());
+    connections.values().parallelStream()
+      .filter(clientConnection -> clientConnection.getLastSeen().isBefore(deadline))
+      .forEach(this::disconnectClient);
+  }
+
+  private void disconnectClient(ClientConnection clientConnection) {
+    eventPublisher.publishEvent(new CloseConnectionEvent(this, clientConnection));
+  }
+
   /**
    * Fires a {@link CloseConnectionEvent} in order to disconnect the client of the user with the specified ID.
    */
@@ -110,7 +132,7 @@ public class ClientConnectionService {
       return;
     }
     Player player = optional.get();
-    eventPublisher.publishEvent(new CloseConnectionEvent(this, player.getClientConnection()));
-    log.info("User '{}' closed connection of user '{}'", requester, player);
+    log.debug("'{}' is closing connection of player '{}'", requester, player);
+    disconnectClient(player.getClientConnection());
   }
 }
