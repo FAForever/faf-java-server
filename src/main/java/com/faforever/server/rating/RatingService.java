@@ -68,8 +68,8 @@ public class RatingService {
   }
 
   /**
-   * Updates the ratings of all players in {@code playerStats} as well as their global/ladder1v1 rating,
-   * according to the outcome of the game <strong> without persisting the results</strong>.
+   * Updates the ratings of all players in {@code playerStats} as well as their global/ladder1v1 rating, according to
+   * the outcome of the game <strong> without persisting the results</strong>.
    *
    * @param noTeamId ID of the "no team" team
    */
@@ -144,8 +144,17 @@ public class RatingService {
   }
 
   private void updatePlayerStats(Entry<IPlayer, de.gesundkrank.jskills.Rating> entry, GamePlayerStats stats) {
-    stats.setAfterMean(entry.getValue().getMean());
-    stats.setAfterDeviation(entry.getValue().getStandardDeviation());
+    de.gesundkrank.jskills.Rating newRating = entry.getValue();
+    double newMean = newRating.getMean();
+    double newDeviation = newRating.getStandardDeviation();
+
+    if (Double.isNaN(newMean) || Double.isNaN(newDeviation)) {
+      log.warn("New rating '{}' for player '{}' in game '{}' contains NaN. Keeping old rating.", newRating, stats.getPlayer(), stats.getGame());
+      newMean = stats.getMean();
+      newDeviation = stats.getDeviation();
+    }
+    stats.setAfterMean(newMean);
+    stats.setAfterDeviation(newDeviation);
   }
 
   private void updateRating(RatingType ratingType, GamePlayerStats stats) {
