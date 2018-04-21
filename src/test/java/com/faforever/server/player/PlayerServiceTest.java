@@ -4,6 +4,7 @@ import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
+import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -15,10 +16,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
+import java.util.Optional;
+import java.util.TimeZone;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PlayerServiceTest {
@@ -31,20 +36,27 @@ public class PlayerServiceTest {
   private MeterRegistry meterRegistry;
   @Mock
   private ApplicationEventPublisher eventPublisher;
+  @Mock
+  private GeoIpService geoIpService;
 
   @Before
   public void setUp() throws Exception {
     player = (Player) new Player().setId(1);
     player.setLogin("JUnit");
-    instance = new PlayerService(clientService, meterRegistry, eventPublisher);
+    instance = new PlayerService(clientService, meterRegistry, eventPublisher, geoIpService);
   }
 
   @Test
-  public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() throws Exception {
+  public void onClientDisconnectRemovesPlayerAndUnsetsGameAndRemovesGameIfLastPlayer() {
     FafUserDetails fafUserDetails = createFafUserDetails();
+
+    when(geoIpService.lookupTimezone(any())).thenReturn(Optional.of(TimeZone.getDefault()));
+    when(geoIpService.lookupCountryCode(any())).thenReturn(Optional.of("CH"));
 
     instance.setPlayerOnline(fafUserDetails.getPlayer());
     assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(true));
+    assertThat(player.getTimeZone(), is(TimeZone.getDefault()));
+    assertThat(player.getCountry(), is("CH"));
 
     instance.removePlayer(fafUserDetails.getPlayer());
 
