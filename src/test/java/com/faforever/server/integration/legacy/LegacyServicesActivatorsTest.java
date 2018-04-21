@@ -1,6 +1,5 @@
 package com.faforever.server.integration.legacy;
 
-import com.faforever.server.chat.ChatService;
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.client.LegacyLoginRequest;
@@ -57,8 +56,6 @@ public class LegacyServicesActivatorsTest {
   private UniqueIdService uniqueIdService;
   @Mock
   private GeoIpService geoIpService;
-  @Mock
-  private ChatService chatService;
   @Mock
   private PlayerService playerService;
 
