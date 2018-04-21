@@ -54,6 +54,8 @@ public enum LegacyClientMessageType {
   // Game messages
   GAME_STATE("GameState"),
   GAME_OPTION("GameOption"),
+  // Wondering why this isn't just a GameState? See https://github.com/FAForever/fa/issues/2378
+  GAME_ENDED("GameEnded"),
   PLAYER_OPTION("PlayerOption"),
   CLEAR_SLOT("ClearSlot"),
   DESYNC("Desync"),

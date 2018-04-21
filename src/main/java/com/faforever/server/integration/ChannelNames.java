@@ -280,4 +280,9 @@ public final class ChannelNames {
    * Channel for {@link com.faforever.server.game.DisconnectedReport}.
    */
   public static final String DISCONNECTED_REPORT = "disconnectedReport";
+
+  /**
+   * Channel for {@link com.faforever.server.game.GameEndedReport}.
+   */
+  public static final String GAME_ENDED_REPORT = "gameEndedReport";
 }
