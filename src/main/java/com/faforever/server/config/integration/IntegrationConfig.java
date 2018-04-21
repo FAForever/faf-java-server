@@ -22,6 +22,7 @@ import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.GameChatMessageReport;
+import com.faforever.server.game.GameEndedReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -210,6 +211,7 @@ public class IntegrationConfig {
     router.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.REMOVE_FRIEND_REQUEST);
     router.setChannelMapping(RemoveFoeRequest.class.getName(), ChannelNames.REMOVE_FOE_REQUEST);
     router.setChannelMapping(DisconnectedReport.class.getName(), ChannelNames.DISCONNECTED_REPORT);
+    router.setChannelMapping(GameEndedReport.class.getName(), ChannelNames.GAME_ENDED_REPORT);
     // This is sent by the game but currently, the server has no interest in it.
     router.setChannelMapping(BottleneckReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     // This is sent by the game but currently, the server has no interest in it.
@@ -240,7 +242,7 @@ public class IntegrationConfig {
   private AbstractTransformer requestExceptionTransformer() {
     return new AbstractTransformer() {
       @Override
-      protected Object doTransform(Message<?> message) throws Exception {
+      protected Object doTransform(Message<?> message) {
         MessagingException messageException = (MessagingException) message.getPayload();
         Message<?> failedMessage = messageException.getFailedMessage();
 

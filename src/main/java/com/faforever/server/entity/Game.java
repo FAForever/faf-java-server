@@ -22,6 +22,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,6 +171,9 @@ public class Game {
   @Transient
   private CompletableFuture<Game> joinableFuture;
 
+  @Transient
+  private Collection<Integer> playerIdsWhoReportedGameEnd;
+
   public Game(int id) {
     this();
     this.id = id;
@@ -191,6 +195,7 @@ public class Game {
     gameVisibility = GameVisibility.PUBLIC;
     victoryCondition = VictoryCondition.DEMORALIZATION;
     joinableFuture = new CompletableFuture<>();
+    playerIdsWhoReportedGameEnd = new ArrayList<>();
   }
 
   public void replaceArmyStatistics(List<ArmyStatistics> newList) {

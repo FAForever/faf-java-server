@@ -33,10 +33,8 @@ import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.Streams;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +48,6 @@ import org.springframework.util.Assert;
 import javax.persistence.EntityManager;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -489,8 +486,6 @@ public class GameService {
         }
         return ArmyResult.of(armyId, armyResult.getOutcome(), score);
       });
-
-    endGameIfArmyResultsComplete(game);
   }
 
   public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome) {
@@ -514,8 +509,6 @@ public class GameService {
         }
         return ArmyResult.of(armyId, outcome, armyResult.getScore());
       });
-
-    endGameIfArmyResultsComplete(game);
   }
 
   /**
@@ -645,60 +638,27 @@ public class GameService {
       });
   }
 
-  private void changePlayerGameState(Player player, PlayerGameState newState) {
-    playerGameStateCounters.get(player.getGameState()).decrementAndGet();
-    player.setGameState(newState);
-    playerGameStateCounters.get(player.getGameState()).incrementAndGet();
-  }
+  public void reportGameEnded(Player reporter) {
+    Requests.verify(reporter.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
 
-  /**
-   * Checks whether a game has ended and, if so, calls {@link #onGameEnded(Game)}. As the game doesn't yet send a clear
-   * "game ended" command yet, a game is considered as ended when the following conditions are met: <ol><li>Every
-   * connected player reported an army outcome for all armies</li> <li>Every survivor reported a score for all armies
-   * (defeated players do not send scores)</li></ol>(human and AI).
-   */
-  // TODO simplify once https://github.com/FAForever/fa/issues/2378 is implemented
-  private void endGameIfArmyResultsComplete(Game game) {
-    List<Integer> armies = Streams.concat(
-      game.getPlayerOptions().values().stream(),
-      game.getAiOptions().values().stream()
-    )
-      .filter(options -> options.containsKey(OPTION_ARMY))
-      .map(options -> (Integer) options.get(OPTION_ARMY))
-      .collect(Collectors.toList());
+    Game game = reporter.getCurrentGame();
+    game.getPlayerIdsWhoReportedGameEnd().add(reporter.getId());
 
-    Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
-    Map<Integer, Map<Integer, ArmyResult>> reportedArmyOutcomes = game.getReportedArmyResults();
+    long missingGameEndedReports = reporter.getCurrentGame().getConnectedPlayers().values().stream()
+      .filter(player -> !game.getPlayerIdsWhoReportedGameEnd().contains(player.getId()))
+      .count();
 
-    for (Integer playerId : connectedPlayers.keySet()) {
-      Map<Integer, ArmyResult> reportedOutcomes = reportedArmyOutcomes.get(playerId);
-      if (reportedOutcomes == null) {
-        return;
-      }
-      if (!areArmyOutcomesComplete(armies, playerId, reportedOutcomes)) {
-        return;
-      }
+    if (missingGameEndedReports > 0) {
+      return;
     }
 
     onGameEnded(game);
   }
 
-  private boolean areArmyOutcomesComplete(List<Integer> armies, Integer playerId, Map<Integer, ArmyResult> reportedOutcomes) {
-    Collection<Integer> armiesWithIncompleteResult = new ArrayList<>(armies);
-    for (ArmyResult armyResult : reportedOutcomes.values()) {
-      // TODO armyResult.getScore() != null isn't correct, see https://github.com/FAForever/fa/issues/2378
-      if (armyResult.getOutcome() != Outcome.UNKNOWN && armyResult.getScore() != null) {
-        armiesWithIncompleteResult.remove(armyResult.getArmyId());
-      }
-    }
-    if (!armiesWithIncompleteResult.isEmpty()) {
-      if (log.isTraceEnabled()) {
-        log.trace("Not considering game as completed because player '{}' did not report scores for armies: {}",
-          playerId, Joiner.on(", ").join(armiesWithIncompleteResult));
-      }
-      return false;
-    }
-    return true;
+  private void changePlayerGameState(Player player, PlayerGameState newState) {
+    playerGameStateCounters.get(player.getGameState()).decrementAndGet();
+    player.setGameState(newState);
+    playerGameStateCounters.get(player.getGameState()).incrementAndGet();
   }
 
   private void addPlayer(Game game, Player player) {
@@ -888,7 +848,7 @@ public class GameService {
   private void onGameLaunching(Player reporter, Game game) {
     if (!Objects.equals(game.getHost(), reporter)) {
       // TODO do non-hosts send this? If not, log to WARN, else ignore if not host
-      log.warn("Player '{}' reported launch for game: {}", reporter, game);
+      log.warn("Player '{}' reported launch for game '{}' but host is '{}'.", reporter, game, game.getHost());
       return;
     }
     changeGameState(game, GameState.PLAYING);

@@ -8,6 +8,7 @@ import com.faforever.server.game.ArmyScoreReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
+import com.faforever.server.game.GameEndedReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -129,6 +130,11 @@ public class GameServiceActivators {
   public void onClientDisconnected(ClientDisconnectedEvent event) {
     Optional.ofNullable(event.getClientConnection().getAuthentication())
       .ifPresent(authentication -> gameService.removePlayer(((FafUserDetails) authentication.getPrincipal()).getPlayer()));
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.GAME_ENDED_REPORT)
+  public void onGameEnded(GameEndedReport event, @Header(USER_HEADER) Authentication authentication) {
+    gameService.reportGameEnded(getPlayer(authentication));
   }
 
   private Player getPlayer(Authentication authentication) {

@@ -27,6 +27,7 @@ import com.faforever.server.game.DisconnectPeerRequest;
 import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameChatMessageReport;
+import com.faforever.server.game.GameEndedReport;
 import com.faforever.server.game.GameModsCountReport;
 import com.faforever.server.game.GameModsReport;
 import com.faforever.server.game.GameOptionReport;
@@ -108,6 +109,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case GAME_OPTION:
         List<Object> args = getArgs(source);
         return new GameOptionReport((String) args.get(0), args.get(1));
+      case GAME_ENDED:
+        return GameEndedReport.INSTANCE;
       case PLAYER_OPTION:
         args = getArgs(source);
         return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), args.get(2));

@@ -80,10 +80,10 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -638,7 +638,8 @@ public class GameServiceTest {
     addPlayer(game, player2);
     launchGame(game);
 
-    reportPlayerScores();
+    reportPlayerScores(player1, player2);
+    reportGameEnded(player1, player2);
 
     assertThat(game.getValidity(), is(Validity.VALID));
     verify(divisionService).postResult(player1, player2, player1);
@@ -650,7 +651,8 @@ public class GameServiceTest {
     addPlayer(game, player2);
     launchGame(game);
 
-    reportPlayerScores();
+    reportPlayerScores(player1, player2);
+    reportGameEnded(player1, player2);
 
     assertThat(game.getValidity(), is(Validity.VALID));
   }
@@ -781,8 +783,6 @@ public class GameServiceTest {
 
     game.getReportedArmyResults().put(1, Collections.emptyMap());
     game.getReportedArmyResults().put(2, Collections.emptyMap());
-    game.getReportedArmyResults().put(1, Collections.emptyMap());
-    game.getReportedArmyResults().put(2, Collections.emptyMap());
 
     instance.updateGameValidity(game);
 
@@ -897,6 +897,8 @@ public class GameServiceTest {
     game.getReportedArmyResults()
       .forEach((playerId, resultMap) -> assertThat("Player " + playerId + " did not report all results", resultMap.size(), is(8)));
 
+    reportGameEnded(player1, player2, player3);
+
     assertThat(game.getPlayerStats().get(1).getScore(), is(4));
     assertThat(game.getPlayerStats().get(2).getScore(), is(2));
     assertThat(game.getPlayerStats().get(3).getScore(), is(-1));
@@ -914,7 +916,8 @@ public class GameServiceTest {
     game.getOptions().put(GameService.OPTION_TEAM_LOCK, "unlocked");
     launchGame(game);
 
-    reportPlayerScores();
+    reportPlayerScores(player1, player2);
+    reportGameEnded(player1, player2);
 
     assertThat(game.getValidity(), is(Validity.TEAMS_UNLOCKED));
   }
@@ -1101,7 +1104,7 @@ public class GameServiceTest {
 
     instance.disconnectPlayerFromGame(player1, 3);
 
-    ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass((Class) List.class);
+    ArgumentCaptor<List<ConnectionAware>> captor = ArgumentCaptor.forClass(List.class);
     verify(clientService).disconnectPlayerFromGame(eq(3), captor.capture());
     List<ConnectionAware> recipients = captor.getValue();
 
@@ -1255,14 +1258,39 @@ public class GameServiceTest {
     assertThat(game.isMutuallyAgreedDraw(), is(true));
   }
 
-  private void reportPlayerScores() {
-    Stream.of(player1, player2)
-      .forEach(player -> {
-        instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
-        instance.reportArmyScore(player, 1, 10);
-        instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
-        instance.reportArmyScore(player, 2, -1);
-      });
+  @Test
+  public void reportGameEnded() throws Exception {
+    Game game = hostGame(player1);
+    addPlayer(game, player2);
+
+    Player player3 = new Player();
+    player3.setId(3);
+
+    addPlayer(game, player3);
+
+    launchGame(game);
+
+    instance.reportGameEnded(player1);
+    instance.removePlayer(player2);
+
+    assertThat(game.getState(), is(GameState.PLAYING));
+
+    instance.reportGameEnded(player3);
+
+    assertThat(game.getState(), is(GameState.ENDED));
+  }
+
+  private void reportPlayerScores(Player player1, Player... players) {
+    Stream.concat(Stream.of(player1), Stream.of(players)).forEach(player -> {
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyScore(player, 1, 10);
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyScore(player, 2, -1);
+    });
+  }
+
+  private void reportGameEnded(Player player1, Player... players) {
+    Stream.concat(Stream.of(player1), Stream.of(players)).forEach(player -> instance.reportGameEnded(player));
   }
 
   private Game hostGame(Player host) throws Exception {
