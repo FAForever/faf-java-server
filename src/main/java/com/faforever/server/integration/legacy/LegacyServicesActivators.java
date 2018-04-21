@@ -10,7 +10,6 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
-import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
@@ -37,17 +36,14 @@ public class LegacyServicesActivators {
   private final AuthenticationManager authenticationManager;
   private final ClientService clientService;
   private final UniqueIdService uniqueIdService;
-  private final GeoIpService geoIpService;
   private final PlayerService playerService;
 
   @Inject
   public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
-                                  UniqueIdService uniqueIdService, GeoIpService geoIpService,
-                                  PlayerService playerService) {
+                                  UniqueIdService uniqueIdService, PlayerService playerService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
     this.uniqueIdService = uniqueIdService;
-    this.geoIpService = geoIpService;
     this.playerService = playerService;
   }
 
@@ -76,8 +72,6 @@ public class LegacyServicesActivators {
       clientConnection.setAuthentication(authentication);
       Player player = userDetails.getPlayer();
       player.setClientConnection(clientConnection);
-      geoIpService.lookupCountryCode(clientConnection.getClientAddress()).ifPresent(player::setCountry);
-      geoIpService.lookupTimezone(clientConnection.getClientAddress()).ifPresent(player::setTimeZone);
 
       uniqueIdService.verify(player, loginRequest.getUniqueId());
       playerService.setPlayerOnline(player);

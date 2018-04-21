@@ -1,7 +1,9 @@
 package com.faforever.server.player;
 
+import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.entity.Player;
+import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.stats.Metrics;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -27,12 +29,14 @@ public class PlayerService {
   private final Map<Integer, Player> onlinePlayersById;
   private final ClientService clientService;
   private final ApplicationEventPublisher eventPublisher;
+  private final GeoIpService geoIpService;
 
   public static final String TAG_PLAYER_GAME_STATE = "gameState";
 
-  public PlayerService(ClientService clientService, MeterRegistry meterRegistry, ApplicationEventPublisher eventPublisher) {
+  public PlayerService(ClientService clientService, MeterRegistry meterRegistry, ApplicationEventPublisher eventPublisher, GeoIpService geoIpService) {
     this.clientService = clientService;
     this.eventPublisher = eventPublisher;
+    this.geoIpService = geoIpService;
     onlinePlayersById = new ConcurrentHashMap<>();
 
     Gauge.builder(Metrics.PLAYERS, onlinePlayersById, Map::size)
@@ -45,6 +49,10 @@ public class PlayerService {
     log.debug("Adding player '{}'", player);
 
     onlinePlayersById.put(player.getId(), player);
+
+    ClientConnection clientConnection = player.getClientConnection();
+    geoIpService.lookupCountryCode(clientConnection.getClientAddress()).ifPresent(player::setCountry);
+    geoIpService.lookupTimezone(clientConnection.getClientAddress()).ifPresent(player::setTimeZone);
 
     List<Player> otherOnlinePlayers = getOtherOnlinePlayers(player);
     clientService.sendLoginDetails(player, player);
