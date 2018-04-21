@@ -8,6 +8,7 @@ import com.faforever.server.integration.MessageHeaders;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.integration.v2.client.V2ClientMessageTransformer;
 import com.faforever.server.integration.v2.server.V2ServerMessageTransformer;
+import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafClientDetails;
 import com.faforever.server.security.FafUserDetails;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +64,8 @@ public class WebsocketAdapterConfig {
    * WebSocket inbound adapter that accepts connections and messages from clients.
    */
   @Bean
-  public WebSocketInboundChannelAdapter webSocketInboundChannelAdapter(IntegrationWebSocketContainer serverWebSocketContainer) {
-    WebSocketInboundChannelAdapter adapter = new WebSocketInboundChannelAdapter(serverWebSocketContainer, new SubProtocolHandlerRegistry(new FafSubProtocolHandler(clientConnectionService)));
+  public WebSocketInboundChannelAdapter webSocketInboundChannelAdapter(IntegrationWebSocketContainer serverWebSocketContainer, PlayerService playerService) {
+    WebSocketInboundChannelAdapter adapter = new WebSocketInboundChannelAdapter(serverWebSocketContainer, new SubProtocolHandlerRegistry(new FafSubProtocolHandler(clientConnectionService, playerService)));
     adapter.setErrorChannelName(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME);
     return adapter;
   }
@@ -174,9 +175,12 @@ public class WebsocketAdapterConfig {
   private static class FafSubProtocolHandler extends PassThruSubProtocolHandler {
 
     private final ClientConnectionService clientConnectionService;
+    private final PlayerService playerService;
 
-    private FafSubProtocolHandler(ClientConnectionService clientConnectionService) {
+    private FafSubProtocolHandler(ClientConnectionService clientConnectionService, PlayerService playerService) {
       this.clientConnectionService = clientConnectionService;
+      this.playerService = playerService;
+
       setSupportedProtocols(Protocol.V2_JSON_UTF_8.name());
     }
 
@@ -186,7 +190,6 @@ public class WebsocketAdapterConfig {
 
       Principal sessionPrincipal = session.getPrincipal();
       if (sessionPrincipal instanceof OAuth2Authentication) {
-
         Object oAuthPrincipal = ((OAuth2Authentication) sessionPrincipal).getPrincipal();
         if (oAuthPrincipal instanceof FafClientDetails) {
           FafClientDetails clientDetails = (FafClientDetails) oAuthPrincipal;
@@ -194,10 +197,10 @@ public class WebsocketAdapterConfig {
         } else if (oAuthPrincipal instanceof FafUserDetails) {
           FafUserDetails userDetails = (FafUserDetails) oAuthPrincipal;
           userDetails.setClientConnection(clientConnection);
+
+          playerService.setPlayerOnline(userDetails.getPlayer());
         }
       }
-
-      // FIXME if it's a player, announce him online.
     }
 
     @Override
