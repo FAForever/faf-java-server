@@ -344,9 +344,9 @@ public class GameService {
       game.setVictoryCondition(VictoryCondition.fromString((String) value));
     } else if (OPTION_SLOTS.equals(key)) {
       game.setMaxPlayers((int) value);
-    } else if (OPTION_SCENARIO_FILE.equals(value)) {
+    } else if (OPTION_SCENARIO_FILE.equals(key)) {
       game.setMapName(((String) value).replace("//", "/").replace("\\", "/").split("/")[2]);
-    } else if (OPTION_TITLE.equals(value)) {
+    } else if (OPTION_TITLE.equals(key)) {
       game.setTitle((String) value);
     }
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);

@@ -73,6 +73,7 @@ import static com.faforever.server.game.GameService.OPTION_TEAM;
 import static com.faforever.server.game.GameService.OPTION_VICTORY_CONDITION;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.greaterThan;
@@ -222,6 +223,41 @@ public class GameServiceTest {
     instance.updateGameOption(player1, "GameSpeed", "normal");
 
     assertThat(game.getOptions().get("GameSpeed"), is("normal"));
+  }
+
+  @Test
+  public void updateGameOptionTitle() throws Exception {
+    Game game = hostGame(player1);
+
+    String newTitle = "Updated Title";
+    assertThat(game.getTitle(), not(newTitle));
+
+    instance.updateGameOption(player1, "Title", newTitle);
+
+    assertThat(game.getTitle(), is(newTitle));
+  }
+
+  @Test
+  public void updateScenarioFile() throws Exception {
+    Game game = hostGame(player1);
+
+    String newScenarioFile = "/maps/3v3 chaos.v0001/3v3 chaos_scenario.lua";
+    assertThat(game.getMapName(), not(newScenarioFile));
+
+    instance.updateGameOption(player1, "ScenarioFile", newScenarioFile);
+
+    assertThat(game.getMapName(), is("3v3 chaos.v0001"));
+  }
+
+  @Test
+  public void updateSlots() throws Exception {
+    Game game = hostGame(player1);
+
+    assertThat(game.getMaxPlayers(), not(12));
+
+    instance.updateGameOption(player1, "Slots", 8);
+
+    assertThat(game.getMaxPlayers(), is(8));
   }
 
   @Test
