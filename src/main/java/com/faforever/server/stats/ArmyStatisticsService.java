@@ -51,7 +51,7 @@ public class ArmyStatisticsService {
     this.modService = modService;
   }
 
-  public void process(Player player, Game game, List<ArmyStatistics> statistics) {
+  public void process(Player player, Game game) {
     int numberOfHumans = 0;
     float highestScore = 0;
     String highestScorerName = null;
@@ -59,7 +59,7 @@ public class ArmyStatisticsService {
     ArmyStatistics armyStats = null;
     int currentIndex = 0;
     int playerArmyId = -1;
-    for (ArmyStatistics statsItem : statistics) {
+    for (ArmyStatistics statsItem : game.getArmyStatistics()) {
       currentIndex++;
       if (statsItem.getType() == AI && !CIVILIAN_ARMY_NAME.equals(statsItem.getName())) {
         log.debug("AI game reported by '{}', aborting stats processing", player);

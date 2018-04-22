@@ -78,8 +78,8 @@ public class V2ClientMessageTransformerTest {
 
   @Test
   public void armyOutcome() throws Exception {
-    ClientMessage result = instance.transform(write(new ArmyOutcomeClientMessage(1, Outcome.DEFEAT)));
-    assertThat(result, is(ArmyOutcomeReport.valueOf(1, Outcome.DEFEAT)));
+    ClientMessage result = instance.transform(write(new ArmyOutcomeClientMessage(1, Outcome.DEFEAT, -1)));
+    assertThat(result, is(new ArmyOutcomeReport(1, Outcome.DEFEAT, -1)));
   }
 
   @Test

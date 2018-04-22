@@ -679,8 +679,6 @@ public class GameService {
 
     Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
     connectedPlayers.remove(playerId);
-    // Discard reports of disconnected players since their report may not reflect the end result
-    game.getReportedArmyResults().remove(playerId);
 
     clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
 
@@ -698,9 +696,9 @@ public class GameService {
         default:
           // Nothing to do
       }
+    } else {
+      markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     }
-
-    markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
   private void onPlayerGameEnded(Player player, Game game) {
@@ -721,6 +719,10 @@ public class GameService {
   }
 
   private void onGameEnded(Game game) {
+    if (game.getState() == GameState.ENDED) {
+      return;
+    }
+
     log.debug("Game ended: {}", game);
 
     GameState previousState = game.getState();
@@ -737,16 +739,17 @@ public class GameService {
       return;
     }
 
-    game.getPlayerStats().values().forEach(stats -> {
-      Player player = stats.getPlayer();
-      armyStatisticsService.process(player, game, game.getArmyStatistics());
-    });
     updateGameValidity(game);
     updateRatingsIfValid(game);
     Optional.ofNullable(game.getMapVersion()).ifPresent(mapVersion -> mapService.incrementTimesPlayed(mapVersion.getMap()));
     settlePlayerScores(game);
     updateDivisionScoresIfValid(game);
     gameRepository.save(game);
+
+    game.getPlayerStats().values().forEach(stats -> {
+      Player player = stats.getPlayer();
+      armyStatisticsService.process(player, game);
+    });
 
     if (game.getConnectedPlayers().isEmpty()) {
       onGameClosed(game);
@@ -780,11 +783,12 @@ public class GameService {
   }
 
   /**
-   * Finds the {@link ArmyResult ArmyOutcomes} that have been reported most often, mapped by army ID. Only respects
+   * Finds the {@link ArmyResult ArmyResults} that have been reported most often, mapped by army ID. Only respects
    * reports of players who are still connected and have reported a score as well as an outcome.
    */
   private Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
     Map<ArmyResult, Long> completeArmyResultToOccurrence = game.getReportedArmyResults().entrySet().stream()
+      .filter(playerIdToResults -> game.getConnectedPlayers().containsKey(playerIdToResults.getKey()))
       .flatMap(integerMapEntry -> integerMapEntry.getValue().values().stream())
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 

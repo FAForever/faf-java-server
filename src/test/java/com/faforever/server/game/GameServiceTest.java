@@ -94,7 +94,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-// TODO more testing needed
 public class GameServiceTest {
 
   private static final String PLAYER_NAME_1 = "player1";
@@ -644,7 +643,7 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     assertThat(game.getState(), is(GameState.ENDED));
 
-    verify(armyStatisticsService).process(any(), eq(game), any());
+    verify(armyStatisticsService).process(any(), eq(game));
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(game));
     assertThat(player1.getGameState(), is(PlayerGameState.ENDED));
@@ -658,7 +657,7 @@ public class GameServiceTest {
     instance.updatePlayerGameState(PlayerGameState.CLOSED, player1);
     assertThat(game.getState(), is(GameState.CLOSED));
 
-    verify(armyStatisticsService).process(any(), eq(game), any());
+    verify(armyStatisticsService).process(any(), eq(game));
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -927,8 +926,8 @@ public class GameServiceTest {
     with an outcome, since only those players saw the end of the game. */
 
     assertThat(game.getValidity(), is(Validity.VALID));
-    // Expect that reports of all disconnected players have been discarded
-    assertThat(game.getReportedArmyResults().values(), hasSize(3));
+    // Expect that reports of all players are still available (they used to be removed)
+    assertThat(game.getReportedArmyResults().values(), hasSize(8));
     // Expect all remaining players to have reported army results for all players
     game.getReportedArmyResults()
       .forEach((playerId, resultMap) -> assertThat("Player " + playerId + " did not report all results", resultMap.size(), is(8)));

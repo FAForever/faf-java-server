@@ -227,7 +227,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     return noCatch(() -> {
       JsonNode node = objectMapper.readTree((String) getArgs(source).get(0));
       JsonNode stats = node.get("stats");
-      TypeReference<List<ArmyStatistics>> typeReference = new TypeReference<List<ArmyStatistics>>() {
+      TypeReference<List<ArmyStatistics>> typeReference = new TypeReference<>() {
       };
       JsonParser jsonParser = stats.traverse();
       jsonParser.setCodec(objectMapper);
@@ -250,13 +250,14 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
     args = getArgs(source);
     int armyId = (int) args.get(0);
     String[] results = ((String) args.get(1)).split(" ");
+    int score = Integer.parseInt(results[1]);
 
     if ("score".equals(results[0])) {
-      return new ArmyScoreReport(armyId, Integer.parseInt(results[1]));
+      return new ArmyScoreReport(armyId, score);
     }
 
     Outcome outcome = Outcome.fromString(results[0]);
-    return ArmyOutcomeReport.valueOf(armyId, outcome);
+    return new ArmyOutcomeReport(armyId, outcome, score);
   }
 
   private ClientMessage handleGameMods(Map<String, Object> source) {

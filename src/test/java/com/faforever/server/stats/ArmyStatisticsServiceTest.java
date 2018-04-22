@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -104,11 +104,11 @@ public class ArmyStatisticsServiceTest {
   @SuppressWarnings("unchecked")
   public void testProcess() throws Exception {
     String file = "/stats/game_stats_full_example.json";
-    List<ArmyStatistics> stats = readStats(file);
+    game.replaceArmyStatistics(readStats(file));
 
     game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
 
     int playerId = 42;
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(playerId, AchievementId.ACH_NOVICE, AchievementUpdate.UpdateType.INCREMENT, 1)));
@@ -176,18 +176,18 @@ public class ArmyStatisticsServiceTest {
 
   @Test
   public void testProcessSinglePlayer() throws Exception {
-    List<ArmyStatistics> stats = readStats("/stats/game_stats_single_player.json");
+    game.replaceArmyStatistics(readStats("/stats/game_stats_single_player.json"));
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
   public void testProcessAiGame() throws Exception {
-    List<ArmyStatistics> stats = readStats("/stats/game_stats_ai_game.json");
+    game.replaceArmyStatistics(readStats("/stats/game_stats_ai_game.json"));
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
@@ -202,9 +202,9 @@ public class ArmyStatisticsServiceTest {
     game.setStartTime(Instant.now().minus(Duration.ofMinutes(90)));
     game.setEndTime(Instant.now());
 
-    List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
+    game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
 
     assertThat(this.achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_FIRST_SUCCESS, AchievementUpdate.UpdateType.UNLOCK, 0)));
   }
@@ -222,9 +222,9 @@ public class ArmyStatisticsServiceTest {
     game.setStartTime(Instant.now().minus(Duration.ofMinutes(9)));
     game.setEndTime(Instant.now());
 
-    List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
+    game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
 
     assertThat(this.achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_RUSHER, AchievementUpdate.UpdateType.UNLOCK, 0)));
   }
@@ -242,15 +242,15 @@ public class ArmyStatisticsServiceTest {
     game.setStartTime(Instant.now().minus(Duration.ofMinutes(11)));
     game.setEndTime(Instant.now());
 
-    List<ArmyStatistics> stats = readStats("/stats/game_stats_simple_win.json");
+    game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
 
     assertThat(this.achievementUpdates, not(hasItem(new AchievementUpdate(42, AchievementId.ACH_RUSHER, AchievementUpdate.UpdateType.UNLOCK, 0))));
   }
 
   @Test
-  public void testCategoryStatsWonMoreAir() throws Exception {
+  public void testCategoryStatsWonMoreAir() {
     unitStats.getAir().setBuilt(3);
     unitStats.getLand().setBuilt(2);
     unitStats.getNaval().setBuilt(1);
@@ -263,7 +263,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testCategoryStatsWonMoreLand() throws Exception {
+  public void testCategoryStatsWonMoreLand() {
     unitStats.getAir().setBuilt(2);
     unitStats.getLand().setBuilt(3);
     unitStats.getNaval().setBuilt(1);
@@ -276,7 +276,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testCategoryStatsWonMoreNaval() throws Exception {
+  public void testCategoryStatsWonMoreNaval() {
     unitStats.getAir().setBuilt(2);
     unitStats.getLand().setBuilt(1);
     unitStats.getNaval().setBuilt(3);
@@ -289,7 +289,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testCategoryStatsWonMoreNavalAndOneExperimental() throws Exception {
+  public void testCategoryStatsWonMoreNavalAndOneExperimental() {
     unitStats.getAir().setBuilt(2);
     unitStats.getLand().setBuilt(1);
     unitStats.getNaval().setBuilt(3);
@@ -304,7 +304,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testCategoryStatsWonMoreNavalAndThreeExperimentals() throws Exception {
+  public void testCategoryStatsWonMoreNavalAndThreeExperimentals() {
     unitStats.getAir().setBuilt(2);
     unitStats.getLand().setBuilt(1);
     unitStats.getNaval().setBuilt(3);
@@ -323,7 +323,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testFactionPlayedAeonSurvived() throws Exception {
+  public void testFactionPlayedAeonSurvived() {
     instance.factionPlayed(Faction.AEON, true, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_AEON_PLAYS, 1)));
@@ -335,14 +335,14 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testFactionPlayedAeonDied() throws Exception {
+  public void testFactionPlayedAeonDied() {
     instance.factionPlayed(Faction.AEON, false, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_AEON_PLAYS, 1)));
   }
 
   @Test
-  public void testFactionPlayedCybranSurvived() throws Exception {
+  public void testFactionPlayedCybranSurvived() {
     instance.factionPlayed(Faction.CYBRAN, true, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_CYBRAN_PLAYS, 1)));
@@ -354,14 +354,14 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testFactionPlayedCybranDied() throws Exception {
+  public void testFactionPlayedCybranDied() {
     instance.factionPlayed(Faction.CYBRAN, false, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_CYBRAN_PLAYS, 1)));
   }
 
   @Test
-  public void testFactionPlayedUefSurvived() throws Exception {
+  public void testFactionPlayedUefSurvived() {
     instance.factionPlayed(Faction.UEF, true, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_UEF_PLAYS, 1)));
@@ -373,14 +373,14 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testFactionPlayedUefDied() throws Exception {
+  public void testFactionPlayedUefDied() {
     instance.factionPlayed(Faction.UEF, false, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_UEF_PLAYS, 1)));
   }
 
   @Test
-  public void testFactionPlayedSeraphimSurvived() throws Exception {
+  public void testFactionPlayedSeraphimSurvived() {
     instance.factionPlayed(Faction.SERAPHIM, true, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_SERAPHIM_PLAYS, 1)));
@@ -392,7 +392,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testFactionPlayedSeraphimDied() throws Exception {
+  public void testFactionPlayedSeraphimDied() {
     instance.factionPlayed(Faction.SERAPHIM, false, achievementUpdates, eventUpdates, player.getId());
 
     assertThat(eventUpdates, hasItem(new EventUpdate(42, EventId.EVENT_SERAPHIM_PLAYS, 1)));
@@ -400,7 +400,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testKilledAcusOneAndSurvived() throws Exception {
+  public void testKilledAcusOneAndSurvived() {
     unitStats.getCdr().setKilled(1);
     instance.killedAcus(unitStats, true, achievementUpdates, player.getId());
 
@@ -409,7 +409,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testKilledAcusThreeAndSurvived() throws Exception {
+  public void testKilledAcusThreeAndSurvived() {
     unitStats.getCdr().setKilled(3);
     instance.killedAcus(unitStats, true, achievementUpdates, player.getId());
 
@@ -419,7 +419,7 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testKilledAcusOneAndDied() throws Exception {
+  public void testKilledAcusOneAndDied() {
     unitStats.getCdr().setKilled(1);
     unitStats.getCdr().setLost(1);
     instance.killedAcus(unitStats, false, achievementUpdates, player.getId());
@@ -429,104 +429,104 @@ public class ArmyStatisticsServiceTest {
   }
 
   @Test
-  public void testBuiltSalvationsOneAndDied() throws Exception {
+  public void testBuiltSalvationsOneAndDied() {
     instance.builtSalvations(1, false, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltSalvationsOneAndSurvived() throws Exception {
+  public void testBuiltSalvationsOneAndSurvived() {
     instance.builtSalvations(1, true, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_RAINMAKER, AchievementUpdate.UpdateType.UNLOCK, 0)));
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltYolonaOssOneAndDied() throws Exception {
+  public void testBuiltYolonaOssOneAndDied() {
     instance.builtYolonaOss(1, false, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltYolonaOssOneAndSurvived() throws Exception {
+  public void testBuiltYolonaOssOneAndSurvived() {
     instance.builtYolonaOss(1, true, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_NUCLEAR_WAR, AchievementUpdate.UpdateType.UNLOCK, 0)));
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltParagonsOneAndDied() throws Exception {
+  public void testBuiltParagonsOneAndDied() {
     instance.builtParagons(1, false, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltParagonsOneAndSurvived() throws Exception {
+  public void testBuiltParagonsOneAndSurvived() {
     instance.builtParagons(1, true, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_SO_MUCH_RESOURCES, AchievementUpdate.UpdateType.UNLOCK, 0)));
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltScathisOneAndDied() throws Exception {
+  public void testBuiltScathisOneAndDied() {
     instance.builtScathis(1, false, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltScathisOneAndSurvived() throws Exception {
+  public void testBuiltScathisOneAndSurvived() {
     instance.builtScathis(1, true, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_MAKE_IT_HAIL, AchievementUpdate.UpdateType.UNLOCK, 0)));
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltMavorsOneAndDied() throws Exception {
+  public void testBuiltMavorsOneAndDied() {
     instance.builtMavors(1, false, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testBuiltMavorsOneAndSurvived() throws Exception {
+  public void testBuiltMavorsOneAndSurvived() {
     instance.builtMavors(1, true, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_I_HAVE_A_CANON, AchievementUpdate.UpdateType.UNLOCK, 0)));
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testLowestAcuHealthZeroDied() throws Exception {
+  public void testLowestAcuHealthZeroDied() {
     instance.lowestAcuHealth(0, false, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testLowestAcuHealth499Survived() throws Exception {
+  public void testLowestAcuHealth499Survived() {
     instance.lowestAcuHealth(499, true, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_THAT_WAS_CLOSE, AchievementUpdate.UpdateType.UNLOCK, 0)));
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testLowestAcuHealth500Survived() throws Exception {
+  public void testLowestAcuHealth500Survived() {
     instance.lowestAcuHealth(500, true, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
   @Test
-  public void testTopScore7Players() throws Exception {
+  public void testTopScore7Players() {
     instance.highscore(true, 7, achievementUpdates, player.getId());
     verifyZeroInteractions(achievementService);
   }
 
   @Test
-  public void testTopScore8Players() throws Exception {
+  public void testTopScore8Players() {
     instance.highscore(true, 8, achievementUpdates, player.getId());
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_TOP_SCORE, AchievementUpdate.UpdateType.UNLOCK, 0)));
     assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_UNBEATABLE, AchievementUpdate.UpdateType.INCREMENT, 1)));
@@ -534,11 +534,11 @@ public class ArmyStatisticsServiceTest {
 
   @Test
   public void testProcessAbortProcessingIfNoArmyResult() throws Exception {
-    List<ArmyStatistics> stats = readStats("/stats/game_stats_full_example.json");
+    game.replaceArmyStatistics(readStats("/stats/game_stats_full_example.json"));
 
     game.getReportedArmyResults().clear();
 
-    instance.process(player, game, stats);
+    instance.process(player, game);
     verifyZeroInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
@@ -546,7 +546,7 @@ public class ArmyStatisticsServiceTest {
   private List<ArmyStatistics> readStats(String file) throws java.io.IOException {
     JsonNode node = objectMapper.readTree(getClass().getResourceAsStream(file));
     JsonNode stats = node.get("stats");
-    TypeReference<List<ArmyStatistics>> typeReference = new TypeReference<List<ArmyStatistics>>() {
+    TypeReference<List<ArmyStatistics>> typeReference = new TypeReference<>() {
     };
 
     JsonParser jsonParser = stats.traverse();

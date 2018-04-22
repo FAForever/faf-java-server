@@ -121,8 +121,9 @@ public class RatingService {
         // If a player is in the "no team" team, assign him to his own team
         teamId = playerStat.getPlayer().getId() + highestTeamId;
       }
-      teamsById.computeIfAbsent(teamId, ScoredTeam::new).addPlayer(player, rating);
-      teamsById.get(teamId).getScore().updateAndGet(score -> score + playerStat.getScore());
+      ScoredTeam team = teamsById.computeIfAbsent(teamId, ScoredTeam::new);
+      team.addPlayer(player, rating);
+      team.getScore().updateAndGet(score -> score + playerStat.getScore());
     }
     return teamsById;
   }

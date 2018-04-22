@@ -112,7 +112,7 @@ public interface V2ClientMessageMapper {
   }
 
   default ArmyOutcomeReport map(ArmyOutcomeClientMessage message) {
-    return ArmyOutcomeReport.valueOf(message.getArmyId(), message.getOutcome());
+    return new ArmyOutcomeReport(message.getArmyId(), message.getOutcome(), message.getScore());
   }
 
   default MutuallyAgreedDrawRequest map(@SuppressWarnings("unused") AgreeDrawClientMessage message) {

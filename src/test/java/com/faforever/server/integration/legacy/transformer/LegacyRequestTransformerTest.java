@@ -63,7 +63,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 
-// TODO more testing needed
 public class LegacyRequestTransformerTest {
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final String KEY_COMMAND = "command";
@@ -84,7 +83,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformHostGameRequest() throws Exception {
+  public void transformHostGameRequest() {
     HostGameRequest hostGameRequest = (HostGameRequest) instance.transform(ImmutableMap.<String, Object>builder()
       .put(KEY_COMMAND, "game_host")
       .put("mapname", "SCMP_001")
@@ -109,7 +108,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformJoinGame() throws Exception {
+  public void transformJoinGame() {
     JoinGameRequest joinGameRequest = (JoinGameRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "game_join",
       "uid", 123,
@@ -122,14 +121,14 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformAskSession() throws Exception {
+  public void transformAskSession() {
     LegacySessionRequest sessionRequest = (LegacySessionRequest) instance.transform(ImmutableMap.of(KEY_COMMAND, "ask_session"));
 
     assertThat(sessionRequest, is(notNullValue()));
   }
 
   @Test
-  public void transformAddFriend() throws Exception {
+  public void transformAddFriend() {
     AddFriendRequest addFriendRequest = (AddFriendRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_add",
       "friend", 123
@@ -140,7 +139,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformAddFoe() throws Exception {
+  public void transformAddFoe() {
     AddFoeRequest addFoeRequest = (AddFoeRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_add",
       "foe", 123
@@ -151,7 +150,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformRemoveFriend() throws Exception {
+  public void transformRemoveFriend() {
     RemoveFriendRequest request = (RemoveFriendRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_remove",
       "friend", 123
@@ -162,7 +161,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformRemoveFoe() throws Exception {
+  public void transformRemoveFoe() {
     RemoveFoeRequest request = (RemoveFoeRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_remove",
       "foe", 123
@@ -173,7 +172,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void invalidSocialRemove() throws Exception {
+  public void invalidSocialRemove() {
     expectedException.expect(requestExceptionWithCode(ErrorCode.UNSUPPORTED_REQUEST));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_remove",
@@ -182,7 +181,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void invalidSocialAdd() throws Exception {
+  public void invalidSocialAdd() {
     expectedException.expect(requestExceptionWithCode(ErrorCode.UNSUPPORTED_REQUEST));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, "social_add",
@@ -191,7 +190,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformLogin() throws Exception {
+  public void transformLogin() {
     LegacyLoginRequest loginRequest = (LegacyLoginRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "hello",
       "login", TEST_USERNAME,
@@ -206,7 +205,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformGameResultToArmyScoreReport() throws Exception {
+  public void transformGameResultToArmyScoreReport() {
     ArmyScoreReport armyScoreReport = (ArmyScoreReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameResult",
       KEY_ARGS, Arrays.asList(1, "score 10")
@@ -218,19 +217,20 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformGameResultToArmyOutcomeReport() throws Exception {
+  public void transformGameResultToArmyOutcomeReport() {
     ArmyOutcomeReport armyOutcomeReport = (ArmyOutcomeReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameResult",
-      KEY_ARGS, Arrays.asList(1, "victory")
+      KEY_ARGS, Arrays.asList(1, "victory 10")
     ));
 
     assertThat(armyOutcomeReport, is(notNullValue()));
     assertThat(armyOutcomeReport.getArmyId(), is(1));
     assertThat(armyOutcomeReport.getOutcome(), is(Outcome.VICTORY));
+    assertThat(armyOutcomeReport.getScore(), is(10));
   }
 
   @Test
-  public void transformGameState() throws Exception {
+  public void transformGameState() {
     GameStateReport gameStateReport = (GameStateReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameState",
       KEY_ARGS, Collections.singletonList("Lobby")
@@ -241,7 +241,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformGameOption() throws Exception {
+  public void transformGameOption() {
     GameOptionReport gameOptionReport = (GameOptionReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameOption",
       KEY_ARGS, Arrays.asList("GameSpeed", "normal")
@@ -253,7 +253,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformGameMods() throws Exception {
+  public void transformGameMods() {
     GameModsReport gameModsReport = (GameModsReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameMods",
       KEY_ARGS, Arrays.asList("uids", "1-2-3-4 5-6-7-8")
@@ -264,7 +264,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformGameModsActivated() throws Exception {
+  public void transformGameModsActivated() {
     GameModsCountReport gameModsCountReport = (GameModsCountReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "GameMods",
       KEY_ARGS, Arrays.asList("activated", 0d)
@@ -275,7 +275,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformPlayerOption() throws Exception {
+  public void transformPlayerOption() {
     PlayerOptionReport playerOptionReport = (PlayerOptionReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "PlayerOption",
       KEY_ARGS, Arrays.asList("1", "Faction", 3)
@@ -288,7 +288,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformClearSlot() throws Exception {
+  public void transformClearSlot() {
     ClearSlotRequest clearSlotRequest = (ClearSlotRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "ClearSlot",
       KEY_ARGS, Collections.singletonList(1)
@@ -299,7 +299,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformOperationComplete() throws Exception {
+  public void transformOperationComplete() {
     CoopMissionCompletedReport coopMissionCompletedReport = (CoopMissionCompletedReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "OperationComplete",
       KEY_ARGS, Arrays.asList(1, 0, 1440)
@@ -328,7 +328,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformPlayerDefeated() throws Exception {
+  public void transformPlayerDefeated() {
     PlayerDefeatedReport playerDefeatedReport = (PlayerDefeatedReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "EnforceRating"
     ));
@@ -337,7 +337,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void transformAiOption() throws Exception {
+  public void transformAiOption() {
     AiOptionReport aiOptionReport = (AiOptionReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "AIOption",
       KEY_ARGS, Arrays.asList("QAI", "Faction", 3)
@@ -350,7 +350,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void teamKillReport() throws Exception {
+  public void teamKillReport() {
     TeamKillReport teamKillReport = (TeamKillReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "TeamkillReport",
       KEY_ARGS, Arrays.asList(1, TEST_USERNAME, 2, "TestNG")
@@ -363,7 +363,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void aiOption() throws Exception {
+  public void aiOption() {
     AiOptionReport report = (AiOptionReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "AIOption",
       KEY_ARGS, Arrays.asList("QAI", "Team", 1)
@@ -375,7 +375,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void createAccountThrowsException() throws Exception {
+  public void createAccountThrowsException() {
     expectedException.expect(requestExceptionWithCode(ErrorCode.CREATE_ACCOUNT_IS_DEPRECATED));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, "create_account"
@@ -383,7 +383,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void desync() throws Exception {
+  public void desync() {
     DesyncReport report = (DesyncReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "Desync"
     ));
@@ -392,7 +392,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void ping() throws Exception {
+  public void ping() {
     PingReport report = (PingReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "ping"
     ));
@@ -401,7 +401,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void disconnected() throws Exception {
+  public void disconnected() {
     DisconnectedReport report = (DisconnectedReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "Disconnected"
     ));
@@ -410,7 +410,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void bottleneck() throws Exception {
+  public void bottleneck() {
     BottleneckReport report = (BottleneckReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "Bottleneck"
     ));
@@ -419,7 +419,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void bottleneckCleared() throws Exception {
+  public void bottleneckCleared() {
     BottleneckClearedReport report = (BottleneckClearedReport) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "BottleneckCleared"
     ));
@@ -428,7 +428,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void closeFa() throws Exception {
+  public void closeFa() {
     DisconnectPeerRequest request = (DisconnectPeerRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "closeFA",
@@ -439,7 +439,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void requestAvatars() throws Exception {
+  public void requestAvatars() {
     GetAvatarsAdminRequest request = (GetAvatarsAdminRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "requestavatars"
@@ -449,7 +449,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void removeAvatar() throws Exception {
+  public void removeAvatar() {
     RemoveAvatarAdminRequest request = (RemoveAvatarAdminRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "remove_avatar",
@@ -462,7 +462,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void addAvatar() throws Exception {
+  public void addAvatar() {
     AddAvatarAdminRequest request = (AddAvatarAdminRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "add_avatar",
@@ -475,7 +475,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void broadcastRequest() throws Exception {
+  public void broadcastRequest() {
     BroadcastRequest request = (BroadcastRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
       KEY_ACTION, "broadcast",
@@ -486,7 +486,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void unknownAdminAction() throws Exception {
+  public void unknownAdminAction() {
     expectedException.expect(requestExceptionWithCode(ErrorCode.UNSUPPORTED_REQUEST));
     instance.transform(ImmutableMap.of(
       KEY_COMMAND, COMMAND_ADMIN,
@@ -495,7 +495,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void searchMatchMakingFactionString() throws Exception {
+  public void searchMatchMakingFactionString() {
     MatchMakerSearchRequest result = (MatchMakerSearchRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "game_matchmaking",
       "mod", "ladder1v1",
@@ -508,7 +508,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void searchMatchMakingFactionInteger() throws Exception {
+  public void searchMatchMakingFactionInteger() {
     MatchMakerSearchRequest result = (MatchMakerSearchRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "game_matchmaking",
       "mod", "ladder1v1",
@@ -521,7 +521,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void stopMatchMaking() throws Exception {
+  public void stopMatchMaking() {
     MatchMakerCancelRequest result = (MatchMakerCancelRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "game_matchmaking",
       "mod", "ladder1v1",
@@ -532,7 +532,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void requestIceServers() throws Exception {
+  public void requestIceServers() {
     IceServersRequest result = (IceServersRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "ice_servers"
     ));
@@ -541,7 +541,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void iceMessage() throws Exception {
+  public void iceMessage() {
     IceMessage iceMessage = (IceMessage) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "IceMsg",
       KEY_ARGS, Arrays.asList(1, "someObject")
@@ -552,7 +552,7 @@ public class LegacyRequestTransformerTest {
   }
 
   @Test
-  public void restoreGameSession() throws Exception {
+  public void restoreGameSession() {
     RestoreGameSessionRequest result = (RestoreGameSessionRequest) instance.transform(ImmutableMap.of(
       KEY_COMMAND, "restore_game_session",
       "game_id", 5
