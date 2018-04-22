@@ -87,6 +87,7 @@ The following issues that exist in the original server are not present in this i
 * [FAForever/server#224](https://github.com/FAForever/server/issues/224) Player reported as "in game" even though they're not
 * [FAForever/server#225](https://github.com/FAForever/server/issues/225) Players in lobby are not always detected properly
 * [FAForever/server#253](https://github.com/FAForever/server/issues/253) Player stats sometimes not stored
+* [FAForever/server#263](https://github.com/FAForever/server/issues/263) Game duration isn't stored correctly (too long)
 * [FAForever/server#276](https://github.com/FAForever/server/issues/276) 5-15 Zombie-games per day since server (re)start
 * [FAForever/server#282](https://github.com/FAForever/server/issues/282) Game titles seem to be quoted needlessly
 * [FAForever/server#283](https://github.com/FAForever/server/issues/283) Wrong game result
@@ -94,6 +95,11 @@ The following issues that exist in the original server are not present in this i
 * [FAForever/server#287](https://github.com/FAForever/server/issues/287) 'Host has left the game' when trying to join a game
 * [FAForever/server#288](https://github.com/FAForever/server/issues/288) Explicitly set startTime
 * [FAForever/server#302](https://github.com/FAForever/server/issues/302) Unique id handling code does not handle malformed UIDs very well
+* [FAForever/server#316](https://github.com/FAForever/server/issues/316) Game stats and player ratings aren't updated before last player disconnects
+* [FAForever/server#319](https://github.com/FAForever/server/issues/319) Make ladder map selection non-random
+* [FAForever/server#323](https://github.com/FAForever/server/issues/323) Notice from server prompt spacing
+* [FAForever/server#343](https://github.com/FAForever/server/issues/343) If teams are unlocked the game should not be valid
+
 
 ## Additional features
 
@@ -105,3 +111,7 @@ This implementation provides the following additional features over the original
 * Verification that it's compatible with the underlying database schema version
 * Updating scores for the league & divisions system after each ladder game
 * ICE support
+* Every error message has an error code that allows specific handling
+* Allows connection via WebSocket
+* Supports OAuth so service applications can connect as well
+* Detailed logging which can be configured at runtime
