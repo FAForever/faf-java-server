@@ -547,7 +547,6 @@ public class GameService {
     playerGameStateCounters.get(event.getPlayer().getGameState()).decrementAndGet();
   }
 
-  @Transactional
   public void removePlayer(Player player) {
     Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removePlayer(game, player));
   }
@@ -741,10 +740,14 @@ public class GameService {
     updateDivisionScoresIfValid(game);
     gameRepository.save(game);
 
-    game.getPlayerStats().values().forEach(stats -> {
-      Player player = stats.getPlayer();
-      armyStatisticsService.process(player, game);
-    });
+    try {
+      game.getPlayerStats().values().forEach(stats -> {
+        Player player = stats.getPlayer();
+        armyStatisticsService.process(player, game);
+      });
+    } catch (Exception e) {
+      log.warn("Army statistics could not be updated", e);
+    }
 
     if (game.getConnectedPlayers().isEmpty()) {
       onGameClosed(game);
