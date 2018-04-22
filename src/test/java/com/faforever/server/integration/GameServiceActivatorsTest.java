@@ -134,7 +134,7 @@ public class GameServiceActivatorsTest {
   @Test
   public void reportArmyOutcome() {
     instance.reportArmyOutcome(new ArmyOutcomeReport(1, Outcome.VICTORY, 10), clientConnection.getAuthentication());
-    verify(gameService).reportArmyOutcome(player, 1, Outcome.VICTORY);
+    verify(gameService).reportArmyOutcome(player, 1, Outcome.VICTORY, 10);
   }
 
   @Test

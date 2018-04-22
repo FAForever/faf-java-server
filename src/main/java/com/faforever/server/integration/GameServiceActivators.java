@@ -93,7 +93,7 @@ public class GameServiceActivators {
 
   @ServiceActivator(inputChannel = ChannelNames.ARMY_OUTCOME_REPORT)
   public void reportArmyOutcome(ArmyOutcomeReport report, @Header(USER_HEADER) Authentication authentication) {
-    gameService.reportArmyOutcome(getPlayer(authentication), report.getArmyId(), report.getOutcome());
+    gameService.reportArmyOutcome(getPlayer(authentication), report.getArmyId(), report.getOutcome(), report.getScore());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.ARMY_SCORE_REPORT)

@@ -420,14 +420,14 @@ public class GameServiceTest {
     instance.reportArmyScore(player1, 1, 10);
     instance.reportArmyScore(player1, 2, -1);
 
-    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
-    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY, 10);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT, -1);
 
     instance.reportArmyScore(player2, 1, 10);
     instance.reportArmyScore(player2, 2, -1);
 
-    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
-    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY, 10);
+    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT, -1);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
@@ -464,25 +464,25 @@ public class GameServiceTest {
     instance.reportArmyScore(player1, 2, -1);
     instance.reportArmyScore(player1, 3, -1);
 
-    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
-    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
-    instance.reportArmyOutcome(player1, 3, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY, 10);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT, -1);
+    instance.reportArmyOutcome(player1, 3, Outcome.DEFEAT, -1);
 
     instance.reportArmyScore(player2, 1, 10);
     instance.reportArmyScore(player2, 2, -1);
     instance.reportArmyScore(player2, 3, -1);
 
-    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
-    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
-    instance.reportArmyOutcome(player2, 3, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY, 10);
+    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT, -1);
+    instance.reportArmyOutcome(player2, 3, Outcome.DEFEAT, -1);
 
     instance.reportArmyScore(player3, 1, -1);
     instance.reportArmyScore(player3, 2, -1);
     instance.reportArmyScore(player3, 3, 10);
 
-    instance.reportArmyOutcome(player3, 1, Outcome.DEFEAT);
-    instance.reportArmyOutcome(player3, 2, Outcome.DEFEAT);
-    instance.reportArmyOutcome(player3, 3, Outcome.VICTORY);
+    instance.reportArmyOutcome(player3, 1, Outcome.DEFEAT, -1);
+    instance.reportArmyOutcome(player3, 2, Outcome.DEFEAT, -1);
+    instance.reportArmyOutcome(player3, 3, Outcome.VICTORY, 10);
 
     instance.updatePlayerGameState(PlayerGameState.ENDED, player1);
     instance.updatePlayerGameState(PlayerGameState.ENDED, player2);
@@ -528,10 +528,10 @@ public class GameServiceTest {
 
     launchGame(game);
 
-    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
-    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
-    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY);
-    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY, 10);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT, -1);
+    instance.reportArmyOutcome(player2, 1, Outcome.VICTORY, 10);
+    instance.reportArmyOutcome(player2, 2, Outcome.DEFEAT, -1);
 
     assertThat(game.getReportedArmyResults().values(), hasSize(2));
     assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
@@ -877,7 +877,7 @@ public class GameServiceTest {
         // Army 3-8 have been defeated
         IntStream.range(3, 9)
           .forEach(armyId -> {
-            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT);
+            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT, -1);
             instance.reportArmyScore(reporter, armyId, -1);
           });
 
@@ -892,14 +892,14 @@ public class GameServiceTest {
         // Army 1 and 2 have allegedly been defeated
         IntStream.range(1, 3)
           .forEach(armyId -> {
-            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT);
+            instance.reportArmyOutcome(reporter, armyId, Outcome.DEFEAT, -1);
             instance.reportArmyScore(reporter, armyId, -1);
           });
 
         // Armies 3 - 8 allegedly won
         IntStream.range(3, 9)
           .forEach(armyId -> {
-            instance.reportArmyOutcome(reporter, armyId, Outcome.VICTORY);
+            instance.reportArmyOutcome(reporter, armyId, Outcome.VICTORY, 10);
             instance.reportArmyScore(reporter, armyId, 10);
           });
       });
@@ -910,16 +910,16 @@ public class GameServiceTest {
 
     // Player 1 claims to have defeated player 2, but player 2 and 3 claim that player 1 has been defeated.
     instance.reportArmyScore(player1, 1, 4);
-    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY);
+    instance.reportArmyOutcome(player1, 1, Outcome.VICTORY, 10);
     instance.reportArmyScore(player1, 2, 2);
-    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT);
+    instance.reportArmyOutcome(player1, 2, Outcome.DEFEAT, -1);
 
     Stream.of(player2, player3).forEach(reporter -> {
       instance.reportArmyScore(reporter, 1, 4);
-      instance.reportArmyOutcome(reporter, 1, Outcome.DEFEAT);
+      instance.reportArmyOutcome(reporter, 1, Outcome.DEFEAT, -1);
 
       instance.reportArmyScore(reporter, 2, 2);
-      instance.reportArmyOutcome(reporter, 2, Outcome.VICTORY);
+      instance.reportArmyOutcome(reporter, 2, Outcome.VICTORY, 10);
     });
 
     /* Even though the intermediate results are the ones reported most often, the results to be considered are the ones
@@ -934,8 +934,8 @@ public class GameServiceTest {
 
     reportGameEnded(player1, player2, player3);
 
-    assertThat(game.getPlayerStats().get(1).getScore(), is(4));
-    assertThat(game.getPlayerStats().get(2).getScore(), is(2));
+    assertThat(game.getPlayerStats().get(1).getScore(), is(-1));
+    assertThat(game.getPlayerStats().get(2).getScore(), is(10));
     assertThat(game.getPlayerStats().get(3).getScore(), is(-1));
     assertThat(game.getPlayerStats().get(4).getScore(), is(-1));
     assertThat(game.getPlayerStats().get(5).getScore(), is(-1));
@@ -964,9 +964,9 @@ public class GameServiceTest {
     launchGame(game);
 
     Stream.of(player1, player2).forEach(player -> {
-      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT, -1);
       instance.reportArmyScore(player, 2, -1);
-      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY, 10);
       instance.reportArmyScore(player, 1, 10);
     });
 
@@ -1317,9 +1317,9 @@ public class GameServiceTest {
 
   private void reportPlayerScores(Player player1, Player... players) {
     Stream.concat(Stream.of(player1), Stream.of(players)).forEach(player -> {
-      instance.reportArmyOutcome(player, 1, Outcome.VICTORY);
+      instance.reportArmyOutcome(player, 1, Outcome.VICTORY, 10);
       instance.reportArmyScore(player, 1, 10);
-      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT);
+      instance.reportArmyOutcome(player, 2, Outcome.DEFEAT, -1);
       instance.reportArmyScore(player, 2, -1);
     });
   }

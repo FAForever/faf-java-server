@@ -488,7 +488,7 @@ public class GameService {
       });
   }
 
-  public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome) {
+  public void reportArmyOutcome(Player reporter, int armyId, Outcome outcome, int score) {
     Game game = reporter.getCurrentGame();
     if (game == null) {
       log.warn("Army score reported by player w/o game: {}", reporter);
@@ -496,19 +496,14 @@ public class GameService {
     }
 
     if (!hasArmy(game, armyId)) {
-      log.warn("Player '{}' reported outcome '{}' for unknown army '{}' in game '{}'", reporter, outcome, armyId, game);
+      log.warn("Player '{}' reported outcome '{}' with score '{}' for unknown army '{}' in game '{}'", reporter, outcome, armyId, game);
       return;
     }
 
-    log.debug("Player '{}' reported result for army '{}' in game '{}': {}", reporter, armyId, game, outcome);
+    log.debug("Player '{}' reported result for army '{}' in game '{}': {}, {}", reporter, armyId, game, outcome, score);
     game.getReportedArmyResults()
       .computeIfAbsent(reporter.getId(), playerId -> new HashMap<>())
-      .compute(armyId, (integer, armyResult) -> {
-        if (armyResult == null) {
-          return ArmyResult.of(armyId, outcome, null);
-        }
-        return ArmyResult.of(armyId, outcome, armyResult.getScore());
-      });
+      .put(armyId, ArmyResult.of(armyId, outcome, score));
   }
 
   /**
