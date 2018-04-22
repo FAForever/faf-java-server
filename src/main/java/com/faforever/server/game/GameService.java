@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.util.Pair;
@@ -130,6 +131,9 @@ public class GameService {
   private final EntityManager entityManager;
 
   private ArmyStatisticsService armyStatisticsService;
+  /** Wire ourselves for calling inner methods using {@link Transactional}. */
+  @Autowired
+  private GameService gameService;
 
   public GameService(GameRepository gameRepository, MeterRegistry meterRegistry, ClientService clientService,
                      MapService mapService, ModService modService, PlayerService playerService,
@@ -646,7 +650,7 @@ public class GameService {
       return;
     }
 
-    onGameEnded(game);
+    gameService.onGameEnded(game);
   }
 
   private void changePlayerGameState(Player player, PlayerGameState newState) {
@@ -684,7 +688,7 @@ public class GameService {
           break;
 
         case PLAYING:
-          onGameEnded(game);
+          gameService.onGameEnded(game);
           break;
 
         default:
@@ -698,7 +702,7 @@ public class GameService {
   private void onPlayerGameEnded(Player player, Game game) {
     log.debug("Player '{}' ended game: {}", player, game);
     if (game.getState() != GameState.ENDED) {
-      onGameEnded(game);
+      gameService.onGameEnded(game);
     }
   }
 
@@ -712,7 +716,8 @@ public class GameService {
     onGameClosed(game);
   }
 
-  private void onGameEnded(Game game) {
+  @Transactional
+  protected void onGameEnded(Game game) {
     if (game.getState() == GameState.ENDED) {
       return;
     }
