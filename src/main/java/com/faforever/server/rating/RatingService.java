@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -123,7 +124,7 @@ public class RatingService {
       }
       ScoredTeam team = teamsById.computeIfAbsent(teamId, ScoredTeam::new);
       team.addPlayer(player, rating);
-      team.getScore().updateAndGet(score -> score + playerStat.getScore());
+      team.getScore().updateAndGet(score -> score + Optional.ofNullable(playerStat.getScore()).orElse(0));
     }
     return teamsById;
   }
