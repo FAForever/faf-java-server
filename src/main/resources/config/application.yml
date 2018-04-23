@@ -24,6 +24,7 @@ faf-server:
     twilio:
       account-sid: ${TWILIO_ACCOUNT_SID:}
       auth-token: ${TWILIO_AUTH_TOKEN:}
+  disable-authentication: ${DISABLE_AUTHENTICATION:false}
 
 spring:
   application:
