@@ -31,6 +31,11 @@ public class ServerProperties {
   private OAuth2 oAuth2 = new OAuth2();
   private Messaging messaging = new Messaging();
   private Database database = new Database();
+  /**
+   * If {@code true}, users are created it they don't already exist and passwords are not checked. This allows for easy
+   * testing without having to create users first.
+   */
+  private boolean disableAuthentication;
 
   @Data
   public static class Shutdown {

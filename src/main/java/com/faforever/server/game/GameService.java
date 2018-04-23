@@ -133,7 +133,8 @@ public class GameService {
   private ArmyStatisticsService armyStatisticsService;
   /** Wire ourselves for calling inner methods using {@link Transactional}. */
   @Autowired
-  private GameService gameService;
+  @VisibleForTesting
+  GameService gameService;
 
   public GameService(GameRepository gameRepository, MeterRegistry meterRegistry, ClientService clientService,
                      MapService mapService, ModService modService, PlayerService playerService,

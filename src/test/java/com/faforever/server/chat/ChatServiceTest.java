@@ -66,8 +66,8 @@ public class ChatServiceTest {
   @SuppressWarnings("unchecked")
   private void testJoinChannels(Group group, String... expectedChannels) {
     User user = (User) new User()
-      .setPassword("pw")
       .setGroupAssociation(group == null ? null : new GroupAssociation().setGroup(group))
+      .setPassword("pw")
       .setLogin("junit");
 
     Player player = new Player()

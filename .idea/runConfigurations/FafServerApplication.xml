@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="FafServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
+    <module name="faf-java-server_main" />
+    <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="com.faforever.server.*" />
         <option name="ENABLED" value="true" />
@@ -14,17 +15,10 @@
     <additionalParameters>
       <param>
         <option name="enabled" value="true" />
-        <option name="name" value="faf-server.ice.twilio.auth-token" />
-        <option name="value" value="c2b7abd989e129160e378a6925fc21db" />
-      </param>
-      <param>
-        <option name="enabled" value="true" />
-        <option name="name" value="faf-server.ice.twilio.account-sid" />
-        <option name="value" value="AC826a4dd9967612d5ad8b018bfc267739" />
+        <option name="name" value="faf-server.disable-authentication" />
+        <option name="value" value="true" />
       </param>
     </additionalParameters>
-    <module name="faf-java-server_main" />
-    <envs />
     <method />
   </configuration>
 </component>

@@ -165,6 +165,7 @@ public class GameServiceTest {
     instance = new GameService(gameRepository, meterRegistry, clientService, mapService, modService, playerService, ratingService,
       serverProperties, divisionService, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
+    instance.gameService = instance;
   }
 
   @Test
