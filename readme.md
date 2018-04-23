@@ -115,3 +115,4 @@ This implementation provides the following additional features over the original
 * Allows connection via WebSocket
 * Supports OAuth so service applications can connect as well
 * Detailed logging which can be configured at runtime
+* Allows disabling authentication, making it much easier for users to test
