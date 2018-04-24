@@ -239,6 +239,7 @@ public class GameService {
       .map(game::setFeaturedMod)
       .orElseThrow(() -> new RequestException(ErrorCode.INVALID_FEATURED_MOD, featuredModName));
     game.setTitle(title);
+    // FIXME I think this is still broken
     mapService.findMap(mapFileName).ifPresent(game::setMapVersion);
     game.setMapName(mapFileName);
     game.setPassword(password);
