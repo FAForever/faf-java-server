@@ -16,7 +16,7 @@ public class ClientConnection implements ConnectionAware {
   private final InetAddress clientAddress;
   private String userAgent;
   /** When the last message was received from the client. */
-  private Instant lastSeen;
+  private Instant lastSeen = Instant.now();
   @Nullable
   private Authentication authentication;
 
