@@ -111,7 +111,7 @@ public class ClientConnectionService {
 
   @Scheduled(fixedDelay = 10_000)
   public void disconnectSilentClients() {
-    Instant deadline = Instant.now().minusMillis(serverProperties.getClientConnectionTimeout());
+    Instant deadline = Instant.now().minusMillis(serverProperties.getClientConnectionTimeoutMillis());
     log.trace("Disconnecting clients that have been idle since '{}", deadline);
 
     connections.values().parallelStream()

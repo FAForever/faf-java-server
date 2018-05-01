@@ -90,7 +90,7 @@ public class ClientConnectionServiceTest {
 
   @Test
   public void disconnectSilentClients() throws Exception {
-    serverProperties.setClientConnectionTimeout(0);
+    serverProperties.setClientConnectionTimeoutMillis(0);
 
     instance.createClientConnection("junit-1", Protocol.V2_JSON_UTF_8, InetAddress.getByName("127.0.0.1"))
       .setLastSeen(Instant.now().minusSeconds(1));

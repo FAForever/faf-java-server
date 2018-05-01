@@ -15,7 +15,7 @@ public class ServerProperties {
 
   private int port = 8001;
   /** The number of milliseconds to wait before disconnecting a client that has been inactive. */
-  private long clientConnectionTimeout = Duration.ofSeconds(60).toMillis();
+  private long clientConnectionTimeoutMillis = Duration.ofSeconds(60).toMillis();
   private String version = "dev";
   private Api api = new Api();
   private TrueSkill trueSkill = new TrueSkill();
