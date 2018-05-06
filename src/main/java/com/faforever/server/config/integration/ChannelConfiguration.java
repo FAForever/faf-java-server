@@ -283,6 +283,11 @@ public class ChannelConfiguration {
     return MessageChannels.direct().get();
   }
 
+  @Bean(name = ChannelNames.PING_REPORT)
+  public SubscribableChannel pingReport() {
+    return MessageChannels.direct().get();
+  }
+
   @Bean(name = ChannelNames.CLIENT_DISCONNECTED_EVENT)
   public SubscribableChannel clientDisconnectedEvent() {
     return MessageChannels.publishSubscribe().get();
