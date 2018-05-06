@@ -6,6 +6,7 @@ import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.entity.Rating;
+import com.faforever.server.game.GameService;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +20,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class RatingServiceTest {
-  private static final int NO_TEAM_ID = 1;
+  private static final int NO_TEAM_ID = GameService.NO_TEAM_ID;
   private RatingService instance;
 
   @Before
@@ -83,44 +84,6 @@ public class RatingServiceTest {
 
     assertThat(player2.getGlobalRating().getMean(), is(1234.4881176451688));
     assertThat(player2.getGlobalRating().getDeviation(), is(429.1918779825801));
-
-    assertThat(player1.getLadder1v1Rating(), is(nullValue()));
-    assertThat(player2.getLadder1v1Rating(), is(nullValue()));
-  }
-
-  /** See <a href="https://github.com/nsp/JSkills/issues/9">nsp/JSkills#9</a>. */
-  @Test
-  public void updateGlobalRatingsWithJSkillBugDoesntUpdateRating() {
-    Player player1 = (Player) new Player()
-      .setGlobalRating((GlobalRating) new GlobalRating().setMean(3453d).setDeviation(74d))
-      .setId(1);
-
-    Player player2 = (Player) new Player()
-      .setGlobalRating((GlobalRating) new GlobalRating().setMean(38d).setDeviation(180d))
-      .setId(2);
-
-    List<GamePlayerStats> playerStats = Arrays.asList(
-      new GamePlayerStats()
-        .setPlayer(player1)
-        .setTeam(NO_TEAM_ID)
-        .setMean(player1.getGlobalRating().getMean())
-        .setDeviation(player1.getGlobalRating().getDeviation())
-        .setScore(10),
-      new GamePlayerStats()
-        .setPlayer(player2)
-        .setTeam(NO_TEAM_ID)
-        .setMean(player2.getGlobalRating().getMean())
-        .setDeviation(player2.getGlobalRating().getDeviation())
-        .setScore(-1)
-    );
-
-    instance.updateRatings(playerStats, NO_TEAM_ID, RatingType.GLOBAL);
-
-    assertThat(player1.getGlobalRating().getMean(), is(3453.0));
-    assertThat(player1.getGlobalRating().getDeviation(), is(74.0));
-
-    assertThat(player2.getGlobalRating().getMean(), is(38.00000000000008));
-    assertThat(player2.getGlobalRating().getDeviation(), is(180.27756377319946));
 
     assertThat(player1.getLadder1v1Rating(), is(nullValue()));
     assertThat(player2.getLadder1v1Rating(), is(nullValue()));

@@ -99,7 +99,7 @@ dependencies {
   compile("org.jolokia:jolokia-core")
   compile("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
   compile("io.micrometer:micrometer-registry-prometheus:${micrometerRegistryPrometheusVersion}")
-  compile("de.gesundkrank.jskills:jskills:${jSkillsVersion}")
+  compile("com.github.micheljung:JSkills:${jSkillsVersion}")
   compile("com.github.nocatch:nocatch:${noCatchVersion}")
   compile("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
   compile("com.google.guava:guava:${guavaVersion}")

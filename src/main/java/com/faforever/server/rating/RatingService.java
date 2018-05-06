@@ -150,11 +150,6 @@ public class RatingService {
     double newMean = newRating.getMean();
     double newDeviation = newRating.getStandardDeviation();
 
-    if (Double.isNaN(newMean) || Double.isNaN(newDeviation)) {
-      log.warn("New rating '{}' for player '{}' in game '{}' contains NaN. Keeping old rating.", newRating, stats.getPlayer(), stats.getGame());
-      newMean = stats.getMean();
-      newDeviation = stats.getDeviation();
-    }
     stats.setAfterMean(newMean);
     stats.setAfterDeviation(newDeviation);
   }
