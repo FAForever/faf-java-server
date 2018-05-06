@@ -218,7 +218,8 @@ public class IntegrationConfig {
     router.setChannelMapping(BottleneckClearedReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     // This is sent by the game but currently, the server has no interest in it.
     router.setChannelMapping(GameChatMessageReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
-    router.setChannelMapping(PingReport.class.getName(), ChannelNames.PING_REPORT);
+    // The message itself doesn't matter, receiving it already triggered com.faforever.server.integration.ClientConnectionChannelInterceptor
+    router.setChannelMapping(PingReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
     return router;
   }
 

@@ -144,11 +144,6 @@ public final class ChannelNames {
   public static final String AI_OPTION_REQUEST = "aiOptionRequest";
 
   /**
-   * Channel for {@link com.faforever.server.client.PingReport}.
-   */
-  public static final String PING_REPORT = "pingReport";
-
-  /**
    * Channel for {@link com.faforever.server.game.DesyncReport}.
    */
   public static final String DESYNC_REPORT = "desyncReport";
