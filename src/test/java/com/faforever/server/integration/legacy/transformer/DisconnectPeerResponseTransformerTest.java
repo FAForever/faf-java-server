@@ -11,10 +11,10 @@ import static org.junit.Assert.assertThat;
 
 public class DisconnectPeerResponseTransformerTest {
   @Test
-  public void transform() throws Exception {
+  public void transform() {
     Map<String, Serializable> response = DisconnectPeerResponseTransformer.INSTANCE.transform(new DisconnectPlayerFromGameResponse(51));
 
-    assertThat(response.get("command"), is("DisconnectPeer"));
+    assertThat(response.get("command"), is("DisconnectFromPeer"));
     assertThat(response.get("peer_id"), is(51));
     assertThat(response.get("target"), is("game"));
   }
