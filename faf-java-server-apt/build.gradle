@@ -1,0 +1,18 @@
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation("com.google.guava:guava:25.0-jre")
+  implementation("javax.validation:validation-api:2.0.1.Final")
+  implementation("com.fasterxml.jackson.core:jackson-databind:2.9.5")
+  implementation("org.freemarker:freemarker:2.3.28")
+
+  implementation project(":faf-java-server-annotations")
+
+  annotationProcessor("org.projectlombok:lombok:1.16.20")
+  compileOnly("org.projectlombok:lombok:1.16.20")
+
+  annotationProcessor("com.google.auto.service:auto-service:1.0-rc4")
+  compileOnly("com.google.auto.service:auto-service:1.0-rc4")
+}

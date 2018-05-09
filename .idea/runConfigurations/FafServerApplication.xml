@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="FafServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-    <module name="faf-java-server_main" />
+    <module name="faf-java-server-app_main" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="com.faforever.server.*" />

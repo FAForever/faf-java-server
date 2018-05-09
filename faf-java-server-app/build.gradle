@@ -1,0 +1,135 @@
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url 'http://repo.spring.io/plugins-release' }
+  }
+  dependencies {
+    classpath("org.springframework.build.gradle:propdeps-plugin:${propdepsVersion}")
+    classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+    classpath("org.kt3k.gradle.plugin:coveralls-gradle-plugin:${coverallsGradlePluginVersion}")
+  }
+}
+
+plugins {
+  id 'net.ltgt.apt' version '0.9'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'propdeps'
+
+repositories {
+  mavenCentral()
+  jcenter()
+  maven { url 'https://jitpack.io' }
+  maven { url "http://dl.bintray.com/typesafe/maven-releases" }
+  // TODO remove when spring-boot-admin-client 2.0.0 has been released
+  maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+configurations {
+  compile.exclude module: "spring-boot-starter-tomcat"
+  compile.exclude module: "assertj-core"
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '4.6'
+}
+
+compileJava.dependsOn(processResources)
+processResources {
+  filesMatching('**/application.yml') {
+    filter {
+      it.replace('#faf-server.version#', project.version.toString())
+    }
+  }
+}
+
+// JACOCO & COVERALLS
+
+apply plugin: 'jacoco'
+apply plugin: 'com.github.kt3k.coveralls'
+jacocoTestReport {
+  reports {
+    xml.enabled = true
+  }
+}
+
+// CODACY
+
+configurations {
+  codacy
+}
+
+// TODO Codacy coverage reporter does not yet support Java 9. See https://github.com/codacy/codacy-coverage-reporter/issues/76
+task sendCoverageToCodacy(type: JavaExec, dependsOn: jacocoTestReport) {
+  main = "com.codacy.CodacyCoverageReporter"
+  classpath = configurations.codacy
+  args = ["-l", "Java", "-r", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"]
+}
+
+dependencies {
+  implementation("org.springframework.boot:spring-boot-starter-actuator")
+  implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("org.springframework.boot:spring-boot-starter-cache")
+  implementation("org.springframework.boot:spring-boot-starter-integration")
+  implementation("org.springframework.boot:spring-boot-starter-websocket")
+  implementation("org.springframework.boot:spring-boot-starter-security")
+  implementation("org.springframework.boot:spring-boot-starter-undertow")
+  implementation("org.springframework.security:spring-security-messaging")
+  implementation("org.springframework.security:spring-security-jwt:${springSecurityJwtVersion}")
+  implementation("org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:${springSecurityOauth2AutoconfigureVersion}")
+  implementation("org.springframework:spring-context-support")
+  implementation("org.springframework.integration:spring-integration-ip")
+  implementation("org.springframework.integration:spring-integration-security")
+  implementation("org.springframework.integration:spring-integration-websocket")
+  implementation("org.springframework.integration:spring-integration-event")
+  implementation("com.github.ben-manes.caffeine:caffeine")
+  implementation("org.jolokia:jolokia-core")
+  implementation("de.codecentric:spring-boot-admin-starter-client:${springBootAdminClientVersion}")
+  implementation("io.micrometer:micrometer-registry-prometheus:${micrometerRegistryPrometheusVersion}")
+  implementation("com.github.micheljung:JSkills:${jSkillsVersion}")
+  implementation("com.github.nocatch:nocatch:${noCatchVersion}")
+  implementation("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
+  implementation("com.google.guava:guava:${guavaVersion}")
+  implementation("javax.annotation:javax.annotation-api:${javaxAnnotationApiVersion}")
+  implementation("javax.inject:javax.inject:${javaxInjectVersion}")
+  // When switching from Java 8 to 9, I got "class file for javax.interceptor.interceptorbinding not found". Adding this fixed it, but IDK what caused it.
+  implementation("javax.interceptor:javax.interceptor-api:${javaxInterceptorApiVersion}")
+  implementation("com.github.jasminb:jsonapi-converter:${jsonApiConverterVersion}")
+  implementation("com.twilio.sdk:twilio:${twilioVersion}")
+  implementation("org.mapstruct:mapstruct-jdk8:${mapstructVersion}")
+  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonDatatypeJsr310Version}")
+  implementation("javax.xml.bind:jaxb-api:${jaxbVersion}")
+  implementation("com.sun.xml.bind:jaxb-ri:${jaxbVersion}")
+  implementation("com.sun.xml.bind:jaxb-impl:${jaxbVersion}")
+  implementation("com.sun.xml.bind:jaxb-core:${jaxbVersion}")
+  implementation("javax.activation:activation:${javaxActivationVersion}")
+  implementation project(":faf-java-server-annotations")
+
+  implementation("com.maxmind.geoip2:geoip2:${geoip2Version}") {
+    exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+  }
+
+  runtime("mysql:mysql-connector-java:${mysqlConnectorVersion}")
+
+  optional("org.springframework.boot:spring-boot-devtools")
+  optional("org.springframework.boot:spring-boot-configuration-processor")
+  optional("org.projectlombok:lombok:${lombokVersion}")
+  optional("org.mapstruct:mapstruct-processor:${mapstructVersion}")
+  optional("com.github.javaparser:javaparser-core:3.6.3")
+  optional("com.github.javaparser:javaparser-symbol-solver-core:3.6.0")
+
+  testCompile("org.springframework.boot:spring-boot-starter-test")
+  testCompile("com.googlecode.zohhak:zohhak:${zohhakVersion}")
+
+  codacy("com.github.codacy:codacy-coverage-reporter:-SNAPSHOT")
+
+  apt("org.mapstruct:mapstruct-processor:${mapstructVersion}")
+  apt("org.projectlombok:lombok:${lombokVersion}")
+  apt project(":faf-java-server-apt")
+}

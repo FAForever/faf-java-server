@@ -1,1 +1,5 @@
 rootProject.name = 'faf-java-server'
+include 'faf-java-server-app'
+include 'faf-java-server-annotations'
+include 'faf-java-server-apt'
+
