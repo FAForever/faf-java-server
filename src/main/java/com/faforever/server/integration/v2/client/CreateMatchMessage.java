@@ -2,12 +2,14 @@ package com.faforever.server.integration.v2.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 class CreateMatchMessage extends V2ClientMessage {
   private UUID requestId;
   private String title;
@@ -19,6 +21,7 @@ class CreateMatchMessage extends V2ClientMessage {
 
   @Getter
   @AllArgsConstructor
+  @NoArgsConstructor
   public static class Participant {
     /** The player's ID. */
     int id;
