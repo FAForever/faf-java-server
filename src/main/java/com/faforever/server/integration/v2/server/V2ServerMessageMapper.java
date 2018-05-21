@@ -50,6 +50,7 @@ public interface V2ServerMessageMapper {
 
   SocialRelationServerMessage map(SocialRelationListResponse source);
 
+  @Mapping(source = "mapFolderName", target = "map")
   StartGameProcessServerMessage map(StartGameProcessResponse source);
 
   ConnectToHostServerMessage map(ConnectToHostResponse source);

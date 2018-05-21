@@ -171,9 +171,15 @@ public class V2ServerMessageTransformerTest {
   }
 
   @Test
-  public void startGameProcess() {
-    String response = instance.transform(new StartGameProcessResponse("faf", 1, Arrays.asList("/foo", "/bar")));
+  public void startGameProcessWithoutMap() {
+    String response = instance.transform(new StartGameProcessResponse("faf", 1, null, Arrays.asList("/foo", "/bar")));
     assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+  }
+
+  @Test
+  public void startGameProcessWithMap() {
+    String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01", Arrays.asList("/foo", "/bar")));
+    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test
