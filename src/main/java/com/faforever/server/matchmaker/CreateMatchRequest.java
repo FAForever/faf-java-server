@@ -2,6 +2,7 @@ package com.faforever.server.matchmaker;
 
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.game.Faction;
+import com.faforever.server.game.LobbyMode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -31,21 +32,5 @@ public class CreateMatchRequest implements ClientMessage {
     private int team;
     private String name;
     private int startSpot;
-  }
-
-  /**
-   * See values for description.
-   */
-  public enum LobbyMode {
-
-    /**
-     * Default lobby where players can select their faction, teams and so on.
-     */
-    DEFAULT,
-
-    /**
-     * The lobby is skipped; the game starts straight away,
-     */
-    NONE
   }
 }

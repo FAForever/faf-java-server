@@ -45,7 +45,7 @@ class V2ClientMessageWrapper {
     @Type(value = RestoreGameSessionClientMessage.class, name = "restoreGameSession"),
     @Type(value = SelectAvatarClientMessage.class, name = "selectAvatar"),
     @Type(value = TeamKillClientMessage.class, name = "teamKill"),
-    @Type(value = CreateMatchMessage.class, name = "createMatch"),
+    @Type(value = CreateMatchClientMessage.class, name = "createMatch"),
     @Type(value = GameChatMessageClientMessage.class, name = "gameChatMessage")
   })
   private V2ClientMessage data;

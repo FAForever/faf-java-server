@@ -10,13 +10,16 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-class CreateMatchMessage extends V2ClientMessage {
+class CreateMatchClientMessage extends V2ClientMessage {
   private UUID requestId;
   private String title;
   /** ID of the map version to be played. */
   private int map;
   /** Name of the featured mod that will be played. */
   private String featuredMod;
+  /** In which lobby mode to start the game in. */
+  private LobbyMode lobbyMode;
+
   private List<Participant> participants;
 
   @Getter
@@ -27,8 +30,6 @@ class CreateMatchMessage extends V2ClientMessage {
     int id;
     /** The faction that will be played by this player. */
     Faction faction;
-    /** The game slot this player will be assigned to. */
-    int slot;
     /** The team this player will be assigned to. */
     int team;
     /**
@@ -38,5 +39,21 @@ class CreateMatchMessage extends V2ClientMessage {
     String name;
     /** ID of the slot on the map the player will start in. */
     int startSpot;
+  }
+
+  /**
+   * See values for description.
+   */
+  public enum LobbyMode {
+
+    /**
+     * Default lobby where players can select their faction, teams and so on.
+     */
+    DEFAULT,
+
+    /**
+     * The lobby is skipped; the game starts straight away,
+     */
+    NONE
   }
 }

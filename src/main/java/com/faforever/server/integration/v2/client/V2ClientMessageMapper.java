@@ -83,7 +83,7 @@ public interface V2ClientMessageMapper {
   GameModsReport map(GameModsClientMessage message);
 
   @Mapping(source = "map", target = "mapVersionId")
-  CreateMatchRequest map(CreateMatchMessage message);
+  CreateMatchRequest map(CreateMatchClientMessage message);
 
   LoginRequest map(LoginClientMessage message);
 
