@@ -53,7 +53,7 @@ public class CoopServiceTest {
 
   @Test
   public void reportOperationComplete() throws Exception {
-    Game game = new Game().setId(42).setMapName("SCMP_001");
+    Game game = new Game().setId(42).setMapFolderName("SCMP_001");
     Map<Integer, GamePlayerStats> playerStats = game.getPlayerStats();
     playerStats.put(1, new GamePlayerStats());
     playerStats.put(2, new GamePlayerStats());

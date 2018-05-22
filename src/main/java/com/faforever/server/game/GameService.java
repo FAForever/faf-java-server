@@ -241,7 +241,7 @@ public class GameService {
     game.setTitle(title);
     // FIXME I think this is still broken
     mapService.findMap(mapFileName).ifPresent(game::setMapVersion);
-    game.setMapName(mapFileName);
+    game.setMapFolderName(mapFileName);
     game.setPassword(password);
     game.setGameVisibility(visibility);
     game.setMinRating(minRating);
@@ -351,7 +351,7 @@ public class GameService {
     } else if (OPTION_SLOTS.equals(key)) {
       game.setMaxPlayers((int) value);
     } else if (OPTION_SCENARIO_FILE.equals(key)) {
-      game.setMapName(((String) value).replace("//", "/").replace("\\", "/").split("/")[2]);
+      game.setMapFolderName(((String) value).replace("//", "/").replace("\\", "/").split("/")[2]);
     } else if (OPTION_TITLE.equals(key)) {
       game.setTitle((String) value);
     }
@@ -1008,7 +1008,7 @@ public class GameService {
       game.getState(),
       game.getFeaturedMod().getTechnicalName(),
       toSimMods(game.getSimMods()),
-      game.getMapName(),
+      game.getMapFolderName(),
       game.getHost().getLogin(),
       toPlayers(game),
       game.getMaxPlayers(),

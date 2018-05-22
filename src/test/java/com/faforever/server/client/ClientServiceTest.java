@@ -115,7 +115,7 @@ public class ClientServiceTest {
 
   @Test
   public void hostGame() {
-    Game game = new Game().setId(1).setMapName("SCMP_001");
+    Game game = new Game().setId(1).setMapFolderName("SCMP_001");
 
     instance.hostGame(game, player);
 

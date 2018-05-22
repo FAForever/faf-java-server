@@ -21,11 +21,13 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
 public class MapVersion {
+
   @Id
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
+  /** Ugly as it is, the file name is stored as {@code maps/something.zip} in the database. */
   @Column(name = "filename")
   private String filename;
 

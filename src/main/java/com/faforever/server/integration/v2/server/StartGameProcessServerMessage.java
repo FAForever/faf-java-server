@@ -17,7 +17,10 @@ class StartGameProcessServerMessage extends V2ServerMessage {
   private String mod;
   /** The ID of the game that will be played. */
   private int gameId;
-  /** The folder name of the map to play. Only set in case of server-initiated matches, like leaderboard games. */
+  /**
+   * The folder name of the map (e.g. {@code SCMP_001}) to play. Only set in case of server-initiated matches, like
+   * leaderboard games.
+   */
   @Nullable
   private String map;
   /**

@@ -92,7 +92,7 @@ public class ClientService {
 
   public void startGameProcess(Game game, Player player) {
     log.debug("Telling '{}' to start game process for game '{}'", game.getHost(), game);
-    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapName(), getCommandLineArgs(player)), player);
+    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), getCommandLineArgs(player)), player);
   }
 
   /**
@@ -121,7 +121,7 @@ public class ClientService {
   }
 
   public void hostGame(Game game, @NotNull ConnectionAware recipient) {
-    send(new HostGameResponse(game.getMapName()), recipient);
+    send(new HostGameResponse(game.getMapFolderName()), recipient);
   }
 
   public void reportUpdatedAchievements(List<UpdatedAchievementResponse> playerAchievements, @NotNull ConnectionAware recipient) {

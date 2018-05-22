@@ -146,7 +146,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "faf", "maps/SCMP_001.zip",
+    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "faf", "SCMP_001",
       null, GameVisibility.PRIVATE, null, null, player1);
     verify(gameService).joinGame(1, null, player2);
 
@@ -231,7 +231,7 @@ public class MatchMakerServiceTest {
     when(mapService.findMap(mapVersionId)).thenReturn(Optional.of(new MapVersion().setFilename("maps/foo.zip")));
 
     Game game = new Game().setId(1);
-    when(gameService.createGame("Test match", "faf", "maps/foo.zip", null, GameVisibility.PRIVATE, null, null, player1))
+    when(gameService.createGame("Test match", "faf", "foo", null, GameVisibility.PRIVATE, null, null, player1))
       .thenReturn(CompletableFuture.completedFuture(game));
 
     when(gameService.joinGame(1, null, player2)).thenReturn(CompletableFuture.completedFuture(game));

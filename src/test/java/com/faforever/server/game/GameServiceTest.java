@@ -242,11 +242,11 @@ public class GameServiceTest {
     Game game = hostGame(player1);
 
     String newScenarioFile = "/maps/3v3 chaos.v0001/3v3 chaos_scenario.lua";
-    assertThat(game.getMapName(), not(newScenarioFile));
+    assertThat(game.getMapFolderName(), not(newScenarioFile));
 
     instance.updateGameOption(player1, "ScenarioFile", newScenarioFile);
 
-    assertThat(game.getMapName(), is("3v3 chaos.v0001"));
+    assertThat(game.getMapFolderName(), is("3v3 chaos.v0001"));
   }
 
   @Test
@@ -1373,7 +1373,7 @@ public class GameServiceTest {
     assertThat(game.getHost(), is(player1));
     assertThat(game.getFeaturedMod().getTechnicalName(), is(FAF_TECHNICAL_NAME));
     assertThat(game.getMapVersion(), is(notNullValue()));
-    assertThat(game.getMapName(), is(MAP_NAME));
+    assertThat(game.getMapFolderName(), is(MAP_NAME));
     assertThat(game.getPassword(), is("secret"));
     assertThat(game.getState(), is(GameState.OPEN));
     assertThat(game.getGameVisibility(), is(GameVisibility.PUBLIC));

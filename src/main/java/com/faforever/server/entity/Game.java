@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -121,8 +122,14 @@ public class Game {
   @JoinColumn(name = "host")
   private Player host;
 
+  /**
+   * {@code null} if the map is not known by the server.
+   *
+   * @see #getMapFolderName()
+   */
   @ManyToOne(optional = false)
   @JoinColumn(name = "mapId")
+  @Nullable
   private MapVersion mapVersion;
 
   @Column(name = "gameName")
@@ -146,11 +153,11 @@ public class Game {
   private String password;
 
   /**
-   * Since some maps are unknown by the server (e.g. in-develop versions from map creators), the literal map name is
-   * kept.
+   * Since some maps are unknown by the server (e.g. in-develop versions from map creators), the literal map folder name
+   * (as sent by the game, e.g. {@code SCMP_001}) is kept. This is also the one that needs to be sent to participants.
    */
   @Transient
-  private String mapName;
+  private String mapFolderName;
 
   @Transient
   private int maxPlayers;

@@ -15,6 +15,7 @@ import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
 import com.faforever.server.map.MapService;
+import com.faforever.server.map.MapUtils;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.rating.RatingService;
@@ -169,6 +170,7 @@ public class MatchMakerService {
 
     String mapFileName = mapService.findMap(mapVersionId)
       .map(MapVersion::getFilename)
+      .map(MapUtils::extractMapName)
       .orElseThrow(() -> new RequestException(requestId, ErrorCode.UNKNOWN_MAP, mapVersionId));
 
     Player host = players.get(0);
@@ -309,7 +311,7 @@ public class MatchMakerService {
     gameService.createGame(
       host.getLogin() + " vs. " + opponent.getLogin(),
       technicalModName,
-      randomMap(host, opponent),
+      MapUtils.extractMapName(randomMap(host, opponent).getFilename()),
       null,
       GameVisibility.PRIVATE,
       null,
@@ -334,8 +336,8 @@ public class MatchMakerService {
       });
   }
 
-  private String randomMap(Player host, Player opponent) {
-    return mapService.getRandomLadderMap(host, opponent).getFilename();
+  private MapVersion randomMap(Player host, Player opponent) {
+    return mapService.getRandomLadderMap(host, opponent);
   }
 
   /**

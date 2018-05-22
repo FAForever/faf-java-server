@@ -33,7 +33,7 @@ public class CoopService {
 
     log.debug("Player '{}' reported coop result '{}' with secondary targets '{}' for game: {}", player, duration, secondaryTargets, game);
 
-    Optional<CoopMap> optional = coopMapRepository.findOneByFilenameLikeIgnoreCase(game.getMapName());
+    Optional<CoopMap> optional = coopMapRepository.findOneByFilenameLikeIgnoreCase(game.getMapFolderName());
     if (optional.isPresent()) {
       CoopLeaderboardEntry coopLeaderboardEntry = new CoopLeaderboardEntry();
       coopLeaderboardEntry.setGameId(game.getId());
