@@ -5,6 +5,7 @@ import com.faforever.server.entity.Player;
 import com.faforever.server.entity.User;
 import com.faforever.server.game.Faction;
 import com.faforever.server.matchmaker.CreateMatchRequest;
+import com.faforever.server.matchmaker.CreateMatchRequest.LobbyMode;
 import com.faforever.server.matchmaker.CreateMatchRequest.Participant;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerMapper;
@@ -68,7 +69,7 @@ public class MatchMakerServiceActivatorTest {
       new Participant()
     );
 
-    CreateMatchRequest request = new CreateMatchRequest(requestId, "Test Match", 1, "faf", participants);
+    CreateMatchRequest request = new CreateMatchRequest(requestId, "Test Match", 1, "faf", participants, LobbyMode.NONE);
     instance.createMatch(request, authentication);
 
     verify(matchmakerService).createMatch((ConnectionAware) authentication.getPrincipal(), requestId, "Test Match",

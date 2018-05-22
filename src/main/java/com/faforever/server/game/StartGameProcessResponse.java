@@ -19,6 +19,7 @@ public class StartGameProcessResponse implements ServerMessage {
 
   /** Only set if the server decides which map will be played, e.g. in leaderboard games. */
   private final String mapFolderName;
+  private final LobbyMode lobbyMode;
 
   /**
    * @deprecated the server should never send command line arguments. They should always be generated on client side.

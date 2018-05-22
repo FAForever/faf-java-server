@@ -15,6 +15,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.data.domain.Page;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -124,7 +125,7 @@ public class MapServiceTest {
     Player opponent = new Player();
     opponent.setId(2);
 
-    assertThat(instance.getRandomLadderMap(host, opponent), isOneOf(oneMap, otherMap));
+    assertThat(instance.getRandomLadderMap(List.of(host, opponent)), isOneOf(oneMap, otherMap));
   }
 
   @Test
@@ -150,6 +151,6 @@ public class MapServiceTest {
     Player opponent = new Player();
     opponent.setId(2);
 
-    assertThat(instance.getRandomLadderMap(host, opponent), isOneOf(oneMap, otherMap));
+    assertThat(instance.getRandomLadderMap(List.of(host, opponent)), isOneOf(oneMap, otherMap));
   }
 }

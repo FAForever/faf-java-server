@@ -21,6 +21,7 @@ public enum LaunchGameResponseTransformer implements GenericTransformer<StartGam
     Builder<String, Serializable> builder = ImmutableMap.<String, Serializable>builder()
       .put("command", "game_launch")
       .put("mod", source.getMod())
+      .put("lobby_mode", source.getLobbyMode().toString())
       .put("uid", source.getGameId())
       .put("args", toLegacyArgs(source.getCommandLineArguments()));
 

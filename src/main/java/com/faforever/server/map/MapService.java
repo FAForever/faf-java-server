@@ -50,13 +50,15 @@ public class MapService {
     return mapVersionRepository.findById(mapVersionId);
   }
 
-  public MapVersion getRandomLadderMap(Player host, Player opponent) {
+  public MapVersion getRandomLadderMap(Iterable<Player> players) {
     List<MapVersion> originalLadderMapPool = getLadder1v1Maps();
     List<MapVersion> modifiedLadderMapPool = new ArrayList<>(originalLadderMapPool);
 
     int lastMapsNotConsidered = serverProperties.getLadder1v1().getLastMapsNotConsidered();
-    modifiedLadderMapPool.removeAll(getRecentlyPlayedLadderMapVersions(host, lastMapsNotConsidered));
-    modifiedLadderMapPool.removeAll(getRecentlyPlayedLadderMapVersions(opponent, lastMapsNotConsidered));
+
+    for (Player player : players) {
+      modifiedLadderMapPool.removeAll(getRecentlyPlayedLadderMapVersions(player, lastMapsNotConsidered));
+    }
 
     if (modifiedLadderMapPool.size() > 1) {
       return modifiedLadderMapPool.get(random.nextInt(modifiedLadderMapPool.size() - 1));

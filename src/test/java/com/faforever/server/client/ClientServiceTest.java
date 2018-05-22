@@ -16,6 +16,7 @@ import com.faforever.server.entity.GlobalRating;
 import com.faforever.server.entity.Ladder1v1Rating;
 import com.faforever.server.entity.Player;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.ForwardedIceMessage;
 import com.faforever.server.ice.IceServer;
@@ -103,14 +104,21 @@ public class ClientServiceTest {
 
   @Test
   public void startGameProcess() {
-    Game game = new Game().setId(1).setFeaturedMod(new FeaturedMod());
+    Game game = new Game().setId(1)
+      .setFeaturedMod(new FeaturedMod().setTechnicalName("junit"))
+      .setMapFolderName("scmp_001")
+      .setLobbyMode(LobbyMode.DEFAULT);
 
     instance.startGameProcess(game, player);
 
     ArgumentCaptor<StartGameProcessResponse> captor = ArgumentCaptor.forClass(StartGameProcessResponse.class);
     verify(clientGateway).send(captor.capture(), any());
 
-    assertThat(captor.getValue().getGameId(), is(1));
+    StartGameProcessResponse message = captor.getValue();
+    assertThat(message.getGameId(), is(1));
+    assertThat(message.getLobbyMode(), is(LobbyMode.DEFAULT));
+    assertThat(message.getMod(), is("junit"));
+    assertThat(message.getMapFolderName(), is("scmp_001"));
   }
 
   @Test

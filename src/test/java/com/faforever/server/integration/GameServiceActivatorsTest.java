@@ -18,6 +18,7 @@ import com.faforever.server.game.GameStateReport;
 import com.faforever.server.game.GameVisibility;
 import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerGameState;
@@ -74,7 +75,7 @@ public class GameServiceActivatorsTest {
   @Test
   public void hostGameRequest() {
     instance.hostGameRequest(new HostGameRequest("scmp01", "Title", "mod", "pw", GameVisibility.PUBLIC, 600, 900), clientConnection.getAuthentication());
-    verify(gameService).createGame("Title", "mod", "scmp01", "pw", GameVisibility.PUBLIC, 600, 900, player);
+    verify(gameService).createGame("Title", "mod", "scmp01", "pw", GameVisibility.PUBLIC, 600, 900, player, LobbyMode.DEFAULT);
   }
 
   @Test

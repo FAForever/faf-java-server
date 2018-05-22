@@ -14,6 +14,7 @@ import com.faforever.server.error.Requests;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.map.MapService;
 import com.faforever.server.map.MapUtils;
 import com.faforever.server.mod.ModService;
@@ -25,6 +26,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -106,7 +108,7 @@ public class MatchMakerService {
         search = new MatchMakerSearch(Instant.now(), player, poolName, faction);
         pool.put(player.getId(), search);
       }
-      notifyPlayers(search, DESIRED_MIN_GAME_QUALITY);
+      notifyPlayers(search);
     }
   }
 
@@ -151,63 +153,16 @@ public class MatchMakerService {
   /**
    * <p>Creates a new match with the specified options and participants. All participants must be online and available
    * for matchmaking. A player can be unavailable for matchmaking if, for instance, he's currently playing a game or
-   * offline. In this case, a {@link ErrorCode#PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING} is thrown.</p>
+   * offline. In this case, a {@link ErrorCode#PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE} is thrown.</p>
    *
    * @throws RequestException if a player is not available for matchmaking or the map to be played is unknown by the
    * server.
    */
   public void createMatch(ConnectionAware requester, UUID requestId, String title, String featuredMod, List<MatchParticipant> participants, int mapVersionId) {
-    log.debug("Creating match '{}' with '{}' participants on map '{}'", title, participants.size(), mapVersionId);
-
-    Requests.verify(participants.size() > 1, ErrorCode.INSUFFICIENT_MATCH_PARTICIPANTS, participants.size(), 2);
-
-    List<Player> players = participants.stream()
-      .map(matchParticipant -> playerService.getOnlinePlayer(matchParticipant.getId())
-        .orElseThrow(() -> new RequestException(requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING, matchParticipant.getId())))
-      .peek(player -> Requests.verify(player.getCurrentGame() == null, requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING, player))
-      .peek(this::removePlayer)
-      .collect(Collectors.toList());
-
-    String mapFileName = mapService.findMap(mapVersionId)
-      .map(MapVersion::getFilename)
-      .map(MapUtils::extractMapName)
+    MapVersion mapVersion = mapService.findMap(mapVersionId)
       .orElseThrow(() -> new RequestException(requestId, ErrorCode.UNKNOWN_MAP, mapVersionId));
 
-    Player host = players.get(0);
-    List<Player> guests = players.subList(1, players.size());
-
-    gameService.createGame(title, featuredMod, mapFileName, null, GameVisibility.PRIVATE, null, null, host)
-      .handle((game, throwable) -> {
-        if (throwable != null) {
-          log.debug("The host of match '{}' failed to start his game", title, throwable);
-          throw new RequestException(requestId, ErrorCode.HOST_FAILED_TO_START_GAME, title, host);
-        }
-
-        AtomicInteger counter = new AtomicInteger();
-        Integer hostId = host.getId();
-
-        setPlayerOptionsForMatchParticipant(participants, host, counter, hostId);
-
-        log.trace("Host '{}' for match '{}' is ready", host, title);
-        clientService.sendMatchCreatedNotification(requestId, game.getId(), requester);
-
-        List<CompletableFuture<Game>> guestGameFutures = guests.stream()
-          .peek(player -> log.trace("Telling player '{}' to start the game process for match '{}'", player, title))
-          .map(player -> gameService.joinGame(game.getId(), null, player)
-            .thenApply(gameStartedFuture -> {
-              setPlayerOptionsForMatchParticipant(participants, host, counter, player.getId());
-              return gameStartedFuture;
-            })
-          )
-          .collect(Collectors.toList());
-
-        return CompletableFuture.allOf(guestGameFutures.toArray(new CompletableFuture[guests.size()]))
-          .thenAccept(aVoid -> log.debug("All players launched their game for match '{}'", title))
-          .exceptionally(throwable1 -> {
-            log.debug("At least one player failed to launch their game for match '{}'", title, throwable1);
-            return null;
-          });
-      });
+    createMatchInternal(title, participants, mapVersion, featuredMod, requestId, requester);
   }
 
   private void setPlayerOptionsForMatchParticipant(List<MatchParticipant> participants, Player host, AtomicInteger counter, Integer playerId) {
@@ -241,19 +196,37 @@ public class MatchMakerService {
       .filter(Optional::isPresent)
       .forEach(optional -> {
         Match match = optional.get();
-        MatchMakerSearch leftSearch = match.leftSearch;
-        MatchMakerSearch rightSearch = match.rightSearch;
 
-        Player leftPlayer = leftSearch.player;
-        Player rightPlayer = rightSearch.player;
+        List<Player> players = match.searches.stream()
+          .map(matchMakerSearch -> matchMakerSearch.player)
+          .collect(Collectors.toList());
 
-        log.debug("Player '{}' was matched against '{}' with game quality '{}'", leftPlayer, rightPlayer, match.quality);
-        pool.remove(leftSearch.player.getId());
-        pool.remove(rightSearch.player.getId());
+        log.debug("Players '{}' were matched with game quality '{}'", players, match.quality);
 
-        String technicalModName = modByPoolName.get(leftSearch.poolName).getTechnicalName();
-        startGame(technicalModName, leftPlayer, leftSearch.faction, rightPlayer, rightSearch.faction);
+        players.forEach(player -> pool.remove(player.getId()));
+
+        String technicalModName = modByPoolName.get(poolName).getTechnicalName();
+
+        String title = createMatchTitle(poolName, players);
+
+        AtomicInteger startSpot = new AtomicInteger();
+        List<MatchParticipant> participants = match.searches.stream()
+          .map(search -> new MatchParticipant(search.player.getId(), search.faction, GameService.NO_TEAM_ID, search.player.getLogin(), startSpot.get()))
+          .collect(Collectors.toList());
+
+        MapVersion map = randomMap(players);
+        createMatchInternal(title, participants, map, technicalModName, null, null);
       });
+  }
+
+  private String createMatchTitle(String poolName, List<Player> players) {
+    String title;
+    if (players.size() == 2) {
+      title = players.get(0).getLogin() + " vs. " + players.get(1).getLogin();
+    } else {
+      title = String.format("A %s match", poolName);
+    }
+    return title;
   }
 
   private Map<Integer, MatchMakerSearch> getPool(String poolName) {
@@ -276,8 +249,7 @@ public class MatchMakerService {
         .map(rightSearch -> {
           alreadyChecked.add(rightSearch);
           return new Match(
-            leftSearch,
-            rightSearch,
+            List.of(leftSearch, rightSearch),
             ratingService.calculateQuality(
               Optional.ofNullable(leftSearch.player.getLadder1v1Rating()).orElse(defaultRating),
               Optional.ofNullable(rightSearch.player.getLadder1v1Rating()).orElse(defaultRating)
@@ -290,9 +262,9 @@ public class MatchMakerService {
 
   /**
    * Notify all players, except those already searching (which includes the search owner) about the {@code search},
-   * given that they would result in a game with a quality of at least {@code minQuality}.
+   * given that they would result in a game with a quality of at least {@link #DESIRED_MIN_GAME_QUALITY}.
    */
-  private void notifyPlayers(MatchMakerSearch search, double minQuality) {
+  private void notifyPlayers(MatchMakerSearch search) {
     playerService.getPlayers().parallelStream()
       .filter(player -> !getPool(search.poolName).containsKey(player.getId()))
       .map(rightPlayer -> new PotentialMatch(
@@ -300,48 +272,69 @@ public class MatchMakerService {
         search.poolName,
         ratingService.calculateQuality(search.player.getLadder1v1Rating(), rightPlayer.getLadder1v1Rating())
       ))
-      .filter(match -> match.quality > minQuality)
+      .filter(match -> match.quality > MatchMakerService.DESIRED_MIN_GAME_QUALITY)
       .forEach(match -> clientService.sendMatchmakerNotification(match.poolName, match.rightPlayer));
   }
 
-  /**
-   * Tells one player to host a game and the other player to join the game.
-   */
-  private void startGame(String technicalModName, Player host, Faction hostFaction, Player opponent, Faction opponentFaction) {
-    gameService.createGame(
-      host.getLogin() + " vs. " + opponent.getLogin(),
-      technicalModName,
-      MapUtils.extractMapName(randomMap(host, opponent).getFilename()),
-      null,
-      GameVisibility.PRIVATE,
-      null,
-      null,
-      host
-    )
-      .thenCompose(game -> gameService.joinGame(game.getId(), null, opponent))
-      .thenAccept(game -> {
-        int hostId = host.getId();
-        gameService.updatePlayerOption(host, hostId, GameService.OPTION_TEAM, GameService.NO_TEAM_ID);
-        gameService.updatePlayerOption(host, hostId, GameService.OPTION_FACTION, hostFaction);
-        gameService.updatePlayerOption(host, hostId, GameService.OPTION_START_SPOT, 1);
-        gameService.updatePlayerOption(host, hostId, GameService.OPTION_COLOR, 1);
-        gameService.updatePlayerOption(host, hostId, GameService.OPTION_ARMY, 2);
+  private void createMatchInternal(String title, List<MatchParticipant> participants, MapVersion map, String featuredMod,
+                                   @Nullable UUID requestId, @Nullable ConnectionAware requester) {
+    log.debug("Creating match '{}' with '{}' participants on map '{}'", title, participants.size(), map);
 
-        int opponentId = opponent.getId();
-        gameService.updatePlayerOption(host, opponentId, GameService.OPTION_TEAM, GameService.NO_TEAM_ID);
-        gameService.updatePlayerOption(host, opponentId, GameService.OPTION_FACTION, opponentFaction);
-        gameService.updatePlayerOption(host, opponentId, GameService.OPTION_START_SPOT, 2);
-        gameService.updatePlayerOption(host, opponentId, GameService.OPTION_COLOR, 2);
-        gameService.updatePlayerOption(host, opponentId, GameService.OPTION_ARMY, 3);
+    List<Player> players = participants.stream()
+      .map(matchParticipant -> playerService.getOnlinePlayer(matchParticipant.getId())
+        .orElseThrow(() -> new RequestException(requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, matchParticipant.getId())))
+      .peek(player -> Requests.verify(player.getCurrentGame() == null, requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, player))
+      .peek(this::removePlayer)
+      .collect(Collectors.toList());
+
+    Requests.verify(players.size() > 1, ErrorCode.INSUFFICIENT_MATCH_PARTICIPANTS, players.size(), 2);
+    String mapFileName = MapUtils.extractMapName(map.getFilename());
+
+    Player host = players.get(0);
+    List<Player> guests = players.subList(1, players.size());
+
+    gameService.createGame(title, featuredMod, mapFileName, null, GameVisibility.PRIVATE, null, null, host, LobbyMode.NONE)
+      .handle((game, throwable) -> {
+        if (throwable != null) {
+          log.debug("The host of match '{}' failed to start his game", title, throwable);
+          throw new RequestException(requestId, ErrorCode.HOST_FAILED_TO_START_GAME, title, host);
+        }
+
+        AtomicInteger counter = new AtomicInteger();
+        Integer hostId = host.getId();
+
+        setPlayerOptionsForMatchParticipant(participants, host, counter, hostId);
+
+        log.trace("Host '{}' for match '{}' is ready", host, title);
+        if (requester != null) {
+          clientService.sendMatchCreatedNotification(requestId, game.getId(), requester);
+        }
+
+        List<CompletableFuture<Game>> guestGameFutures = guests.stream()
+          .peek(player -> log.trace("Telling player '{}' to start the game process for match '{}'", player, title))
+          .map(player -> gameService.joinGame(game.getId(), null, player)
+            .thenApply(gameStartedFuture -> {
+              setPlayerOptionsForMatchParticipant(participants, host, counter, player.getId());
+              return gameStartedFuture;
+            })
+          )
+          .collect(Collectors.toList());
+
+        return CompletableFuture.allOf(guestGameFutures.toArray(new CompletableFuture[guests.size()]))
+          .thenAccept(aVoid -> log.debug("All players launched their game for match '{}'", title))
+          .exceptionally(throwable1 -> {
+            log.debug("At least one player failed to launch their game for match '{}'", title, throwable1);
+            return null;
+          });
       });
   }
 
-  private MapVersion randomMap(Player host, Player opponent) {
-    return mapService.getRandomLadderMap(host, opponent);
+  private MapVersion randomMap(Iterable<Player> players) {
+    return mapService.getRandomLadderMap(players);
   }
 
   /**
-   * Checks whether the specified match passes the minimum required game quality. The longer {@code match} has been
+   * Checks whether the specified match passes the minimum required game quality. The longer a {@code match} has been
    * around, the lower the required game quality in order to pass.
    */
   private boolean passesMinimumQuality(Match match) {
@@ -349,7 +342,11 @@ public class MatchMakerService {
     double acceptableGameQuality = properties.getMatchMaker().getAcceptableGameQuality();
     long acceptableQualityWaitTime = Math.max(1, properties.getMatchMaker().getAcceptableQualityWaitTime());
 
-    long secondsPassed = Math.max(1, Duration.between(Instant.now(), match.leftSearch.createdTime).getSeconds());
+    MatchMakerSearch oldestSearch = match.searches.stream()
+      .min(Comparator.comparing(o -> o.createdTime))
+      .orElseThrow(() -> new IllegalStateException("No searches"));
+
+    long secondsPassed = Math.max(1, Duration.between(Instant.now(), oldestSearch.createdTime).getSeconds());
 
     float reductionPercent = secondsPassed / acceptableQualityWaitTime;
     float reduction = (float) (reductionPercent * (desiredGameQuality - acceptableGameQuality));
@@ -376,12 +373,11 @@ public class MatchMakerService {
   }
 
   /**
-   * Represents a match of two searches. A {@code Match} is only created if a minimum quality is met.
+   * Represents a match of multiple searches. A {@code Match} is only created if a minimum quality is met.
    */
   @Value
   private static class Match {
-    MatchMakerSearch leftSearch;
-    MatchMakerSearch rightSearch;
+    List<MatchMakerSearch> searches;
     double quality;
   }
 

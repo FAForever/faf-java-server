@@ -84,7 +84,6 @@ public class GameService {
   public static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
   public static final String OPTION_NO_RUSH = "NoRushOption";
   public static final String OPTION_RESTRICTED_CATEGORIES = "RestrictedCategories";
-  public static final String OPTION_SLOT = "Slot";
   public static final String OPTION_SLOTS = "Slots";
   public static final String OPTION_SCENARIO_FILE = "ScenarioFile";
   public static final String OPTION_TITLE = "Title";
@@ -219,7 +218,7 @@ public class GameService {
   @Transactional(readOnly = true)
   public CompletableFuture<Game> createGame(String title, String featuredModName, String mapFileName,
                                             String password, GameVisibility visibility,
-                                            Integer minRating, Integer maxRating, Player player) {
+                                            Integer minRating, Integer maxRating, Player player, LobbyMode lobbyMode) {
 
     Game currentGame = player.getCurrentGame();
     if (currentGame != null && currentGame.getState() == GameState.INITIALIZING) {
@@ -246,6 +245,7 @@ public class GameService {
     game.setGameVisibility(visibility);
     game.setMinRating(minRating);
     game.setMaxRating(maxRating);
+    game.setLobbyMode(lobbyMode);
 
     activeGamesById.put(game.getId(), game);
     gameStateCounters.get(game.getState()).incrementAndGet();
@@ -423,7 +423,7 @@ public class GameService {
     log.trace("Clearing slot '{}' of game '{}'", slotId, game);
 
     game.getPlayerOptions().entrySet().stream()
-      .filter(entry -> Objects.equals(entry.getValue().get(OPTION_SLOT), slotId))
+      .filter(entry -> Objects.equals(entry.getValue().get(OPTION_START_SPOT), slotId))
       .map(Entry::getKey)
       .collect(Collectors.toList())
       .forEach(playerId -> {

@@ -67,7 +67,6 @@ import static com.faforever.server.game.GameService.OPTION_FOG_OF_WAR;
 import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
 import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
 import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
-import static com.faforever.server.game.GameService.OPTION_SLOT;
 import static com.faforever.server.game.GameService.OPTION_START_SPOT;
 import static com.faforever.server.game.GameService.OPTION_TEAM;
 import static com.faforever.server.game.GameService.OPTION_VICTORY_CONDITION;
@@ -207,7 +206,7 @@ public class GameServiceTest {
   @Test
   public void updateGameStateIdle() {
     instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
-      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
     instance.updatePlayerGameState(PlayerGameState.IDLE, player1);
 
     Game game = instance.getActiveGame(1).get();
@@ -300,12 +299,12 @@ public class GameServiceTest {
   @Test
   public void clearSlot() throws Exception {
     Game game = hostGame(player1);
-    instance.updatePlayerOption(game.getHost(), player1.getId(), OPTION_SLOT, 2);
+    instance.updatePlayerOption(game.getHost(), player1.getId(), OPTION_START_SPOT, 2);
     addPlayer(game, player2);
 
-    instance.updatePlayerOption(player1, 1, OPTION_SLOT, 3);
+    instance.updatePlayerOption(player1, 1, OPTION_START_SPOT, 3);
     instance.updatePlayerOption(player1, 1, OPTION_FACTION, 3);
-    instance.updatePlayerOption(player1, 2, OPTION_SLOT, 4);
+    instance.updatePlayerOption(player1, 2, OPTION_START_SPOT, 4);
     instance.updatePlayerOption(player1, 2, OPTION_FACTION, 4);
 
     instance.clearSlot(game, 1);
@@ -1058,7 +1057,7 @@ public class GameServiceTest {
   @SuppressWarnings("unchecked")
   public void onAuthenticationSuccess() {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
 
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
     authentication.setDetails(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
@@ -1166,7 +1165,7 @@ public class GameServiceTest {
   @Test
   public void mutualDrawRequestedByPlayerInNonPlayingGameState() {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_GAME_STATE));
@@ -1333,7 +1332,7 @@ public class GameServiceTest {
     player1.setCurrentGame(null);
 
     CompletableFuture<Game> joinable = instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
-      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, host);
+      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, host, LobbyMode.DEFAULT);
 
     assertThat(joinable.isDone(), is(false));
     assertThat(joinable.isCancelled(), is(false));
@@ -1398,7 +1397,7 @@ public class GameServiceTest {
 
     Player host = game.getHost();
     instance.updatePlayerOption(host, player.getId(), OPTION_FACTION, 1);
-    instance.updatePlayerOption(host, player.getId(), OPTION_SLOT, player.getId());
+    instance.updatePlayerOption(host, player.getId(), OPTION_START_SPOT, player.getId());
     instance.updatePlayerOption(host, player.getId(), OPTION_ARMY, player.getId());
     instance.updatePlayerOption(host, player.getId(), OPTION_COLOR, player.getId());
     instance.updatePlayerOption(host, player.getId(), OPTION_START_SPOT, player.getId());

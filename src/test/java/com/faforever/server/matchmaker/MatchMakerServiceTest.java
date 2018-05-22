@@ -13,6 +13,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.map.MapService;
 import com.faforever.server.mod.ModService;
 import com.faforever.server.player.PlayerService;
@@ -34,12 +35,14 @@ import java.util.concurrent.CompletableFuture;
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -71,7 +74,7 @@ public class MatchMakerServiceTest {
     FeaturedMod ladder1v1Mod = new FeaturedMod().setTechnicalName("faf");
 
     when(modService.getLadder1v1()).thenReturn(Optional.of(ladder1v1Mod));
-    when(mapService.getRandomLadderMap(any(), any())).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
+    when(mapService.getRandomLadderMap(anyIterable())).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
 
     RatingService ratingService = new RatingService(properties);
     instance = new MatchMakerService(modService, properties, ratingService, clientService, gameService, mapService, playerService);
@@ -125,7 +128,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any());
+    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), eq(null), any());
   }
 
@@ -136,10 +139,14 @@ public class MatchMakerServiceTest {
   public void submitSearchTwoFreshPlayersMatch() {
     Player player1 = (Player) new Player().setLogin(LOGIN_PLAYER_1).setId(1);
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
-    when(gameService.createGame(any(), any(), any(), any(), any(), any(), any(), any()))
-      .thenReturn(CompletableFuture.completedFuture(new Game(1)));
+    Game game = new Game(1);
+
+    when(gameService.createGame(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+      .thenReturn(CompletableFuture.completedFuture(game));
     when(gameService.joinGame(1, null, player2))
-      .thenReturn(CompletableFuture.completedFuture(new Game(1)));
+      .thenReturn(CompletableFuture.completedFuture(game));
+    when(playerService.getOnlinePlayer(1)).thenReturn(Optional.of(player1));
+    when(playerService.getOnlinePlayer(2)).thenReturn(Optional.of(player2));
 
     properties.getMatchMaker().setAcceptableQualityWaitTime(0);
     instance.submitSearch(player1, Faction.CYBRAN, QUEUE_NAME);
@@ -147,11 +154,10 @@ public class MatchMakerServiceTest {
     instance.processPools();
 
     verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "faf", "SCMP_001",
-      null, GameVisibility.PRIVATE, null, null, player1);
+      null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE);
     verify(gameService).joinGame(1, null, player2);
 
-    // Verify only the last player option being set, to verify it went through until the end.
-    verify(gameService).updatePlayerOption(player1, player2.getId(), GameService.OPTION_ARMY, 3);
+    verify(gameService, times(10)).updatePlayerOption(any(), anyInt(), any(), any());
   }
 
   /**
@@ -172,7 +178,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any());
+    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), eq(null), any());
   }
 
@@ -213,8 +219,8 @@ public class MatchMakerServiceTest {
 
   @Test
   public void createMatch() {
-    MatchParticipant participant1 = new MatchParticipant().setId(1).setFaction(Faction.UEF).setTeam(1).setSlot(1).setStartSpot(1);
-    MatchParticipant participant2 = new MatchParticipant().setId(2).setFaction(Faction.AEON).setTeam(2).setSlot(2).setStartSpot(2);
+    MatchParticipant participant1 = new MatchParticipant().setId(1).setFaction(Faction.UEF).setTeam(1).setStartSpot(1);
+    MatchParticipant participant2 = new MatchParticipant().setId(2).setFaction(Faction.AEON).setTeam(2).setStartSpot(2);
 
     ConnectionAware requester = mock(ConnectionAware.class);
     UUID requestId = UUID.randomUUID();
@@ -231,7 +237,7 @@ public class MatchMakerServiceTest {
     when(mapService.findMap(mapVersionId)).thenReturn(Optional.of(new MapVersion().setFilename("maps/foo.zip")));
 
     Game game = new Game().setId(1);
-    when(gameService.createGame("Test match", "faf", "foo", null, GameVisibility.PRIVATE, null, null, player1))
+    when(gameService.createGame("Test match", "faf", "foo", null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE))
       .thenReturn(CompletableFuture.completedFuture(game));
 
     when(gameService.joinGame(1, null, player2)).thenReturn(CompletableFuture.completedFuture(game));

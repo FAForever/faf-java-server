@@ -18,6 +18,7 @@ import com.faforever.server.game.GameResponse.Player;
 import com.faforever.server.game.GameResponse.SimMod;
 import com.faforever.server.game.GameVisibility;
 import com.faforever.server.game.HostGameResponse;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.IceServer;
 import com.faforever.server.ice.IceServerList;
@@ -172,14 +173,14 @@ public class V2ServerMessageTransformerTest {
 
   @Test
   public void startGameProcessWithoutMap() {
-    String response = instance.transform(new StartGameProcessResponse("faf", 1, null, Arrays.asList("/foo", "/bar")));
-    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+    String response = instance.transform(new StartGameProcessResponse("faf", 1, null, LobbyMode.DEFAULT, Arrays.asList("/foo", "/bar")));
+    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"lobbyMode\":\"DEFAULT\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test
   public void startGameProcessWithMap() {
-    String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01", Arrays.asList("/foo", "/bar")));
-    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+    String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01", LobbyMode.DEFAULT, Arrays.asList("/foo", "/bar")));
+    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"lobbyMode\":\"DEFAULT\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test

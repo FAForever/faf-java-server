@@ -92,7 +92,7 @@ public class ClientService {
 
   public void startGameProcess(Game game, Player player) {
     log.debug("Telling '{}' to start game process for game '{}'", game.getHost(), game);
-    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), getCommandLineArgs(player)), player);
+    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), game.getLobbyMode(), getCommandLineArgs(player)), player);
   }
 
   /**

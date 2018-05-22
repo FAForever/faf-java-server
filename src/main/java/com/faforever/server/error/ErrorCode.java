@@ -25,7 +25,7 @@ public enum ErrorCode {
   EITHER_AVATAR_ID_OR_URL(118, "Invalid avatar command", "Either the avatar URL or the avatar ID must be set."),
   INVALID_PASSWORD(119, "Invalid password", "The password you provided is not correct."),
   NOT_A_PLAYER(120, "Not a player", "This request can only be made if the authenticated user is a player."),
-  PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING(121, "Player unavailable for matchmaking", "The player ''{0}'' is currently not available for matchmaking."),
+  PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE(121, "Player unavailable for matchmaking", "The player ''{0}'' is currently not available for matchmaking as she/he is offline."),
   UNKNOWN_MAP(122, "Unknown map", "The map ''{0}'' is unknown by the server."),
   INSUFFICIENT_MATCH_PARTICIPANTS(123, "Insufficient match participants", "Can't create match with {0,number,#} participants, at least {1,number,#} are required."),
   HOST_FAILED_TO_START_GAME(124, "Host failed to start game", "The game ''{0}'' could not be started since its host ''{1}}'' failed to start his game."),

@@ -16,6 +16,7 @@ import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameStateReport;
 import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
@@ -43,7 +44,7 @@ public class GameServiceActivators {
   @ServiceActivator(inputChannel = ChannelNames.HOST_GAME_REQUEST)
   public void hostGameRequest(HostGameRequest request, @Header(USER_HEADER) Authentication authentication) {
     gameService.createGame(request.getTitle(), request.getMod(), request.getMapName(), request.getPassword(),
-      request.getVisibility(), request.getMinRating(), request.getMaxRating(), getPlayer(authentication));
+      request.getVisibility(), request.getMinRating(), request.getMaxRating(), getPlayer(authentication), LobbyMode.DEFAULT);
   }
 
   @ServiceActivator(inputChannel = ChannelNames.JOIN_GAME_REQUEST)

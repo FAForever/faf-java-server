@@ -23,10 +23,35 @@ class StartGameProcessServerMessage extends V2ServerMessage {
    */
   @Nullable
   private String map;
+
+  /** In which lobby mode to start the game in. */
+  @Nullable
+  private LobbyMode lobbyMode;
+
   /**
+   * private LobbyMode lobbyMode;
+   * <p>
+   * /**
+   *
    * @deprecated the server should never send command line arguments. They should always be generated on client side.
    * This is currently used for {@code /numgames} which shouldn't even be reported by a peer anyway, but looked up.
    */
   @Deprecated
   private List<String> commandLineArguments;
+
+  /**
+   * See values for description.
+   */
+  public enum LobbyMode {
+
+    /**
+     * Default lobby where players can select their faction, teams and so on.
+     */
+    DEFAULT,
+
+    /**
+     * The lobby is skipped; the game starts straight away,
+     */
+    NONE
+  }
 }

@@ -1,5 +1,6 @@
 package com.faforever.server.integration.legacy.transformer;
 
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.StartGameProcessResponse;
 import org.junit.Test;
 
@@ -19,6 +20,7 @@ public class LaunchGameResponseTransformerTest {
       "faf",
       4,
       null,
+      LobbyMode.DEFAULT,
       Arrays.asList("/numgames", "4")
     ));
 
@@ -26,6 +28,7 @@ public class LaunchGameResponseTransformerTest {
     assertThat(result.get("mod"), is("faf"));
     assertThat(result.get("uid"), is(4));
     assertThat(result.get("mapname"), is(nullValue()));
+    assertThat(result.get("lobby_mode"), is("DEFAULT"));
     assertThat(result.get("args"), is(new String[]{"/numgames 4"}));
   }
 
@@ -35,6 +38,7 @@ public class LaunchGameResponseTransformerTest {
       "faf",
       4,
       "scmp01",
+      LobbyMode.DEFAULT,
       Arrays.asList("/numgames", "4")
     ));
 
@@ -42,6 +46,7 @@ public class LaunchGameResponseTransformerTest {
     assertThat(result.get("mod"), is("faf"));
     assertThat(result.get("uid"), is(4));
     assertThat(result.get("mapname"), is("scmp01"));
+    assertThat(result.get("lobby_mode"), is("DEFAULT"));
     assertThat(result.get("args"), is(new String[]{"/numgames 4"}));
   }
 
@@ -51,6 +56,7 @@ public class LaunchGameResponseTransformerTest {
       "faf",
       4,
       null,
+      LobbyMode.DEFAULT,
       Arrays.asList("/numgames", "4", "/mean", "1500", "/deviation", "500")
     ));
   }

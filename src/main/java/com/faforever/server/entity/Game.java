@@ -1,6 +1,7 @@
 package com.faforever.server.entity;
 
 import com.faforever.server.game.GameVisibility;
+import com.faforever.server.game.LobbyMode;
 import com.faforever.server.stats.ArmyStatistics;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -181,6 +182,9 @@ public class Game {
   @Transient
   private Collection<Integer> playerIdsWhoReportedGameEnd;
 
+  @Transient
+  private LobbyMode lobbyMode;
+
   public Game(int id) {
     this();
     this.id = id;
@@ -222,7 +226,9 @@ public class Game {
   public Game setState(GameState state) {
     GameState.verifyTransition(this.state, state);
     this.state = state;
-    joinableFuture.complete(this);
+    if (state == GameState.OPEN) {
+      joinableFuture.complete(this);
+    }
     return this;
   }
 }
