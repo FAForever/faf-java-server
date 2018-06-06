@@ -682,6 +682,12 @@ public class GameService {
 
     clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
 
+
+    if ((game.getState().equals(GameState.INITIALIZING) || (game.getState().equals(GameState.OPEN))
+      && !connectedPlayers.containsValue(game.getHost()))) {
+      hostLeftLobby(connectedPlayers);
+    }
+
     if (connectedPlayers.isEmpty()) {
       switch (game.getState()) {
         case INITIALIZING:
@@ -699,6 +705,16 @@ public class GameService {
     } else {
       markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
     }
+  }
+
+  private void hostLeftLobby(Map<Integer, Player> connectedPlayers) {
+    connectedPlayers.values().forEach(player -> {
+      changePlayerGameState(player, PlayerGameState.NONE);
+      player.setCurrentGame(null);
+      player.getGameFuture().cancel(false);
+      clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
+    });
+    connectedPlayers.clear();
   }
 
   private void onPlayerGameEnded(Player player, Game game) {
