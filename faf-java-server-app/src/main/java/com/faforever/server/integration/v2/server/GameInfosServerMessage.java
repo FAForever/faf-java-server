@@ -7,7 +7,7 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * Message sent from the server to the client containing information about players.
+ * Message sent from the server to the client containing information about games.
  */
 @Getter
 @Setter

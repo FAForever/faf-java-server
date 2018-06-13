@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Message sent from the server to the client containing information about an available featured mod.
+ * Message sent from the server to the client containing information about a game.
  */
 @Getter
 @Setter
