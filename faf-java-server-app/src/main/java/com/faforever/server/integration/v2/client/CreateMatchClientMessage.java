@@ -46,6 +46,7 @@ class CreateMatchClientMessage extends V2ClientMessage {
   /** A player that participates in a match. */
   @Getter
   @AllArgsConstructor
+  @NoArgsConstructor
   public static class Participant {
     /** The player's ID. */
     int id;
