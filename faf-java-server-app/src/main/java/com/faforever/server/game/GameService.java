@@ -51,6 +51,7 @@ import org.springframework.util.Assert;
 import javax.persistence.EntityManager;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -286,6 +287,7 @@ public class GameService {
 
     CompletableFuture<Game> gameJoinedFuture = new CompletableFuture<>();
     player.setGameFuture(gameJoinedFuture);
+    player.setLastActive(OffsetDateTime.now());
 
     return gameJoinedFuture;
   }
@@ -660,6 +662,7 @@ public class GameService {
   private void changePlayerGameState(Player player, PlayerGameState newState) {
     playerGameStateCounters.get(player.getGameState()).decrementAndGet();
     player.setGameState(newState);
+    player.setLastActive(OffsetDateTime.now());
     playerGameStateCounters.get(player.getGameState()).incrementAndGet();
   }
 

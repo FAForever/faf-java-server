@@ -49,7 +49,9 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 
 import javax.persistence.EntityManager;
 import java.net.InetAddress;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,6 +79,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
@@ -141,6 +144,7 @@ public class GameServiceTest {
     map.setRanked(true);
 
     player1 = new Player();
+    player1.setLastActive(OffsetDateTime.now().minus(Duration.ofHours(1)));
     player1.setId(1);
     player1.setLogin(PLAYER_NAME_1);
 
@@ -174,7 +178,9 @@ public class GameServiceTest {
     Game game = hostGame(player1);
 
     instance.joinGame(game.getId(), game.getPassword(), player2);
+
     verify(clientService).startGameProcess(game, player2);
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
     assertThat(player2.getCurrentGame(), is(game));
     assertThat(player2.getGameState(), is(PlayerGameState.INITIALIZING));
 
@@ -188,6 +194,8 @@ public class GameServiceTest {
     game.setPassword("pw");
 
     instance.joinGame(game.getId(), "pw", player2);
+
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
     verify(clientService).startGameProcess(game, player2);
     assertThat(player2.getCurrentGame(), is(game));
     assertThat(player2.getGameState(), is(PlayerGameState.INITIALIZING));
@@ -211,6 +219,8 @@ public class GameServiceTest {
       GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
     instance.updatePlayerGameState(PlayerGameState.IDLE, player1);
 
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
+
     Game game = instance.getActiveGame(1).get();
 
     assertThat(game.getState(), is(GameState.INITIALIZING));
@@ -223,6 +233,7 @@ public class GameServiceTest {
 
     instance.updateGameOption(player1, "GameSpeed", "normal");
 
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
     assertThat(game.getOptions().get("GameSpeed"), is("normal"));
   }
 
@@ -235,6 +246,7 @@ public class GameServiceTest {
 
     instance.updateGameOption(player1, "Title", newTitle);
 
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
     assertThat(game.getTitle(), is(newTitle));
   }
 
@@ -247,6 +259,7 @@ public class GameServiceTest {
 
     instance.updateGameOption(player1, "ScenarioFile", newScenarioFile);
 
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
     assertThat(game.getMapFolderName(), is("3v3 chaos.v0001"));
   }
 
@@ -258,6 +271,7 @@ public class GameServiceTest {
 
     instance.updateGameOption(player1, "Slots", 8);
 
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
     assertThat(game.getMaxPlayers(), is(8));
   }
 
@@ -276,6 +290,8 @@ public class GameServiceTest {
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_FACTION, 2);
     assertThat(game.getPlayerOptions().get(player1.getId()).get(OPTION_FACTION), is(2));
+
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -286,6 +302,7 @@ public class GameServiceTest {
     instance.updateAiOption(player1, QAI, OPTION_ARMY, 2);
 
     assertThat(game.getAiOptions().get(QAI).get(OPTION_ARMY), is(2));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -296,6 +313,7 @@ public class GameServiceTest {
     instance.updateAiOption(player1, QAI, OPTION_FACTION, 2);
 
     assertThat(game.getAiOptions().containsKey(QAI), is(false));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -324,6 +342,7 @@ public class GameServiceTest {
     instance.clearSlot(game, 2);
     assertThat(game.getPlayerOptions().containsKey(1), is(false));
     assertThat(game.getPlayerOptions().containsKey(2), is(false));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -406,6 +425,7 @@ public class GameServiceTest {
     assertThat(game.getReportedArmyResults().values(), hasSize(2));
     assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
     assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -538,6 +558,7 @@ public class GameServiceTest {
     assertThat(game.getReportedArmyResults().values(), hasSize(2));
     assertThat(game.getReportedArmyResults().get(player1.getId()).values(), hasSize(2));
     assertThat(game.getReportedArmyResults().get(player2.getId()).values(), hasSize(2));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -707,6 +728,7 @@ public class GameServiceTest {
 
     verify(entityManager).persist(game);
     verify(clientService, atLeastOnce()).broadcastDelayed(any(GameResponse.class), any(), any(), any(), any());
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -1072,6 +1094,7 @@ public class GameServiceTest {
 
     assertThat(games.getResponses(), hasSize(1));
     assertThat(games.getResponses().iterator().next().getTitle(), is("Test game"));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -1209,6 +1232,7 @@ public class GameServiceTest {
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
     assertThat(player2.getGameState(), is(PlayerGameState.LOBBY));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -1234,6 +1258,7 @@ public class GameServiceTest {
     instance.restoreGameSession(player2, game.getId());
     assertThat(player2.getCurrentGame(), is(game));
     assertThat(player2.getGameState(), is(PlayerGameState.LAUNCHING));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   @Test
@@ -1315,6 +1340,7 @@ public class GameServiceTest {
     instance.reportGameEnded(player3);
 
     assertThat(game.getState(), is(GameState.ENDED));
+    assertThat(player1.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 
   private void reportPlayerScores(Player player1, Player... players) {

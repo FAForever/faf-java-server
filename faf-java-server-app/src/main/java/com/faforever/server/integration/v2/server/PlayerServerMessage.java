@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
 import java.util.TimeZone;
 
 /**
@@ -34,12 +35,13 @@ class PlayerServerMessage extends V2ServerMessage {
   /** The player's rating in the 1v1 leaderboard, if any. */
   private Rating ladder1v1Rating;
   /** The number of games the player has played. */
-  @NotNull
   private int numberOfGames;
   /** The player's avatar, if any. */
   private Avatar avatar;
   /** The player's clan tag, if any. */
   private String clanTag;
+  /** The time when the player was last active, e. g. logged in, joined a game, finished a game and so on. **/
+  private OffsetDateTime lastActive;
 
   /** A player's TrueSkill rating. */
   @Getter

@@ -8,6 +8,7 @@ import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,10 +17,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.TimeZone;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -82,5 +86,14 @@ public class PlayerServiceTest {
     player.setClientConnection(new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class)));
 
     return new FafUserDetails(user);
+  }
+
+  @Test
+  public void testPlayerOnlineUpdatesLastActive() {
+    player.setLastActive(OffsetDateTime.now().minus(Duration.ofHours(1)));
+
+    instance.setPlayerOnline(player);
+
+    assertThat(player.getLastActive(), is(greaterThanOrEqualTo(OffsetDateTime.now().minus(Duration.ofMinutes(10)))));
   }
 }

@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.management.MXBean;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -58,6 +59,7 @@ public class PlayerService {
     clientService.sendLoginDetails(player, player);
     clientService.sendPlayerInformation(otherOnlinePlayers, player);
 
+    player.setLastActive(OffsetDateTime.now());
     eventPublisher.publishEvent(new PlayerOnlineEvent(this, player));
     announceOnline(player);
   }

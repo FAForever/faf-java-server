@@ -16,6 +16,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -65,11 +66,15 @@ public class Player extends Login implements ConnectionAware {
   @Transient
   private ClientConnection clientConnection;
 
+  @Transient
+  private OffsetDateTime lastActive = OffsetDateTime.now();
+
   /**
    * The future that will be completed as soon as the player's game entered {@link GameState#OPEN}. A player's game may
    * never start if it crashes or the player disconnects.
    */
   @Transient
+  @Nullable
   private CompletableFuture<Game> gameFuture;
 
   public Clan getClan() {

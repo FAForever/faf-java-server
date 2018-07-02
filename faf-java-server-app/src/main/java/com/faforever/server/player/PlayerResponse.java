@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.Value;
 
+import java.time.Instant;
 import java.util.TimeZone;
 
 @Getter
@@ -21,6 +22,7 @@ public class PlayerResponse implements ServerMessage {
   private int numberOfGames;
   private Avatar avatar;
   private String clanTag;
+  private Instant lastActive;
 
   @Value
   public static class Rating {
