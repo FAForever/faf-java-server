@@ -51,6 +51,7 @@ import org.springframework.util.Assert;
 import javax.persistence.EntityManager;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -114,7 +115,6 @@ public class GameService {
    */
   private final AtomicInteger lastGameId;
   private final ClientService clientService;
-  private final ConcurrentMap<Integer, Game> activeGamesById;
   private final MapService mapService;
   private final ModService modService;
   private final PlayerService playerService;
@@ -122,6 +122,8 @@ public class GameService {
   private final DivisionService divisionService;
   private final Map<GameState, AtomicInteger> gameStateCounters;
   private final Map<PlayerGameState, AtomicInteger> playerGameStateCounters;
+  @VisibleForTesting
+  final ConcurrentMap<Integer, Game> activeGamesById;
 
   /**
    * Since Spring Data JPA assumes that entities with IDs != 0 (or != null) are already stored in the database, we can't
@@ -136,6 +138,13 @@ public class GameService {
   @Autowired
   @VisibleForTesting
   GameService gameService;
+
+  /**
+   * A list of games which can not yet be rated because there are other games that need to finish and be rated first.
+   * This is the case if one of a game's players has also participated in another game, which has not yet finished.
+   * Without waiting, the rating update of the second game would get overridden as soon as the first game ends.
+   */
+  private Collection<Game> gamesAwaitingRatingUpdate;
 
   public GameService(GameRepository gameRepository, MeterRegistry meterRegistry, ClientService clientService,
                      MapService mapService, ModService modService, PlayerService playerService,
@@ -152,6 +161,7 @@ public class GameService {
     this.armyStatisticsService = armyStatisticsService;
     lastGameId = new AtomicInteger(0);
     activeGamesById = new ConcurrentHashMap<>();
+    gamesAwaitingRatingUpdate = new ArrayList<>();
 
     validityVoters = Arrays.asList(
       ValidityVoter.isRankedVoter(modService),
@@ -325,12 +335,11 @@ public class GameService {
     }
   }
 
-  /**
-   * Returns the active game with the specified ID, if such a game exists. A game is considered active as soon as it's
-   * being hosted and until it finished.
-   */
-  public Optional<Game> getActiveGame(int id) {
-    return Optional.ofNullable(activeGamesById.get(id));
+  private void processGamesAwaitingRatingUpdate() {
+    gamesAwaitingRatingUpdate.stream()
+      .filter(game -> !hasRatingDependentGame(game) && game.getStartTime() != null)
+      .sorted(Comparator.comparing(Game::getStartTime))
+      .forEach(this::updateRatingsIfValid);
   }
 
   /**
@@ -720,6 +729,33 @@ public class GameService {
     onGameClosed(game);
   }
 
+  /**
+   * Returns {@code true} if there is at least one active game that is older than the specified game and contains at
+   * least one player who also participated in the specified game.
+   */
+  private boolean hasRatingDependentGame(Game game) {
+    return activeGamesById.values().stream()
+      .anyMatch(activeGame -> !Objects.equals(activeGame, game)
+        && activeGame.getStartTime() != null
+        && activeGame.getState() == GameState.PLAYING
+        && activeGame.getStartTime().isBefore(game.getStartTime())
+        && activeGame.getPlayerStats().keySet().stream().anyMatch(playerId -> game.getPlayerStats().containsKey(playerId))
+      );
+  }
+
+  private void enqueueForRatingUpdate(Game game) {
+    gamesAwaitingRatingUpdate.add(game);
+  }
+
+  /**
+   * Returns the active game with the specified ID, if such a game exists. A game is considered active as soon as it's
+   * being hosted and until it finished.
+   */
+  @VisibleForTesting
+  Optional<Game> getActiveGame(int id) {
+    return Optional.ofNullable(activeGamesById.get(id));
+  }
+
   @Transactional
   protected void onGameEnded(Game game) {
     if (game.getState() == GameState.ENDED) {
@@ -743,7 +779,8 @@ public class GameService {
     }
 
     updateGameValidity(game);
-    updateRatingsIfValid(game);
+    enqueueForRatingUpdate(game);
+    processGamesAwaitingRatingUpdate();
     Optional.ofNullable(game.getMapVersion()).ifPresent(mapVersion -> mapService.incrementTimesPlayed(mapVersion.getMap()));
     settlePlayerScores(game);
     updateDivisionScoresIfValid(game);
@@ -812,6 +849,7 @@ public class GameService {
     });
     return armyIdsToMostReportedScore;
   }
+
 
   private void updateRatingsIfValid(Game game) {
     if (game.getValidity() != Validity.VALID && !game.isRatingEnforced()) {

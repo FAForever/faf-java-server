@@ -72,6 +72,7 @@ based server.
 | Was built in accordance with a set of design and implementation principles, like [Clean Code](https://dzone.com/articles/clean-code-principles?edition=154263&utm_source=Weekly%20Digest&utm_medium=email&utm_campaign=wd%202017-01-11), and strong quality control to assure high quality and maintainability. | Was built by "[Hackers](https://danielmiessler.com/study/programmer_hacker_developer/#gs.vEWu9K4)" with little principles or bigger picture in mind, focusing on "getting the job done". |
 | Is actively maintained by me, and various other people are (interested in) contributing. | Hasn't had a committed maintainer for over a year, and nobody is willing take over. Many unfinished PRs are lying around as the original authors lost interest, and nobody is taking care. |
 | Uses a database abstraction technology so that the application is decoupled from the underlying database, which allows easy switching to a different database. | Is tightly coupled to the rather infamous MySQL database, making it expensive to ever switch to different (better) database. |
+| Verifies incoming messages thoroughly. If a messages is invalid in the current context (e. g. a player reports a result for a game he isn't part of, or for an army that doesn't exist) he receives a very clear error message. This protects the server from malicious messages and helps client developers know when their application is misbehaving. | Does little message verification, allowing players to manipulate the system. Silently drops invalid messages or disconnects the client without specifying a reason, making it difficult for client developers to identify mistakes. |
 
 ## Solved problems of the current server
 
@@ -88,6 +89,7 @@ The following issues that exist in the original server are not present in this i
 * [FAForever/server#225](https://github.com/FAForever/server/issues/225) Players in lobby are not always detected properly
 * [FAForever/server#253](https://github.com/FAForever/server/issues/253) Player stats sometimes not stored
 * [FAForever/server#263](https://github.com/FAForever/server/issues/263) Game duration isn't stored correctly (too long)
+* [FAForever/server#265](https://github.com/FAForever/server/issues/265) Rating is always calculated based on player rating when game started
 * [FAForever/server#276](https://github.com/FAForever/server/issues/276) 5-15 Zombie-games per day since server (re)start
 * [FAForever/server#282](https://github.com/FAForever/server/issues/282) Game titles seem to be quoted needlessly
 * [FAForever/server#283](https://github.com/FAForever/server/issues/283) Wrong game result
