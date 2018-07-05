@@ -60,7 +60,8 @@ public enum AchievementId {
   ACH_SO_MUCH_RESOURCES("46a6e900-88bb-4eae-92d1-4f31b53faedc"),
   ACH_NUCLEAR_WAR("9ad697bb-441e-45a5-b682-b9227e8eef3e"),
   ACH_DR_EVIL("a6b7dfa1-1ebc-4c6d-9305-4a9d623e1b4f"),
-  ACH_DONT_MESS_WITH_ME("2103e0de-1c87-4fba-bc1b-0bba66669607");
+  ACH_DONT_MESS_WITH_ME("2103e0de-1c87-4fba-bc1b-0bba66669607"),
+  ACH_SLEEP_IS_FOR_THE_WEAK("071a87cc-df45-4dbd-a6f8-e03b84f8129d");
 
   private final String id;
 
