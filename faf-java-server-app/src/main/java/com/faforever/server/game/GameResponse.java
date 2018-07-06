@@ -34,6 +34,7 @@ public class GameResponse implements ServerMessage {
   public static class Player {
     private final int id;
     /** @deprecated used by the legacy protocol, will be removed in future. */
+    @Deprecated
     private final String name;
     private final int team;
   }

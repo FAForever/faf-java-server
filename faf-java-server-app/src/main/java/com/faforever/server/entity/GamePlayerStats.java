@@ -19,8 +19,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "game_player_stats")
 @Immutable
-@Data
 @NoArgsConstructor
+@Data
 @EqualsAndHashCode(of = "id")
 @Cacheable
 public class GamePlayerStats {

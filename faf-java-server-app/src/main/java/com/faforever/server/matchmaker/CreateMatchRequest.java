@@ -23,20 +23,8 @@ public class CreateMatchRequest implements ClientMessage {
   private List<Participant> participants;
   private LobbyMode lobbyMode;
 
-  /**
-   * See values for description.
-   */
   public enum LobbyMode {
-
-    /**
-     * Default lobby where players can select their faction, teams and so on.
-     */
-    DEFAULT,
-
-    /**
-     * The lobby is skipped; the game starts straight away,
-     */
-    NONE
+    DEFAULT, NONE
   }
 
   @Getter

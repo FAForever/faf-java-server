@@ -60,7 +60,7 @@ import static java.util.Locale.US;
 
 @SupportedAnnotationTypes("com.faforever.server.annotations.*")
 @AutoService(Processor.class)
-@SupportedSourceVersion(SourceVersion.RELEASE_9)
+@SupportedSourceVersion(SourceVersion.RELEASE_10)
 public class V2ProtocolDocGenerator extends AbstractProcessor {
 
   private static final Pattern CODE_PATTERN = Pattern.compile("\\{@code (.*?)}", Pattern.DOTALL);

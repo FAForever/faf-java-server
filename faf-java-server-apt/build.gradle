@@ -10,8 +10,8 @@ dependencies {
 
   implementation project(":faf-java-server-annotations")
 
-  annotationProcessor("org.projectlombok:lombok:1.16.20")
-  compileOnly("org.projectlombok:lombok:1.16.20")
+  annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+  compileOnly("org.projectlombok:lombok:${lombokVersion}")
 
   annotationProcessor("com.google.auto.service:auto-service:1.0-rc4")
   compileOnly("com.google.auto.service:auto-service:1.0-rc4")
