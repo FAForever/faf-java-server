@@ -37,7 +37,7 @@ Given the number of required configuration values, it's easiest to run the serve
 
 This project uses:
 
-* Java 8 as the programming language
+* Java 10 as the programming language
 * [Spring Boot](https://projects.spring.io/spring-boot/) as a base framework
 * [Spring Integration](https://projects.spring.io/spring-integration/) as a messaging framework
 * [Gradle](https://gradle.org/) as a build automation tool

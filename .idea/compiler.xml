@@ -6,12 +6,12 @@
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
-      <module name="faf-java-server-annotations_main" target="1.9" />
-      <module name="faf-java-server-annotations_test" target="1.9" />
-      <module name="faf-java-server-app_main" target="1.9" />
-      <module name="faf-java-server-app_test" target="1.9" />
-      <module name="faf-java-server-apt_main" target="1.9" />
-      <module name="faf-java-server-apt_test" target="1.9" />
+      <module name="faf-java-server-annotations_main" target="1.10" />
+      <module name="faf-java-server-annotations_test" target="1.10" />
+      <module name="faf-java-server-app_main" target="1.10" />
+      <module name="faf-java-server-app_test" target="1.10" />
+      <module name="faf-java-server-apt_main" target="1.10" />
+      <module name="faf-java-server-apt_test" target="1.10" />
       <module name="faf-java-server_main" target="1.9" />
       <module name="faf-java-server_test" target="1.9" />
     </bytecodeTargetLevel>

@@ -35,6 +35,10 @@ class CreateMatchClientMessage extends V2ClientMessage {
   @NotNull
   private String featuredMod;
 
+  /** Specifies in which lobby mode the game has to be started in. */
+  @NotNull
+  private LobbyMode lobbyMode;
+
   /** The players who will participate in this match. */
   @NotNull
   private List<Participant> participants;
@@ -65,5 +69,15 @@ class CreateMatchClientMessage extends V2ClientMessage {
 
     /** ID of the slot on the map the player will start in. */
     int startSpot;
+  }
+
+  /** See values for description. */
+  public enum LobbyMode {
+
+    /** Default lobby where players can select their faction, teams and so on. */
+    DEFAULT,
+
+    /** The lobby is skipped; the game starts straight away, */
+    NONE
   }
 }
