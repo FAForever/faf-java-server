@@ -1328,6 +1328,7 @@ public class GameServiceTest {
 
     Player player3 = (Player) new Player().setId(3);
     Player player4 = (Player) new Player().setId(4);
+    Player player5 = (Player) new Player().setId(5);
 
     addPlayer(firstGame, player3);
     addPlayer(firstGame, player4);
@@ -1353,23 +1354,22 @@ public class GameServiceTest {
     reportPlayerScores(player3, player4);
     reportGameEnded(player3, player4);
 
-    // Player 3 & 4 leave the second game
     closePlayerGame(player3);
     closePlayerGame(player4);
 
-    // Player 3's rating should not have been updated yet
+    // No ratings should've been updated yet as the second game is still blocked by the first game
     verify(ratingService, never()).updateRatings(any(), anyInt(), any());
 
-    // Player 3 creates a third game, while the first game is still active
-    Game thirdGame = hostGame(player3, 3);
-    addPlayer(thirdGame, player4);
+    // Player 4 creates a third game, while the first game is still active
+    Game thirdGame = hostGame(player4, 3);
+    addPlayer(thirdGame, player5);
     launchGame(thirdGame);
 
-    // Player 3 & 4 finish their game, while first game is still active. Player 3 wins and will gain rating again
-    reportPlayerScores(player3, player4);
-    reportGameEnded(player3, player4);
+    // Player 4 & 5 finish their game, while first game is still active
+    reportPlayerScores(player4, player5);
+    reportGameEnded(player4, player5);
 
-    // Player 3's rating should not have been updated yet
+    // No ratings should've been updated yet as the third game is blocked by the second game which is blocked by the first game
     verify(ratingService, never()).updateRatings(any(), anyInt(), any());
 
     // The first game finishes
