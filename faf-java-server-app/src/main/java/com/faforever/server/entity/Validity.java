@@ -1,8 +1,8 @@
 package com.faforever.server.entity;
 
 /**
- * Defines whether a game is ranked or - if not - why it isn't ranked.
- * Identifiers must be kept in sync with the contents of the invalid_game_reasons table.
+ * Defines whether a game is ranked or - if not - why it isn't ranked. Identifiers must be kept in sync with the
+ * contents of the invalid_game_reasons table.
  */
 public enum Validity {
   // Order sensitive
@@ -23,5 +23,9 @@ public enum Validity {
   FREE_FOR_ALL,
   UNEVEN_TEAMS,
   UNKNOWN_RESULT,
-  TEAMS_UNLOCKED
+  TEAMS_UNLOCKED,
+  /** The server never received a game-end message (usually because the server crashed). */
+  STALE,
+  /** The game was in progress while the server was being shut down. */
+  SERVER_SHUTDOWN
 }

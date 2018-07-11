@@ -335,6 +335,12 @@ public class GameService {
     }
   }
 
+  @Transactional
+  public void updateUnfinishedGamesValidity(Validity validity) {
+    log.debug("Invalidating unfinished games validity to: {}", validity);
+    gameRepository.updateUnfinishedGamesValidity(validity);
+  }
+
   private void processGamesAwaitingRatingUpdate() {
     gamesAwaitingRatingUpdate.stream()
       .filter(game -> !hasRatingDependentGame(game) && game.getStartTime() != null)
