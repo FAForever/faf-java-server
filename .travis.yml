@@ -36,7 +36,7 @@ after_success:
   - export IMAGE_TAG=faf-java-server;
   - export REPO=faforever/faf-java-server;
   - if [ -n "${TRAVIS_TAG}" ]; then
-      docker build -t ${IMAGE_TAG} . &&
+      docker build -t ${IMAGE_TAG} faf-java-server-app &&
       echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin &&
       docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_TAG} &&
       docker push ${REPO};
@@ -44,7 +44,7 @@ after_success:
 # TODO Codacy coverage reporter does not yet support Java 9. See https://github.com/codacy/codacy-coverage-reporter/issues/76
 #      ./gradlew sendCoverageToCodacy;
   - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
-      docker build -t ${IMAGE_TAG} . &&
+      docker build -t ${IMAGE_TAG} faf-java-server-app &&
       echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin &&
       docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_BRANCH} &&
       docker push ${REPO};
