@@ -9,7 +9,9 @@ import lombok.Data;
 @Data
 @Deprecated
 public class CoopMissionResponse implements ServerMessage {
+  private final int id;
   private final String name;
   private final String description;
   private final String filename;
+  private final CoopMissionType missionType;
 }

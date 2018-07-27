@@ -8,6 +8,11 @@ public enum CoopMissionType {
   UEF_CAMPAIGN("UEF Vanilla Campaign"),
   CUSTOM_MISSIONS("Custom Missions");
 
+  /**
+   * @deprecated bad for internationalization. We should send a key or translated string instead. But it's used by the
+   * legacy client.
+   */
+  @Deprecated
   private final String title;
 
   CoopMissionType(String title) {
