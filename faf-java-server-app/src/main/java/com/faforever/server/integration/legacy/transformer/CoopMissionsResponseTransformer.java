@@ -14,10 +14,12 @@ public enum CoopMissionsResponseTransformer implements GenericTransformer<CoopMi
   public Map<String, Serializable> transform(CoopMissionResponse source) {
     return ImmutableMap.<String, Serializable>builder()
       .put("command", "coop_info")
+      .put("uid", source.getId())
       .put("featured_mod", "coop")
       .put("name", source.getName())
       .put("description", source.getDescription())
       .put("filename", source.getFilename())
+      .put("type", source.getMissionType().getTitle())
       .build();
   }
 }

@@ -184,7 +184,7 @@ public class ClientService {
   @Deprecated
   public void sendCoopList(ClientConnection clientConnection) {
     coopService.getMaps().stream()
-      .map(map -> new CoopMissionResponse(map.getName(), map.getDescription(), map.getFilename()))
+      .map(map -> new CoopMissionResponse(map.getId(), map.getName(), map.getDescription(), map.getFilename(), map.getType()))
       .forEach(coopMissionResponse -> clientGateway.send(coopMissionResponse, clientConnection));
   }
 
