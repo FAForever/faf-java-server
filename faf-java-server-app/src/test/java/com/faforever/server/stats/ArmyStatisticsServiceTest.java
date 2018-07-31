@@ -603,7 +603,7 @@ public class ArmyStatisticsServiceTest {
   public void testSleepIsForTheWeakInBetween() throws Exception {
     game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
     game.setEndTime(Instant.parse("2018-07-18T04:23:00.0Z"));
-    player.setTimeZone(TimeZone.getDefault());
+    player.setTimeZone(TimeZone.getTimeZone("UTC"));
     game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
     instance.process(player, game);
