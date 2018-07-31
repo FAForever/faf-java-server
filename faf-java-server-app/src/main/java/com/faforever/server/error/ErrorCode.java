@@ -30,7 +30,11 @@ public enum ErrorCode {
   INSUFFICIENT_MATCH_PARTICIPANTS(123, "Insufficient match participants", "Can't create match with {0,number,#} participants, at least {1,number,#} are required."),
   HOST_FAILED_TO_START_GAME(124, "Host failed to start game", "The game ''{0}'' could not be started since its host ''{1}}'' failed to start his game."),
   INVALID_FEATURED_MOD(125, "Invalid featured mod", "The featured mod ''{0}'' does not exist."),
-  UID_FRAUD(126, "Fraudulent login attempt detected", "To prevent \"smurfing\", FAF permits one user per system. Your login attempt indicated that you were trying to circumvent this check, which caused your account to be banned permanently. If you think this is a false positive, please present your case to a moderator.");
+  UID_FRAUD(126, "Fraudulent login attempt detected", "To prevent \"smurfing\", FAF permits one user per system. Your login attempt indicated that you were trying to circumvent this check, which caused your account to be banned permanently. If you think this is a false positive, please present your case to a moderator."),
+  PLAYER_NOT_ONLINE(127, "Player not online", "The player with the ID {0,number,#} is not online."),
+  OTHER_PLAYER_NOT_IN_GAME(128, "Player is not in a game", "The player with the ID {0,number,#} is currently not in a game."),
+  THIS_PLAYER_NOT_IN_GAME(129, "Not in a game", "The action you tried is not available as you are currently not in a game."),
+  NOT_SAME_GAME(130, "Not the same game", "Verification denied as you are not in the same game as player ''{0}''.");
 
   private final int code;
   private final String title;

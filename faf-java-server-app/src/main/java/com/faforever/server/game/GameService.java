@@ -680,6 +680,19 @@ public class GameService {
 
   private void addPlayer(Game game, Player player) {
     game.getConnectedPlayers().put(player.getId(), player);
+
+    if (modService.isLadder1v1(game.getFeaturedMod())) {
+      if (player.getLadder1v1Rating() == null) {
+        ratingService.initLadder1v1Rating(player);
+      }
+      player.setRatingWithinCurrentGame(player.getLadder1v1Rating());
+    } else {
+      if (player.getGlobalRating() == null) {
+        ratingService.initGlobalRating(player);
+      }
+      player.setRatingWithinCurrentGame(player.getGlobalRating());
+    }
+
     player.setCurrentGame(game);
     player.getGameFuture().complete(game);
 
@@ -953,23 +966,15 @@ public class GameService {
     Game game = player.getCurrentGame();
 
     if (modService.isLadder1v1(game.getFeaturedMod())) {
-      if (player.getLadder1v1Rating() == null) {
-        ratingService.initLadder1v1Rating(player);
-      }
-      Assert.state(Optional.ofNullable(player.getLadder1v1Rating()).isPresent(),
-        "Ladder1v1 rating not properly initialized");
-
       Ladder1v1Rating ladder1v1Rating = player.getLadder1v1Rating();
+      Assert.state(ladder1v1Rating != null, "Expected ladder1v1 rating to be set");
+
       gamePlayerStats.setDeviation(ladder1v1Rating.getDeviation());
       gamePlayerStats.setMean(ladder1v1Rating.getMean());
     } else {
-      if (player.getGlobalRating() == null) {
-        ratingService.initGlobalRating(player);
-      }
-      Assert.state(Optional.ofNullable(player.getGlobalRating()).isPresent(),
-        "Global rating not properly initialized");
-
       GlobalRating globalRating = player.getGlobalRating();
+      Assert.state(globalRating != null, "Expected global rating to be set");
+
       gamePlayerStats.setDeviation(globalRating.getDeviation());
       gamePlayerStats.setMean(globalRating.getMean());
     }

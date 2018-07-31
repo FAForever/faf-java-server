@@ -25,6 +25,7 @@ import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.game.VerifyPlayerReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
@@ -132,6 +133,11 @@ public final class ChannelNames {
    * Channel for {@link PlayerOptionReport}.
    */
   public static final String PLAYER_OPTION_REQUEST = "playerOptionRequest";
+
+  /**
+   * Channel for {@link VerifyPlayerReport}.
+   */
+  public static final String VERIFY_PLAYER_REQUEST = "verifyPlayerReport";
 
   /**
    * Channel for {@link ClearSlotRequest}.

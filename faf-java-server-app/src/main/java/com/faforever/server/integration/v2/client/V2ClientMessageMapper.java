@@ -23,6 +23,7 @@ import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.game.VerifyPlayerReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
@@ -90,6 +91,8 @@ public interface V2ClientMessageMapper {
   ArmyOutcomeReport map(ArmyOutcomeClientMessage message);
 
   GameChatMessageReport map(GameChatMessageClientMessage message);
+
+  VerifyPlayerReport map(VerifyPlayerClientMessage message);
 
   default PlayerDefeatedReport map(@SuppressWarnings("unused") PlayerDefeatedClientMessage message) {
     return PlayerDefeatedReport.INSTANCE;
