@@ -187,6 +187,38 @@ public class GameServiceTest {
   }
 
   @Test
+  public void joinGameInitLadder1v1Rating() throws Exception {
+    Game game = hostGame(player1, 1);
+    when(modService.isLadder1v1(any())).thenReturn(true);
+
+    assertThat(player2.getRatingWithinCurrentGame(), nullValue());
+
+    doAnswer(invocation -> ((Player) invocation.getArgument(0)).setLadder1v1Rating(new Ladder1v1Rating()))
+      .when(ratingService).initLadder1v1Rating(player2);
+
+    instance.joinGame(game.getId(), game.getPassword(), player2);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+
+    assertThat(player2.getRatingWithinCurrentGame(), not(nullValue()));
+  }
+
+  @Test
+  public void joinGameInitGlobalRating() throws Exception {
+    Game game = hostGame(player1, 1);
+    when(modService.isLadder1v1(any())).thenReturn(false);
+
+    assertThat(player2.getRatingWithinCurrentGame(), nullValue());
+
+    doAnswer(invocation -> ((Player) invocation.getArgument(0)).setGlobalRating(new GlobalRating()))
+      .when(ratingService).initGlobalRating(player2);
+
+    instance.joinGame(game.getId(), game.getPassword(), player2);
+    instance.updatePlayerGameState(PlayerGameState.LOBBY, player2);
+
+    assertThat(player2.getRatingWithinCurrentGame(), not(nullValue()));
+  }
+
+  @Test
   public void joinGameWithPassword() throws Exception {
     Game game = hostGame(player1, 1);
     game.setPassword("pw");

@@ -16,7 +16,10 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Entity
@@ -40,7 +43,7 @@ public class Player extends Login implements ConnectionAware {
   @JoinTable(name = "avatars",
     joinColumns = @JoinColumn(name = "idUser", referencedColumnName = "id"),
     inverseJoinColumns = @JoinColumn(name = "idAvatar", referencedColumnName = "id"))
-  private List<AvatarAssociation> availableAvatars;
+  private List<AvatarAssociation> availableAvatars = new ArrayList<>();
 
   @OneToMany(mappedBy = "player")
   private List<ClanMembership> clanMemberships;
@@ -61,12 +64,20 @@ public class Player extends Login implements ConnectionAware {
   @Transient
   private ClientConnection clientConnection;
 
+  /** ID of players who reported that this player spoofed their data. */
+  @Transient
+  private Set<Integer> fraudReporterIds = new HashSet<>();
+
   /**
    * The future that will be completed as soon as the player's game entered {@link GameState#OPEN}. A player's game may
    * never start if it crashes or the player disconnects.
    */
   @Transient
   private CompletableFuture<Game> gameFuture;
+
+  /** The player's rating for the game he joined, at the time he joined. */
+  @Transient
+  private Rating ratingWithinCurrentGame;
 
   public Clan getClan() {
     if (getClanMemberships() != null && getClanMemberships().size() == 1) {

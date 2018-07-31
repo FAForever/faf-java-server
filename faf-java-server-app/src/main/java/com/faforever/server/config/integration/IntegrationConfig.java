@@ -33,6 +33,7 @@ import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.game.VerifyPlayerReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.ChannelNames;
@@ -180,6 +181,7 @@ public class IntegrationConfig {
     router.setChannelMapping(GameStateReport.class.getName(), ChannelNames.UPDATE_GAME_STATE_REQUEST);
     router.setChannelMapping(GameOptionReport.class.getName(), ChannelNames.GAME_OPTION_REQUEST);
     router.setChannelMapping(PlayerOptionReport.class.getName(), ChannelNames.PLAYER_OPTION_REQUEST);
+    router.setChannelMapping(VerifyPlayerReport.class.getName(), ChannelNames.VERIFY_PLAYER_REQUEST);
     router.setChannelMapping(ClearSlotRequest.class.getName(), ChannelNames.CLEAR_SLOT_REQUEST);
     router.setChannelMapping(AiOptionReport.class.getName(), ChannelNames.AI_OPTION_REQUEST);
     router.setChannelMapping(DesyncReport.class.getName(), ChannelNames.DESYNC_REPORT);

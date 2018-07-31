@@ -41,6 +41,7 @@ import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.game.VerifyPlayerReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.integration.legacy.LegacyClientMessageType;
@@ -114,6 +115,17 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case PLAYER_OPTION:
         args = getArgs(source);
         return new PlayerOptionReport(Integer.parseInt((String) args.get(0)), (String) args.get(1), args.get(2));
+      case VERIFY_PLAYER:
+        args = getArgs(source);
+        return new VerifyPlayerReport(
+          (int) args.get(0),
+          (String) args.get(1),
+          (float) args.get(2),
+          (float) args.get(3),
+          (String) args.get(4),
+          (String) args.get(5),
+          (String) args.get(6)
+        );
       case CLEAR_SLOT:
         args = getArgs(source);
         return ClearSlotRequest.valueOf((int) args.get(0));

@@ -163,6 +163,12 @@ public class ChannelConfiguration {
     return MessageChannels.direct().get();
   }
 
+  @Bean(name = ChannelNames.VERIFY_PLAYER_REQUEST)
+  @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
+  public SubscribableChannel verifyPlayerReport() {
+    return MessageChannels.direct().get();
+  }
+
   @Bean(name = ChannelNames.CLEAR_SLOT_REQUEST)
   @SecuredChannel(interceptor = CHANNEL_SECURITY_INTERCEPTOR, sendAccess = ROLE_USER)
   public SubscribableChannel clearSlotRequest() {

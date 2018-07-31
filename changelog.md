@@ -5,7 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Removed
+### Added
+- Added player verification message
 
 ### Changed
 - Replaced UID verification with integration of the [FAF Policy Server](https://github.com/FAForever/faf-policy-server).

@@ -32,6 +32,7 @@ import com.faforever.server.game.PlayerDefeatedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
+import com.faforever.server.game.VerifyPlayerReport;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.matchmaker.MatchMakerCancelRequest;
@@ -285,6 +286,23 @@ public class LegacyRequestTransformerTest {
     assertThat(playerOptionReport.getPlayerId(), is(1));
     assertThat(playerOptionReport.getKey(), is("Faction"));
     assertThat(playerOptionReport.getValue(), is(3));
+  }
+
+  @Test
+  public void transformVerifyPlayer() {
+    VerifyPlayerReport verifyPlayerReport = (VerifyPlayerReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "VerifyPlayer",
+      KEY_ARGS, Arrays.asList(123, "JUnit", 1234.56f, 76.54f, "CH", "http://example.com/avatar.png", "Avatar Description")
+    ));
+
+    assertThat(verifyPlayerReport, is(notNullValue()));
+    assertThat(verifyPlayerReport.getId(), is(123));
+    assertThat(verifyPlayerReport.getName(), is("JUnit"));
+    assertThat(verifyPlayerReport.getCountry(), is("CH"));
+    assertThat(verifyPlayerReport.getMean(), is(1234.56f));
+    assertThat(verifyPlayerReport.getDeviation(), is(76.54f));
+    assertThat(verifyPlayerReport.getAvatarDescription(), is("Avatar Description"));
+    assertThat(verifyPlayerReport.getAvatarUrl(), is("http://example.com/avatar.png"));
   }
 
   @Test

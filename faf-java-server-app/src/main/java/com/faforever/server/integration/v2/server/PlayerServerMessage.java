@@ -40,15 +40,17 @@ class PlayerServerMessage extends V2ServerMessage {
   private Avatar avatar;
   /** The player's clan tag, if any. */
   private String clanTag;
+  /** The game the player is currently part of. */
+  private Game game;
 
   /** A player's TrueSkill rating. */
   @Getter
   @Setter
   static class Rating {
     /** The TrueSkill's mu, representing the perceived skill. */
-    double mean;
+    private double mean;
     /** The TrueSkill's sigma, representing how "unconfident" the system is in the player's mu value. */
-    double deviation;
+    private double deviation;
   }
 
   /** A player's avatar. */
@@ -56,8 +58,18 @@ class PlayerServerMessage extends V2ServerMessage {
   @Setter
   static class Avatar {
     /** The avatar's URL. */
-    String url;
+    private String url;
     /** The avatar's description. */
-    String description;
+    private String description;
+  }
+
+  /**
+   * Limited information about the player's game. The full game info is sent separately, clients should wait for the
+   * respective message to complete the information once it's available.
+   */
+  @Getter
+  @Setter
+  static class Game {
+    private int id;
   }
 }
