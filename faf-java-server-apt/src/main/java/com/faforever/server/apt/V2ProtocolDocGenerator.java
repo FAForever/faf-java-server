@@ -177,7 +177,7 @@ public class V2ProtocolDocGenerator extends AbstractProcessor {
       case CHAR:
       case FLOAT:
       case DOUBLE:
-        return new Type(null, typeMirror.getKind().toString().toLowerCase(US), null, Collections.emptyList(), null, Collections.emptyList());
+        return new Type(null, TypeUtils.forPrimitive(typeMirror.getKind()), null, Collections.emptyList(), null, Collections.emptyList());
 
       case DECLARED:
         DeclaredType declaredType = (DeclaredType) typeMirror;
