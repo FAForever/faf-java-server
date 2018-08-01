@@ -67,7 +67,7 @@ final class TypeUtils {
     return typeName;
   }
 
-  private static String forPrimitive(TypeKind typeKind) {
+  public static String forPrimitive(TypeKind typeKind) {
     switch (typeKind) {
       case BOOLEAN:
         return "boolean";
