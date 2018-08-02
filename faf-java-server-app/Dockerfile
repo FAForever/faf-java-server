@@ -1,4 +1,4 @@
-FROM openjdk:9-jdk-slim
+FROM openjdk:10-jdk-slim
 
 MAINTAINER Michel Jung <michel.jung89@gmail.com>
 
