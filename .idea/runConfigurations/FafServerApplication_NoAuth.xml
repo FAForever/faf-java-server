@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="FafServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+  <configuration default="false" name="FafServerApplication NoAuth" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="faf-java-server-app_main" />
     <extension name="coverage">
       <pattern>
@@ -16,9 +16,9 @@
       <param>
         <option name="enabled" value="true" />
         <option name="name" value="faf-server.disable-authentication" />
-        <option name="value" value="false" />
+        <option name="value" value="true" />
       </param>
     </additionalParameters>
-    <method />k
+    <method />
   </configuration>
 </component>
