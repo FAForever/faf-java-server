@@ -61,8 +61,8 @@ based server.
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Has thoroughly been performance-tested, proofing that it can withstand more load than FAF will ever experience. | Has never been performance-tested during its development, later performance tests revealed that it handles load very badly and even crashes. |
 | Uses a very popular framework in order to: <p><ul><li>Reuse mature and stable technology instead of building "our own thing"</li><li>Reduce the amount of code to be written</li><li>Reduce possible of bugs and vulnerabilities</li><li>Be easily adjustable for future requirements</li></ul></p> | Doesn't use any framework, so that it: <p><ul><li>Reinvents the wheel</li><li>Requires much more code to be written</li><li>Is more error-prone</li><li>Doesn't adjust well for future requirements</li></ul></p> |
-| Uses a statically typed programming language which: <p><ul><li>Drastically reduces the amount of possible bugs</li><li>Allows to find many bugs before the software is even started</li><li>Makes it a lot easier for developers to find their way around</li></ul></p> | Uses a dynamically typed programming language which: <p><ul><li>Allows the developer to [do things that make no sense at all](https://semitwist.com/articles/article/view/why-i-hate-python-or-any-dynamic-language-really)</li><li>Makes it very difficult to impossible to automatically detect bugs, so you often only find them when the software is running (even very trivial ones [like typos](https://github.com/FAForever/client/issues/630))</li><li>Makes it much harder for (especially new) developers to find their way around</li></ul></p> |
-| Makes use of a very strong and mature ecosystem when it comes to libraries, documentation, build tools, developer tools and everything you need. | Lives in an ecosystem that still has to be come mature, often lacks good documentation and has [laughable build tools and dependency resolution](https://pythonrants.wordpress.com/2013/12/06/why-i-hate-virtualenv-and-pip/). |
+| Uses a statically typed programming language which: <p><ul><li>Drastically reduces the amount of possible bugs</li><li>Allows to find many bugs before the software is even started</li><li>Makes it a lot easier for developers to find their way around</li></ul></p> | Uses a dynamically typed programming language which: <p><ul><li>Allows the developer to [do things that make no sense at all](https://semitwist.com/articles/article/view/why-i-hate-python-or-any-dynamic-language-really)</li><li>Makes it very difficult to impossible to automatically detect bugs, so you often only find them when the software is running (even very trivial ones [like typos](https://github.com/FAForever/client/issues/630)). Which caused production problems [more than once](https://github.com/FAForever/server/commit/cdf44be67c1e56368705728e2b70ff6db5f72fe6).</li><li>Makes it much harder for (especially new) developers to find their way around</li></ul></p> |
+| Makes use of a very strong and mature ecosystem when it comes to libraries, documentation, build tools, developer tools and everything you need. | Lives in an ecosystem where you often encounter immature libraries and frameworks and/or lack of good documentation. |
 | Is highly decoupled from the underlying communication protocol, so that additional protocols can be added easily and supported simultaneously. | Is strongly coupled to the underlying communication protocol so that it's difficult to add new protocols or support multiple protocols at once. Also the server's internal implementation can't be changed easily without breaking client compatibility. |
 | Makes heavy use of design patterns of modern Software development, making it easily understandable (for educated developers) and provides high flexibility while avoiding common mistakes. | Makes little use of design patterns, making it more difficult to understand, less flexible and more error-prone. |
 | Runs on Windows, Linux and Mac with very little setup time so that every developer can get started within couple of minutes. | Only runs on Linux based systems. In order to run it on Windows, developers have to spend a significant amount of time setting up a Linux virtual machine and installing many dependencies manually. By using Docker some problems are solved but replaced by new ones. |
@@ -100,6 +100,7 @@ The following issues that exist in the original server are not present in this i
 * [FAForever/server#316](https://github.com/FAForever/server/issues/316) Game stats and player ratings aren't updated before last player disconnects
 * [FAForever/server#319](https://github.com/FAForever/server/issues/319) Make ladder map selection non-random
 * [FAForever/server#323](https://github.com/FAForever/server/issues/323) Notice from server prompt spacing
+* [FAForever/server#343](https://github.com/FAForever/server/issues/339) Teamkills with reference to non-existing games
 * [FAForever/server#343](https://github.com/FAForever/server/issues/343) If teams are unlocked the game should not be valid
 
 
@@ -107,14 +108,22 @@ The following issues that exist in the original server are not present in this i
 
 This implementation provides the following additional features over the original server:
 
-* Management and monitoring using a web interface
-* Automatic update of the GeoIP file (used to display the country flags in the client)
+* Management and monitoring using a web interface, allowing for better live-administration
+* Automatic update of the GeoIP file (used to display the country flags in the client), eliminating manual updates and
+out-of-date/missing flags
 * Support for min/max rating for games
-* Verification that it's compatible with the underlying database schema version
+* Verification that it's compatible with the underlying database schema version, preventing runtime-errors
 * Updating scores for the league & divisions system after each ladder game
-* ICE support
-* Every error message has an error code that allows specific handling
-* Allows connection via WebSocket
-* Supports OAuth so service applications can connect as well
-* Detailed logging which can be configured at runtime
-* Allows disabling authentication, making it much easier for users to test
+* ICE support, improving player connectivity
+* Error codes for error messages, allowing easy problem identification, error message translation and specific error
+handling client-side
+* Connection via WebSocket, allowing websites (and any other tool) to easily connect
+* Extended (v2) protocol, fixing shortcomings of the legacy protocol
+* Auto-generated v2 protocol documentation to ensure it's always up-to-date, complete and error-free
+* OAuth2 support, so that basically everyone can write services that connect to the server
+* Helpful, detailed, and runtime-configurable logging for easier investigation in case of problems 
+* Authentication toggle, allowing to disable authentication when being run as a test-server
+* Transactional database access, ensuring database integrity
+* Invalidation of "unfinished" games in case of server crash/restart
+* Better protection against cheaters
+* Providing player time zones to the client
