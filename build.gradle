@@ -1,7 +1,8 @@
 subprojects {
   apply plugin: 'java'
   group = 'com.faforever.server'
-  version = '1.3.2'
+  // Version has to be passed at build time from command line
+  version = 'snapshot'
 
   sourceCompatibility = 1.10
   targetCompatibility = 1.10

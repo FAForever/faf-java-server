@@ -19,6 +19,7 @@ before_install:
   - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
   - sudo curl -L https://github.com/docker/compose/releases/download/1.16.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
   - sudo chmod +x /usr/local/bin/docker-compose
+  - VERSION=$([ -z "${TRAVIS_TAG}" ] && echo "${TRAVIS_TAG#*v}" || echo "${TRAVIS_BRANCH##*/}")
 
 install:
   - git clone https://github.com/FAForever/faf-stack.git faf-stack
@@ -29,7 +30,7 @@ install:
   - docker-compose -f faf-stack/docker-compose.yml up -d faf-db
 
 script:
-  - chmod +x gradlew && ./gradlew build --info
+- chmod +x gradlew && ./gradlew build -Pversion=${VERSION} --info
 
 after_success:
   - ./gradlew jacocoTestReport coveralls
@@ -38,7 +39,7 @@ after_success:
   - if [ -n "${TRAVIS_TAG}" ]; then
       docker build -t ${IMAGE_TAG} faf-java-server-app &&
       echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin &&
-      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_TAG} &&
+    docker tag ${IMAGE_TAG} ${REPO}:${VERSION} &&
       docker push ${REPO};
     fi
 # TODO Codacy coverage reporter does not yet support Java 9. See https://github.com/codacy/codacy-coverage-reporter/issues/76
@@ -46,7 +47,7 @@ after_success:
   - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
       docker build -t ${IMAGE_TAG} faf-java-server-app &&
       echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin &&
-      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_BRANCH} &&
+    docker tag ${IMAGE_TAG} ${REPO}:${VERSION} &&
       docker push ${REPO};
     fi
 
