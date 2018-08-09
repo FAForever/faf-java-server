@@ -11,8 +11,8 @@ public enum ErrorCode {
   COOP_CANT_REPORT_NOT_IN_GAME(104, "Can't report Co-Op result", "Your game result could not be reported since you are not associated with a game. This may happen if you got disconnected from the server."),
   CREATE_ACCOUNT_IS_DEPRECATED(105, "Unsupported operation", "Creating accounts is no longer supported. Please visit the website http://www.faforever.com instead."),
   HOST_ONLY_OPTION(106, "Invalid operation", "The option ''{0}'' can only be set by the host of the game"),
-  UID_USED_BY_MULTIPLE_USERS(107, "Login denied", "Your computer is associated with too many FAF accounts.<br>To continue using them, you have to link them to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
-  UID_USED_BY_ANOTHER_USER(108, "Login denied", "Your computer is already associated with another FAF account.<br><br>To log in with a new account, you have to link it to Steam: <a href=\"{0}\">{0}</a>.<br>If you need an exception to this rule, please contact an admin on the forums."),
+  UID_VM(107, "Login denied", "In order to use FAF in a virtual machine, you have to link your account to Steam ({0}). If you need an exception to this rule, please contact a moderator on the forums."),
+  UID_ALREADY_ASSOCIATED(108, "Login denied", "Your computer is already associated with another FAF account. To log in with a new account, you have to link it to Steam ({0}). If you need an exception to this rule, please contact an admin on the forums."),
   UNSUPPORTED_REQUEST(109, "Unsupported request", "The server received an unsupported request from your client: {0}"),
   BANNED_FROM_MATCH_MAKER(110, "Banned from match maker", "You have been banned from the match maker."),
   MATCH_MAKER_POOL_DOESNT_EXIST(111, "No such match maker pool", "Match maker pool with name ''{0}'' does not exist."),
@@ -29,7 +29,8 @@ public enum ErrorCode {
   UNKNOWN_MAP(122, "Unknown map", "The map ''{0}'' is unknown by the server."),
   INSUFFICIENT_MATCH_PARTICIPANTS(123, "Insufficient match participants", "Can't create match with {0,number,#} participants, at least {1,number,#} are required."),
   HOST_FAILED_TO_START_GAME(124, "Host failed to start game", "The game ''{0}'' could not be started since its host ''{1}}'' failed to start his game."),
-  INVALID_FEATURED_MOD(125, "Invalid featured mod", "The featured mod ''{0}'' does not exist.");
+  INVALID_FEATURED_MOD(125, "Invalid featured mod", "The featured mod ''{0}'' does not exist."),
+  UID_FRAUD(126, "Fraudulent login attempt detected", "To prevent \"smurfing\", FAF permits one user per system. Your login attempt indicated that you were trying to circumvent this check, which caused your account to be banned permanently. If you think this is a false positive, please present your case to a moderator.");
 
   private final int code;
   private final String title;

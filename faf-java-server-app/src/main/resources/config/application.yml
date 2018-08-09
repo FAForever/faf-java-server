@@ -6,10 +6,9 @@ faf-server:
     beta: 240
     dynamic-factor: 10
     draw-probability: 0.1
-  uid:
-    link-to-steam-url: http://app.faforever.com/faf/steam.php
-    enabled: ${UID_ENABLED:false}
-    private-key: ${UID_PRIVATE_KEY:}
+  policy-service:
+    url: ${POLICY_SERVICE_URL:}
+    link-to-steam-url: ${STEAM_LINK_URL:}
   shutdown:
     message: The server has been shut down for maintenance, but should be back online soon. If you experience any problems, please restart your client. We apologize for this interruption.
   api:

@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @ToString
 public class FafUserDetails extends org.springframework.security.core.userdetails.User implements ConnectionAware {
@@ -61,8 +62,8 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
     return roles;
   }
 
-  private static boolean isNonLocked(BanDetails banDetails) {
-    return banDetails == null
-      || banDetails.getExpiresAt().before(Timestamp.from(Instant.now()));
+  private static boolean isNonLocked(Set<BanDetails> banDetails) {
+    return banDetails.stream()
+      .noneMatch(details -> details.getExpiresAt() == null || details.getExpiresAt().after(Timestamp.from(Instant.now())));
   }
 }

@@ -19,7 +19,7 @@ public class ServerProperties {
   private String version = "dev";
   private Api api = new Api();
   private TrueSkill trueSkill = new TrueSkill();
-  private Uid uid = new Uid();
+  private PolicyService policyService = new PolicyService();
   private MatchMaker matchMaker = new MatchMaker();
   private Ladder1v1 ladder1v1 = new Ladder1v1();
   private Game game = new Game();
@@ -115,14 +115,10 @@ public class ServerProperties {
   }
 
   @Data
-  public static class Uid {
-    private boolean enabled = true;
-    /**
-     * PKCS#1 private key without decoration and newlines. To generate, execute {@code openssl genrsa -f4 -out
-     * private.txt 512}, then copy the content of {@code private.txt} without header, footer, and newlines/spaces.
-     */
-    private String privateKey;
+  public static class PolicyService {
     private String linkToSteamUrl;
+    /** Full URL to the policy server's verification endpoint. */
+    private String url;
   }
 
   @Data
