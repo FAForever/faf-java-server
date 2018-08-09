@@ -13,7 +13,7 @@ import com.faforever.server.error.Requests;
 import com.faforever.server.integration.ChannelNames;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.security.UniqueIdService;
+import com.faforever.server.security.PolicyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -35,15 +35,15 @@ public class LegacyServicesActivators {
 
   private final AuthenticationManager authenticationManager;
   private final ClientService clientService;
-  private final UniqueIdService uniqueIdService;
+  private final PolicyService policyService;
   private final PlayerService playerService;
 
   @Inject
   public LegacyServicesActivators(AuthenticationManager authenticationManager, ClientService clientService,
-                                  UniqueIdService uniqueIdService, PlayerService playerService) {
+                                  PolicyService policyService, PlayerService playerService) {
     this.authenticationManager = authenticationManager;
     this.clientService = clientService;
-    this.uniqueIdService = uniqueIdService;
+    this.policyService = policyService;
     this.playerService = playerService;
   }
 
@@ -73,7 +73,8 @@ public class LegacyServicesActivators {
       Player player = userDetails.getPlayer();
       player.setClientConnection(clientConnection);
 
-      uniqueIdService.verify(player, loginRequest.getUniqueId());
+      // TODO check if "session" is really needed by the policy server
+      policyService.verify(player, loginRequest.getUniqueId(), "1");
       playerService.setPlayerOnline(player);
     } catch (BadCredentialsException e) {
       throw new RequestException(e, ErrorCode.INVALID_LOGIN);

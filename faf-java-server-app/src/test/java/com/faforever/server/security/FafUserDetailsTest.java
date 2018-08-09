@@ -66,7 +66,6 @@ public class FafUserDetailsTest {
   public void userWithoutBanDetailsIsNonLocked() throws Exception {
     User user = (User) new User()
       .setPassword(TEST_PASSWORD)
-      .setBanDetails(null)
       .setLogin(TEST_USERNAME);
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
@@ -75,11 +74,23 @@ public class FafUserDetailsTest {
   }
 
   @Test
-  public void userWithValidBanDetailsIsLocked() throws Exception {
+  public void userWithValidBanDetailsIsLockedWithExpiry() throws Exception {
     User user = (User) new User()
       .setPassword(TEST_PASSWORD)
-      .setBanDetails(new BanDetails().setExpiresAt(Timestamp.from(Instant.now().plus(1, ChronoUnit.HOURS))))
       .setLogin(TEST_USERNAME);
+    user.getBanDetails().add(new BanDetails().setExpiresAt(Timestamp.from(Instant.now().plus(1, ChronoUnit.HOURS))));
+
+    FafUserDetails fafUserDetails = new FafUserDetails(user);
+
+    assertThat(fafUserDetails.isAccountNonLocked(), is(false));
+  }
+
+  @Test
+  public void userWithValidBanDetailsIsLockedWithoutExpiry() throws Exception {
+    User user = (User) new User()
+      .setPassword(TEST_PASSWORD)
+      .setLogin(TEST_USERNAME);
+    user.getBanDetails().add(new BanDetails().setExpiresAt(null));
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 
@@ -90,8 +101,8 @@ public class FafUserDetailsTest {
   public void userWithExpiredBanDetailsIsNonLocked() throws Exception {
     User user = (User) new User()
       .setPassword(TEST_PASSWORD)
-      .setBanDetails(new BanDetails().setExpiresAt(Timestamp.from(Instant.now().minusSeconds(1))))
       .setLogin(TEST_USERNAME);
+    user.getBanDetails().add(new BanDetails().setExpiresAt(Timestamp.from(Instant.now().minusSeconds(1))));
 
     FafUserDetails fafUserDetails = new FafUserDetails(user);
 

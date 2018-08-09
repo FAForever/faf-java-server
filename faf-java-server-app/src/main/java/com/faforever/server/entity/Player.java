@@ -17,7 +17,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Entity
@@ -33,9 +32,6 @@ public class Player extends Login implements ConnectionAware {
   @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)
   @Nullable
   private GlobalRating globalRating;
-
-  @ManyToMany(mappedBy = "players", fetch = FetchType.LAZY)
-  private Set<HardwareInformation> hardwareInformations;
 
   @OneToOne(mappedBy = "player", fetch = FetchType.LAZY)
   private MatchMakerBanDetails matchMakerBanDetails;

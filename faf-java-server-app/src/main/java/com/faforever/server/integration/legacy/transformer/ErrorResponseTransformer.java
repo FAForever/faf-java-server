@@ -16,8 +16,9 @@ public enum ErrorResponseTransformer implements GenericTransformer<ErrorResponse
 
   private static final Set<ErrorCode> AUTHENTICATION_ERRORS = Sets.newHashSet(
     ErrorCode.INVALID_LOGIN,
-    ErrorCode.UID_USED_BY_ANOTHER_USER,
-    ErrorCode.UID_USED_BY_MULTIPLE_USERS
+    ErrorCode.UID_VM,
+    ErrorCode.UID_ALREADY_ASSOCIATED,
+    ErrorCode.UID_FRAUD
   );
 
   @Override

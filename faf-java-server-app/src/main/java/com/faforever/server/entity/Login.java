@@ -12,8 +12,11 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimeZone;
 
 @MappedSuperclass
@@ -45,8 +48,8 @@ public abstract class Login {
   @Column(name = "ip")
   private String ip;
 
-  @OneToOne(mappedBy = "player")
-  private BanDetails banDetails;
+  @OneToMany(mappedBy = "user")
+  private Set<BanDetails> banDetails = new HashSet<>();
 
   @OneToOne(mappedBy = "player")
   private UniqueIdExempt uniqueIdExempt;

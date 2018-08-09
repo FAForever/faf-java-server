@@ -12,7 +12,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.security.FafUserDetails;
-import com.faforever.server.security.UniqueIdService;
+import com.faforever.server.security.PolicyService;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,7 +51,7 @@ public class LegacyServicesActivatorsTest {
   @Mock
   private ClientService clientService;
   @Mock
-  private UniqueIdService uniqueIdService;
+  private PolicyService policyService;
   @Mock
   private PlayerService playerService;
 
@@ -64,7 +64,7 @@ public class LegacyServicesActivatorsTest {
     player = new Player();
     player.setClientConnection(clientConnection);
 
-    instance = new LegacyServicesActivators(authenticationManager, clientService, uniqueIdService,
+    instance = new LegacyServicesActivators(authenticationManager, clientService, policyService,
       playerService);
   }
 
@@ -100,7 +100,7 @@ public class LegacyServicesActivatorsTest {
 
     instance.loginRequest(new LegacyLoginRequest("JUnit", "password", "uniqueId"), clientConnection);
 
-    verify(uniqueIdService).verify(any(), eq("uniqueId"));
+    verify(policyService).verify(any(), eq("uniqueId"), eq("1"));
   }
 
   @Test

@@ -15,10 +15,6 @@ logging:
   path: ${LOG_FILE_DIRECTORY:/tmp}
 
 faf-server:
-  uid:
-    enabled: ${UID_ENABLED:true}
-    private-key: ${UID_PRIVATE_KEY}
-    link-to-steam-url: ${STEAM_LINK_URL:http://app.faforever.com/faf/steam.php}
   jwt:
     secret: ${JWT_SECRET}
   ladder1v1:
