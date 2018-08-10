@@ -1,9 +1,8 @@
 package com.faforever.server.ladder1v1;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.Division;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.PlayerDivisionInfo;
+import com.faforever.server.player.Player;
+import com.faforever.server.player.PlayerDivisionInfo;
 import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

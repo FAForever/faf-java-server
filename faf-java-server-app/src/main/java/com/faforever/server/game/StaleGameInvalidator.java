@@ -1,6 +1,5 @@
 package com.faforever.server.game;
 
-import com.faforever.server.entity.Validity;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;

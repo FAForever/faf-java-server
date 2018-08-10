@@ -2,12 +2,9 @@ package com.faforever.server.map;
 
 import com.faforever.server.cache.CacheNames;
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.FeaturedMod;
-import com.faforever.server.entity.Map;
-import com.faforever.server.entity.MapStats;
-import com.faforever.server.entity.MapVersion;
-import com.faforever.server.entity.Player;
+import com.faforever.server.mod.FeaturedMod;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.Player;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;

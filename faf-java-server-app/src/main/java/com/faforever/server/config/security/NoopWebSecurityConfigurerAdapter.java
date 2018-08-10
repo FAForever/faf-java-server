@@ -1,9 +1,9 @@
 package com.faforever.server.config.security;
 
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerRepository;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import com.faforever.server.security.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -1,10 +1,10 @@
 package com.faforever.server.social;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.integration.Protocol;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

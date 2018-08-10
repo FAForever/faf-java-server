@@ -1,7 +1,7 @@
 package com.faforever.server.client;
 
-import com.faforever.server.entity.User;
 import com.faforever.server.integration.Protocol;
+import com.faforever.server.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -5,31 +5,25 @@ import com.faforever.server.client.ClientService;
 import com.faforever.server.client.ConnectionAware;
 import com.faforever.server.client.GameResponses;
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.ArmyResult;
-import com.faforever.server.entity.FeaturedMod;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.GamePlayerStats;
-import com.faforever.server.entity.GameState;
-import com.faforever.server.entity.GlobalRating;
-import com.faforever.server.entity.Ladder1v1Rating;
-import com.faforever.server.entity.MapVersion;
-import com.faforever.server.entity.Mod;
-import com.faforever.server.entity.ModVersion;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
-import com.faforever.server.entity.Validity;
-import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.ladder1v1.DivisionService;
+import com.faforever.server.ladder1v1.Ladder1v1Rating;
 import com.faforever.server.map.MapService;
+import com.faforever.server.map.MapVersion;
+import com.faforever.server.mod.FeaturedMod;
 import com.faforever.server.mod.FeaturedModFile;
+import com.faforever.server.mod.Mod;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.mod.ModVersion;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerOnlineEvent;
 import com.faforever.server.player.PlayerService;
+import com.faforever.server.rating.GlobalRating;
 import com.faforever.server.rating.RatingService;
 import com.faforever.server.rating.RatingType;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
@@ -38,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,11 +51,16 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
 import static com.faforever.server.game.GameService.NO_TEAM_ID;
@@ -133,6 +133,7 @@ public class GameServiceTest {
   @Mock
   private EntityManager entityManager;
 
+  private FakeActiveGameRepository activeGameRepository;
   private MeterRegistry meterRegistry;
   private Player player1;
   private Player player2;
@@ -141,6 +142,7 @@ public class GameServiceTest {
   @Before
   public void setUp() throws Exception {
     meterRegistry = new SimpleMeterRegistry();
+    activeGameRepository = new FakeActiveGameRepository();
 
     MapVersion map = new MapVersion();
     map.setRanked(true);
@@ -169,7 +171,7 @@ public class GameServiceTest {
     serverProperties.getGame().setRankedMinTimeMultiplicator(-10000);
 
     instance = new GameService(gameRepository, meterRegistry, clientService, mapService, modService, playerService, ratingService,
-      serverProperties, divisionService, entityManager, armyStatisticsService);
+      serverProperties, divisionService, activeGameRepository, entityManager, armyStatisticsService);
     instance.onApplicationEvent(null);
     instance.gameService = instance;
   }
@@ -1462,7 +1464,7 @@ public class GameServiceTest {
     assertThat(joinable.isCancelled(), is(false));
     assertThat(joinable.isCompletedExceptionally(), is(false));
 
-    assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, "").gauge().value(), is((double) instance.activeGamesById.size()));
+    assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, "").gauge().value(), is((double) activeGameRepository.count()));
     assertThat(meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, GameState.INITIALIZING.name()).gauge().value(), is(1d));
 
     Game game = instance.getActiveGame(gameId).get();
@@ -1488,10 +1490,10 @@ public class GameServiceTest {
     instance.updatePlayerOption(host, host.getId(), OPTION_START_SPOT, host.getId());
     instance.updatePlayerOption(host, host.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
 
-    assertThat(meterRegistry.find(Metrics.GAMES).gauge().value(), is((double) instance.activeGamesById.size()));
+    assertThat(meterRegistry.find(Metrics.GAMES).gauge().value(), is((double) activeGameRepository.count()));
     assertThat(
       meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, GameState.OPEN.name()).gauge().value(),
-      is((double) instance.activeGamesById.values().stream().filter(game1 -> game1.getState() == GameState.OPEN).count())
+      is((double) activeGameRepository.findAll().stream().filter(game1 -> game1.getState() == GameState.OPEN).count())
     );
 
     verify(clientService).startGameProcess(game, host);
@@ -1526,10 +1528,10 @@ public class GameServiceTest {
     game.getConnectedPlayers().values()
       .forEach(player -> instance.updatePlayerGameState(PlayerGameState.LAUNCHING, player));
 
-    assertThat(meterRegistry.find(Metrics.GAMES).gauge().value(), is((double) instance.activeGamesById.size()));
+    assertThat(meterRegistry.find(Metrics.GAMES).gauge().value(), is((double) activeGameRepository.count()));
     assertThat(
       meterRegistry.find(Metrics.GAMES).tag(GameService.TAG_GAME_STATE, GameState.PLAYING.name()).gauge().value(),
-      is((double) instance.activeGamesById.values().stream().filter(game1 -> game1.getState() == GameState.PLAYING).count())
+      is((double) activeGameRepository.findAll().stream().filter(game1 -> game1.getState() == GameState.PLAYING).count())
     );
   }
 
@@ -1544,5 +1546,82 @@ public class GameServiceTest {
     instance.updatePlayerOption(host, player.getId(), OPTION_COLOR, player.getId());
     instance.updatePlayerOption(host, player.getId(), OPTION_START_SPOT, player.getId());
     instance.updatePlayerOption(host, player.getId(), OPTION_TEAM, GameService.NO_TEAM_ID);
+  }
+
+  private class FakeActiveGameRepository implements ActiveGameRepository {
+    private final Map<Integer, Game> games;
+
+    private FakeActiveGameRepository() {
+      games = new HashMap<>();
+    }
+
+    @NotNull
+    @Override
+    public <S extends Game> S save(@NotNull S entity) {
+      games.put(entity.getId(), entity);
+      return entity;
+    }
+
+    @NotNull
+    @Override
+    public <S extends Game> Iterable<S> saveAll(@NotNull Iterable<S> entities) {
+      entities.forEach(s -> games.put(s.getId(), s));
+      return entities;
+    }
+
+    @NotNull
+    @Override
+    public Optional<Game> findById(@NotNull Integer integer) {
+      return Optional.ofNullable(games.get(integer));
+    }
+
+    @Override
+    public boolean existsById(@NotNull Integer integer) {
+      return games.containsKey(integer);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Game> findAll() {
+      return games.values();
+    }
+
+    @NotNull
+    @Override
+    public Iterable<Game> findAllById(@NotNull Iterable<Integer> integers) {
+      Set<Integer> ids = StreamSupport.stream(integers.spliterator(), false)
+        .collect(Collectors.toSet());
+
+      return games.values().stream()
+        .filter(game -> ids.contains(game.getId()))
+        .collect(Collectors.toList());
+    }
+
+    @Override
+    public long count() {
+      return games.size();
+    }
+
+    @Override
+    public void deleteById(@NotNull Integer integer) {
+      games.remove(integer);
+    }
+
+    @Override
+    public void delete(@NotNull Game entity) {
+      games.remove(entity.getId());
+    }
+
+    @Override
+    public void deleteAll(@NotNull Iterable<? extends Game> entities) {
+      for (Game entity : entities) {
+        games.remove(entity.getId());
+      }
+    }
+
+    @Override
+    public void deleteAll() {
+      games.clear();
+    }
   }
 }

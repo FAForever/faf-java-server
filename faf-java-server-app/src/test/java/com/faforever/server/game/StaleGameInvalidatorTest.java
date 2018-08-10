@@ -1,6 +1,5 @@
 package com.faforever.server.game;
 
-import com.faforever.server.entity.Validity;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

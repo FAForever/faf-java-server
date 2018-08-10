@@ -1,7 +1,9 @@
 package com.faforever.server.user;
 
-import com.faforever.server.entity.BanDetails;
-import com.faforever.server.entity.BanDetails.BanScope;
+import com.faforever.server.security.BanDetails;
+import com.faforever.server.security.BanDetails.BanScope;
+import com.faforever.server.security.BanDetailsRepository;
+import com.faforever.server.security.BanDetailsService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,8 +1,8 @@
 package com.faforever.server.config.security;
 
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerRepository;
+import com.faforever.server.security.User;
 import com.faforever.server.security.UserRepository;
 import org.junit.Before;
 import org.junit.Test;

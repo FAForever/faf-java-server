@@ -1,7 +1,7 @@
 package com.faforever.server.social;
 
-import com.faforever.server.entity.SocialRelation;
-import com.faforever.server.entity.SocialRelationStatus;
+import com.faforever.server.player.SocialRelation;
+import com.faforever.server.player.SocialRelationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

@@ -2,12 +2,10 @@ package com.faforever.server.security;
 
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
-import com.faforever.server.entity.BanDetails;
-import com.faforever.server.entity.GroupAssociation.Group;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
+import com.faforever.server.player.Player;
+import com.faforever.server.security.GroupAssociation.Group;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.GrantedAuthority;

@@ -2,44 +2,43 @@ package com.faforever.server.player;
 
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.stats.Metrics;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import javax.management.MXBean;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @Slf4j
 @MXBean
 public class PlayerService {
 
-  private final Map<Integer, Player> onlinePlayersById;
+  private final OnlinePlayerRepository onlinePlayerRepository;
   private final ClientService clientService;
   private final ApplicationEventPublisher eventPublisher;
   private final GeoIpService geoIpService;
 
   public static final String TAG_PLAYER_GAME_STATE = "gameState";
 
-  public PlayerService(ClientService clientService, MeterRegistry meterRegistry, ApplicationEventPublisher eventPublisher, GeoIpService geoIpService) {
+  public PlayerService(ClientService clientService, MeterRegistry meterRegistry, OnlinePlayerRepository onlinePlayerRepository, ApplicationEventPublisher eventPublisher, GeoIpService geoIpService) {
     this.clientService = clientService;
+    this.onlinePlayerRepository = onlinePlayerRepository;
     this.eventPublisher = eventPublisher;
     this.geoIpService = geoIpService;
-    onlinePlayersById = new ConcurrentHashMap<>();
 
-    Gauge.builder(Metrics.PLAYERS, onlinePlayersById, Map::size)
+    Gauge.builder(Metrics.PLAYERS, onlinePlayerRepository, CrudRepository::count)
       .description("The number of players that are currently online.")
       .tag(TAG_PLAYER_GAME_STATE, "")
       .register(meterRegistry);
@@ -48,7 +47,7 @@ public class PlayerService {
   public void setPlayerOnline(Player player) {
     log.debug("Adding player '{}'", player);
 
-    onlinePlayersById.put(player.getId(), player);
+    onlinePlayerRepository.save(player);
 
     ClientConnection clientConnection = player.getClientConnection();
     geoIpService.lookupCountryCode(clientConnection.getClientAddress()).ifPresent(player::setCountry);
@@ -65,21 +64,22 @@ public class PlayerService {
   public void removePlayer(Player player) {
     log.debug("Removing player '{}'", player);
 
-    if (onlinePlayersById.remove(player.getId()) != null) {
+    onlinePlayerRepository.findById(player.getId()).ifPresent(p -> {
+      onlinePlayerRepository.delete(p);
       eventPublisher.publishEvent(new PlayerOfflineEvent(this, player));
-    }
+    });
   }
 
   public Optional<Player> getOnlinePlayer(int id) {
-    return Optional.ofNullable(onlinePlayersById.get(id));
+    return onlinePlayerRepository.findById(id);
   }
 
   public Collection<Player> getPlayers() {
-    return onlinePlayersById.values();
+    return StreamSupport.stream(onlinePlayerRepository.findAll().spliterator(), false).collect(Collectors.toSet());
   }
 
   public boolean isPlayerOnline(String login) {
-    return onlinePlayersById.values().stream().anyMatch(player -> Objects.equals(player.getLogin(), login));
+    return onlinePlayerRepository.findByLogin(login).isPresent();
   }
 
   /**
@@ -93,7 +93,7 @@ public class PlayerService {
    * Gets all online players except the specified one.
    */
   private List<Player> getOtherOnlinePlayers(Player player) {
-    return onlinePlayersById.values().stream()
+    return StreamSupport.stream(onlinePlayerRepository.findAll().spliterator(), false)
       .filter(otherPlayer -> !Objects.equals(otherPlayer.getId(), player.getId()) && otherPlayer.getClientConnection() != null)
       .collect(Collectors.toList());
   }

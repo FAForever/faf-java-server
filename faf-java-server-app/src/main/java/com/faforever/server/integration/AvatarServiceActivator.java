@@ -3,7 +3,7 @@ package com.faforever.server.integration;
 import com.faforever.server.avatar.AvatarService;
 import com.faforever.server.avatar.ListAvatarsRequest;
 import com.faforever.server.avatar.SelectAvatarRequest;
-import com.faforever.server.entity.Player;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;

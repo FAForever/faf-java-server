@@ -1,12 +1,10 @@
 package com.faforever.server.rating;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.GamePlayerStats;
-import com.faforever.server.entity.GlobalRating;
-import com.faforever.server.entity.Ladder1v1Rating;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.Rating;
+import com.faforever.server.game.GamePlayerStats;
 import com.faforever.server.game.GameService;
+import com.faforever.server.ladder1v1.Ladder1v1Rating;
+import com.faforever.server.player.Player;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;

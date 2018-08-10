@@ -1,11 +1,11 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.client.GameResponses;
-import com.faforever.server.entity.GameState;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
+import com.faforever.server.game.GameState;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import org.springframework.integration.transformer.GenericTransformer;

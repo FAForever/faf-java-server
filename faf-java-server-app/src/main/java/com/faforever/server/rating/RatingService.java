@@ -1,11 +1,9 @@
 package com.faforever.server.rating;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.GamePlayerStats;
-import com.faforever.server.entity.GlobalRating;
-import com.faforever.server.entity.Ladder1v1Rating;
-import com.faforever.server.entity.Rating;
 import com.faforever.server.error.ProgrammingError;
+import com.faforever.server.game.GamePlayerStats;
+import com.faforever.server.ladder1v1.Ladder1v1Rating;
 import de.gesundkrank.jskills.GameInfo;
 import de.gesundkrank.jskills.IPlayer;
 import de.gesundkrank.jskills.ITeam;
@@ -97,12 +95,12 @@ public class RatingService {
       });
   }
 
-  public void initGlobalRating(com.faforever.server.entity.Player player) {
+  public void initGlobalRating(com.faforever.server.player.Player player) {
     Assert.state(player.getGlobalRating() == null, "Global rating has already been set for player: " + player);
     player.setGlobalRating(new GlobalRating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
   }
 
-  public void initLadder1v1Rating(com.faforever.server.entity.Player player) {
+  public void initLadder1v1Rating(com.faforever.server.player.Player player) {
     Assert.state(player.getLadder1v1Rating() == null, "Ladder1v1 rating has already been set for player: " + player);
     player.setLadder1v1Rating(new Ladder1v1Rating(player, gameInfo.getInitialMean(), gameInfo.getInitialStandardDeviation()));
   }

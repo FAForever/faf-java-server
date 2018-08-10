@@ -1,12 +1,8 @@
 package com.faforever.server.game;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.GamePlayerStats;
-import com.faforever.server.entity.ModVersion;
-import com.faforever.server.entity.Validity;
-import com.faforever.server.entity.VictoryCondition;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.mod.ModVersion;
 import lombok.experimental.UtilityClass;
 
 import java.time.Duration;

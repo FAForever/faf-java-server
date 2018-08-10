@@ -2,7 +2,7 @@ package com.faforever.server.integration.v2.server;
 
 
 import com.faforever.server.annotations.V2ServerResponse;
-import com.faforever.server.entity.GameState;
+import com.faforever.server.game.GameState;
 import com.faforever.server.game.GameVisibility;
 import lombok.Getter;
 import lombok.Setter;

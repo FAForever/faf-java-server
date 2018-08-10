@@ -1,6 +1,5 @@
 package com.faforever.server.map;
 
-import com.faforever.server.entity.MapVersion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

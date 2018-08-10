@@ -2,7 +2,6 @@ package com.faforever.server.security;
 
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ConnectionAware;
-import com.faforever.server.entity.OAuthClient;
 import org.springframework.security.oauth2.provider.client.BaseClientDetails;
 
 public class FafClientDetails extends BaseClientDetails implements ConnectionAware {

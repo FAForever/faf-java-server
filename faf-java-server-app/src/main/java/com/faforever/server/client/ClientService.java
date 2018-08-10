@@ -2,17 +2,15 @@ package com.faforever.server.client;
 
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
+import com.faforever.server.avatar.Avatar;
+import com.faforever.server.avatar.AvatarAssociation;
 import com.faforever.server.chat.JoinChatChannelResponse;
+import com.faforever.server.clan.Clan;
 import com.faforever.server.common.ServerMessage;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
-import com.faforever.server.entity.AvatarAssociation;
-import com.faforever.server.entity.Clan;
-import com.faforever.server.entity.FeaturedMod;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.GlobalRating;
-import com.faforever.server.entity.Player;
+import com.faforever.server.game.Game;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
@@ -21,10 +19,13 @@ import com.faforever.server.ice.IceServerList;
 import com.faforever.server.integration.ClientGateway;
 import com.faforever.server.matchmaker.MatchCreatedResponse;
 import com.faforever.server.matchmaker.MatchMakerResponse;
+import com.faforever.server.mod.FeaturedMod;
 import com.faforever.server.mod.FeaturedModResponse;
 import com.faforever.server.player.LoginDetailsResponse;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerResponse;
 import com.faforever.server.player.PlayerResponse.Rating;
+import com.faforever.server.rating.GlobalRating;
 import com.faforever.server.social.SocialRelationListResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -291,7 +292,7 @@ public class ClientService {
     send(response, recipient);
   }
 
-  public void sendAvatarList(List<com.faforever.server.entity.Avatar> avatars, ConnectionAware recipient) {
+  public void sendAvatarList(List<Avatar> avatars, ConnectionAware recipient) {
     AvatarsResponse avatarListResponse = new AvatarsResponse(avatars.stream()
       .map(avatar -> new AvatarsResponse.Avatar(avatar.getUrl(), avatar.getDescription())).collect(Collectors.toList()));
 
@@ -309,7 +310,7 @@ public class ClientService {
       .filter(AvatarAssociation::isSelected)
       .findFirst()
       .map(association -> {
-        com.faforever.server.entity.Avatar avatarEntity = association.getAvatar();
+        Avatar avatarEntity = association.getAvatar();
         return new PlayerResponse.Avatar(avatarEntity.getUrl(), avatarEntity.getDescription());
       });
 

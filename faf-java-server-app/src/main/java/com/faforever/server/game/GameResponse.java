@@ -1,7 +1,6 @@
 package com.faforever.server.game;
 
 import com.faforever.server.common.ServerMessage;
-import com.faforever.server.entity.GameState;
 import lombok.Data;
 
 import java.time.Instant;

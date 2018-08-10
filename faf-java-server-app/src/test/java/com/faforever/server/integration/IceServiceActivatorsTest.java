@@ -1,12 +1,12 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientConnection;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.ice.IceMessage;
 import com.faforever.server.ice.IceServersRequest;
 import com.faforever.server.ice.IceService;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

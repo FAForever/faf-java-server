@@ -1,7 +1,6 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ClientDisconnectedEvent;
-import com.faforever.server.entity.Player;
 import com.faforever.server.game.AiOptionReport;
 import com.faforever.server.game.ArmyOutcomeReport;
 import com.faforever.server.game.ArmyScoreReport;
@@ -20,6 +19,7 @@ import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.stats.ArmyStatisticsReport;
 import org.springframework.integration.annotation.MessageEndpoint;

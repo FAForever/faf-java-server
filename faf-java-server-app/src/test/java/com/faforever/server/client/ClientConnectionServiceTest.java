@@ -1,10 +1,10 @@
 package com.faforever.server.client;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.integration.Protocol;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerService;
+import com.faforever.server.security.User;
 import com.faforever.server.stats.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Before;
