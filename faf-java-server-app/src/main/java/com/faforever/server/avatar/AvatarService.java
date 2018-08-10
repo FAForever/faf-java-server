@@ -1,11 +1,9 @@
 package com.faforever.server.avatar;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Avatar;
-import com.faforever.server.entity.AvatarAssociation;
-import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
+import com.faforever.server.player.Player;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

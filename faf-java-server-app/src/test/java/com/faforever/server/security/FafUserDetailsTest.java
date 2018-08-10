@@ -1,9 +1,6 @@
 package com.faforever.server.security;
 
-import com.faforever.server.entity.BanDetails;
-import com.faforever.server.entity.GroupAssociation;
-import com.faforever.server.entity.GroupAssociation.Group;
-import com.faforever.server.entity.User;
+import com.faforever.server.security.GroupAssociation.Group;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,9 +1,9 @@
 package com.faforever.server.rating;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.GamePlayerStats;
-import com.faforever.server.entity.Player;
+import com.faforever.server.game.Game;
+import com.faforever.server.game.GamePlayerStats;
+import com.faforever.server.player.Player;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,7 +1,7 @@
 package com.faforever.server.config;
 
+import com.faforever.server.security.BanDetailsService;
 import com.faforever.server.security.PolicyService;
-import com.faforever.server.user.BanDetailsService;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

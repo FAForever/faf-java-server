@@ -1,9 +1,8 @@
 package com.faforever.server.ladder1v1;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.Division;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.PlayerDivisionInfo;
+import com.faforever.server.player.Player;
+import com.faforever.server.player.PlayerDivisionInfo;
 import com.googlecode.zohhak.api.TestWith;
 import com.googlecode.zohhak.api.runners.ZohhakRunner;
 import org.junit.Before;

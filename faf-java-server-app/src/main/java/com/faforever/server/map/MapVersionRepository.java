@@ -1,6 +1,5 @@
 package com.faforever.server.map;
 
-import com.faforever.server.entity.MapVersion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

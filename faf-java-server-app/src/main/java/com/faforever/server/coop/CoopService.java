@@ -1,11 +1,9 @@
 package com.faforever.server.coop;
 
-import com.faforever.server.entity.CoopLeaderboardEntry;
-import com.faforever.server.entity.CoopMap;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
+import com.faforever.server.game.Game;
+import com.faforever.server.player.Player;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

@@ -1,12 +1,12 @@
 package com.faforever.server.social;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.SocialRelation;
-import com.faforever.server.entity.SocialRelationStatus;
-import com.faforever.server.entity.User;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerOnlineEvent;
+import com.faforever.server.player.SocialRelation;
+import com.faforever.server.player.SocialRelationStatus;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse;
 import com.faforever.server.social.SocialRelationListResponse.SocialRelationResponse.RelationType;
 import org.junit.Before;

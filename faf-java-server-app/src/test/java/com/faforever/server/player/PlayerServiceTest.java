@@ -2,12 +2,12 @@ package com.faforever.server.player;
 
 import com.faforever.server.client.ClientConnection;
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.geoip.GeoIpService;
 import com.faforever.server.integration.Protocol;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,8 +16,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -39,11 +45,14 @@ public class PlayerServiceTest {
   @Mock
   private GeoIpService geoIpService;
 
+  private OnlinePlayerRepository onlinePlayerRepository;
+
   @Before
   public void setUp() throws Exception {
+    onlinePlayerRepository = new FakeOnlinePlayerRepository();
     player = (Player) new Player().setId(1);
     player.setLogin("JUnit");
-    instance = new PlayerService(clientService, meterRegistry, eventPublisher, geoIpService);
+    instance = new PlayerService(clientService, meterRegistry, onlinePlayerRepository, eventPublisher, geoIpService);
   }
 
   @Test
@@ -83,4 +92,89 @@ public class PlayerServiceTest {
 
     return new FafUserDetails(user);
   }
+
+  private class FakeOnlinePlayerRepository implements OnlinePlayerRepository {
+    private final Map<Integer, Player> players;
+
+    private FakeOnlinePlayerRepository() {
+      players = new HashMap<>();
+    }
+
+    @NotNull
+    @Override
+    public <S extends Player> S save(@NotNull S entity) {
+      players.put(entity.getId(), entity);
+      return entity;
+    }
+
+    @NotNull
+    @Override
+    public <S extends Player> Iterable<S> saveAll(@NotNull Iterable<S> entities) {
+      entities.forEach(s -> players.put(s.getId(), s));
+      return entities;
+    }
+
+    @NotNull
+    @Override
+    public Optional<Player> findById(@NotNull Integer integer) {
+      return Optional.ofNullable(players.get(integer));
+    }
+
+    @Override
+    public boolean existsById(@NotNull Integer integer) {
+      return players.containsKey(integer);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Player> findAll() {
+      return players.values();
+    }
+
+    @NotNull
+    @Override
+    public Iterable<Player> findAllById(@NotNull Iterable<Integer> integers) {
+      Set<Integer> ids = StreamSupport.stream(integers.spliterator(), false)
+        .collect(Collectors.toSet());
+
+      return players.values().stream()
+        .filter(player -> ids.contains(player.getId()))
+        .collect(Collectors.toList());
+    }
+
+    @Override
+    public long count() {
+      return players.size();
+    }
+
+    @Override
+    public void deleteById(@NotNull Integer integer) {
+      players.remove(integer);
+    }
+
+    @Override
+    public void delete(@NotNull Player entity) {
+      players.remove(entity.getId());
+    }
+
+    @Override
+    public void deleteAll(@NotNull Iterable<? extends Player> entities) {
+      for (Player entity : entities) {
+        players.remove(entity.getId());
+      }
+    }
+
+    @Override
+    public void deleteAll() {
+      players.clear();
+    }
+
+    @Override
+    public Optional<Player> findByLogin(String login) {
+      return players.values().stream()
+        .filter(player1 -> player1.getLogin().equals(login))
+        .findFirst();
+    }
+  }
+
 }

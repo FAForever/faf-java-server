@@ -1,7 +1,7 @@
 package com.faforever.server.social;
 
-import com.faforever.server.entity.Player;
 import com.faforever.server.integration.ChannelNames;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;

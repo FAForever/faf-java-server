@@ -4,12 +4,10 @@
  
 This is a reimplementation of the  [Forged Alliance Forever](https://www.faforever.com/)'s server application.
 
-It aims to abstract the communication protocol as far as possible in order to stay compatible with current server's
+It abstracts the communication protocol as far as possible in order to stay compatible with current server's
 legacy protocol while at the same time allowing new protocols to be added and supported simultaneously.
 
-As the underlying (legacy) database schema isn't based on best education and diligence either, some data types,
-structures, concepts and/or field names may be questionable, too, even though efforts are made to abstract it with a
-clean layer as well (work in progress)
+It's compatible with the legacy database as well, so it can be used as a drop-in replacement of the existing server.
  
 ## How to run
 
@@ -17,15 +15,20 @@ clean layer as well (work in progress)
 
 In order to run this software, you need to set up a [FAF database](https://github.com/FAForever/db).
 
-### From source
-
-In order to run the application from source code:
+### From source within IntelliJ
 
 1. Clone the repository
-1. Import the project into IntelliJ. For some reason, IntelliJ deletes launch configurations after import. Please revert such deleted files first (Version Control (Alt+F9) -> Local Changes)
-1. Configure your JDK 8 if you haven't already
+1. Import the project into IntelliJ as Gradle project. Doing so will delete the .idea folder which also deletes launch
+configurations and code style settings. Please revert such deleted files first (Version Control (Alt+F9) -> Local 
+Changes)
+1. Configure your JDK 10 if you haven't already
 1. Make sure you have the _IntelliJ Lombok plugin_ installed
 1. Launch `FafServerApplication`
+
+### From source using the command line
+
+1. Clone the repository
+1. Run `.\gradlew bootRun`
  
 ### From binary
 

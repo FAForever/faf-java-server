@@ -1,14 +1,13 @@
 package com.faforever.server.game;
 
+import com.faforever.server.avatar.Avatar;
+import com.faforever.server.avatar.AvatarAssociation;
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Avatar;
-import com.faforever.server.entity.AvatarAssociation;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.Rating;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerService;
+import com.faforever.server.rating.Rating;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

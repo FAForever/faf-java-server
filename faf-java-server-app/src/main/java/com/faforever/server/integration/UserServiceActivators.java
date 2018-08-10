@@ -1,7 +1,7 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.LoginRequest;
-import com.faforever.server.user.UserService;
+import com.faforever.server.security.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;

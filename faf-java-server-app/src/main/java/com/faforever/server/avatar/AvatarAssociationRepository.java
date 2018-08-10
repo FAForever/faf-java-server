@@ -1,6 +1,5 @@
 package com.faforever.server.avatar;
 
-import com.faforever.server.entity.AvatarAssociation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

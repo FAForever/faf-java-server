@@ -1,7 +1,7 @@
 package com.faforever.server.ice;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

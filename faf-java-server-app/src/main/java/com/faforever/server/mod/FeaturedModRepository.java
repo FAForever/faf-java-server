@@ -1,6 +1,5 @@
 package com.faforever.server.mod;
 
-import com.faforever.server.entity.FeaturedMod;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;

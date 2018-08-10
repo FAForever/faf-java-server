@@ -1,11 +1,9 @@
 package com.faforever.server.coop;
 
-import com.faforever.server.entity.CoopLeaderboardEntry;
-import com.faforever.server.entity.CoopMap;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.GamePlayerStats;
-import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
+import com.faforever.server.game.Game;
+import com.faforever.server.game.GamePlayerStats;
+import com.faforever.server.player.Player;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

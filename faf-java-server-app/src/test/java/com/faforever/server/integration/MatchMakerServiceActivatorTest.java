@@ -1,8 +1,6 @@
 package com.faforever.server.integration;
 
 import com.faforever.server.client.ConnectionAware;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
 import com.faforever.server.game.Faction;
 import com.faforever.server.matchmaker.CreateMatchRequest;
 import com.faforever.server.matchmaker.CreateMatchRequest.LobbyMode;
@@ -11,7 +9,9 @@ import com.faforever.server.matchmaker.MatchMakerCancelRequest;
 import com.faforever.server.matchmaker.MatchMakerMapper;
 import com.faforever.server.matchmaker.MatchMakerSearchRequest;
 import com.faforever.server.matchmaker.MatchMakerService;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
+import com.faforever.server.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

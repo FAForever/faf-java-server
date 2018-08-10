@@ -1,7 +1,7 @@
 package com.faforever.server.ice;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerService;
 import org.junit.Before;
 import org.junit.Test;

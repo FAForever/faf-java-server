@@ -1,8 +1,8 @@
 package com.faforever.server.client;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.Player;
 import com.faforever.server.integration.Protocol;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerService;
 import com.faforever.server.stats.Metrics;
 import com.google.common.annotations.VisibleForTesting;

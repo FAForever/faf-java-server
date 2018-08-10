@@ -1,6 +1,5 @@
 package com.faforever.server.coop;
 
-import com.faforever.server.entity.CoopMap;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

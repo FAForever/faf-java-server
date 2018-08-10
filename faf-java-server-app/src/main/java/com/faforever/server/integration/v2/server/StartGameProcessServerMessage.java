@@ -33,9 +33,7 @@ class StartGameProcessServerMessage extends V2ServerMessage {
   private LobbyMode lobbyMode;
 
   /**
-   * private LobbyMode lobbyMode;
-   * <p>
-   * /**
+   * The command line arguments to append when invoking {@code ForgedAlliance.exe}.
    *
    * @deprecated the server should never send command line arguments. They should always be generated on client side.
    * This is currently used for {@code /numgames} which shouldn't even be reported by a peer anyway, but looked up.

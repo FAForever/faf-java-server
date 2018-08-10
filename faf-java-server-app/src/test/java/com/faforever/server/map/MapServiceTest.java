@@ -1,12 +1,9 @@
 package com.faforever.server.map;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.FeaturedMod;
-import com.faforever.server.entity.Map;
-import com.faforever.server.entity.MapStats;
-import com.faforever.server.entity.MapVersion;
-import com.faforever.server.entity.Player;
+import com.faforever.server.mod.FeaturedMod;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.Player;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

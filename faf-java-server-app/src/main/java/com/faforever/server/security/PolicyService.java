@@ -1,12 +1,11 @@
 package com.faforever.server.security;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.BanDetails.BanScope;
-import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ProgrammingError;
 import com.faforever.server.error.Requests;
-import com.faforever.server.user.BanDetailsService;
+import com.faforever.server.player.Player;
+import com.faforever.server.security.BanDetails.BanScope;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;

@@ -1,8 +1,8 @@
 package com.faforever.server.teamkill;
 
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.TeamKill;
+import com.faforever.server.game.Game;
+import com.faforever.server.game.TeamKill;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerService;
 import org.junit.Before;
 import org.junit.Test;

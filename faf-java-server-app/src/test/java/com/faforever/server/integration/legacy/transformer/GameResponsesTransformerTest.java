@@ -1,10 +1,10 @@
 package com.faforever.server.integration.legacy.transformer;
 
 import com.faforever.server.client.GameResponses;
-import com.faforever.server.entity.GameState;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
+import com.faforever.server.game.GameState;
 import com.faforever.server.game.GameVisibility;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;

@@ -16,6 +16,7 @@
 .idea/uiDesigner.xml
 .idea/inspectionProfiles/
 .idea/kotlinc.xml
+.idea/discord.xml
 
 # Gradle:
 .idea/gradle.xml

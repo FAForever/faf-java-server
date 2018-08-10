@@ -2,9 +2,8 @@ package com.faforever.server.mod;
 
 import com.faforever.server.cache.CacheNames;
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.FeaturedMod;
-import com.faforever.server.entity.ModVersion;
 import com.faforever.server.player.PlayerOnlineEvent;
+import io.jsonwebtoken.lang.Assert;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -34,6 +33,7 @@ public class ModService {
   @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
   // Required for access to @Cacheable methods since inner calls do not go through proxy object.
   private ModService modService;
+  private boolean applicationInitialized;
 
   public ModService(ModVersionRepository modVersionRepository, FeaturedModRepository featuredModRepository,
                     FeaturedModFileRepository featuredModFileRepository, ClientService clientService) {
@@ -56,8 +56,9 @@ public class ModService {
       log.warn("No mod named '{}' was found in the database. Coop will not be available.", COOP_MOD_NAME);
     }
     if (!ladder1v1FeaturedMod.isPresent()) {
-      log.warn("No mod named '{}' was found in the database. Ladder1v1 will not be available.", LADDER_1V1_MOD_NAME);
+      log.warn("No mod named '{}' was found in the database. Ladder 1v1 will not be available.", LADDER_1V1_MOD_NAME);
     }
+    applicationInitialized = true;
   }
 
   @Cacheable(CacheNames.FEATURED_MODS)
@@ -85,6 +86,7 @@ public class ModService {
   }
 
   public boolean isCoop(FeaturedMod featuredMod) {
+    verifyInitialized();
     return coopFeaturedMod.isPresent() && coopFeaturedMod.get().equals(featuredMod);
   }
 
@@ -93,6 +95,7 @@ public class ModService {
   }
 
   public Optional<FeaturedMod> getLadder1v1Mod() {
+    verifyInitialized();
     return ladder1v1FeaturedMod;
   }
 
@@ -102,5 +105,10 @@ public class ModService {
 
   public List<FeaturedModFile> getLatestFileVersions(FeaturedMod featuredMod) {
     return featuredModFileRepository.getLatestFileVersions(featuredMod.getTechnicalName());
+  }
+
+  private void verifyInitialized() {
+    Assert.state(applicationInitialized, "In order to know whether this mod is available, the database must be queried. " +
+      "This can only be done after the application has been started, which is not the case.");
   }
 }

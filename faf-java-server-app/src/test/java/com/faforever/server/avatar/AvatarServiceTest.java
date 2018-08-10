@@ -1,9 +1,9 @@
 package com.faforever.server.avatar;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
+import com.faforever.server.player.Player;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.junit.Before;
 import org.junit.Rule;

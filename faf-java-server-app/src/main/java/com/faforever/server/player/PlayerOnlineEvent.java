@@ -1,6 +1,5 @@
 package com.faforever.server.player;
 
-import com.faforever.server.entity.Player;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.context.ApplicationEvent;

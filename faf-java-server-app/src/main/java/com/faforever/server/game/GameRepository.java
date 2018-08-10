@@ -1,7 +1,5 @@
 package com.faforever.server.game;
 
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.Validity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

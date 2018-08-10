@@ -1,13 +1,13 @@
 package com.faforever.server.stats;
 
 import com.faforever.server.client.ClientService;
-import com.faforever.server.entity.ArmyResult;
-import com.faforever.server.entity.FeaturedMod;
-import com.faforever.server.entity.Game;
-import com.faforever.server.entity.Player;
+import com.faforever.server.game.ArmyResult;
 import com.faforever.server.game.Faction;
+import com.faforever.server.game.Game;
 import com.faforever.server.game.Outcome;
+import com.faforever.server.mod.FeaturedMod;
 import com.faforever.server.mod.ModService;
+import com.faforever.server.player.Player;
 import com.faforever.server.stats.achievements.AchievementId;
 import com.faforever.server.stats.achievements.AchievementService;
 import com.faforever.server.stats.achievements.AchievementUpdate;

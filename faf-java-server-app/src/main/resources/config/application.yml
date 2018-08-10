@@ -18,7 +18,7 @@ faf-server:
     access-token-uri: ${API_ACCESS_TOKEN_URI}
     max-page-size: 10000
   database:
-    schema-version: ${DATABASE_SCHEMA_VERSION:58}
+    schema-version: ${DATABASE_SCHEMA_VERSION:59}
   ice:
     twilio:
       account-sid: ${TWILIO_ACCOUNT_SID:}
@@ -65,8 +65,8 @@ management:
 
 logging:
   level:
-    org.springframework.integration: info
-    org.springframework: info
+    org.springframework: warn
+    org.springframework.integration: warn
     org.hibernate: warn
     com.zaxxer.hikari: warn
     com.faforever.server.geoip: error

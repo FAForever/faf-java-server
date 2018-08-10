@@ -1,15 +1,15 @@
 package com.faforever.server.chat;
 
+import com.faforever.server.clan.Clan;
+import com.faforever.server.clan.ClanMembership;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Chat;
-import com.faforever.server.entity.Clan;
-import com.faforever.server.entity.ClanMembership;
-import com.faforever.server.entity.GroupAssociation;
-import com.faforever.server.entity.GroupAssociation.Group;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.User;
+import com.faforever.server.player.Player;
 import com.faforever.server.player.PlayerOnlineEvent;
+import com.faforever.server.security.GroupAssociation;
+import com.faforever.server.security.GroupAssociation.Group;
+import com.faforever.server.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

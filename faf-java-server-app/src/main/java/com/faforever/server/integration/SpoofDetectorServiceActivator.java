@@ -1,8 +1,8 @@
 package com.faforever.server.integration;
 
-import com.faforever.server.entity.Player;
 import com.faforever.server.game.SpoofDetectorService;
 import com.faforever.server.game.VerifyPlayerReport;
+import com.faforever.server.player.Player;
 import com.faforever.server.security.FafUserDetails;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;

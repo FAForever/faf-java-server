@@ -1,12 +1,10 @@
 package com.faforever.server.security;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.entity.BanDetails.BanScope;
-import com.faforever.server.entity.Player;
-import com.faforever.server.entity.UniqueIdExempt;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
-import com.faforever.server.user.BanDetailsService;
+import com.faforever.server.player.Player;
+import com.faforever.server.security.BanDetails.BanScope;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
