@@ -68,7 +68,7 @@ public class MapService {
 
   @Transactional
   public List<MapVersion> getRecentlyPlayedLadderMapVersions(Player player, int limit) {
-    Optional<FeaturedMod> ladder1v1 = modService.getLadder1v1();
+    Optional<FeaturedMod> ladder1v1 = modService.getLadder1v1Mod();
     if (!ladder1v1.isPresent()) {
       throw new IllegalStateException("Ladder 1v1 mod could not be found");
     }

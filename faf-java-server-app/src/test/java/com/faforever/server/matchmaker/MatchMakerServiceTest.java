@@ -73,7 +73,7 @@ public class MatchMakerServiceTest {
     properties = new ServerProperties();
     FeaturedMod ladder1v1Mod = new FeaturedMod().setTechnicalName("faf");
 
-    when(modService.getLadder1v1()).thenReturn(Optional.of(ladder1v1Mod));
+    when(modService.getLadder1v1Mod()).thenReturn(Optional.of(ladder1v1Mod));
     when(mapService.getRandomLadderMap(anyIterable())).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
 
     RatingService ratingService = new RatingService(properties);
@@ -100,7 +100,7 @@ public class MatchMakerServiceTest {
 
   @Test
   public void startSearchModNotAvailable() {
-    when(modService.getLadder1v1()).thenReturn(Optional.empty());
+    when(modService.getLadder1v1Mod()).thenReturn(Optional.empty());
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST));
     instance.submitSearch(new Player(), Faction.CYBRAN, QUEUE_NAME);

@@ -27,8 +27,8 @@ public class ModService {
   private final FeaturedModRepository featuredModRepository;
   private final FeaturedModFileRepository featuredModFileRepository;
   private final ClientService clientService;
-  private FeaturedMod coopFeaturedMod;
-  private FeaturedMod ladder1v1FeaturedMod;
+  private Optional<FeaturedMod> coopFeaturedMod;
+  private Optional<FeaturedMod> ladder1v1FeaturedMod;
 
   @Autowired
   @SuppressWarnings("SpringAutowiredFieldsWarningInspection")
@@ -46,15 +46,14 @@ public class ModService {
   @EventListener
   @Transactional(readOnly = true)
   public void onApplicationEvent(ContextRefreshedEvent event) {
-    coopFeaturedMod = featuredModRepository.findOneByTechnicalName(COOP_MOD_NAME).orElse(null);
-    ladder1v1FeaturedMod = featuredModRepository.findOneByTechnicalName(LADDER_1V1_MOD_NAME).orElse(null);
+    coopFeaturedMod = featuredModRepository.findOneByTechnicalName(COOP_MOD_NAME);
+    ladder1v1FeaturedMod = featuredModRepository.findOneByTechnicalName(LADDER_1V1_MOD_NAME);
 
-    if (coopFeaturedMod == null) {
-      throw new IllegalStateException("No mod named '" + COOP_MOD_NAME + "' was found in the database. Note that '"
-        + LADDER_1V1_MOD_NAME + "' needs to exist as well.");
+    if (!coopFeaturedMod.isPresent()) {
+      log.warn("No mod named '{}' was found in the database. Coop will not be available.", COOP_MOD_NAME);
     }
-    if (ladder1v1FeaturedMod == null) {
-      throw new IllegalStateException("No mod named '" + LADDER_1V1_MOD_NAME + "' was found in the database.");
+    if (!ladder1v1FeaturedMod.isPresent()) {
+      log.warn("No mod named '{}' was found in the database. Coop will not be available.", LADDER_1V1_MOD_NAME);
     }
   }
 
@@ -83,19 +82,19 @@ public class ModService {
   }
 
   public boolean isCoop(FeaturedMod featuredMod) {
-    return coopFeaturedMod != null && coopFeaturedMod.equals(featuredMod);
+    return coopFeaturedMod.isPresent() && coopFeaturedMod.get().equals(featuredMod);
   }
 
   public boolean isLadder1v1(FeaturedMod featuredMod) {
-    return ladder1v1FeaturedMod != null && ladder1v1FeaturedMod.equals(featuredMod);
+    return ladder1v1FeaturedMod.isPresent() && ladder1v1FeaturedMod.get().equals(featuredMod);
   }
 
   public Optional<FeaturedMod> getFeaturedMod(int modId) {
     return featuredModRepository.findById(modId);
   }
 
-  public Optional<FeaturedMod> getLadder1v1() {
-    return Optional.ofNullable(ladder1v1FeaturedMod);
+  public Optional<FeaturedMod> getLadder1v1Mod() {
+    return ladder1v1FeaturedMod;
   }
 
   public Optional<FeaturedMod> getFeaturedMod(String featuredModName) {

@@ -57,7 +57,7 @@ public class MapServiceTest {
 
     FeaturedMod ladder = new FeaturedMod();
     ladder.setId(LADDER_1V1_MOD_Id);
-    when(modService.getLadder1v1()).thenReturn(Optional.of(ladder));
+    when(modService.getLadder1v1Mod()).thenReturn(Optional.of(ladder));
 
     MapStats features = new MapStats().setId(1).setTimesPlayed(41);
     when(mapStatsRepository.findById(1)).thenReturn(Optional.ofNullable(features));
