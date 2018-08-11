@@ -55,8 +55,6 @@ import java.util.stream.Collectors;
 public class MatchMakerService {
 
   private static final double DESIRED_MIN_GAME_QUALITY = 0.8d;
-  private static final String LADDER_1V1_MOD_NAME = "ladder1v1";
-  private final ModService modService;
   private final ServerProperties properties;
   private final RatingService ratingService;
   /**
@@ -72,7 +70,6 @@ public class MatchMakerService {
   public MatchMakerService(ModService modService, ServerProperties properties, RatingService ratingService,
                            ClientService clientService, GameService gameService, MapService mapService,
                            PlayerService playerService) {
-    this.modService = modService;
     this.properties = properties;
     this.ratingService = ratingService;
     this.clientService = clientService;
@@ -81,6 +78,8 @@ public class MatchMakerService {
     this.playerService = playerService;
     modByPoolName = new HashMap<>();
     searchesByPoolName = new HashMap<>();
+
+    modService.getLadder1v1Mod().ifPresent(featuredMod -> modByPoolName.put(featuredMod.getTechnicalName(), featuredMod));
   }
 
   /**
@@ -90,8 +89,6 @@ public class MatchMakerService {
    * @param faction the faction the player will play once the game starts
    */
   public void submitSearch(Player player, Faction faction, String poolName) {
-    modByPoolName.computeIfAbsent(LADDER_1V1_MOD_NAME, s -> modService.getLadder1v1().orElse(null));
-
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
     Requests.verify(isNotBanned(player), ErrorCode.BANNED_FROM_MATCH_MAKER);
     Requests.verify(modByPoolName.get(poolName) != null, ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST, poolName);
@@ -348,12 +345,12 @@ public class MatchMakerService {
 
     long secondsPassed = Math.max(1, Duration.between(Instant.now(), oldestSearch.createdTime).getSeconds());
 
-    float reductionPercent = secondsPassed / acceptableQualityWaitTime;
+    float reductionPercent = (float) secondsPassed / acceptableQualityWaitTime;
     float reduction = (float) (reductionPercent * (desiredGameQuality - acceptableGameQuality));
 
     double requiredQuality = desiredGameQuality - reduction;
     boolean passes = match.quality > requiredQuality;
-    log.trace("Calculated quality '{}' of required '{}' for match: {}", match);
+    log.trace("Calculated quality '{}' of required '{}' for match: {}", match.quality, requiredQuality, match);
     return passes;
   }
 
