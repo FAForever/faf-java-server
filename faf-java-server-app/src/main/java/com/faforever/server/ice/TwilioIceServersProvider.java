@@ -1,11 +1,12 @@
 package com.faforever.server.ice;
 
 import com.faforever.server.config.ServerProperties;
-import com.faforever.server.ice.TwilioService.TwilioServiceCondition;
+import com.faforever.server.ice.TwilioIceServersProvider.TwilioServiceCondition;
+import com.faforever.server.player.Player;
 import com.google.common.base.Strings;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Token;
-import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
@@ -22,12 +23,11 @@ import java.util.stream.Collectors;
  * credentials are configured.
  */
 @Service
-@Slf4j
 @Conditional(TwilioServiceCondition.class)
-public class TwilioService implements IceServersProvider {
+public class TwilioIceServersProvider implements IceServersProvider {
   private final ServerProperties properties;
 
-  public TwilioService(ServerProperties properties) {
+  public TwilioIceServersProvider(ServerProperties properties) {
     this.properties = properties;
   }
 
@@ -45,7 +45,7 @@ public class TwilioService implements IceServersProvider {
   }
 
   @Override
-  public IceServerList getIceServerList() {
+  public IceServerList getIceServerList(Player player) {
     Token token = Token.creator().setTtl(properties.getIce().getTtl()).create();
 
     return new IceServerList(
@@ -62,7 +62,7 @@ public class TwilioService implements IceServersProvider {
    */
   static class TwilioServiceCondition implements Condition {
     @Override
-    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+    public boolean matches(@NotNull ConditionContext context, @NotNull AnnotatedTypeMetadata metadata) {
       Environment environment = context.getEnvironment();
       return !Strings.isNullOrEmpty(environment.getProperty("faf-server.ice.twilio.account-sid"))
         && !Strings.isNullOrEmpty(environment.getProperty("faf-server.ice.twilio.auth-token"));

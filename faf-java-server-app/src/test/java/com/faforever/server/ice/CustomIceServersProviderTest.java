@@ -2,77 +2,61 @@ package com.faforever.server.ice;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Ice.Server;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.faforever.server.player.Player;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.security.jwt.Jwt;
-import org.springframework.security.jwt.JwtHelper;
-import org.springframework.security.jwt.crypto.sign.MacSigner;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CustomIceServersProviderTest {
   private CustomIceServersProvider instance;
 
-  @Mock
-  private ObjectMapper objectMapper;
   private ServerProperties properties;
 
   @Before
   public void setUp() throws Exception {
     properties = new ServerProperties();
-    properties.getJwt().setSecret("banana");
-
-    instance = new CustomIceServersProvider(properties, objectMapper);
+    instance = new CustomIceServersProvider(properties);
+    instance.setTimeProvider(() -> Instant.ofEpochSecond(0));
   }
 
   @Test
   @SuppressWarnings("unchecked")
-  public void getIceServerList() throws Exception {
-    String claim = "{\"expiresAt\": \"ff\"}";
-    when(objectMapper.writeValueAsString(any())).thenReturn(claim);
+  public void getIceServerList() {
     properties.getIce().setServers(Arrays.asList(
-      new Server().setUrl("http://localhost:1234"),
-      new Server().setUrl("http://localhost:2345")
+      new Server().setUrl("stun:localhost:1234").setSecret("secret1"),
+      new Server().setUrl("turn:localhost:2345?transport=tcp").setSecret("secret2"),
+      new Server().setUrl("turn:localhost:2345?transport=udp").setSecret("secret3")
     ));
 
-    IceServerList result = instance.getIceServerList();
-
-    ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass((Class) Map.class);
-    verify(objectMapper, times(2)).writeValueAsString(captor.capture());
-    Map<String, Object> map = captor.getValue();
-    assertThat(map.get("expiresAt"), is(notNullValue()));
+    IceServerList result = instance.getIceServerList((Player) new Player().setLogin("JUnit"));
 
     List<IceServer> servers = result.getServers();
-    assertThat(servers, hasSize(2));
-    assertThat(servers.get(0).getUrl(), is(URI.create("http://localhost:1234")));
-    assertThat(servers.get(0).getCredential(), is(notNullValue()));
-    assertThat(servers.get(0).getUsername(), is(notNullValue()));
+    assertThat(servers, hasSize(3));
+    assertThat(servers.get(0).getUrl(), is(URI.create("stun:localhost:1234")));
+    assertThat(servers.get(0).getCredential(), is("C3lsR1iV8r1ywUPNTWYChd+S8Iw="));
+    assertThat(servers.get(0).getCredentialType(), is("token"));
+    assertThat(servers.get(0).getUsername(), endsWith(":JUnit"));
 
-    assertThat(servers.get(1).getUrl(), is(URI.create("http://localhost:2345")));
-    assertThat(servers.get(1).getCredential(), is(notNullValue()));
-    assertThat(servers.get(1).getUsername(), is(notNullValue()));
+    assertThat(servers.get(1).getUrl(), is(URI.create("turn:localhost:2345?transport=tcp")));
+    assertThat(servers.get(1).getCredential(), is("noPPAyGebv4KrdnFRvA5zSoh+zM="));
+    assertThat(servers.get(1).getCredentialType(), is("token"));
+    assertThat(servers.get(1).getUsername(), endsWith(":JUnit"));
 
-    MacSigner macSigner = new MacSigner(properties.getJwt().getSecret());
-    Jwt jwt = JwtHelper.decodeAndVerify(servers.get(0).getCredential(), macSigner);
-
-    assertThat(jwt.getClaims(), is(claim));
+    assertThat(servers.get(2).getUrl(), is(URI.create("turn:localhost:2345?transport=udp")));
+    assertThat(servers.get(2).getCredential(), is("A8+TlRGRqeZKOeD93VNJnzvlUfM="));
+    assertThat(servers.get(2).getCredentialType(), is("token"));
+    assertThat(servers.get(2).getUsername(), endsWith(":JUnit"));
   }
 }
