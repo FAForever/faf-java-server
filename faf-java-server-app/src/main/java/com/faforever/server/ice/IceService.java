@@ -28,7 +28,7 @@ public class IceService {
     log.trace("Player '{}' requested a list of ICE servers", player);
 
     List<IceServerList> iceServerLists = serversProviders.stream()
-      .map(IceServersProvider::getIceServerList)
+      .map(iceServersProvider -> iceServersProvider.getIceServerList(player))
       .collect(Collectors.toList());
 
     log.trace("Sending list of ICE servers to player '{}': {}", player, iceServerLists);

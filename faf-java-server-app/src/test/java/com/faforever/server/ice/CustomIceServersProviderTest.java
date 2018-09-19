@@ -2,6 +2,7 @@ package com.faforever.server.ice;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Ice.Server;
+import com.faforever.server.entity.Player;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,9 +54,9 @@ public class CustomIceServersProviderTest {
       new Server().setUrl("http://localhost:2345")
     ));
 
-    IceServerList result = instance.getIceServerList();
+    IceServerList result = instance.getIceServerList(new Player());
 
-    ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass((Class) Map.class);
+    ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
     verify(objectMapper, times(2)).writeValueAsString(captor.capture());
     Map<String, Object> map = captor.getValue();
     assertThat(map.get("expiresAt"), is(notNullValue()));

@@ -1,6 +1,7 @@
 package com.faforever.server.ice;
 
 import com.faforever.server.config.ServerProperties;
+import com.faforever.server.entity.Player;
 import com.faforever.server.ice.TwilioService.TwilioServiceCondition;
 import com.google.common.base.Strings;
 import com.twilio.Twilio;
@@ -45,7 +46,7 @@ public class TwilioService implements IceServersProvider {
   }
 
   @Override
-  public IceServerList getIceServerList() {
+  public IceServerList getIceServerList(Player player) {
     Token token = Token.creator().setTtl(properties.getIce().getTtl()).create();
 
     return new IceServerList(
