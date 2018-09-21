@@ -34,7 +34,10 @@ public enum ErrorCode {
   PLAYER_NOT_ONLINE(127, "Player not online", "The player with the ID {0,number,#} is not online."),
   OTHER_PLAYER_NOT_IN_GAME(128, "Player is not in a game", "The player with the ID {0,number,#} is currently not in a game."),
   THIS_PLAYER_NOT_IN_GAME(129, "Not in a game", "The action you tried is not available as you are currently not in a game."),
-  NOT_SAME_GAME(130, "Not the same game", "Verification denied as you are not in the same game as player ''{0}''.");
+  NOT_SAME_GAME(130, "Not the same game", "Verification denied as you are not in the same game as player ''{0}''."),
+  TEMPORARILY_BANNED(131, "Login denied", "Your account is currently banned. Reason: {0}. Expiration: {1}."),
+  PERMANENTLY_BANNED(132, "Login denied", "Your account has been banned permanently. Reason: {0}."),
+  MATCH_MAKER_LADDER1V1_NOT_AVAILABLE(133, "Ladder1v1 not available", "The server is currently not configured to support ladder1v1 matches.");
 
   private final int code;
   private final String title;

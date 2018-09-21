@@ -64,6 +64,9 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
 
   private static boolean isNonLocked(Set<BanDetails> banDetails) {
     return banDetails.stream()
-      .noneMatch(details -> details.getExpiresAt() == null || details.getExpiresAt().after(Timestamp.from(Instant.now())));
+      .noneMatch(details ->
+        !details.isRevoked()
+          && (details.getExpiresAt() == null || details.getExpiresAt().after(Timestamp.from(Instant.now())))
+      );
   }
 }

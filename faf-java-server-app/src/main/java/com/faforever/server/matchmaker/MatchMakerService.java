@@ -91,8 +91,7 @@ public class MatchMakerService {
   public void submitSearch(Player player, Faction faction, String poolName) {
     Optional<FeaturedMod> ladder1v1Mod = modService.getLadder1v1Mod();
     if (!ladder1v1Mod.isPresent()) {
-      log.warn("Rejecting search for pool '{}' since no ladder1v1 mod is configured", poolName);
-      return;
+      throw Requests.exception(ErrorCode.MATCH_MAKER_LADDER1V1_NOT_AVAILABLE);
     }
 
     FeaturedMod featuredMod = ladder1v1Mod.get();

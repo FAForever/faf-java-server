@@ -34,6 +34,11 @@ public class NoopWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
   }
 
   class UserCreatingAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
+
+    UserCreatingAuthenticationProvider() {
+      setPreAuthenticationChecks(new FafAccountBannedChecker());
+    }
+
     private User updatePassword(User user, String password) {
       user.setPassword(password);
       return userRepository.save(user);
