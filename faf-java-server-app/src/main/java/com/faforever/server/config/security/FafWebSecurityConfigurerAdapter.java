@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -31,6 +33,16 @@ public class FafWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
     return super.authenticationManagerBean();
   }
 
+  private ObjectPostProcessor<DaoAuthenticationProvider> daoAuthenticationProviderPostProcessor() {
+    return new ObjectPostProcessor<>() {
+      @Override
+      public <O extends DaoAuthenticationProvider> O postProcess(O object) {
+        object.setPreAuthenticationChecks(new FafAccountBannedChecker());
+        return object;
+      }
+    };
+  }
+
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
     String idForEncode = "bcrypt";
@@ -43,6 +55,7 @@ public class FafWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapte
 
     auth
       .userDetailsService(userDetailsService)
+      .withObjectPostProcessor(daoAuthenticationProviderPostProcessor())
       .passwordEncoder(passwordEncoder);
   }
 }

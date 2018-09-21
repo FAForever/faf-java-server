@@ -102,7 +102,7 @@ public class MatchMakerServiceTest {
   public void startSearchModNotAvailable() {
     when(modService.getLadder1v1Mod()).thenReturn(Optional.empty());
 
-    expectedException.expect(requestExceptionWithCode(ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST));
+    expectedException.expect(requestExceptionWithCode(ErrorCode.MATCH_MAKER_LADDER1V1_NOT_AVAILABLE));
     instance.submitSearch(new Player(), Faction.CYBRAN, QUEUE_NAME);
   }
 

@@ -6,6 +6,8 @@ import com.faforever.server.client.LegacyLoginRequest;
 import com.faforever.server.client.LegacySessionRequest;
 import com.faforever.server.client.ListCoopRequest;
 import com.faforever.server.client.SessionResponse;
+import com.faforever.server.config.security.FafLockedException;
+import com.faforever.server.entity.BanDetails;
 import com.faforever.server.entity.Player;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.RequestException;
@@ -25,6 +27,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.time.Instant;
+import java.util.Comparator;
 
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
 
@@ -68,6 +72,7 @@ public class LegacyServicesActivators {
 
       Authentication authentication = authenticationManager.authenticate(token);
       FafUserDetails userDetails = (FafUserDetails) authentication.getPrincipal();
+      checkBan(userDetails);
 
       clientConnection.setAuthentication(authentication);
       Player player = userDetails.getPlayer();
@@ -76,9 +81,27 @@ public class LegacyServicesActivators {
       // TODO check if "session" is really needed by the policy server
       policyService.verify(player, loginRequest.getUniqueId(), "1");
       playerService.setPlayerOnline(player);
+    } catch (FafLockedException e) {
+      log.debug("Account locked", e);
+      checkBan(e.getFafUserDetails());
+      throw new IllegalStateException("This exception should never be reached");
     } catch (BadCredentialsException e) {
       throw new RequestException(e, ErrorCode.INVALID_LOGIN);
     }
+  }
+
+  /** Throws an exception if the account has an active ban. */
+  private void checkBan(FafUserDetails userDetails) {
+    userDetails.getPlayer().getBanDetails().stream()
+      .filter(banDetail -> !banDetail.isRevoked() && (banDetail.getExpiresAt() == null || banDetail.getExpiresAt().toInstant().isAfter(Instant.now())))
+      .max(Comparator.comparing(BanDetails::getId))
+      .ifPresent(banDetails -> {
+        if (banDetails.getExpiresAt() != null) {
+          throw Requests.exception(ErrorCode.TEMPORARILY_BANNED, banDetails.getReason(), banDetails.getExpiresAt());
+        } else {
+          throw Requests.exception(ErrorCode.PERMANENTLY_BANNED, banDetails.getReason());
+        }
+      });
   }
 
   @ServiceActivator(inputChannel = ChannelNames.LEGACY_COOP_LIST)
