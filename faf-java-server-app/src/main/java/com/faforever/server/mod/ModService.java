@@ -41,6 +41,9 @@ public class ModService {
     this.featuredModRepository = featuredModRepository;
     this.featuredModFileRepository = featuredModFileRepository;
     this.clientService = clientService;
+
+    coopFeaturedMod = Optional.empty();
+    ladder1v1FeaturedMod = Optional.empty();
   }
 
   @EventListener
@@ -53,7 +56,7 @@ public class ModService {
       log.warn("No mod named '{}' was found in the database. Coop will not be available.", COOP_MOD_NAME);
     }
     if (!ladder1v1FeaturedMod.isPresent()) {
-      log.warn("No mod named '{}' was found in the database. Coop will not be available.", LADDER_1V1_MOD_NAME);
+      log.warn("No mod named '{}' was found in the database. Ladder1v1 will not be available.", LADDER_1V1_MOD_NAME);
     }
   }
 
@@ -87,10 +90,6 @@ public class ModService {
 
   public boolean isLadder1v1(FeaturedMod featuredMod) {
     return ladder1v1FeaturedMod.isPresent() && ladder1v1FeaturedMod.get().equals(featuredMod);
-  }
-
-  public Optional<FeaturedMod> getFeaturedMod(int modId) {
-    return featuredModRepository.findById(modId);
   }
 
   public Optional<FeaturedMod> getLadder1v1Mod() {

@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 public class MatchMakerService {
 
   private static final double DESIRED_MIN_GAME_QUALITY = 0.8d;
+  private final ModService modService;
   private final ServerProperties properties;
   private final RatingService ratingService;
   /**
@@ -70,6 +71,7 @@ public class MatchMakerService {
   public MatchMakerService(ModService modService, ServerProperties properties, RatingService ratingService,
                            ClientService clientService, GameService gameService, MapService mapService,
                            PlayerService playerService) {
+    this.modService = modService;
     this.properties = properties;
     this.ratingService = ratingService;
     this.clientService = clientService;
@@ -78,8 +80,6 @@ public class MatchMakerService {
     this.playerService = playerService;
     modByPoolName = new HashMap<>();
     searchesByPoolName = new HashMap<>();
-
-    modService.getLadder1v1Mod().ifPresent(featuredMod -> modByPoolName.put(featuredMod.getTechnicalName(), featuredMod));
   }
 
   /**
@@ -89,6 +89,15 @@ public class MatchMakerService {
    * @param faction the faction the player will play once the game starts
    */
   public void submitSearch(Player player, Faction faction, String poolName) {
+    Optional<FeaturedMod> ladder1v1Mod = modService.getLadder1v1Mod();
+    if (!ladder1v1Mod.isPresent()) {
+      log.warn("Rejecting search for pool '{}' since no ladder1v1 mod is configured", poolName);
+      return;
+    }
+
+    FeaturedMod featuredMod = ladder1v1Mod.get();
+    modByPoolName.putIfAbsent(featuredMod.getTechnicalName(), featuredMod);
+
     Requests.verify(player.getCurrentGame() == null, ErrorCode.ALREADY_IN_GAME);
     Requests.verify(isNotBanned(player), ErrorCode.BANNED_FROM_MATCH_MAKER);
     Requests.verify(modByPoolName.get(poolName) != null, ErrorCode.MATCH_MAKER_POOL_DOESNT_EXIST, poolName);

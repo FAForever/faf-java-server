@@ -71,7 +71,7 @@ public class MatchMakerServiceTest {
   @Before
   public void setUp() throws Exception {
     properties = new ServerProperties();
-    FeaturedMod ladder1v1Mod = new FeaturedMod().setTechnicalName("faf");
+    FeaturedMod ladder1v1Mod = new FeaturedMod().setTechnicalName("ladder1v1");
 
     when(modService.getLadder1v1Mod()).thenReturn(Optional.of(ladder1v1Mod));
     when(mapService.getRandomLadderMap(anyIterable())).thenReturn(new MapVersion().setFilename("maps/SCMP_001.zip"));
@@ -153,7 +153,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "faf", "SCMP_001",
+    verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "ladder1v1", "SCMP_001",
       null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE);
     verify(gameService).joinGame(1, null, player2);
 
