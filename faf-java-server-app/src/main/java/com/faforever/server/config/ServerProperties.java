@@ -47,7 +47,7 @@ public class ServerProperties {
 
   @Data
   public static class GeoIp {
-    private String databaseUrl = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz";
+    private String databaseUrl = "https://faf.geosearchef.de/GeoLite2-City.mmdb.gz";
     private Path databaseFile = Paths.get("cache/geoIp.mmdb");
   }
 
