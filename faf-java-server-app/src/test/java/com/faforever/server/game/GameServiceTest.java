@@ -33,6 +33,7 @@ import com.faforever.server.security.FafUserDetails;
 import com.faforever.server.stats.ArmyStatistics;
 import com.faforever.server.stats.ArmyStatisticsService;
 import com.faforever.server.stats.Metrics;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -1491,6 +1492,18 @@ public class GameServiceTest {
     assertThat(game.getMinRating(), is(GAME_MIN_RATING));
     assertThat(game.getMaxRating(), is(GAME_MAX_RATING));
     assertThat(host.getCurrentGame(), is(game));
+
+    ArgumentCaptor<GameResponse> gameCaptor = ArgumentCaptor.forClass(GameResponse.class);
+    verify(clientService, atLeastOnce()).broadcastDelayed(gameCaptor.capture(), any(), any(), any(), any());
+
+    GameResponse gameResponse = gameCaptor.getValue();
+    assertThat(gameResponse.getTitle(), is(game.getTitle()));
+    assertThat(gameResponse.getHostUsername(), is(game.getHost().getLogin()));
+    assertThat(gameResponse.getFeaturedModTechnicalName(), is(game.getFeaturedMod().getTechnicalName()));
+    assertThat(gameResponse.getTechnicalMapName(), is(game.getMapFolderName()));
+    assertThat(gameResponse.isPasswordProtected(), is(!Strings.isNullOrEmpty(game.getPassword())));
+    assertThat(gameResponse.getMinRating(), is(game.getMinRating()));
+    assertThat(gameResponse.getMaxRating(), is(game.getMaxRating()));
 
     return game;
   }

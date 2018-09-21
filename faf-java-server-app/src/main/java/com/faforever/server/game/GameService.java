@@ -1055,7 +1055,7 @@ public class GameService {
       game.getId(),
       game.getTitle(),
       game.getGameVisibility(),
-      Strings.isNullOrEmpty(game.getPassword()),
+      !Strings.isNullOrEmpty(game.getPassword()),
       game.getState(),
       game.getFeaturedMod().getTechnicalName(),
       toSimMods(game.getSimMods()),
