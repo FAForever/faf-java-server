@@ -1434,6 +1434,14 @@ public class GameServiceTest {
     assertThat(statsCaptor.getAllValues().get(2), hasSize(2));
   }
 
+  @Test
+  public void playerDisconnected() {
+    instance.playerDisconnected(player1, player2.getId());
+    // the above shouldn't do anything but log, difficult to assert.
+    verifyZeroInteractions(clientService);
+    verifyZeroInteractions(playerService);
+  }
+
   private void closePlayerGame(Player player3) {
     instance.updatePlayerGameState(PlayerGameState.CLOSED, player3);
   }

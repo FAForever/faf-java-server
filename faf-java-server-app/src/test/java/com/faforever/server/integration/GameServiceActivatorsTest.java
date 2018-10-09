@@ -19,6 +19,7 @@ import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.Outcome;
+import com.faforever.server.game.PlayerDisconnectedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
@@ -167,5 +168,11 @@ public class GameServiceActivatorsTest {
   public void onClientDisconnected() {
     instance.onClientDisconnected(new ClientDisconnectedEvent(this, clientConnection));
     verify(gameService).removePlayer(player);
+  }
+
+  @Test
+  public void onDisconnected() {
+    instance.onDisconnected(new PlayerDisconnectedReport(42), clientConnection.getAuthentication());
+    verify(gameService).playerDisconnected(player, 42);
   }
 }

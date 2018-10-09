@@ -17,7 +17,6 @@ import com.faforever.server.game.BottleneckReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameModsCountReport;
@@ -29,6 +28,7 @@ import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerDefeatedReport;
+import com.faforever.server.game.PlayerDisconnectedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
@@ -420,11 +420,13 @@ public class LegacyRequestTransformerTest {
 
   @Test
   public void disconnected() {
-    DisconnectedReport report = (DisconnectedReport) instance.transform(ImmutableMap.of(
-      KEY_COMMAND, "Disconnected"
+    PlayerDisconnectedReport report = (PlayerDisconnectedReport) instance.transform(ImmutableMap.of(
+      KEY_COMMAND, "Disconnected",
+      KEY_ARGS, Collections.singletonList(42)
     ));
 
     assertThat(report, is(notNullValue()));
+    assertThat(report.getPlayerId(), is(42));
   }
 
   @Test

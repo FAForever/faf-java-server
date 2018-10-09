@@ -20,7 +20,6 @@ import com.faforever.server.game.BottleneckReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameEndedReport;
 import com.faforever.server.game.GameModsCountReport;
@@ -31,6 +30,7 @@ import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerDefeatedReport;
+import com.faforever.server.game.PlayerDisconnectedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.game.VerifyPlayerReport;
@@ -212,7 +212,7 @@ public class IntegrationConfig {
     router.setChannelMapping(AddFoeRequest.class.getName(), ChannelNames.ADD_FOE_REQUEST);
     router.setChannelMapping(RemoveFriendRequest.class.getName(), ChannelNames.REMOVE_FRIEND_REQUEST);
     router.setChannelMapping(RemoveFoeRequest.class.getName(), ChannelNames.REMOVE_FOE_REQUEST);
-    router.setChannelMapping(DisconnectedReport.class.getName(), ChannelNames.DISCONNECTED_REPORT);
+    router.setChannelMapping(PlayerDisconnectedReport.class.getName(), ChannelNames.DISCONNECTED_REPORT);
     router.setChannelMapping(GameEndedReport.class.getName(), ChannelNames.GAME_ENDED_REPORT);
     // This is sent by the game but currently, the server has no interest in it.
     router.setChannelMapping(BottleneckReport.class.getName(), IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME);
