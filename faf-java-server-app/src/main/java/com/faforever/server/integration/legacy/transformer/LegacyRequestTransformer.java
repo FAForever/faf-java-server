@@ -24,7 +24,6 @@ import com.faforever.server.game.BottleneckReport;
 import com.faforever.server.game.ClearSlotRequest;
 import com.faforever.server.game.DesyncReport;
 import com.faforever.server.game.DisconnectPeerRequest;
-import com.faforever.server.game.DisconnectedReport;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameChatMessageReport;
 import com.faforever.server.game.GameEndedReport;
@@ -38,6 +37,7 @@ import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.Outcome;
 import com.faforever.server.game.PlayerDefeatedReport;
+import com.faforever.server.game.PlayerDisconnectedReport;
 import com.faforever.server.game.PlayerGameState;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
@@ -161,7 +161,8 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
       case ADMIN:
         return handleAdminAction(source);
       case DISCONNECTED:
-        return DisconnectedReport.INSTANCE;
+        args = getArgs(source);
+        return new PlayerDisconnectedReport((int) args.get(0));
       case BOTTLENECK:
         return BottleneckReport.INSTANCE;
       case CHAT:

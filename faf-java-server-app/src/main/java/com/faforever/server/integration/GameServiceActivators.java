@@ -17,6 +17,7 @@ import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.LobbyMode;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
+import com.faforever.server.game.PlayerDisconnectedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.integration.legacy.transformer.RestoreGameSessionRequest;
 import com.faforever.server.player.Player;
@@ -136,6 +137,11 @@ public class GameServiceActivators {
   @ServiceActivator(inputChannel = ChannelNames.GAME_ENDED_REPORT)
   public void onGameEnded(GameEndedReport event, @Header(USER_HEADER) Authentication authentication) {
     gameService.reportGameEnded(getPlayer(authentication));
+  }
+
+  @ServiceActivator(inputChannel = ChannelNames.DISCONNECTED_REPORT)
+  public void onDisconnected(PlayerDisconnectedReport event, @Header(USER_HEADER) Authentication authentication) {
+    gameService.playerDisconnected(getPlayer(authentication), event.getPlayerId());
   }
 
   private Player getPlayer(Authentication authentication) {

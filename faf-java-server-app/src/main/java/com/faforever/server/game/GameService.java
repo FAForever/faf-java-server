@@ -337,6 +337,10 @@ public class GameService {
     gameRepository.updateUnfinishedGamesValidity(validity);
   }
 
+  public void playerDisconnected(Player reporter, int disconnectedPlayerId) {
+    log.debug("Player '{}' reported disconnect of player with ID '{}'", reporter, disconnectedPlayerId);
+  }
+
   private void processGamesAwaitingRatingUpdate() {
     gamesAwaitingRatingUpdate.stream()
       .filter(game -> !hasRatingDependentGame(game) && game.getStartTime() != null)

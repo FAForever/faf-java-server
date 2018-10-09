@@ -23,6 +23,7 @@ import com.faforever.server.game.HostGameRequest;
 import com.faforever.server.game.JoinGameRequest;
 import com.faforever.server.game.MutuallyAgreedDrawRequest;
 import com.faforever.server.game.PlayerDefeatedReport;
+import com.faforever.server.game.PlayerDisconnectedReport;
 import com.faforever.server.game.PlayerOptionReport;
 import com.faforever.server.game.TeamKillReport;
 import com.faforever.server.game.VerifyPlayerReport;
@@ -278,7 +279,7 @@ public final class ChannelNames {
   public static final String SELECT_AVATAR = "selectAvatar";
 
   /**
-   * Channel for {@link com.faforever.server.game.DisconnectedReport}.
+   * Channel for {@link PlayerDisconnectedReport}.
    */
   public static final String DISCONNECTED_REPORT = "disconnectedReport";
 
