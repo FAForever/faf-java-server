@@ -996,6 +996,20 @@ public class GameServiceTest {
   }
 
   @Test
+  public void updateGameValidityHasAi() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+
+    instance.updateAiOption(player1, "JUnit", OPTION_ARMY, 1);
+    launchGame(game);
+
+    reportPlayerScores(player1, player2);
+    reportGameEnded(player1, player2);
+
+    assertThat(game.getValidity(), is(Validity.HAS_AI));
+  }
+
+  @Test
   public void simpleValidGameWithoutEnded() throws Exception {
     Game game = hostGame(player1, 1);
     addPlayer(game, player2);

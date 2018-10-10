@@ -179,7 +179,8 @@ public class GameService {
       ValidityVoter.singlePlayerVoter(),
       ValidityVoter.gameResultVoter(),
       ValidityVoter.gameLengthVoter(properties),
-      ValidityVoter.teamsUnlockedVoter()
+      ValidityVoter.teamsUnlockedVoter(),
+      ValidityVoter.hasAiVoter()
     );
 
     Gauge.builder(Metrics.GAMES, activeGamesById, Map::size)
@@ -419,8 +420,8 @@ public class GameService {
     Requests.verify(Objects.equals(reporter.getCurrentGame().getHost(), reporter), ErrorCode.HOST_ONLY_OPTION, key);
 
     if (!OPTION_ARMY.equals(key)) {
-      log.trace("Ignoring option '{}' = '{}' for AI '{}' in game '{}' because only the option 'Army' is currently sent with the correct, final AI name",
-        key, value, aiName, game.getId());
+      log.trace("Ignoring option '{}' = '{}' for AI '{}' in game '{}' because only the option '{}' is currently sent with the correct, final AI name",
+        OPTION_ARMY, key, value, aiName, game.getId());
       return;
     }
 

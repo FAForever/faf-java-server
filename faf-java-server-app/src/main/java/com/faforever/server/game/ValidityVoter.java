@@ -130,4 +130,8 @@ class ValidityVoter {
   Function<Game, Validity> isRankedVoter(ModService modService) {
     return game -> !game.getSimMods().stream().allMatch(ModVersion::isRanked) ? Validity.BAD_MOD : Validity.VALID;
   }
+
+  Function<Game, Validity> hasAiVoter() {
+    return game -> game.getAiOptions().size() > 0 ? Validity.HAS_AI : Validity.VALID;
+  }
 }

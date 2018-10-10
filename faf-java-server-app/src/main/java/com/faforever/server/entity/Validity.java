@@ -26,6 +26,8 @@ public enum Validity {
   TEAMS_UNLOCKED,
   /** The server never received a game-end message (usually because the server crashed). */
   STALE,
+  /** The game had at least one AI player. */
+  HAS_AI,
   /** The game was in progress while the server was being shut down. */
-  SERVER_SHUTDOWN
+  SERVER_SHUTDOWN,
 }
