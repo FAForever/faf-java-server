@@ -714,6 +714,11 @@ public class GameService {
 
     clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
 
+    if (game.getState() == GameState.OPEN && game.getHost().equals(player)) {
+      // A copy of the connected players is required as otherwise we run into a ConcurrentModificationException
+      new ArrayList<>(connectedPlayers.values()).forEach(connectedPlayer -> removePlayer(game, connectedPlayer));
+    }
+
     if (connectedPlayers.isEmpty()) {
       switch (game.getState()) {
         case INITIALIZING:

@@ -607,8 +607,10 @@ public class GameServiceTest {
     addPlayer(game, player2);
     assertThat(game.getState(), is(GameState.OPEN));
 
+    launchGame(game);
+
     closePlayerGame(player1);
-    assertThat(game.getState(), is(GameState.OPEN));
+    assertThat(game.getState(), is(GameState.PLAYING));
 
     closePlayerGame(player2);
     assertThat(game.getState(), is(GameState.CLOSED));
@@ -702,6 +704,37 @@ public class GameServiceTest {
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+  }
+
+  @Test
+  public void onHostLeftClosesGameIfOpen() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+
+    closePlayerGame(player1);
+
+    assertThat(game.getState(), is(GameState.CLOSED));
+    assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+    assertThat(player2.getCurrentGame(), is(nullValue()));
+    assertThat(player2.getGameState(), is(PlayerGameState.NONE));
+  }
+
+  @Test
+  public void onHostLeftDoesntCloseGameIfPlaying() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+    addPlayer(game, (Player) new Player().setId(3));
+
+    launchGame(game);
+
+    closePlayerGame(player1);
+
+    assertThat(game.getState(), is(GameState.PLAYING));
+    assertThat(player1.getCurrentGame(), is(nullValue()));
+    assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+    assertThat(player2.getCurrentGame(), is(game));
+    assertThat(player2.getGameState(), is(PlayerGameState.LAUNCHING));
   }
 
   @Test
