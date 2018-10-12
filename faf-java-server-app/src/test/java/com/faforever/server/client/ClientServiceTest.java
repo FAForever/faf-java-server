@@ -5,7 +5,6 @@ import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.avatar.Avatar;
 import com.faforever.server.clan.Clan;
-import com.faforever.server.clan.ClanMembership;
 import com.faforever.server.common.ServerMessage;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopService;
@@ -153,7 +152,7 @@ public class ClientServiceTest {
       .setAvatar(avatar)
       .setGlobalRating((GlobalRating) new GlobalRating().setNumGames(12).setMean(1100d).setDeviation(100d))
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(900d).setDeviation(50d))
-      .setClanMemberships(Collections.singletonList(new ClanMembership().setClan(new Clan().setTag("FOO"))))
+      .setClan(new Clan().setTag("FOO"))
       .setCountry("CH")
       .setLogin("JUnit")
       .setId(5);

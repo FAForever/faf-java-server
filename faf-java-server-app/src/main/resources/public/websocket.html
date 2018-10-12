@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!-- Thanks to https://www.pegaxchange.com/2018/03/23/websocket-client/ -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="connect-src * 'unsafe-inline';">
+  <style>
+    table {
+      border: 2px solid black;
+    }
+
+    input {
+      width: 300px;
+    }
+
+    select {
+      width: 300px;
+    }
+
+    textarea {
+      width: 513px;
+      border: 2px solid black;
+    }
+
+    #btnConnect {
+      width: 100px;
+    }
+
+    #btnDisconnect {
+      width: 100px;
+    }
+
+    #btnSend {
+      width: 100px;
+    }
+  </style>
+  <script>
+    var webSocket = null;
+
+    /**
+     * Event handler for clicking on button "Connect"
+     */
+    function onConnectClick() {
+      var ws_protocol = document.getElementById("protocol").value;
+      var ws_hostname = document.getElementById("hostname").value;
+      var ws_port = document.getElementById("port").value;
+      var ws_endpoint = document.getElementById("endpoint").value;
+      openWSConnection(ws_protocol, ws_hostname, ws_port, ws_endpoint);
+    }
+
+    /**
+     * Event handler for clicking on button "Disconnect"
+     */
+    function onDisconnectClick() {
+      webSocket.close();
+    }
+
+    /**
+     * Open a new WebSocket connection using the given parameters
+     */
+    function openWSConnection(protocol, hostname, port, endpoint) {
+      var webSocketURL = protocol + "://" + hostname + ":" + port + endpoint;
+      console.log("openWSConnection::Connecting to: " + webSocketURL);
+      try {
+        webSocket = new WebSocket(webSocketURL);
+        webSocket.onopen = function (openEvent) {
+          console.log("WebSocket OPEN: " + JSON.stringify(openEvent, null, 4));
+          document.getElementById("btnSend").disabled = false;
+          document.getElementById("btnConnect").disabled = true;
+          document.getElementById("btnDisconnect").disabled = false;
+        };
+        webSocket.onclose = function (closeEvent) {
+          console.log("WebSocket CLOSE: " + JSON.stringify(closeEvent, null, 4));
+          document.getElementById("btnSend").disabled = true;
+          document.getElementById("btnConnect").disabled = false;
+          document.getElementById("btnDisconnect").disabled = true;
+        };
+        webSocket.onerror = function (errorEvent) {
+          console.log("WebSocket ERROR: " + JSON.stringify(errorEvent, null, 4));
+        };
+        webSocket.onmessage = function (messageEvent) {
+          var wsMsg = messageEvent.data;
+          console.log("WebSocket MESSAGE: " + wsMsg);
+          document.getElementById("incomingMsgOutput").value += "Response: " + wsMsg + "\r\n";
+        };
+      } catch (exception) {
+        console.error(exception);
+      }
+    }
+
+    /**
+     * Send a message to the WebSocket server
+     */
+    function onSendClick() {
+      if (webSocket.readyState !== WebSocket.OPEN) {
+        console.error("webSocket is not open: " + webSocket.readyState);
+        return;
+      }
+      var msg = document.getElementById("message").value;
+      webSocket.send(msg);
+    }
+  </script>
+</head>
+<body>
+<h1>Test v2 WebSocket protocol</h1>
+<p>See the <a href="http://localhost:8012/v2-protocol.html">Documentation</a>.</p>
+<table>
+  <tr>
+    <td width="200px">WS Protocol</td>
+    <td>
+      <select id="protocol">
+        <option value="ws" selected="selected">ws</option>
+        <option value="wss">wss</option>
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <td>WS Hostname</td>
+    <td><input type="text" id="hostname" value="localhost"/></td>
+  </tr>
+  <tr>
+    <td>WS Port</td>
+    <td><input type="text" id="port" value="8012"/></td>
+  </tr>
+  <tr>
+    <td>WS Endpoint</td>
+    <td><input type="text" id="endpoint" value="/ws"/></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>
+      <input id="btnConnect" type="button" value="Connect" onclick="onConnectClick()">&nbsp;&nbsp;
+      <input id="btnDisconnect" type="button" value="Disconnect" onclick="onDisconnectClick()" disabled="disabled">
+    </td>
+  </tr>
+</table>
+<br/>
+<table>
+  <tr>
+    <td width="200px">Message</td>
+    <td><textarea type="text" rows="10" id="message"></textarea></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>
+      <input id="btnSend" type="button" value="Send Message" disabled="disabled" onclick="onSendClick()">
+    </td>
+  </tr>
+</table>
+<br/>
+<textarea id="incomingMsgOutput" rows="10" disabled="disabled" wrap="soft" style="width: 100%"></textarea>
+</body>
+</html>

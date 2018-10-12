@@ -1,7 +1,6 @@
 package com.faforever.server.chat;
 
 import com.faforever.server.clan.Clan;
-import com.faforever.server.clan.ClanMembership;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.Chat;
@@ -72,7 +71,7 @@ public class ChatServiceTest {
 
     Player player = new Player()
       .setUser(user)
-      .setClanMemberships(Collections.singletonList(new ClanMembership().setClan(new Clan().setTag("junit"))));
+      .setClan(new Clan().setTag("junit"));
 
     instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, player));
 
