@@ -1,7 +1,7 @@
 package com.faforever.server.game;
 
 import com.faforever.server.avatar.Avatar;
-import com.faforever.server.avatar.AvatarAssociation;
+import com.faforever.server.avatar.AvatarService;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.player.Player;
@@ -42,10 +42,12 @@ public class SpoofDetectorServiceTest {
   private PlayerService playerService;
   @Mock
   private ClientService clientService;
+  @Mock
+  private AvatarService avatarService;
 
   @Before
   public void setUp() throws Exception {
-    instance = new SpoofDetectorService(playerService, clientService);
+    instance = new SpoofDetectorService(playerService, clientService, avatarService);
   }
 
   @Test
@@ -166,13 +168,8 @@ public class SpoofDetectorServiceTest {
       .setId(1)
       .setLogin("JUnit");
     reportee.setRatingWithinCurrentGame(new GlobalRating(reportee, 50, 5));
-    reportee.getAvailableAvatars().add(
-      new AvatarAssociation()
-        .setAvatar(new Avatar().setDescription("Description"))
-        .setPlayer(reportee)
-        .setSelected(true)
-    );
 
+    when(avatarService.getCurrentAvatar(reportee)).thenReturn(Optional.of(new Avatar().setDescription("Description")));
     when(playerService.getOnlinePlayer(1)).thenReturn(Optional.of(reportee));
 
     Player reporter = (Player) new Player().setCurrentGame(new Game(1)).setId(42);
@@ -192,13 +189,8 @@ public class SpoofDetectorServiceTest {
       .setId(1)
       .setLogin("JUnit");
     reportee.setRatingWithinCurrentGame(new GlobalRating(reportee, 50, 5));
-    reportee.getAvailableAvatars().add(
-      new AvatarAssociation()
-        .setAvatar(new Avatar().setUrl("http://example.com/avatar.png"))
-        .setPlayer(reportee)
-        .setSelected(true)
-    );
 
+    when(avatarService.getCurrentAvatar(reportee)).thenReturn(Optional.of(new Avatar().setUrl("http://example.com/avatar.png")));
     when(playerService.getOnlinePlayer(1)).thenReturn(Optional.of(reportee));
 
     Player reporter = (Player) new Player().setCurrentGame(new Game(1)).setId(42);
@@ -218,13 +210,9 @@ public class SpoofDetectorServiceTest {
       .setId(1)
       .setLogin("JUnit");
     reportee.setRatingWithinCurrentGame(new GlobalRating(reportee, 50, 5));
-    reportee.getAvailableAvatars().add(
-      new AvatarAssociation()
-        .setAvatar(new Avatar().setUrl("http://example.com/avatar.png").setDescription("Description"))
-        .setPlayer(reportee)
-        .setSelected(true)
-    );
 
+    when(avatarService.getCurrentAvatar(reportee))
+      .thenReturn(Optional.of(new Avatar().setUrl("http://example.com/avatar.png").setDescription("Description")));
     when(playerService.getOnlinePlayer(1)).thenReturn(Optional.of(reportee));
 
     Player reporter = (Player) new Player().setCurrentGame(new Game(1)).setId(42);
@@ -245,12 +233,6 @@ public class SpoofDetectorServiceTest {
       .setId(1)
       .setLogin("JUnit");
     reportee.setRatingWithinCurrentGame(new GlobalRating(reportee, 50, 5));
-    reportee.getAvailableAvatars().add(
-      new AvatarAssociation()
-        .setAvatar(new Avatar().setUrl("http://example.com/avatar.png").setDescription("Description"))
-        .setPlayer(reportee)
-        .setSelected(true)
-    );
 
     when(playerService.getOnlinePlayer(1)).thenReturn(Optional.of(reportee));
 

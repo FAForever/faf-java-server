@@ -3,7 +3,6 @@ package com.faforever.server.client;
 import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.avatar.Avatar;
-import com.faforever.server.avatar.AvatarAssociation;
 import com.faforever.server.chat.JoinChatChannelResponse;
 import com.faforever.server.clan.Clan;
 import com.faforever.server.common.ServerMessage;
@@ -72,6 +71,7 @@ public class ClientService {
   };
 
   private final ClientGateway clientGateway;
+  // TODO ClientService should not depend on other services
   private final CoopService coopService;
   private final ConcurrentMap<Object, DelayedResponse> delayedResponses;
   private final ServerProperties serverProperties;
@@ -306,14 +306,8 @@ public class ClientService {
   }
 
   private PlayerResponse toPlayerInformationResponse(Player player) {
-    Optional<PlayerResponse.Avatar> avatar = player.getAvailableAvatars().stream()
-      .filter(AvatarAssociation::isSelected)
-      .findFirst()
-      .map(association -> {
-        Avatar avatarEntity = association.getAvatar();
-        return new PlayerResponse.Avatar(avatarEntity.getUrl(), avatarEntity.getDescription());
-      });
-
+    Optional<PlayerResponse.Avatar> avatar = Optional.ofNullable(player.getAvatar())
+      .map(currentAvatar -> new PlayerResponse.Avatar(currentAvatar.getUrl(), currentAvatar.getDescription()));
     Optional<Rating> globalRating = Optional.ofNullable(player.getGlobalRating())
       .map(rating -> new Rating(rating.getMean(), rating.getDeviation()));
     Optional<Rating> ladder1v1Rating = Optional.ofNullable(player.getLadder1v1Rating())

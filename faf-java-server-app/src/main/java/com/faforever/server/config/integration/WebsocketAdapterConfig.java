@@ -30,12 +30,14 @@ import org.springframework.integration.websocket.support.PassThruSubProtocolHand
 import org.springframework.integration.websocket.support.SubProtocolHandlerRegistry;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.inject.Inject;
 import java.security.Principal;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -189,18 +191,41 @@ public class WebsocketAdapterConfig {
       ClientConnection clientConnection = clientConnectionService.createClientConnection(session.getId(), Protocol.V2_JSON_UTF_8, session.getRemoteAddress().getAddress());
 
       Principal sessionPrincipal = session.getPrincipal();
-      if (sessionPrincipal instanceof OAuth2Authentication) {
-        Object oAuthPrincipal = ((OAuth2Authentication) sessionPrincipal).getPrincipal();
-        if (oAuthPrincipal instanceof FafClientDetails) {
-          FafClientDetails clientDetails = (FafClientDetails) oAuthPrincipal;
-          clientDetails.setClientConnection(clientConnection);
-        } else if (oAuthPrincipal instanceof FafUserDetails) {
-          FafUserDetails userDetails = (FafUserDetails) oAuthPrincipal;
-          userDetails.setClientConnection(clientConnection);
 
+      extractClientDetailsOrNull(sessionPrincipal)
+        .ifPresent(clientDetails -> clientDetails.setClientConnection(clientConnection));
+
+      extractUserDetailsOrNull(sessionPrincipal)
+        .ifPresent(userDetails -> {
+          userDetails.setClientConnection(clientConnection);
           playerService.setPlayerOnline(userDetails.getPlayer());
+        });
+    }
+
+    private Optional<FafClientDetails> extractClientDetailsOrNull(Principal principal) {
+      if (!(principal instanceof OAuth2Authentication)) {
+        return Optional.empty();
+      }
+      Object oAuthPrincipal = ((OAuth2Authentication) principal).getPrincipal();
+      if (oAuthPrincipal instanceof FafClientDetails) {
+        return Optional.of((FafClientDetails) oAuthPrincipal);
+      }
+      return Optional.empty();
+    }
+
+    private Optional<FafUserDetails> extractUserDetailsOrNull(Principal principal) {
+      if (principal instanceof OAuth2Authentication) {
+        Object oAuthPrincipal = ((OAuth2Authentication) principal).getPrincipal();
+        if (oAuthPrincipal instanceof FafUserDetails) {
+          return Optional.of((FafUserDetails) oAuthPrincipal);
+        }
+      } else if (principal instanceof UsernamePasswordAuthenticationToken) {
+        Object tokenPrincipal = ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        if (tokenPrincipal instanceof FafUserDetails) {
+          return Optional.of((FafUserDetails) tokenPrincipal);
         }
       }
+      return Optional.empty();
     }
 
     @Override

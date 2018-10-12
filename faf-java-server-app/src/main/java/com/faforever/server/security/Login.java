@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.keyvalue.annotation.KeySpace;
 
 import javax.persistence.Column;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -51,7 +52,7 @@ public abstract class Login {
   @Column(name = "ip")
   private String ip;
 
-  @OneToMany(mappedBy = "user")
+  @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
   private Set<BanDetails> banDetails = new HashSet<>();
 
   @OneToOne(mappedBy = "player")

@@ -1,10 +1,14 @@
 package com.faforever.server.avatar;
 
+import com.faforever.server.player.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AvatarAssociationRepository extends JpaRepository<AvatarAssociation, Integer> {
@@ -21,4 +25,8 @@ public interface AvatarAssociationRepository extends JpaRepository<AvatarAssocia
   @Modifying
   @Query("update AvatarAssociation set selected = case when (avatar.id = :avatarId) then 1 else 0 end where player.id = :playerId ")
   void selectAvatar(@Param("playerId") int playerId, @Param("avatarId") int avatarId);
+
+  List<AvatarAssociation> findByPlayer(Player player);
+
+  Optional<AvatarAssociation> findBySelectedIsTrueAndPlayerIs(Player player);
 }

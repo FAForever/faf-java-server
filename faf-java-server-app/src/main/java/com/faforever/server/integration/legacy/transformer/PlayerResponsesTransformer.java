@@ -4,6 +4,7 @@ import com.faforever.server.client.PlayerResponses;
 import com.faforever.server.player.PlayerResponse;
 import com.faforever.server.player.PlayerResponse.Avatar;
 import com.faforever.server.player.PlayerResponse.Rating;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import org.springframework.integration.transformer.GenericTransformer;
@@ -61,7 +62,7 @@ public enum PlayerResponsesTransformer implements GenericTransformer<PlayerRespo
       builder
         .put("avatar", ImmutableMap.of(
           "url", avatar.getUrl(),
-          "tooltip", avatar.getDescription()));
+          "tooltip", Strings.nullToEmpty(avatar.getDescription())));
     }
 
     return builder.build();

@@ -1,7 +1,7 @@
 package com.faforever.server.game;
 
 import com.faforever.server.avatar.Avatar;
-import com.faforever.server.avatar.AvatarAssociation;
+import com.faforever.server.avatar.AvatarService;
 import com.faforever.server.client.ClientService;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
@@ -28,10 +28,12 @@ public class SpoofDetectorService {
 
   private final PlayerService playerService;
   private final ClientService clientService;
+  private final AvatarService avatarService;
 
-  public SpoofDetectorService(PlayerService playerService, ClientService clientService) {
+  public SpoofDetectorService(PlayerService playerService, ClientService clientService, AvatarService avatarService) {
     this.playerService = playerService;
     this.clientService = clientService;
+    this.avatarService = avatarService;
   }
 
   public void verifyPlayer(Player reporter, int reporteeId, String name, float mean, float deviation, String country, String avatarUrl, String avatarDescription) {
@@ -67,22 +69,20 @@ public class SpoofDetectorService {
   }
 
   private boolean isAvatarDataCorrect(Player reporter, String avatarUrl, String avatarDescription, Player reportee) {
-    Optional<Avatar> optionalAvatar = reportee.getAvailableAvatars().stream()
-      .filter(AvatarAssociation::isSelected)
-      .map(AvatarAssociation::getAvatar)
-      .findFirst();
-    if (optionalAvatar.isPresent()) {
-      Avatar avatar = optionalAvatar.get();
-      if (!Objects.equals(avatarUrl, avatar.getUrl())) {
-        log.debug("Avatar URL '{}' of player '{}' does not match in-game URL '{}' as reported by player '{}'",
-          avatarUrl, reportee, avatar.getUrl(), reporter);
-        return false;
-      }
-      if (!Objects.equals(avatarDescription, avatar.getDescription())) {
-        log.debug("Avatar description '{}' of player '{}' does not match in-game description '{}' as reported by player '{}'",
-          avatarDescription, reportee, avatar.getDescription(), reporter);
-        return false;
-      }
+    Optional<Avatar> optionalAvatar = avatarService.getCurrentAvatar(reportee);
+    if (!optionalAvatar.isPresent()) {
+      return true;
+    }
+    Avatar avatar = optionalAvatar.get();
+    if (!Objects.equals(avatarUrl, avatar.getUrl())) {
+      log.debug("Avatar URL '{}' of player '{}' does not match in-game URL '{}' as reported by player '{}'",
+        avatarUrl, reportee, avatar.getUrl(), reporter);
+      return false;
+    }
+    if (!Objects.equals(avatarDescription, avatar.getDescription())) {
+      log.debug("Avatar description '{}' of player '{}' does not match in-game description '{}' as reported by player '{}'",
+        avatarDescription, reportee, avatar.getDescription(), reporter);
+      return false;
     }
     return true;
   }

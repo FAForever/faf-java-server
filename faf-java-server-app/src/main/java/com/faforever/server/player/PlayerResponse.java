@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.Value;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.TimeZone;
 
@@ -31,6 +32,7 @@ public class PlayerResponse implements ServerMessage {
   @Value
   public static class Avatar {
     String url;
+    @Nullable
     String description;
   }
 }

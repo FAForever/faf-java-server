@@ -4,7 +4,6 @@ import com.faforever.server.FafServerApplication.ApplicationShutdownEvent;
 import com.faforever.server.api.dto.AchievementState;
 import com.faforever.server.api.dto.UpdatedAchievementResponse;
 import com.faforever.server.avatar.Avatar;
-import com.faforever.server.avatar.AvatarAssociation;
 import com.faforever.server.clan.Clan;
 import com.faforever.server.clan.ClanMembership;
 import com.faforever.server.common.ServerMessage;
@@ -151,9 +150,7 @@ public class ClientServiceTest {
   public void sendUserDetails() {
     Avatar avatar = new Avatar().setUrl("http://example.com").setDescription("Tooltip");
     player
-      .setAvailableAvatars(Collections.singletonList(
-        new AvatarAssociation().setAvatar(avatar).setPlayer(player).setSelected(true)
-      ))
+      .setAvatar(avatar)
       .setGlobalRating((GlobalRating) new GlobalRating().setNumGames(12).setMean(1100d).setDeviation(100d))
       .setLadder1v1Rating((Ladder1v1Rating) new Ladder1v1Rating().setMean(900d).setDeviation(50d))
       .setClanMemberships(Collections.singletonList(new ClanMembership().setClan(new Clan().setTag("FOO"))))
@@ -214,8 +211,8 @@ public class ClientServiceTest {
   @Test
   public void sendOnlinePlayerList() throws Exception {
     List<Player> players = Arrays.asList(
-      (Player) new Player().setAvailableAvatars(emptyList()).setId(1).setLogin("JUnit").setCountry("CH"),
-      (Player) new Player().setAvailableAvatars(emptyList()).setId(2).setLogin("JUnit").setCountry("CH")
+      (Player) new Player().setId(1).setLogin("JUnit").setCountry("CH"),
+      (Player) new Player().setId(2).setLogin("JUnit").setCountry("CH")
     );
     ConnectionAware connectionAware = new Player().setClientConnection(clientConnection);
 
@@ -319,9 +316,9 @@ public class ClientServiceTest {
     instance.broadcastMinDelay = Duration.ofMinutes(-1);
 
     instance.broadcastPlayerInformation(Arrays.asList(
-      (Player) new Player().setAvailableAvatars(emptyList()).setId(1),
-      (Player) new Player().setAvailableAvatars(emptyList()).setId(2),
-      (Player) new Player().setAvailableAvatars(emptyList()).setId(3)
+      (Player) new Player().setId(1),
+      (Player) new Player().setId(2),
+      (Player) new Player().setId(3)
     ));
     instance.broadcastDelayedResponses();
 

@@ -18,17 +18,18 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Does not check user passwords. Not for production use, only for testing environments.
+ * Creates users if they don't yet exist. Does not check user passwords. Not for production use, only for testing
+ * environments.
  */
 @Configuration
 @ConditionalOnProperty(value = "faf-server.disable-authentication")
 @Slf4j
-public class NoopWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
+public class UserCreatingWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
 
   private final UserRepository userRepository;
   private final PlayerRepository playerRepository;
 
-  public NoopWebSecurityConfigurerAdapter(UserRepository userRepository, PlayerRepository playerRepository) {
+  public UserCreatingWebSecurityConfigurerAdapter(UserRepository userRepository, PlayerRepository playerRepository) {
     this.userRepository = userRepository;
     this.playerRepository = playerRepository;
   }

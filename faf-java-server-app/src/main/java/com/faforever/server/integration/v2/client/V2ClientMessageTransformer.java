@@ -2,9 +2,8 @@ package com.faforever.server.integration.v2.client;
 
 import com.faforever.server.common.ClientMessage;
 import com.faforever.server.error.ErrorCode;
-import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -50,8 +49,8 @@ public class V2ClientMessageTransformer implements GenericTransformer<String, Cl
       Requests.verify(mappingMethod != null, ErrorCode.UNSUPPORTED_REQUEST, source);
 
       return (ClientMessage) mappingMethod.invoke(v2ClientMessageMapper, message);
-    } catch (JsonMappingException e) {
-      throw new RequestException(e, ErrorCode.UNSUPPORTED_REQUEST, source, e.getMessage());
+    } catch (JsonProcessingException e) {
+      throw Requests.exception(e, ErrorCode.UNSUPPORTED_REQUEST, source, e.getMessage());
     }
   }
 }

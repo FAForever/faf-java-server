@@ -26,9 +26,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NoopWebSecurityConfigurerAdapterTest {
+public class UserCreatingWebSocketSecurityConfigurerAdapterTest {
 
-  private NoopWebSecurityConfigurerAdapter instance;
+  private UserCreatingWebSecurityConfigurerAdapter instance;
 
   @Mock
   private UserRepository userRepository;
@@ -37,7 +37,7 @@ public class NoopWebSecurityConfigurerAdapterTest {
 
   @Before
   public void setUp() throws Exception {
-    instance = new NoopWebSecurityConfigurerAdapter(userRepository, playerRepository);
+    instance = new UserCreatingWebSecurityConfigurerAdapter(userRepository, playerRepository);
 
     when(userRepository.save(any())).thenAnswer(invocation -> ((User) invocation.getArgument(0)).setId(1));
     when(playerRepository.findById(any())).thenAnswer(invocation -> Optional.of(new Player().setId(invocation.getArgument(0))));

@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -26,6 +27,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SocialServiceTest {
@@ -88,15 +90,17 @@ public class SocialServiceTest {
 
   @Test
   public void onAuthenticationSuccess() throws Exception {
+    Player player = new Player();
     User user = (User) new User()
-      .setPlayer(new Player()
-        .setSocialRelations(Arrays.asList(
-          new SocialRelation(1, null, 10, SocialRelationStatus.FRIEND),
-          new SocialRelation(2, null, 11, SocialRelationStatus.FOE)
-        )))
+      .setPlayer(player)
       .setPassword("pw")
       .setLogin("junit");
     FafUserDetails userDetails = new FafUserDetails(user);
+
+    when(socialRelationRepository.findAllByPlayer(player)).thenReturn(Arrays.asList(
+      new SocialRelation(1, null, 10, SocialRelationStatus.FRIEND),
+      new SocialRelation(2, null, 11, SocialRelationStatus.FOE)
+    ));
 
     instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, userDetails.getPlayer()));
 
@@ -112,14 +116,15 @@ public class SocialServiceTest {
   }
 
   @Test
-  public void onAuthenticationSuccessNullRelations() throws Exception {
+  public void onAuthenticationSuccessNoSocialRelations() throws Exception {
+    Player player = new Player();
     User user = (User) new User()
-      .setPlayer(new Player()
-        .setSocialRelations(null))
+      .setPlayer(player)
       .setPassword("pw")
       .setLogin("junit");
     FafUserDetails userDetails = new FafUserDetails(user);
 
+    when(socialRelationRepository.findAllByPlayer(player)).thenReturn(Collections.emptyList());
     instance.onPlayerOnlineEvent(new PlayerOnlineEvent(this, userDetails.getPlayer()));
 
     verify(clientService, never()).sendSocialRelations(any(), any());

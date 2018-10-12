@@ -5,7 +5,10 @@ import lombok.Data;
 
 import java.util.List;
 
-
+/**
+ * @deprecated the client should read the avatar list from the API instead
+ */
+@Deprecated
 @Data
 public class AvatarsResponse implements ServerMessage {
   private final List<Avatar> avatars;

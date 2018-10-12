@@ -210,8 +210,8 @@ public class V2ServerMessageTransformerTest {
 
   @Test
   public void errorMessage() {
-    UUID requestId = UUID.randomUUID();
-    String response = instance.transform(new ErrorResponse(ErrorCode.UNSUPPORTED_REQUEST, requestId, new String[]{"{\"foo\": \"bar\"}"}));
-    assertThat(response, is("{\"data\":{\"code\":109,\"title\":\"Unsupported request\",\"text\":\"The server received an unsupported request from your client: {\\\"foo\\\": \\\"bar\\\"}\",\"requestId\":\"" + requestId + "\",\"args\":[\"{\\\"foo\\\": \\\"bar\\\"}\"]},\"type\":\"error\"}"));
+    UUID requestId = UUID.fromString("fa41225f-d818-495f-8843-d421949d5968");
+    String response = instance.transform(new ErrorResponse(ErrorCode.UNSUPPORTED_REQUEST, requestId, new String[]{"{\"foo\": \"bar\"}", "JUnit Test"}));
+    assertThat(response, is("{\"data\":{\"code\":109,\"title\":\"Unsupported request\",\"text\":\"The server received an unsupported request from your client: {\\\"foo\\\": \\\"bar\\\"}. Cause: JUnit Test\",\"requestId\":\"fa41225f-d818-495f-8843-d421949d5968\",\"args\":[\"{\\\"foo\\\": \\\"bar\\\"}\",\"JUnit Test\"]},\"type\":\"error\"}"));
   }
 }

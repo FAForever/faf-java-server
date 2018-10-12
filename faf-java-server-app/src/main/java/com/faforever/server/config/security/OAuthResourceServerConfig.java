@@ -10,7 +10,6 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Res
 import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Locale;
 
@@ -27,7 +26,6 @@ public class OAuthResourceServerConfig extends ResourceServerConfigurerAdapter {
   private final String resourceId;
   private final ResourceServerTokenServices tokenServices;
 
-  @Inject
   public OAuthResourceServerConfig(ServerProperties serverProperties, ResourceServerTokenServices tokenServices) {
     this.resourceId = serverProperties.getOAuth2().getResourceId();
     this.tokenServices = tokenServices;

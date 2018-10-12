@@ -58,8 +58,9 @@ public class SocialService {
   @EventListener
   public void onPlayerOnlineEvent(PlayerOnlineEvent event) {
     Player player = event.getPlayer();
-    List<SocialRelation> socialRelations = player.getSocialRelations();
-    if (socialRelations == null) {
+    List<SocialRelation> socialRelations = socialRelationRepository.findAllByPlayer(player);
+
+    if (socialRelations.isEmpty()) {
       return;
     }
 

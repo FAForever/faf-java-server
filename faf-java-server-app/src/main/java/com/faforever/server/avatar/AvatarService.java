@@ -7,6 +7,7 @@ import com.faforever.server.player.Player;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,12 +36,20 @@ public class AvatarService {
 
   /**
    * Sends a list of available avatars to the specified player.
+   *
+   * @deprecated the client should read the avatar list from the API instead
    */
+  @Deprecated
   public void sendAvatarList(Player player) {
-    List<Avatar> avatars = player.getAvailableAvatars().stream()
+    List<Avatar> avatars = avatarAssociationRepository.findByPlayer(player).stream()
       .map(AvatarAssociation::getAvatar)
       .collect(Collectors.toList());
 
     clientService.sendAvatarList(avatars, player);
+  }
+
+  public Optional<Avatar> getCurrentAvatar(Player player) {
+    return avatarAssociationRepository.findBySelectedIsTrueAndPlayerIs(player)
+      .map(AvatarAssociation::getAvatar);
   }
 }

@@ -18,6 +18,10 @@ public final class Requests {
     return new RequestException(errorCode, args);
   }
 
+  public static RequestException exception(Throwable cause, ErrorCode errorCode, Object... args) {
+    return new RequestException(cause, errorCode, args);
+  }
+
   public static void verify(boolean expression, UUID requestId, ErrorCode errorCode, Object... args) {
     if (!expression) {
       throw new RequestException(requestId, errorCode, args);

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.MXBean;
 import java.util.Collection;
@@ -44,6 +45,7 @@ public class PlayerService {
       .register(meterRegistry);
   }
 
+  @Transactional
   public void setPlayerOnline(Player player) {
     log.debug("Adding player '{}'", player);
 
