@@ -125,7 +125,7 @@ public class V2ProtocolDocGenerator extends AbstractProcessor {
 
   private FileObject getOutputFile() throws IOException {
     return processingEnv.getFiler()
-      .createResource(StandardLocation.CLASS_OUTPUT, "com.faforever.server.doc", "v2-protocol.html");
+      .createResource(StandardLocation.SOURCE_OUTPUT, "", "public/v2-protocol.html");
   }
 
   private List<MessageCategory> buildMessageCategories(RoundEnvironment roundEnv) {
