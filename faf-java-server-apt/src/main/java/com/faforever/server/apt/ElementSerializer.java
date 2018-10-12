@@ -68,6 +68,8 @@ public class ElementSerializer extends StdSerializer<TypeElement> {
     if (typeNameElement.isPresent()) {
       gen.writeFieldName("type");
       gen.writeString((String) typeNameElement.get().getConstantValue());
+      gen.writeFieldName("data");
+      gen.writeStartObject();
     }
 
     Map<Name, Element> fields = value.getEnclosedElements().stream()
@@ -132,6 +134,10 @@ public class ElementSerializer extends StdSerializer<TypeElement> {
         default:
           throw new IllegalArgumentException("Not meant to serialize: " + value.getKind());
       }
+    }
+
+    if (typeNameElement.isPresent()) {
+      gen.writeEndObject();
     }
 
     gen.writeEndObject();
