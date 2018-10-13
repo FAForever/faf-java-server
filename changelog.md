@@ -17,7 +17,7 @@ Nothing yet
 ### Changed
 - Replaced UID verification with integration of the [FAF Policy Server](https://github.com/FAForever/faf-policy-server).
 The environment variables `UID_ENABLED` and `UID_PRIVATE_KEY` have been removed, `POLICY_SERVICE_URL` has been added.
-If not policy service URL is specified, the service is disabled.
+If no policy service URL is specified, the service is disabled.
 - If ladder1v1 or coop isn't available in the database, the server will now start anyway but log warn messages.
 These game modes will then not be available and an error will be sent to the client if it tries to use them.
 
