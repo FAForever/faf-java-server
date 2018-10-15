@@ -1,0 +1,21 @@
+faf-server:
+  geo-ip:
+    database-url: http://content.faforever.com/GeoLite2-City.mmdb.gz
+  database:
+    schema-version: ${DATABASE_SCHEMA_VERSION:59}
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
+        dialect: org.hibernate.dialect.MySQL5Dialect
+
+logging:
+  level:
+    com.faforever.server.geoip.GeoIpService: debug
