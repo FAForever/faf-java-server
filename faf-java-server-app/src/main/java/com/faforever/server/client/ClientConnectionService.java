@@ -115,7 +115,7 @@ public class ClientConnectionService {
     log.trace("Disconnecting clients that have been idle since '{}", deadline);
 
     connections.values().parallelStream()
-      .filter(clientConnection -> clientConnection.getLastSeen().isBefore(deadline))
+      .filter(clientConnection -> clientConnection.getLastSeen().isBefore(deadline) && clientConnection.getProtocol() != Protocol.V2_JSON_UTF_8)
       .forEach(this::disconnectClient);
   }
 

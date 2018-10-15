@@ -24,12 +24,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Configuration
 @ConditionalOnProperty(value = "faf-server.disable-authentication")
 @Slf4j
-public class UserCreatingWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
+public class UserCreatingWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
   private final UserRepository userRepository;
   private final PlayerRepository playerRepository;
 
-  public UserCreatingWebSecurityConfigurerAdapter(UserRepository userRepository, PlayerRepository playerRepository) {
+  public UserCreatingWebSecurityConfig(UserRepository userRepository, PlayerRepository playerRepository) {
     this.userRepository = userRepository;
     this.playerRepository = playerRepository;
   }
