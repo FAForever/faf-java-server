@@ -24,7 +24,7 @@ before_install:
 install:
   - git clone https://github.com/FAForever/faf-stack.git faf-stack
       && pushd faf-stack
-    && git checkout v18.10.4
+      && git checkout v18.10.4
       && cp -r config.template config
       && popd
   - docker-compose -f faf-stack/docker-compose.yml up -d faf-db
@@ -36,20 +36,14 @@ after_success:
   - ./gradlew jacocoTestReport coveralls
   - export IMAGE_TAG=faf-java-server;
   - export REPO=faforever/faf-java-server;
-  - if [ -n "${TRAVIS_TAG}" ]; then
+  - if [ -n "${TRAVIS_TAG}" -o "${TRAVIS_BRANCH}" == "develop" ]; then
       docker build -t ${IMAGE_TAG} faf-java-server-app &&
       echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin &&
-    docker tag ${IMAGE_TAG} ${REPO}:v${VERSION} &&
+      docker tag ${IMAGE_TAG} ${REPO}:${TRAVIS_TAG} &&
       docker push ${REPO};
     fi
 # TODO Codacy coverage reporter does not yet support Java 9. See https://github.com/codacy/codacy-coverage-reporter/issues/76
 #      ./gradlew sendCoverageToCodacy;
-  - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
-      docker build -t ${IMAGE_TAG} faf-java-server-app &&
-      echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin &&
-    docker tag ${IMAGE_TAG} ${REPO}:v${VERSION} &&
-      docker push ${REPO};
-    fi
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
