@@ -22,8 +22,6 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'propdeps'
 
-version "${version}"
-
 repositories {
   mavenCentral()
   jcenter()
