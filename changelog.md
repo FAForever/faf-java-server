@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-Nothing yet
+### Fixed
+
+- Don't require login for actuator endpoints
 
 ## v1.3.4
 ### Added
