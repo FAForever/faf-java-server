@@ -7,7 +7,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
 @Configuration
-@Order(101)
+// Default order of other adapters is 100, so make sure this one comes first
+@Order(99)
 public class HttpSecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Override
