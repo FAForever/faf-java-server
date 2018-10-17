@@ -784,6 +784,7 @@ public class GameService {
     }
 
     changeGameState(game, GameState.CLOSED);
+    markDirty(game, Duration.ZERO, Duration.ZERO);
 
     activeGameRepository.delete(game);
   }

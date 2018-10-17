@@ -615,6 +615,10 @@ public class GameServiceTest {
     closePlayerGame(player2);
     assertThat(game.getState(), is(GameState.CLOSED));
 
+    ArgumentCaptor<GameResponse> gameCaptor = ArgumentCaptor.forClass(GameResponse.class);
+    verify(clientService, atLeastOnce()).broadcastDelayed(gameCaptor.capture(), any(), any(), any(), any());
+
+    assertThat(gameCaptor.getValue().getState(), is(GameState.CLOSED));
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(player2.getCurrentGame(), is(nullValue()));
@@ -632,6 +636,11 @@ public class GameServiceTest {
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
+
+    ArgumentCaptor<GameResponse> gameCaptor = ArgumentCaptor.forClass(GameResponse.class);
+    verify(clientService, atLeastOnce()).broadcastDelayed(gameCaptor.capture(), any(), any(), any(), any());
+
+    assertThat(gameCaptor.getValue().getState(), is(GameState.CLOSED));
   }
 
   @Test
@@ -718,6 +727,11 @@ public class GameServiceTest {
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
     assertThat(player2.getCurrentGame(), is(nullValue()));
     assertThat(player2.getGameState(), is(PlayerGameState.NONE));
+
+    ArgumentCaptor<GameResponse> gameCaptor = ArgumentCaptor.forClass(GameResponse.class);
+    verify(clientService, atLeastOnce()).broadcastDelayed(gameCaptor.capture(), any(), any(), any(), any());
+
+    assertThat(gameCaptor.getValue().getState(), is(GameState.CLOSED));
   }
 
   @Test
