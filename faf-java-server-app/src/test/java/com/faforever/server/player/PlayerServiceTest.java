@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,11 +46,9 @@ public class PlayerServiceTest {
   @Mock
   private GeoIpService geoIpService;
 
-  private OnlinePlayerRepository onlinePlayerRepository;
-
   @Before
   public void setUp() throws Exception {
-    onlinePlayerRepository = new FakeOnlinePlayerRepository();
+    OnlinePlayerRepository onlinePlayerRepository = new FakeOnlinePlayerRepository();
     player = (Player) new Player().setId(1);
     player.setLogin("JUnit");
     instance = new PlayerService(clientService, meterRegistry, onlinePlayerRepository, eventPublisher, geoIpService);
@@ -174,6 +173,11 @@ public class PlayerServiceTest {
       return players.values().stream()
         .filter(player1 -> player1.getLogin().equals(login))
         .findFirst();
+    }
+
+    @Override
+    public List<Player> findAllByCountry(String country) {
+      return players.values().stream().filter(player -> player.getCountry() != null).collect(Collectors.toList());
     }
   }
 

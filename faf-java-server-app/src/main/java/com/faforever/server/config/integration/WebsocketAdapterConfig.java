@@ -31,6 +31,7 @@ import org.springframework.integration.websocket.support.SubProtocolHandlerRegis
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
@@ -194,6 +195,11 @@ public class WebsocketAdapterConfig {
 
       extractClientDetailsOrNull(sessionPrincipal)
         .ifPresent(clientDetails -> clientDetails.setClientConnection(clientConnection));
+
+      if (!(sessionPrincipal instanceof Authentication)) {
+        throw new IllegalStateException("Session principal needs to be a subclass of Authentication");
+      }
+      clientConnection.setAuthentication((Authentication) sessionPrincipal);
 
       extractUserDetailsOrNull(sessionPrincipal)
         .ifPresent(userDetails -> {
