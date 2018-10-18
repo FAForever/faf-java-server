@@ -72,7 +72,7 @@ public class GeoIpService {
     return lookupCity(inetAddress).map(city -> city.getLocation().getTimeZone()).map(TimeZone::getTimeZone);
   }
 
-  private Optional<CityResponse> lookupCity(InetAddress inetAddress) {
+  public Optional<CityResponse> lookupCity(InetAddress inetAddress) {
     Assert.state(databaseReader != null, "Database has not been initialized");
     return noCatch(() -> {
       try {
