@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -62,9 +60,6 @@ public class FafUserDetails extends org.springframework.security.core.userdetail
 
   private static boolean isNonLocked(Set<BanDetails> banDetails) {
     return banDetails.stream()
-      .noneMatch(details ->
-        !details.isRevoked()
-          && (details.getExpiresAt() == null || details.getExpiresAt().after(Timestamp.from(Instant.now())))
-      );
+      .noneMatch(BanDetails::isActive);
   }
 }
