@@ -8,6 +8,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.Game;
+import com.faforever.server.game.GameParticipant;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
 import com.faforever.server.game.LobbyMode;
@@ -163,15 +164,15 @@ public class MatchMakerService {
    * @throws RequestException if a player is not available for matchmaking or the map to be played is unknown by the
    * server.
    */
-  public void createMatch(ConnectionAware requester, UUID requestId, String title, String featuredMod, List<MatchParticipant> participants, int mapVersionId) {
+  public void createMatch(ConnectionAware requester, UUID requestId, String title, String featuredMod, List<GameParticipant> participants, int mapVersionId) {
     MapVersion mapVersion = mapService.findMap(mapVersionId)
       .orElseThrow(() -> new RequestException(requestId, ErrorCode.UNKNOWN_MAP, mapVersionId));
 
     createMatchInternal(title, participants, mapVersion, featuredMod, requestId, requester);
   }
 
-  private void setPlayerOptionsForMatchParticipant(List<MatchParticipant> participants, Player host, AtomicInteger counter, Integer playerId) {
-    MatchParticipant participant = getMatchParticipant(participants, playerId);
+  private void setPlayerOptionsForMatchParticipant(List<GameParticipant> participants, Player host, AtomicInteger counter, Integer playerId) {
+    GameParticipant participant = getMatchParticipant(participants, playerId);
     gameService.updatePlayerOption(host, playerId, GameService.OPTION_TEAM, participant.getTeam());
     gameService.updatePlayerOption(host, playerId, GameService.OPTION_FACTION, participant.getFaction().toFaValue());
     gameService.updatePlayerOption(host, playerId, GameService.OPTION_START_SPOT, participant.getStartSpot());
@@ -181,9 +182,9 @@ public class MatchMakerService {
   }
 
   @NotNull
-  private MatchParticipant getMatchParticipant(List<MatchParticipant> participants, int playerId) {
+  private GameParticipant getMatchParticipant(List<GameParticipant> participants, int playerId) {
     return participants.stream()
-      .filter(matchParticipant -> matchParticipant.getId() == playerId)
+      .filter(gameParticipant -> gameParticipant.getId() == playerId)
       .findFirst()
       .orElseThrow(() -> new IllegalStateException("No match participant for player: " + playerId));
   }
@@ -215,8 +216,8 @@ public class MatchMakerService {
         String title = createMatchTitle(poolName, players);
 
         AtomicInteger startSpot = new AtomicInteger();
-        List<MatchParticipant> participants = match.searches.stream()
-          .map(search -> new MatchParticipant(search.player.getId(), search.faction, GameService.NO_TEAM_ID, search.player.getLogin(), startSpot.get()))
+        List<GameParticipant> participants = match.searches.stream()
+          .map(search -> new GameParticipant(search.player.getId(), search.faction, GameService.NO_TEAM_ID, search.player.getLogin(), startSpot.get()))
           .collect(Collectors.toList());
 
         MapVersion map = randomMap(players);
@@ -281,13 +282,13 @@ public class MatchMakerService {
       .forEach(match -> clientService.sendMatchmakerNotification(match.poolName, match.rightPlayer));
   }
 
-  private void createMatchInternal(String title, List<MatchParticipant> participants, MapVersion map, String featuredMod,
+  private void createMatchInternal(String title, List<GameParticipant> presetParticipants, MapVersion map, String featuredMod,
                                    @Nullable UUID requestId, @Nullable ConnectionAware requester) {
-    log.debug("Creating match '{}' with '{}' participants on map '{}'", title, participants.size(), map);
+    log.debug("Creating match '{}' with '{}' presetParticipants on map '{}'", title, presetParticipants.size(), map);
 
-    List<Player> players = participants.stream()
-      .map(matchParticipant -> playerService.getOnlinePlayer(matchParticipant.getId())
-        .orElseThrow(() -> new RequestException(requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, matchParticipant.getId())))
+    List<Player> players = presetParticipants.stream()
+      .map(gameParticipant -> playerService.getOnlinePlayer(gameParticipant.getId())
+        .orElseThrow(() -> new RequestException(requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, gameParticipant.getId())))
       .peek(player -> Requests.verify(player.getCurrentGame() == null, requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, player))
       .peek(this::removePlayer)
       .collect(Collectors.toList());
@@ -298,7 +299,7 @@ public class MatchMakerService {
     Player host = players.get(0);
     List<Player> guests = players.subList(1, players.size());
 
-    gameService.createGame(title, featuredMod, mapFileName, null, GameVisibility.PRIVATE, null, null, host, LobbyMode.NONE)
+    gameService.createGame(title, featuredMod, mapFileName, null, GameVisibility.PRIVATE, null, null, host, LobbyMode.NONE, Optional.of(presetParticipants))
       .handle((game, throwable) -> {
         if (throwable != null) {
           log.debug("The host of match '{}' failed to start his game", title, throwable);
@@ -308,7 +309,7 @@ public class MatchMakerService {
         AtomicInteger counter = new AtomicInteger();
         Integer hostId = host.getId();
 
-        setPlayerOptionsForMatchParticipant(participants, host, counter, hostId);
+        setPlayerOptionsForMatchParticipant(presetParticipants, host, counter, hostId);
 
         log.trace("Host '{}' for match '{}' is ready", host, title);
         if (requester != null) {
@@ -319,7 +320,7 @@ public class MatchMakerService {
           .peek(player -> log.trace("Telling player '{}' to start the game process for match '{}'", player, title))
           .map(player -> gameService.joinGame(game.getId(), null, player)
             .thenApply(gameStartedFuture -> {
-              setPlayerOptionsForMatchParticipant(participants, host, counter, player.getId());
+              setPlayerOptionsForMatchParticipant(presetParticipants, host, counter, player.getId());
               return gameStartedFuture;
             })
           )

@@ -37,6 +37,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -76,7 +77,7 @@ public class GameServiceActivatorsTest {
   @Test
   public void hostGameRequest() {
     instance.hostGameRequest(new HostGameRequest("scmp01", "Title", "mod", "pw", GameVisibility.PUBLIC, 600, 900), clientConnection.getAuthentication());
-    verify(gameService).createGame("Title", "mod", "scmp01", "pw", GameVisibility.PUBLIC, 600, 900, player, LobbyMode.DEFAULT);
+    verify(gameService).createGame("Title", "mod", "scmp01", "pw", GameVisibility.PUBLIC, 600, 900, player, LobbyMode.DEFAULT, Optional.empty());
   }
 
   @Test

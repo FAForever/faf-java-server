@@ -32,7 +32,6 @@ public class CreateMatchRequest implements ClientMessage {
   public static class Participant {
     private int id;
     private Faction faction;
-    private int slot;
     private int team;
     private String name;
     private int startSpot;

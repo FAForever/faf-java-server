@@ -6,6 +6,7 @@ import com.faforever.server.config.ServerProperties;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.Faction;
 import com.faforever.server.game.Game;
+import com.faforever.server.game.GameParticipant;
 import com.faforever.server.game.GameService;
 import com.faforever.server.game.GameVisibility;
 import com.faforever.server.game.LobbyMode;
@@ -127,7 +128,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any(), any());
+    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), eq(null), any());
   }
 
@@ -140,7 +141,10 @@ public class MatchMakerServiceTest {
     Player player2 = (Player) new Player().setLogin(LOGIN_PLAYER_2).setId(2);
     Game game = new Game(1);
 
-    when(gameService.createGame(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    GameParticipant gameParticipant1 = new GameParticipant(1, Faction.CYBRAN, 1, LOGIN_PLAYER_1, 0);
+    GameParticipant gameParticipant2 = new GameParticipant(2, Faction.AEON, 1, LOGIN_PLAYER_2, 0);
+
+    when(gameService.createGame(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
       .thenReturn(CompletableFuture.completedFuture(game));
     when(gameService.joinGame(1, null, player2))
       .thenReturn(CompletableFuture.completedFuture(game));
@@ -153,7 +157,7 @@ public class MatchMakerServiceTest {
     instance.processPools();
 
     verify(gameService).createGame(LOGIN_PLAYER_1 + " vs. " + LOGIN_PLAYER_2, "ladder1v1", "SCMP_001",
-      null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE);
+      null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE, Optional.of(List.of(gameParticipant1, gameParticipant2)));
     verify(gameService).joinGame(1, null, player2);
 
     verify(gameService, times(10)).updatePlayerOption(any(), anyInt(), any(), any());
@@ -177,7 +181,7 @@ public class MatchMakerServiceTest {
     instance.submitSearch(player2, Faction.AEON, QUEUE_NAME);
     instance.processPools();
 
-    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any(), any());
+    verify(gameService, never()).createGame(any(), any(), any(), any(), any(), anyInt(), anyInt(), any(), any(), any());
     verify(gameService, never()).joinGame(anyInt(), eq(null), any());
   }
 
@@ -218,12 +222,12 @@ public class MatchMakerServiceTest {
 
   @Test
   public void createMatch() {
-    MatchParticipant participant1 = new MatchParticipant().setId(1).setFaction(Faction.UEF).setTeam(1).setStartSpot(1);
-    MatchParticipant participant2 = new MatchParticipant().setId(2).setFaction(Faction.AEON).setTeam(2).setStartSpot(2);
+    GameParticipant participant1 = new GameParticipant().setId(1).setFaction(Faction.UEF).setTeam(1).setStartSpot(1);
+    GameParticipant participant2 = new GameParticipant().setId(2).setFaction(Faction.AEON).setTeam(2).setStartSpot(2);
 
     ConnectionAware requester = mock(ConnectionAware.class);
     UUID requestId = UUID.randomUUID();
-    List<MatchParticipant> participants = Arrays.asList(
+    List<GameParticipant> participants = Arrays.asList(
       participant1, participant2
     );
     int mapVersionId = 1;
@@ -236,7 +240,7 @@ public class MatchMakerServiceTest {
     when(mapService.findMap(mapVersionId)).thenReturn(Optional.of(new MapVersion().setFilename("maps/foo.zip")));
 
     Game game = new Game().setId(1);
-    when(gameService.createGame("Test match", "faf", "foo", null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE))
+    when(gameService.createGame("Test match", "faf", "foo", null, GameVisibility.PRIVATE, null, null, player1, LobbyMode.NONE, Optional.of(participants)))
       .thenReturn(CompletableFuture.completedFuture(game));
 
     when(gameService.joinGame(1, null, player2)).thenReturn(CompletableFuture.completedFuture(game));

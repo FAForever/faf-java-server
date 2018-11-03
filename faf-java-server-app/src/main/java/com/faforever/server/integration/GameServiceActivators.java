@@ -45,7 +45,8 @@ public class GameServiceActivators {
   @ServiceActivator(inputChannel = ChannelNames.HOST_GAME_REQUEST)
   public void hostGameRequest(HostGameRequest request, @Header(USER_HEADER) Authentication authentication) {
     gameService.createGame(request.getTitle(), request.getMod(), request.getMapName(), request.getPassword(),
-      request.getVisibility(), request.getMinRating(), request.getMaxRating(), getPlayer(authentication), LobbyMode.DEFAULT);
+      request.getVisibility(), request.getMinRating(), request.getMaxRating(), getPlayer(authentication),
+      LobbyMode.DEFAULT, Optional.empty());
   }
 
   @ServiceActivator(inputChannel = ChannelNames.JOIN_GAME_REQUEST)

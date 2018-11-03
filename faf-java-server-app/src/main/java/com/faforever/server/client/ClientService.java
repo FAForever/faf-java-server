@@ -92,7 +92,11 @@ public class ClientService {
 
   public void startGameProcess(Game game, Player player) {
     log.debug("Telling '{}' to start game process for game '{}'", game.getHost(), game);
-    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), game.getLobbyMode(), getCommandLineArgs(player)), player);
+
+    Optional<Integer> team = game.getPresetParticipants()
+      .map(gameParticipants -> gameParticipants.get(player.getId()).getTeam());
+
+    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), game.getLobbyMode(), team, getCommandLineArgs(player)), player);
   }
 
   /**

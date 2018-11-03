@@ -1,7 +1,7 @@
-package com.faforever.server.matchmaker;
+package com.faforever.server.game;
 
-import com.faforever.server.game.Faction;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +12,8 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString(of = {"id", "name"})
-class MatchParticipant {
+@EqualsAndHashCode(of = "id")
+public class GameParticipant {
   private int id;
   private Faction faction;
   private int team;
