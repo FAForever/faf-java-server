@@ -247,7 +247,7 @@ public class GameServiceTest {
   @Test
   public void updateGameStateIdle() {
     instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
-      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
+      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT, Optional.empty());
     instance.updatePlayerGameState(PlayerGameState.IDLE, player1);
 
     Game game = instance.getActiveGame(1).get();
@@ -1159,7 +1159,8 @@ public class GameServiceTest {
   @SuppressWarnings("unchecked")
   public void onAuthenticationSuccess() {
     player1.setCurrentGame(null);
-    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
+    instance.createGame("Test game", FAF_TECHNICAL_NAME, MAP_NAME, null, GameVisibility.PUBLIC,
+      GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT, Optional.empty());
 
     TestingAuthenticationToken authentication = new TestingAuthenticationToken("JUnit", "foo");
     authentication.setDetails(new TestingAuthenticationToken(new FafUserDetails((User) new User().setPlayer(player2).setPassword("pw").setLogin("JUnit")), null));
@@ -1267,7 +1268,8 @@ public class GameServiceTest {
   @Test
   public void mutualDrawRequestedByPlayerInNonPlayingGameState() {
     player1.setCurrentGame(null);
-    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT);
+    instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret", GameVisibility.PUBLIC,
+      GAME_MIN_RATING, GAME_MAX_RATING, player1, LobbyMode.DEFAULT, Optional.empty());
     instance.updatePlayerGameState(PlayerGameState.LOBBY, player1);
 
     expectedException.expect(requestExceptionWithCode(ErrorCode.INVALID_GAME_STATE));
@@ -1513,7 +1515,7 @@ public class GameServiceTest {
     host.setCurrentGame(null);
 
     CompletableFuture<Game> joinable = instance.createGame("Game title", FAF_TECHNICAL_NAME, MAP_NAME, "secret",
-      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, host, LobbyMode.DEFAULT);
+      GameVisibility.PUBLIC, GAME_MIN_RATING, GAME_MAX_RATING, host, LobbyMode.DEFAULT, Optional.empty());
 
     assertThat(joinable.isDone(), is(false));
     assertThat(joinable.isCancelled(), is(false));

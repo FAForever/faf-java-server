@@ -226,7 +226,8 @@ public class GameService {
   @Transactional(readOnly = true)
   public CompletableFuture<Game> createGame(String title, String featuredModName, String mapFileName,
                                             String password, GameVisibility visibility,
-                                            Integer minRating, Integer maxRating, Player player, LobbyMode lobbyMode) {
+                                            Integer minRating, Integer maxRating, Player player, LobbyMode lobbyMode,
+                                            Optional<List<GameParticipant>> presetParticipants) {
 
     Game currentGame = player.getCurrentGame();
     if (currentGame != null && currentGame.getState() == GameState.INITIALIZING) {
@@ -241,6 +242,7 @@ public class GameService {
 
     int gameId = this.lastGameId.incrementAndGet();
     Game game = new Game(gameId);
+    game.setPresetParticipants(presetParticipants);
     game.setHost(player);
     modService.getFeaturedMod(featuredModName)
       .map(game::setFeaturedMod)

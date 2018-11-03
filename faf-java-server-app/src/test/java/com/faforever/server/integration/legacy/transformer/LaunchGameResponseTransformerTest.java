@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -21,6 +22,7 @@ public class LaunchGameResponseTransformerTest {
       4,
       null,
       LobbyMode.DEFAULT,
+      Optional.empty(),
       Arrays.asList("/numgames", "4")
     ));
 
@@ -39,6 +41,7 @@ public class LaunchGameResponseTransformerTest {
       4,
       "scmp01",
       LobbyMode.DEFAULT,
+      Optional.empty(),
       Arrays.asList("/numgames", "4")
     ));
 
@@ -57,6 +60,7 @@ public class LaunchGameResponseTransformerTest {
       4,
       null,
       LobbyMode.DEFAULT,
+      Optional.empty(),
       Arrays.asList("/numgames", "4", "/mean", "1500", "/deviation", "500")
     ));
   }

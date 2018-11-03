@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +46,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ToString(of = {"id", "title", "state"}, includeFieldNames = false)
 @KeySpace("game")
 public class Game {
+
+  @Transient
+  private Optional<List<GameParticipant>> presetParticipants;
 
   /**
    * A key-value map of gamespecific options, like {@code "PrebuiltUnits" -> "Off"}.
@@ -197,6 +201,7 @@ public class Game {
 
   public Game() {
     state = GameState.INITIALIZING;
+    presetParticipants = Optional.empty();
     playerOptions = new HashMap<>();
     options = new HashMap<>();
     aiOptions = new HashMap<>();

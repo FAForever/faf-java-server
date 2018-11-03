@@ -43,6 +43,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -173,13 +174,15 @@ public class V2ServerMessageTransformerTest {
 
   @Test
   public void startGameProcessWithoutMap() {
-    String response = instance.transform(new StartGameProcessResponse("faf", 1, null, LobbyMode.DEFAULT, Arrays.asList("/foo", "/bar")));
+    String response = instance.transform(new StartGameProcessResponse("faf", 1, null,
+      LobbyMode.DEFAULT, Optional.empty(), Arrays.asList("/foo", "/bar")));
     assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"lobbyMode\":\"DEFAULT\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test
   public void startGameProcessWithMap() {
-    String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01", LobbyMode.DEFAULT, Arrays.asList("/foo", "/bar")));
+    String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01",
+      LobbyMode.DEFAULT, Optional.empty(), Arrays.asList("/foo", "/bar")));
     assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"lobbyMode\":\"DEFAULT\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
