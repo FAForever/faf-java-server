@@ -27,7 +27,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import java.time.Instant;
 import java.util.Comparator;
 
 import static com.faforever.server.integration.MessageHeaders.CLIENT_CONNECTION;
@@ -93,7 +92,7 @@ public class LegacyServicesActivators {
   /** Throws an exception if the account has an active ban. */
   private void checkBan(FafUserDetails userDetails) {
     userDetails.getPlayer().getBanDetails().stream()
-      .filter(banDetail -> !banDetail.isRevoked() && (banDetail.getExpiresAt() == null || banDetail.getExpiresAt().toInstant().isAfter(Instant.now())))
+      .filter(BanDetails::isActive)
       .max(Comparator.comparing(BanDetails::getId))
       .ifPresent(banDetails -> {
         if (banDetails.getExpiresAt() != null) {
