@@ -13,6 +13,7 @@ import com.faforever.server.rating.GlobalRating;
 import com.faforever.server.rating.Rating;
 import com.faforever.server.security.Login;
 import com.faforever.server.security.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JoinColumnOrFormula;
@@ -52,6 +53,7 @@ public class Player extends Login implements ConnectionAware {
 
   @OneToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "id", insertable = false, updatable = false)
+  @JsonIgnore
   private User user;
 
   @ManyToOne

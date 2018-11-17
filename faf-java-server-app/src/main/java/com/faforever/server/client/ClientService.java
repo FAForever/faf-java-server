@@ -10,6 +10,7 @@ import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
 import com.faforever.server.game.Game;
+import com.faforever.server.game.GameParticipant;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
@@ -94,7 +95,8 @@ public class ClientService {
     log.debug("Telling '{}' to start game process for game '{}'", game.getHost(), game);
 
     Optional<Integer> team = game.getPresetParticipants()
-      .map(gameParticipants -> gameParticipants.get(player.getId()).getTeam());
+      .flatMap(gameParticipants -> gameParticipants.stream().filter(gameParticipant -> gameParticipant.getId() == player.getId()).findFirst())
+      .map(GameParticipant::getTeam);
 
     send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), game.getLobbyMode(), team, getCommandLineArgs(player)), player);
   }
