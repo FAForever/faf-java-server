@@ -28,6 +28,8 @@ public enum LaunchGameResponseTransformer implements GenericTransformer<StartGam
     Optional.ofNullable(source.getMapFolderName())
       .ifPresent(mapFolderName -> builder.put("mapname", mapFolderName));
 
+    source.getTeam().ifPresent(team -> builder.put("team", team));
+
     return builder.build();
   }
 
