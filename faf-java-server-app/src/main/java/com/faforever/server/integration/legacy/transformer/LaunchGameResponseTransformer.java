@@ -10,7 +10,6 @@ import org.springframework.util.Assert;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public enum LaunchGameResponseTransformer implements GenericTransformer<StartGameProcessResponse, Map<String, Serializable>> {
 
@@ -21,14 +20,27 @@ public enum LaunchGameResponseTransformer implements GenericTransformer<StartGam
     Builder<String, Serializable> builder = ImmutableMap.<String, Serializable>builder()
       .put("command", "game_launch")
       .put("mod", source.getMod())
+      .put("name", source.getName())
+      .put("team", source.getTeam())
       .put("lobby_mode", source.getLobbyMode().toString())
       .put("uid", source.getGameId())
       .put("args", toLegacyArgs(source.getCommandLineArguments()));
 
-    Optional.ofNullable(source.getMapFolderName())
-      .ifPresent(mapFolderName -> builder.put("mapname", mapFolderName));
+    if (source.getMapFolderName() != null) {
+      builder.put("mapname", source.getMapFolderName());
+    }
 
-    source.getTeam().ifPresent(team -> builder.put("team", team));
+    if (source.getFaction() != null) {
+      builder.put("faction", source.getFaction());
+    }
+
+    if (source.getExpectedPlayers() != null) {
+      builder.put("expectedPlayers", source.getExpectedPlayers());
+    }
+
+    if (source.getMapPosition() != null) {
+      builder.put("mapPosition", source.getMapPosition());
+    }
 
     return builder.build();
   }

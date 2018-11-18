@@ -11,6 +11,7 @@ import com.faforever.server.client.UpdatedAchievementsResponse.UpdatedAchievemen
 import com.faforever.server.config.JacksonConfig;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ErrorResponse;
+import com.faforever.server.game.Faction;
 import com.faforever.server.game.GameResponse;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.Player;
@@ -43,7 +44,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -175,15 +175,15 @@ public class V2ServerMessageTransformerTest {
   @Test
   public void startGameProcessWithoutMap() {
     String response = instance.transform(new StartGameProcessResponse("faf", 1, null,
-      LobbyMode.DEFAULT, Optional.empty(), Arrays.asList("/foo", "/bar")));
-    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"lobbyMode\":\"DEFAULT\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+      LobbyMode.DEFAULT, Faction.UEF, "someName", 2, 1, 3, Arrays.asList("/foo", "/bar")));
+    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"lobbyMode\":\"DEFAULT\",\"faction\":\"uef\",\"name\":\"someName\",\"expectedPlayers\":2,\"team\":1,\"mapPosition\":3,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test
   public void startGameProcessWithMap() {
     String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01",
-      LobbyMode.DEFAULT, Optional.empty(), Arrays.asList("/foo", "/bar")));
-    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"lobbyMode\":\"DEFAULT\",\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+      LobbyMode.DEFAULT, null, "someName", null, 0, null, Arrays.asList("/foo", "/bar")));
+    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"lobbyMode\":\"DEFAULT\",\"name\":\"someName\",\"team\":0,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
   }
 
   @Test
