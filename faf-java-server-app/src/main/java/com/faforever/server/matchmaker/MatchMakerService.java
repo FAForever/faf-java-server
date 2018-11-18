@@ -24,6 +24,7 @@ import com.faforever.server.rating.RatingService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +95,7 @@ public class MatchMakerService {
     if (!ladder1v1Mod.isPresent()) {
       throw Requests.exception(ErrorCode.MATCH_MAKER_LADDER1V1_NOT_AVAILABLE);
     }
+    log.debug("Player '{}' submitted a search to the pool '{}' as '{}'", player, poolName, faction);
 
     FeaturedMod featuredMod = ladder1v1Mod.get();
     modByPoolName.putIfAbsent(featuredMod.getTechnicalName(), featuredMod);
@@ -261,6 +263,7 @@ public class MatchMakerService {
               Optional.ofNullable(rightSearch.player.getLadder1v1Rating()).orElse(defaultRating)
             ));
         })
+        .peek(match -> log.trace("Potential match: {}", match))
         .filter(this::passesMinimumQuality)
         .max(Comparator.comparingDouble(value -> value.quality));
     }
@@ -382,6 +385,7 @@ public class MatchMakerService {
    * Represents a match of multiple searches. A {@code Match} is only created if a minimum quality is met.
    */
   @Value
+  @ToString
   private static class Match {
     List<MatchMakerSearch> searches;
     double quality;
@@ -392,6 +396,7 @@ public class MatchMakerService {
    */
   @AllArgsConstructor
   @EqualsAndHashCode(of = {"poolName", "player"})
+  @ToString
   private static class MatchMakerSearch {
     private final Instant createdTime;
     private final Player player;
