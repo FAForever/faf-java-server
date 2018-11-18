@@ -352,7 +352,7 @@ public class MatchMakerService {
       .min(Comparator.comparing(o -> o.createdTime))
       .orElseThrow(() -> new IllegalStateException("No searches"));
 
-    long secondsPassed = Math.max(1, Duration.between(Instant.now(), oldestSearch.createdTime).getSeconds());
+    long secondsPassed = Math.max(1, Duration.between(oldestSearch.createdTime, Instant.now()).getSeconds());
 
     float reductionPercent = (float) secondsPassed / acceptableQualityWaitTime;
     float reduction = (float) (reductionPercent * (desiredGameQuality - acceptableGameQuality));

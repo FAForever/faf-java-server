@@ -69,7 +69,7 @@ public class MapService {
     if (!ladder1v1.isPresent()) {
       throw new IllegalStateException("Ladder 1v1 mod could not be found");
     }
-    return ladder1v1MapRepository.findRecentlyPlayedLadderMapVersions(new PageRequest(0, limit), player.getId(), ladder1v1.get().getId()).getContent();
+    return ladder1v1MapRepository.findRecentlyPlayedLadderMapVersions(PageRequest.of(0, limit), player.getId(), ladder1v1.get().getId()).getContent();
   }
 
   @Transactional
