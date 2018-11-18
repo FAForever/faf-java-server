@@ -79,6 +79,7 @@ public class ClientServiceTest {
     serverProperties = new ServerProperties();
     clientConnection = new ClientConnection("1", Protocol.V1_LEGACY_UTF_16, mock(InetAddress.class));
     player = new Player().setClientConnection(clientConnection);
+    player.setLogin("playerLogin");
 
     instance = new ClientService(clientGateway, coopService, serverProperties);
   }

@@ -9,6 +9,7 @@ import com.faforever.server.common.ServerMessage;
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.coop.CoopService;
+import com.faforever.server.game.Faction;
 import com.faforever.server.game.Game;
 import com.faforever.server.game.GameParticipant;
 import com.faforever.server.game.GameResponse;
@@ -94,11 +95,17 @@ public class ClientService {
   public void startGameProcess(Game game, Player player) {
     log.debug("Telling '{}' to start game process for game '{}'", game.getHost(), game);
 
-    Optional<Integer> team = game.getPresetParticipants()
-      .flatMap(gameParticipants -> gameParticipants.stream().filter(gameParticipant -> gameParticipant.getId() == player.getId()).findFirst())
-      .map(GameParticipant::getTeam);
+    Optional<GameParticipant> currentParticipant = game.getPresetParticipants()
+      .flatMap(gameParticipants -> gameParticipants.stream().filter(gameParticipant -> gameParticipant.getId() == player.getId()).findFirst());
 
-    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(), game.getLobbyMode(), team, getCommandLineArgs(player)), player);
+    Integer expectedPlayers = game.getPresetParticipants().map(List::size).orElse(null);
+    Faction faction = currentParticipant.map(GameParticipant::getFaction).orElse(null);
+    String name = currentParticipant.map(GameParticipant::getName).orElse(player.getLogin());
+    int team = currentParticipant.map(GameParticipant::getTeam).orElse(1);
+    Integer mapPosition = currentParticipant.map(GameParticipant::getStartSpot).orElse(null);
+
+    send(new StartGameProcessResponse(game.getFeaturedMod().getTechnicalName(), game.getId(), game.getMapFolderName(),
+      game.getLobbyMode(), faction, name, expectedPlayers, team, mapPosition, getCommandLineArgs(player)), player);
   }
 
   /**
