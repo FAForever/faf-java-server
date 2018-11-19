@@ -47,8 +47,17 @@ import java.util.Collections;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import static com.spotify.hamcrest.jackson.JsonMatchers.isJsonStringMatching;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonArray;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonBoolean;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonDouble;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonInt;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonLong;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonObject;
+import static com.spotify.hamcrest.jackson.JsonMatchers.jsonText;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 @RunWith(MockitoJUnitRunner.class)
 public class V2ServerMessageTransformerTest {
@@ -65,37 +74,71 @@ public class V2ServerMessageTransformerTest {
   @Test
   public void infoResponse() {
     String response = instance.transform(new InfoResponse("Hello JUnit"));
-    assertThat(response, is("{\"data\":{\"message\":\"Hello JUnit\"},\"type\":\"info\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("info")))
+        .where("data", is(
+          jsonObject()
+            .where("message", is(jsonText("Hello JUnit")))))));
   }
 
   @Test
   public void hostGame() {
     String response = instance.transform(new HostGameResponse("scmp01"));
-    assertThat(response, is("{\"data\":{\"mapName\":\"scmp01\"},\"type\":\"hostGame\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("hostGame")))
+        .where("data", is(
+          jsonObject()
+            .where("mapName", is(jsonText("scmp01")))))));
   }
 
   @Test
   public void joinChatChannel() {
     String response = instance.transform(new JoinChatChannelResponse(ImmutableSet.of("#one", "#two")));
-    assertThat(response, is("{\"data\":{\"channels\":[\"#one\",\"#two\"]},\"type\":\"chatChannel\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("chatChannel")))
+        .where("data", is(
+          jsonObject().where("channels", is(jsonArray(contains(jsonText("#one"), jsonText("#two")))))))));
   }
 
   @Test
   public void connectToPeer() {
     String response = instance.transform(new ConnectToPeerResponse("junit", 123, false));
-    assertThat(response, is("{\"data\":{\"playerName\":\"junit\",\"playerId\":123},\"type\":\"connectToPeer\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("connectToPeer")))
+        .where("data", is(
+          jsonObject()
+            .where("playerName", is(jsonText("junit")))
+            .where("playerId", is(jsonInt(123)))))));
   }
 
   @Test
   public void disconnectFromPlayer() {
     String response = instance.transform(new DisconnectPlayerFromGameResponse(123));
-    assertThat(response, is("{\"data\":{\"playerId\":123},\"type\":\"disconnectFromPeer\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("disconnectFromPeer")))
+        .where("data", is(
+          jsonObject()
+            .where("playerId", is(jsonInt(123)))))));
   }
 
   @Test
   public void featuredMod() {
     String response = instance.transform(new FeaturedModResponse("faf", "Forged Alliance Forever", "Description", 1));
-    assertThat(response, is("{\"data\":{\"technicalName\":\"faf\",\"displayName\":\"Forged Alliance Forever\",\"description\":\"Description\",\"displayOrder\":1},\"type\":\"featuredMod\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("featuredMod")))
+        .where("data", is(
+          jsonObject()
+            .where("technicalName", is(jsonText("faf")))
+            .where("displayName", is(jsonText("Forged Alliance Forever")))
+            .where("description", is(jsonText("Description")))
+            .where("displayOrder", is(jsonInt(1)))
+        ))));
   }
 
   @Test
@@ -123,7 +166,49 @@ public class V2ServerMessageTransformerTest {
         )
       )
     );
-    assertThat(response, is("{\"data\":{\"id\":1,\"title\":\"Title\",\"gameVisibility\":\"PUBLIC\",\"passwordProtected\":false,\"state\":\"ENDED\",\"mod\":\"faf\",\"simMods\":[{\"uid\":\"1-1-1-1\",\"displayName\":\"Mod #1\"},{\"uid\":\"2-2-2-2\",\"displayName\":\"Mod #2\"}],\"map\":\"scmp01\",\"hostUsername\":\"JUnit4\",\"players\":[{\"id\":1,\"team\":1},{\"id\":2,\"team\":1}],\"maxPlayers\":12,\"startTime\":1196676930000,\"minRating\":500,\"maxRating\":800,\"modFileVersions\":[{\"id\":1,\"version\":4444},{\"id\":2,\"version\":6789}],\"modVersion\":1},\"type\":\"game\"}"));
+
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("game")))
+        .where("data", is(
+          jsonObject()
+            .where("id", is(jsonInt(1)))
+            .where("title", is(jsonText("Title")))
+            .where("gameVisibility", is(jsonText("PUBLIC")))
+            .where("passwordProtected", is(jsonBoolean(false)))
+            .where("state", is(jsonText("ENDED")))
+            .where("mod", is(jsonText("faf")))
+            .where("simMods", is(jsonArray(contains(
+              jsonObject()
+                .where("uid", is(jsonText("1-1-1-1")))
+                .where("displayName", is(jsonText("Mod #1"))),
+              jsonObject()
+                .where("uid", is(jsonText("2-2-2-2")))
+                .where("displayName", is(jsonText("Mod #2")))
+            ))))
+            .where("map", is(jsonText("scmp01")))
+            .where("hostUsername", is(jsonText("JUnit4")))
+            .where("players", is(jsonArray(contains(
+              jsonObject()
+                .where("id", is(jsonInt(1)))
+                .where("team", is(jsonInt(1))),
+              jsonObject()
+                .where("id", is(jsonInt(2)))
+                .where("team", is(jsonInt(1)))))))
+            .where("maxPlayers", is(jsonInt(12)))
+            .where("startTime", is(jsonLong(1196676930000L)))
+            .where("minRating", is(jsonInt(500)))
+            .where("maxRating", is(jsonInt(800)))
+            .where("modFileVersions", is(jsonArray(contains(
+              jsonObject()
+                .where("id", is(jsonInt(1)))
+                .where("version", is(jsonInt(4444))),
+              jsonObject()
+                .where("id", is(jsonInt(2)))
+                .where("version", is(jsonInt(6789)))
+            ))))
+            .where("modVersion", is(jsonInt(1)))
+        ))));
   }
 
   @Test
@@ -138,7 +223,24 @@ public class V2ServerMessageTransformerTest {
         "token"
       )))
     )));
-    assertThat(response, is("{\"data\":{\"iceServerLists\":[{\"ttlSeconds\":3600,\"createdAt\":1196676930000,\"servers\":[{\"url\":\"http://localhost\",\"username\":\"anonymous\",\"credential\":\"123\",\"credentialType\":\"token\"}]}]},\"type\":\"iceServers\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("iceServers")))
+        .where("data", is(
+          jsonObject()
+            .where("iceServerLists", is(jsonArray(contains(
+              jsonObject()
+                .where("ttlSeconds", is(jsonInt(3600)))
+                .where("createdAt", is(jsonLong(1196676930000L)))
+                .where("servers", is(jsonArray(contains(
+                  jsonObject()
+                    .where("url", is(jsonText("http://localhost")))
+                    .where("username", is(jsonText("anonymous")))
+                    .where("credential", is(jsonText("123")))
+                    .where("credentialType", is(jsonText("token")))
+                ))))
+            ))))
+        ))));
   }
 
   @Test
@@ -154,13 +256,45 @@ public class V2ServerMessageTransformerTest {
       new Avatar("http://localhost/avatar.png", "Avatar"),
       "AA"
     )));
-    assertThat(response, is("{\"data\":{\"playerId\":1,\"username\":\"A\",\"country\":\"CH\",\"timeZone\":\"Europe/Berlin\",\"globalRating\":{\"mean\":900.0,\"deviation\":120.0},\"ladder1v1Rating\":{\"mean\":600.0,\"deviation\":50.0},\"numberOfGames\":12,\"avatar\":{\"url\":\"http://localhost/avatar.png\",\"description\":\"Avatar\"},\"clanTag\":\"AA\"},\"type\":\"loginDetails\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("loginDetails")))
+        .where("data", is(
+          jsonObject()
+            .where("playerId", is(jsonInt(1)))
+            .where("username", is(jsonText("A")))
+            .where("country", is(jsonText("CH")))
+            .where("timeZone", is(jsonText("Europe/Berlin")))
+            .where("globalRating", is(
+              jsonObject()
+                .where("mean", is(jsonDouble(900.0)))
+                .where("deviation", is(jsonDouble(120.0)))
+            ))
+            .where("ladder1v1Rating", is(
+              jsonObject()
+                .where("mean", is(jsonDouble(600.0)))
+                .where("deviation", is(jsonDouble(50.0)))
+            ))
+            .where("numberOfGames", is(jsonInt(12)))
+            .where("avatar", is(
+              jsonObject()
+                .where("url", is(jsonText("http://localhost/avatar.png")))
+                .where("description", is(jsonText("Avatar")))
+            ))
+            .where("clanTag", is(jsonText("AA")))
+        ))));
   }
 
   @Test
   public void matchAvailable() {
     String response = instance.transform(new MatchMakerResponse("ladder2v2"));
-    assertThat(response, is("{\"data\":{\"pool\":\"ladder2v2\"},\"type\":\"matchAvailable\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("matchAvailable")))
+        .where("data", is(
+          jsonObject()
+            .where("pool", is(jsonText("ladder2v2")))
+        ))));
   }
 
   @Test
@@ -169,21 +303,60 @@ public class V2ServerMessageTransformerTest {
       new SocialRelationResponse(1, RelationType.FRIEND),
       new SocialRelationResponse(2, RelationType.FOE)
     )));
-    assertThat(response, is("{\"data\":{\"socialRelations\":[{\"playerId\":1,\"type\":\"FRIEND\"},{\"playerId\":2,\"type\":\"FOE\"}]},\"type\":\"socialRelations\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("socialRelations")))
+        .where("data", is(
+          jsonObject()
+            .where("socialRelations", is(jsonArray(contains(
+              jsonObject()
+                .where("playerId", is(jsonInt(1)))
+                .where("type", is(jsonText("FRIEND"))),
+              jsonObject()
+                .where("playerId", is(jsonInt(2)))
+                .where("type", is(jsonText("FOE")))
+            ))))
+        ))));
   }
 
   @Test
   public void startGameProcessWithoutMap() {
     String response = instance.transform(new StartGameProcessResponse("faf", 1, null,
       LobbyMode.DEFAULT, Faction.UEF, "someName", 2, 1, 3, Arrays.asList("/foo", "/bar")));
-    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"lobbyMode\":\"DEFAULT\",\"faction\":\"uef\",\"name\":\"someName\",\"expectedPlayers\":2,\"team\":1,\"mapPosition\":3,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("startGameProcess")))
+        .where("data", is(
+          jsonObject()
+            .where("mod", is(jsonText("faf")))
+            .where("gameId", is(jsonInt(1)))
+            .where("lobbyMode", is(jsonText("DEFAULT")))
+            .where("faction", is(jsonText("uef")))
+            .where("name", is(jsonText("someName")))
+            .where("expectedPlayers", is(jsonInt(2)))
+            .where("team", is(jsonInt(1)))
+            .where("mapPosition", is(jsonInt(3)))
+            .where("commandLineArguments", is(jsonArray(contains(jsonText("/foo"), jsonText("/bar")))))
+        ))));
   }
 
   @Test
   public void startGameProcessWithMap() {
     String response = instance.transform(new StartGameProcessResponse("faf", 1, "scmp01",
       LobbyMode.DEFAULT, null, "someName", null, 0, null, Arrays.asList("/foo", "/bar")));
-    assertThat(response, is("{\"data\":{\"mod\":\"faf\",\"gameId\":1,\"map\":\"scmp01\",\"lobbyMode\":\"DEFAULT\",\"name\":\"someName\",\"team\":0,\"commandLineArguments\":[\"/foo\",\"/bar\"]},\"type\":\"startGameProcess\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("startGameProcess")))
+        .where("data", is(
+          jsonObject()
+            .where("mod", is(jsonText("faf")))
+            .where("gameId", is(jsonInt(1)))
+            .where("lobbyMode", is(jsonText("DEFAULT")))
+            .where("map", is(jsonText("scmp01")))
+            .where("name", is(jsonText("someName")))
+            .where("team", is(jsonInt(0)))
+            .where("commandLineArguments", is(jsonArray(contains(jsonText("/foo"), jsonText("/bar")))))
+        ))));
   }
 
   @Test
@@ -192,7 +365,24 @@ public class V2ServerMessageTransformerTest {
       new UpdatedAchievement("111", 2, AchievementState.REVEALED, false),
       new UpdatedAchievement("111", 2, AchievementState.REVEALED, false)
     )));
-    assertThat(response, is("{\"data\":{\"updatedAchievements\":[{\"achievementId\":\"111\",\"currentSteps\":2,\"currentState\":\"REVEALED\",\"newlyUnlocked\":false},{\"achievementId\":\"111\",\"currentSteps\":2,\"currentState\":\"REVEALED\",\"newlyUnlocked\":false}]},\"type\":\"updatedAchievements\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("updatedAchievements")))
+        .where("data", is(
+          jsonObject()
+            .where("updatedAchievements", is(jsonArray(contains(
+              jsonObject()
+                .where("achievementId", is(jsonText("111")))
+                .where("currentSteps", is(jsonInt(2)))
+                .where("currentState", is(jsonText("REVEALED")))
+                .where("newlyUnlocked", is(jsonBoolean(false))),
+              jsonObject()
+                .where("achievementId", is(jsonText("111")))
+                .where("currentSteps", is(jsonInt(2)))
+                .where("currentState", is(jsonText("REVEALED")))
+                .where("newlyUnlocked", is(jsonBoolean(false)))
+            ))))
+        ))));
   }
 
   @Test
@@ -208,13 +398,52 @@ public class V2ServerMessageTransformerTest {
       new Avatar("http://localhost/avatar.png", "Avatar"),
       "AA"
     ));
-    assertThat(response, is("{\"data\":{\"playerId\":1,\"username\":\"A\",\"country\":\"CH\",\"timeZone\":\"Europe/Berlin\",\"globalRating\":{\"mean\":900.0,\"deviation\":120.0},\"ladder1v1Rating\":{\"mean\":600.0,\"deviation\":50.0},\"numberOfGames\":12,\"avatar\":{\"url\":\"http://localhost/avatar.png\",\"description\":\"Avatar\"},\"clanTag\":\"AA\"},\"type\":\"player\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("player")))
+        .where("data", is(
+          jsonObject()
+            .where("playerId", is(jsonInt(1)))
+            .where("username", is(jsonText("A")))
+            .where("country", is(jsonText("CH")))
+            .where("timeZone", is(jsonText("Europe/Berlin")))
+            .where("globalRating", is(
+              jsonObject()
+                .where("mean", is(jsonDouble(900.0)))
+                .where("deviation", is(jsonDouble(120.0)))
+            ))
+            .where("ladder1v1Rating", is(
+              jsonObject()
+                .where("mean", is(jsonDouble(600.0)))
+                .where("deviation", is(jsonDouble(50.0)))
+            ))
+            .where("numberOfGames", is(jsonInt(12)))
+            .where("avatar", is(
+              jsonObject()
+                .where("url", is(jsonText("http://localhost/avatar.png")))
+                .where("description", is(jsonText("Avatar")))
+            ))
+            .where("clanTag", is(jsonText("AA")))
+        ))));
   }
 
   @Test
   public void errorMessage() {
     UUID requestId = UUID.fromString("fa41225f-d818-495f-8843-d421949d5968");
     String response = instance.transform(new ErrorResponse(ErrorCode.UNSUPPORTED_REQUEST, requestId, new String[]{"{\"foo\": \"bar\"}", "JUnit Test"}));
-    assertThat(response, is("{\"data\":{\"code\":109,\"title\":\"Unsupported request\",\"text\":\"The server received an unsupported request from your client: {\\\"foo\\\": \\\"bar\\\"}. Cause: JUnit Test\",\"requestId\":\"fa41225f-d818-495f-8843-d421949d5968\",\"args\":[\"{\\\"foo\\\": \\\"bar\\\"}\",\"JUnit Test\"]},\"type\":\"error\"}"));
+    assertThat(response, isJsonStringMatching(
+      jsonObject()
+        .where("type", is(jsonText("error")))
+        .where("data", is(
+          jsonObject()
+            .where("code", is(jsonInt(109)))
+            .where("title", is(jsonText("Unsupported request")))
+            .where("text", is(jsonText("The server received an unsupported request from your client: {\"foo\": \"bar\"}. Cause: JUnit Test")))
+            .where("requestId", is(jsonText("fa41225f-d818-495f-8843-d421949d5968")))
+            .where("args", is(jsonArray(contains(
+              jsonText("{\"foo\": \"bar\"}"),
+              jsonText("JUnit Test")
+            ))))
+        ))));
   }
 }

@@ -132,6 +132,7 @@ dependencies {
   annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 
   testCompile("org.springframework.boot:spring-boot-starter-test")
+  testCompile("com.spotify:hamcrest-jackson:${spotifyHamcrestVersion}")
   testCompile("com.googlecode.zohhak:zohhak:${zohhakVersion}")
 
   codacy("com.github.codacy:codacy-coverage-reporter:-SNAPSHOT")
