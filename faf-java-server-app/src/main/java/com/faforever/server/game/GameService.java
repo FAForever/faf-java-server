@@ -870,7 +870,7 @@ public class GameService {
   private Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
     Map<ArmyResult, Long> completeArmyResultToOccurrence = game.getReportedArmyResults().entrySet().stream()
       .filter(playerIdToResults -> game.getConnectedPlayers().containsKey(playerIdToResults.getKey()))
-      .flatMap(integerMapEntry -> integerMapEntry.getValue().values().stream())
+      .flatMap(playerIdToReportedResults -> playerIdToReportedResults.getValue().values().stream())
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
     Map<Integer, ArmyResult> armyIdsToMostReportedScore = new HashMap<>();
