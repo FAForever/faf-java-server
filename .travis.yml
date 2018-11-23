@@ -25,10 +25,10 @@ before_install:
 install:
   - git clone https://github.com/FAForever/faf-stack.git faf-stack
       && pushd faf-stack
-      && git checkout v18.10.4
+      && git checkout v18.11.16
       && cp -r config.template config
       && popd
-  - docker-compose -f faf-stack/docker-compose.yml up -d faf-db
+  - pushd faf-stack && ./scripts/init-db.sh && popd
 
 script:
 - chmod +x gradlew && ./gradlew build -Pversion=${APP_VERSION} --info

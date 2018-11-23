@@ -18,7 +18,7 @@ faf-server:
     access-token-uri: ${API_ACCESS_TOKEN_URI}
     max-page-size: 10000
   database:
-    schema-version: ${DATABASE_SCHEMA_VERSION:59}
+    schema-version: ${DATABASE_SCHEMA_VERSION:61}
   ice:
     twilio:
       account-sid: ${TWILIO_ACCOUNT_SID:}
