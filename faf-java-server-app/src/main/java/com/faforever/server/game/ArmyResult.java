@@ -1,23 +1,23 @@
 package com.faforever.server.game;
 
 import lombok.AccessLevel;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.util.Assert;
 
-@Data
+@Value
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ArmyResult {
 
-  private final int armyId;
+  int armyId;
   /** The army's outcome, updated whenever an army has been defeated or won the game. */
   @NotNull
-  private final Outcome outcome;
+  Outcome outcome;
   /** The army's score, updated whenever an army defeated someone or has been defeated. */
   @Nullable
-  private final Integer score;
+  Integer score;
 
   public static ArmyResult of(int armyId, @NotNull Outcome outcome, @Nullable Integer score) {
     Assert.notNull(outcome, "'outcome' must not be null");
