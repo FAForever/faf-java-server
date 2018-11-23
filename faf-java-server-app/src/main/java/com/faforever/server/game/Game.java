@@ -153,7 +153,7 @@ public class Game {
    * Mapped by player ID. Meant to be set just before game start.
    */
   @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
-  @MapKey(name = "id")
+  @MapKey(name = "playerId")
   private Map<Integer, GamePlayerStats> playerStats;
 
   @Transient
