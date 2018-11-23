@@ -35,6 +35,9 @@ public class GamePlayerStats {
   @JoinColumn(name = "playerId")
   private Player player;
 
+  @Column(name = "playerId", insertable = false, updatable = false)
+  private int playerId;
+
   @Column(name = "AI")
   private boolean ai;
 
