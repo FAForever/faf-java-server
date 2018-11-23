@@ -13,6 +13,7 @@ import com.faforever.server.game.Faction;
 import com.faforever.server.game.Game;
 import com.faforever.server.game.GameParticipant;
 import com.faforever.server.game.GameResponse;
+import com.faforever.server.game.GameResult;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.ForwardedIceMessage;
@@ -238,6 +239,10 @@ public class ClientService {
 
   public void sendMatchCreatedNotification(UUID requestId, int gameId, ConnectionAware recipient) {
     send(new MatchCreatedResponse(requestId, gameId), recipient);
+  }
+
+  public void broadcastGameResult(GameResult gameResult) {
+    clientGateway.broadcast(gameResult);
   }
 
   /**

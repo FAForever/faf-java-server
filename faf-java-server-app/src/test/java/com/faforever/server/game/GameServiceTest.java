@@ -80,7 +80,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
@@ -667,6 +669,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.ENDED));
 
     verify(gameRepository).save(game);
+    verify(clientService).broadcastGameResult(any());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(game));
     assertThat(player1.getGameState(), is(PlayerGameState.ENDED));
@@ -681,6 +684,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(gameRepository).save(game);
+    verify(clientService).broadcastGameResult(any());
     verify(mapService).incrementTimesPlayed(game.getMapVersion().getMap());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
@@ -696,6 +700,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.ENDED));
 
     verify(armyStatisticsService).process(any(), eq(game));
+    verify(clientService).broadcastGameResult(any());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(game));
     assertThat(player1.getGameState(), is(PlayerGameState.ENDED));
@@ -710,6 +715,7 @@ public class GameServiceTest {
     assertThat(game.getState(), is(GameState.CLOSED));
 
     verify(armyStatisticsService).process(any(), eq(game));
+    verify(clientService).broadcastGameResult(any());
     verifyZeroInteractions(divisionService);
     assertThat(player1.getCurrentGame(), is(nullValue()));
     assertThat(player1.getGameState(), is(PlayerGameState.NONE));
@@ -1489,6 +1495,81 @@ public class GameServiceTest {
     // the above shouldn't do anything but log, difficult to assert.
     verifyZeroInteractions(clientService);
     verifyZeroInteractions(playerService);
+  }
+
+  @Test
+  public void mapArmyResultsToPlayerIds() {
+    Game game = new Game();
+    game.setPlayerStats(
+      new ImmutableMap.Builder<Integer, GamePlayerStats>()
+        .put(1, new GamePlayerStats().setPlayer((Player) new Player().setId(1)))
+        .put(2, new GamePlayerStats().setPlayer((Player) new Player().setId(2)))
+        .put(3, new GamePlayerStats().setPlayer((Player) new Player().setId(3))).build()
+    );
+
+    game.getPlayerOptions().put(1, new ImmutableMap.Builder<String, Object>()
+      .put(GameService.OPTION_ARMY, 7)
+      .build());
+    game.getPlayerOptions().put(2, new ImmutableMap.Builder<String, Object>()
+      .put(GameService.OPTION_ARMY, 8)
+      .build());
+    game.getPlayerOptions().put(3, new ImmutableMap.Builder<String, Object>()
+      .put(GameService.OPTION_ARMY, 9)
+      .build());
+
+    Map<Integer, ArmyResult> reportedArmyResults = new ImmutableMap.Builder<Integer, ArmyResult>()
+      .put(7, ArmyResult.of(7, Outcome.VICTORY, 10))
+      .put(8, ArmyResult.of(8, Outcome.DEFEAT, null))
+      .put(9, ArmyResult.of(9, Outcome.DEFEAT, 0))
+      .build();
+
+    Map<Integer, ArmyResult> result = instance.mapArmyResultsToPlayerIds(game, reportedArmyResults);
+    assertThat(result, hasEntry(equalTo(1), equalTo(ArmyResult.of(7, Outcome.VICTORY, 10))));
+    assertThat(result, hasEntry(equalTo(2), equalTo(ArmyResult.of(8, Outcome.DEFEAT, null))));
+    assertThat(result, hasEntry(equalTo(3), equalTo(ArmyResult.of(9, Outcome.DEFEAT, 0))));
+  }
+
+  @Test
+  public void findMostReportedCompleteArmyResultsReportedByConnectedPlayers() {
+    Game game = mock(Game.class);
+    Map<Integer, Map<Integer, ArmyResult>> reportedArmyResults = new HashMap<>();
+    Map<Integer, Player> connectedPlayersMock = mock(Map.class);
+    when(game.getConnectedPlayers()).thenReturn(connectedPlayersMock);
+    when(connectedPlayersMock.containsKey(any(Integer.class))).thenReturn(true);
+    when(game.getReportedArmyResults()).thenReturn(reportedArmyResults);
+
+    Map<Integer, ArmyResult> playerOneResults = new ImmutableMap.Builder<Integer, ArmyResult>()
+      .put(7, ArmyResult.of(7, Outcome.VICTORY, 10))
+      .put(8, ArmyResult.of(8, Outcome.DEFEAT, 0))
+      .put(9, ArmyResult.of(9, Outcome.DEFEAT, 0))
+      .build();
+
+    Map<Integer, ArmyResult> playerTwoResults = new ImmutableMap.Builder<Integer, ArmyResult>()
+      .put(7, ArmyResult.of(7, Outcome.VICTORY, 10))
+      .put(8, ArmyResult.of(8, Outcome.DEFEAT, null))
+      .put(9, ArmyResult.of(9, Outcome.DEFEAT, 0))
+      .build();
+
+    Map<Integer, ArmyResult> playerThreeResults = new ImmutableMap.Builder<Integer, ArmyResult>()
+      .put(7, ArmyResult.of(7, Outcome.DEFEAT, 10))
+      .put(8, ArmyResult.of(8, Outcome.DEFEAT, null))
+      .put(9, ArmyResult.of(9, Outcome.VICTORY, 10))
+      .build();
+
+    reportedArmyResults.put(1, playerOneResults);
+    reportedArmyResults.put(2, playerTwoResults);
+    reportedArmyResults.put(3, playerThreeResults);
+
+    Map<Integer, ArmyResult> result = instance.findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
+
+    assertThat(result, hasEntry(equalTo(7), equalTo(ArmyResult.of(7, Outcome.VICTORY, 10))));
+    assertThat(result, hasEntry(equalTo(8), equalTo(ArmyResult.of(8, Outcome.DEFEAT, null))));
+    assertThat(result, hasEntry(equalTo(9), equalTo(ArmyResult.of(9, Outcome.DEFEAT, 0))));
+
+    when(connectedPlayersMock.containsKey(any(Integer.class))).thenReturn(false);
+
+    result = instance.findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
+    assertThat(result.size(), is(0));
   }
 
   private void closePlayerGame(Player player3) {
