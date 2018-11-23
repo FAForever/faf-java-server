@@ -2,7 +2,7 @@ faf-server:
   geo-ip:
     database-url: http://content.faforever.com/GeoLite2-City.mmdb.gz
   database:
-    schema-version: ${DATABASE_SCHEMA_VERSION:59}
+    schema-version: ${DATABASE_SCHEMA_VERSION:61}
 
 spring:
   datasource:
