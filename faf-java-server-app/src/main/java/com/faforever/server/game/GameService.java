@@ -850,8 +850,8 @@ public class GameService {
   private void settlePlayerScores(Game game) {
     Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
 
-    for (Entry<Integer, GamePlayerStats> entry : game.getPlayerStats().entrySet()) {
-      Integer playerId = entry.getKey();
+    for (GamePlayerStats gamePlayerStats : game.getPlayerStats().values()) {
+      Integer playerId = gamePlayerStats.getPlayer().getId();
       Integer armyScore = Optional.ofNullable(game.getPlayerOptions())
         .map(playerOptions -> playerOptions.get(playerId))
         .map(options -> (Integer) options.get(OPTION_ARMY))
@@ -859,7 +859,7 @@ public class GameService {
         .map(ArmyResult::getScore)
         .orElse(null);
 
-      entry.getValue().setScore(armyScore).setScoreTime(Instant.now());
+      gamePlayerStats.setScore(armyScore).setScoreTime(Instant.now());
     }
   }
 
