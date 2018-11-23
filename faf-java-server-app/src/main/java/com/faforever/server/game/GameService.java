@@ -10,6 +10,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
+import com.faforever.server.game.GameResult.PlayerResult;
 import com.faforever.server.ladder1v1.DivisionService;
 import com.faforever.server.ladder1v1.Ladder1v1Rating;
 import com.faforever.server.map.MapService;
@@ -52,12 +53,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
@@ -791,6 +794,56 @@ public class GameService {
     activeGameRepository.delete(game);
   }
 
+  private GameResult buildGameResult(Game game, Map<Integer, ArmyResult> playerIdToResult) {
+    Set<PlayerResult> playerResults = new HashSet<>();
+
+    GameResult gameResult = new GameResult()
+      .setGameId(game.getId())
+      .setPlayerResults(playerResults)
+      .setDraw(false);
+
+    for (Map.Entry<Integer, ArmyResult> playerResultEntry : playerIdToResult.entrySet()) {
+      playerResults.add(
+        new PlayerResult()
+          .setPlayerId(playerResultEntry.getKey())
+          .setAcuKilled(false) // TODO: Add a way to actually find this out
+          .setWinner(playerResultEntry.getValue().getOutcome() == Outcome.VICTORY)
+      );
+
+      if (playerResultEntry.getValue().getOutcome() == Outcome.DRAW) {
+        gameResult.setDraw(true);
+      }
+    }
+
+    return gameResult;
+  }
+
+  /**
+   * Determines the final army results and updates the players' scores with them.
+   */
+  private void settlePlayerScores(Game game, Map<Integer, ArmyResult> armyIdToResult) {
+    for (GamePlayerStats gamePlayerStats : game.getPlayerStats().values()) {
+      Integer playerId = gamePlayerStats.getPlayer().getId();
+      Integer armyScore = Optional.ofNullable(game.getPlayerOptions())
+        .map(playerOptions -> playerOptions.get(playerId))
+        .map(options -> (Integer) options.get(OPTION_ARMY))
+        .map(armyIdToResult::get)
+        .map(ArmyResult::getScore)
+        .orElse(null);
+
+      gamePlayerStats.setScore(armyScore).setScoreTime(Instant.now());
+    }
+  }
+
+  /**
+   * Returns the active game with the specified ID, if such a game exists. A game is considered active as soon as it's
+   * being hosted and until it finished.
+   */
+  @VisibleForTesting
+  Optional<Game> getActiveGame(int id) {
+    return activeGameRepository.findById(id);
+  }
+
   @Transactional
   protected void onGameEnded(Game game) {
     if (game.getState() == GameState.ENDED) {
@@ -817,7 +870,14 @@ public class GameService {
     enqueueForRatingUpdate(game);
     processGamesAwaitingRatingUpdate();
     Optional.ofNullable(game.getMapVersion()).ifPresent(mapVersion -> mapService.incrementTimesPlayed(mapVersion.getMap()));
-    settlePlayerScores(game);
+
+
+    Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
+    Map<Integer, ArmyResult> playerIdToResult = mapArmyResultsToPlayerIds(game, armyIdToResult);
+    GameResult gameResult = buildGameResult(game, playerIdToResult);
+
+    settlePlayerScores(game, armyIdToResult);
+    clientService.broadcastGameResult(gameResult);
     updateDivisionScoresIfValid(game);
     gameRepository.save(game);
 
@@ -836,38 +896,29 @@ public class GameService {
   }
 
   /**
-   * Returns the active game with the specified ID, if such a game exists. A game is considered active as soon as it's
-   * being hosted and until it finished.
+   * Takes a map of {@code armyId -> ArmyResult} and maps all army IDs to player IDs.
    */
   @VisibleForTesting
-  Optional<Game> getActiveGame(int id) {
-    return activeGameRepository.findById(id);
-  }
-
-  /**
-   * Determines the final army results and updates the players' scores with them.
-   */
-  private void settlePlayerScores(Game game) {
-    Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
-
+  Map<Integer, ArmyResult> mapArmyResultsToPlayerIds(Game game, Map<Integer, ArmyResult> armyIdToResult) {
+    Map<Integer, ArmyResult> playerIdToResult = new HashMap<>();
     for (GamePlayerStats gamePlayerStats : game.getPlayerStats().values()) {
       Integer playerId = gamePlayerStats.getPlayer().getId();
-      Integer armyScore = Optional.ofNullable(game.getPlayerOptions())
+      Optional.ofNullable(game.getPlayerOptions())
         .map(playerOptions -> playerOptions.get(playerId))
         .map(options -> (Integer) options.get(OPTION_ARMY))
         .map(armyIdToResult::get)
-        .map(ArmyResult::getScore)
-        .orElse(null);
-
-      gamePlayerStats.setScore(armyScore).setScoreTime(Instant.now());
+        .ifPresent(armyResult -> playerIdToResult.put(playerId, armyResult));
     }
+
+    return playerIdToResult;
   }
 
   /**
    * Finds the {@link ArmyResult ArmyResults} that have been reported most often, mapped by army ID. Only respects
    * reports of players who are still connected and have reported a score as well as an outcome.
    */
-  private Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
+  @VisibleForTesting
+  Map<Integer, ArmyResult> findMostReportedCompleteArmyResultsReportedByConnectedPlayers(Game game) {
     Map<ArmyResult, Long> completeArmyResultToOccurrence = game.getReportedArmyResults().entrySet().stream()
       .filter(playerIdToResults -> game.getConnectedPlayers().containsKey(playerIdToResults.getKey()))
       .flatMap(playerIdToReportedResults -> playerIdToReportedResults.getValue().values().stream())
