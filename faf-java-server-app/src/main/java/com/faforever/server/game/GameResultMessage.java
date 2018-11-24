@@ -15,7 +15,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GameResult implements ServerMessage {
+public class GameResultMessage implements ServerMessage {
   private int gameId;
   private boolean draw;
   private Set<PlayerResult> playerResults;

@@ -1508,13 +1508,13 @@ public class GameServiceTest {
     );
 
     game.getPlayerOptions().put(1, new ImmutableMap.Builder<String, Object>()
-      .put(GameService.OPTION_ARMY, 7)
+      .put(OPTION_ARMY, 7)
       .build());
     game.getPlayerOptions().put(2, new ImmutableMap.Builder<String, Object>()
-      .put(GameService.OPTION_ARMY, 8)
+      .put(OPTION_ARMY, 8)
       .build());
     game.getPlayerOptions().put(3, new ImmutableMap.Builder<String, Object>()
-      .put(GameService.OPTION_ARMY, 9)
+      .put(OPTION_ARMY, 9)
       .build());
 
     Map<Integer, ArmyResult> reportedArmyResults = new ImmutableMap.Builder<Integer, ArmyResult>()
