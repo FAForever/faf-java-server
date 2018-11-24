@@ -10,7 +10,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
-import com.faforever.server.game.GameResult.PlayerResult;
+import com.faforever.server.game.GameResultMessage.PlayerResult;
 import com.faforever.server.ladder1v1.DivisionService;
 import com.faforever.server.ladder1v1.Ladder1v1Rating;
 import com.faforever.server.map.MapService;
@@ -794,10 +794,10 @@ public class GameService {
     activeGameRepository.delete(game);
   }
 
-  private GameResult buildGameResult(Game game, Map<Integer, ArmyResult> playerIdToResult) {
+  private GameResultMessage buildGameResult(Game game, Map<Integer, ArmyResult> playerIdToResult) {
     Set<PlayerResult> playerResults = new HashSet<>();
 
-    GameResult gameResult = new GameResult()
+    GameResultMessage gameResultMessage = new GameResultMessage()
       .setGameId(game.getId())
       .setPlayerResults(playerResults)
       .setDraw(false);
@@ -811,11 +811,11 @@ public class GameService {
       );
 
       if (playerResultEntry.getValue().getOutcome() == Outcome.DRAW) {
-        gameResult.setDraw(true);
+        gameResultMessage.setDraw(true);
       }
     }
 
-    return gameResult;
+    return gameResultMessage;
   }
 
   /**
@@ -874,10 +874,10 @@ public class GameService {
 
     Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
     Map<Integer, ArmyResult> playerIdToResult = mapArmyResultsToPlayerIds(game, armyIdToResult);
-    GameResult gameResult = buildGameResult(game, playerIdToResult);
+    GameResultMessage gameResultMessage = buildGameResult(game, playerIdToResult);
 
     settlePlayerScores(game, armyIdToResult);
-    clientService.broadcastGameResult(gameResult);
+    clientService.broadcastGameResult(gameResultMessage);
     updateDivisionScoresIfValid(game);
     gameRepository.save(game);
 
