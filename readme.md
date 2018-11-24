@@ -105,6 +105,8 @@ The following issues that exist in the original server are not present in this i
 * [FAForever/server#323](https://github.com/FAForever/server/issues/323) Notice from server prompt spacing
 * [FAForever/server#343](https://github.com/FAForever/server/issues/339) Teamkills with reference to non-existing games
 * [FAForever/server#343](https://github.com/FAForever/server/issues/343) If teams are unlocked the game should not be valid
+* [FAForever/server#343](https://github.com/FAForever/server/issues/349) Docker build failure
+* [FAForever/server#343](https://github.com/FAForever/server/issues/367) Army statistics can't be processed
 
 
 ## Additional features
