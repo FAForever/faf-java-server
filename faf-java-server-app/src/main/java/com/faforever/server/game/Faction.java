@@ -2,6 +2,7 @@ package com.faforever.server.game;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,8 @@ public enum Faction {
     }
   }
 
+  // TODO: This is legacy. Remove.
+  @Getter
   private final String string;
 
   Faction(String string) {

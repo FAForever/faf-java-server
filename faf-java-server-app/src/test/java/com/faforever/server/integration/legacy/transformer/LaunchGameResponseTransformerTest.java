@@ -35,7 +35,7 @@ public class LaunchGameResponseTransformerTest {
     assertThat(result.get("uid"), is(4));
     assertThat(result.get("mapname"), is(nullValue()));
     assertThat(result.get("lobby_mode"), is("DEFAULT"));
-    assertThat(result.get("faction"), is(Faction.UEF));
+    assertThat(result.get("faction"), is(Faction.UEF.getString()));
     assertThat(result.get("name"), is("someName"));
     assertThat(result.get("expectedPlayers"), is(2));
     assertThat(result.get("team"), is(1));

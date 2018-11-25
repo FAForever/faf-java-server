@@ -31,7 +31,7 @@ public enum LaunchGameResponseTransformer implements GenericTransformer<StartGam
     }
 
     if (source.getFaction() != null) {
-      builder.put("faction", source.getFaction());
+      builder.put("faction", source.getFaction().getString());
     }
 
     if (source.getExpectedPlayers() != null) {
