@@ -37,9 +37,9 @@ public class LaunchGameResponseTransformerTest {
     assertThat(result.get("lobby_mode"), is("DEFAULT"));
     assertThat(result.get("faction"), is(Faction.UEF.getString()));
     assertThat(result.get("name"), is("someName"));
-    assertThat(result.get("expectedPlayers"), is(2));
+    assertThat(result.get("expected_players"), is(2));
     assertThat(result.get("team"), is(1));
-    assertThat(result.get("mapPosition"), is(5));
+    assertThat(result.get("map_position"), is(5));
     assertThat(result.get("args"), is(new String[]{"/numgames 4"}));
   }
 
@@ -65,9 +65,9 @@ public class LaunchGameResponseTransformerTest {
     assertThat(result.get("lobby_mode"), is("DEFAULT"));
     assertThat(result.get("faction"), nullValue());
     assertThat(result.get("name"), is("someName"));
-    assertThat(result.get("expectedPlayers"), nullValue());
+    assertThat(result.get("expected_players"), nullValue());
     assertThat(result.get("team"), is(0));
-    assertThat(result.get("mapPosition"), nullValue());
+    assertThat(result.get("map_position"), nullValue());
     assertThat(result.get("args"), is(new String[]{"/numgames 4"}));
   }
 

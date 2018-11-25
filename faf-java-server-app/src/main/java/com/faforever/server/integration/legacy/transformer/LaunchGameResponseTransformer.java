@@ -35,11 +35,11 @@ public enum LaunchGameResponseTransformer implements GenericTransformer<StartGam
     }
 
     if (source.getExpectedPlayers() != null) {
-      builder.put("expectedPlayers", source.getExpectedPlayers());
+      builder.put("expected_players", source.getExpectedPlayers());
     }
 
     if (source.getMapPosition() != null) {
-      builder.put("mapPosition", source.getMapPosition());
+      builder.put("map_position", source.getMapPosition());
     }
 
     return builder.build();
