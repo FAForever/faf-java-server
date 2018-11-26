@@ -162,7 +162,7 @@ public class LegacyRequestTransformer implements GenericTransformer<Map<String, 
         return handleAdminAction(source);
       case DISCONNECTED:
         args = getArgs(source);
-        return new PlayerDisconnectedReport((int) args.get(0));
+        return new PlayerDisconnectedReport(Integer.parseInt((String) args.get(0)));
       case BOTTLENECK:
         return BottleneckReport.INSTANCE;
       case CHAT:

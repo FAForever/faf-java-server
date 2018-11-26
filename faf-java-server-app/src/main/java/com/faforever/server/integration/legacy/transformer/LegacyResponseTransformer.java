@@ -13,6 +13,7 @@ import com.faforever.server.client.UpdatedAchievementsResponse;
 import com.faforever.server.common.ServerMessage;
 import com.faforever.server.coop.CoopMissionResponse;
 import com.faforever.server.error.ErrorResponse;
+import com.faforever.server.game.GameResultResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.ice.ForwardedIceMessage;
@@ -56,6 +57,7 @@ public final class LegacyResponseTransformer implements GenericTransformer<Serve
       .put(IceServersResponse.class, IceServersResponseTransformer.INSTANCE)
       .put(ForwardedIceMessage.class, ForwardedIceMessageTransformer.INSTANCE)
       .put(ConnectToHostResponse.class, ConnectToHostResponseTransformer.INSTANCE)
+      .put(GameResultResponse.class, GameResultMessageTransformer.INSTANCE)
       .build();
   }
 

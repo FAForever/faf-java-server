@@ -31,6 +31,7 @@ class V2ServerMessageWrapper {
     @Type(value = UpdatedAchievementsServerMessage.class, name = UpdatedAchievementsServerMessage.TYPE_NAME),
     @Type(value = MatchCreatedServerMessage.class, name = MatchCreatedServerMessage.TYPE_NAME),
     @Type(value = ConnectToHostServerMessage.class, name = ConnectToHostServerMessage.TYPE_NAME),
+    @Type(value = GameResultMessage.class, name = GameResultMessage.TYPE_NAME),
   })
   private V2ServerMessage data;
 }

@@ -13,6 +13,7 @@ import com.faforever.server.client.UpdatedAchievementsResponse;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.ErrorResponse;
 import com.faforever.server.game.GameResponse;
+import com.faforever.server.game.GameResultResponse;
 import com.faforever.server.game.HostGameResponse;
 import com.faforever.server.game.StartGameProcessResponse;
 import com.faforever.server.matchmaker.MatchCreatedResponse;
@@ -77,6 +78,8 @@ public interface V2ServerMessageMapper {
   MatchCreatedServerMessage map(MatchCreatedResponse source);
 
   AvatarsServerMessage map(AvatarsResponse source);
+
+  GameResultMessage map(GameResultResponse source);
 
   default ErrorServerMessage map(ErrorResponse source) {
     ErrorCode errorCode = source.getErrorCode();

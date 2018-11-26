@@ -292,7 +292,7 @@ public class MatchMakerService {
     List<Player> players = presetParticipants.stream()
       .map(gameParticipant -> playerService.getOnlinePlayer(gameParticipant.getId())
         .orElseThrow(() -> new RequestException(requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, gameParticipant.getId())))
-      .peek(player -> Requests.verify(player.getCurrentGame() == null, requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, player))
+      .peek(player -> Requests.verify(player.getCurrentGame() == null, requestId, ErrorCode.PLAYER_NOT_AVAILABLE_FOR_MATCHMAKING_OFFLINE, player.getId()))
       .peek(this::removePlayer)
       .collect(Collectors.toList());
 

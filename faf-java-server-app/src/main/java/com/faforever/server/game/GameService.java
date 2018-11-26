@@ -10,7 +10,7 @@ import com.faforever.server.error.RequestException;
 import com.faforever.server.error.Requests;
 import com.faforever.server.game.GameResponse.FeaturedModFileVersion;
 import com.faforever.server.game.GameResponse.SimMod;
-import com.faforever.server.game.GameResultMessage.PlayerResult;
+import com.faforever.server.game.GameResultResponse.PlayerResult;
 import com.faforever.server.ladder1v1.DivisionService;
 import com.faforever.server.ladder1v1.Ladder1v1Rating;
 import com.faforever.server.map.MapService;
@@ -794,10 +794,10 @@ public class GameService {
     activeGameRepository.delete(game);
   }
 
-  private GameResultMessage buildGameResult(Game game, Map<Integer, ArmyResult> playerIdToResult) {
+  private GameResultResponse buildGameResult(Game game, Map<Integer, ArmyResult> playerIdToResult) {
     Set<PlayerResult> playerResults = new HashSet<>();
 
-    GameResultMessage gameResultMessage = new GameResultMessage()
+    GameResultResponse gameResultResponse = new GameResultResponse()
       .setGameId(game.getId())
       .setPlayerResults(playerResults)
       .setDraw(false);
@@ -811,11 +811,11 @@ public class GameService {
       );
 
       if (playerResultEntry.getValue().getOutcome() == Outcome.DRAW) {
-        gameResultMessage.setDraw(true);
+        gameResultResponse.setDraw(true);
       }
     }
 
-    return gameResultMessage;
+    return gameResultResponse;
   }
 
   /**
@@ -844,54 +844,29 @@ public class GameService {
     return activeGameRepository.findById(id);
   }
 
-  @Transactional
-  protected void onGameEnded(Game game) {
-    if (game.getState() == GameState.ENDED) {
+  /**
+   * <p>Called when a player's game entered {@link PlayerGameState#LOBBY}. If the player is host, the state of the
+   * {@link Game} instance will be updated and the player is requested to "host" a game (open a port so others can
+   * connect). A joining player whose game entered {@link PlayerGameState#LOBBY} will be told to connect to the host and
+   * any other players in the game.</p> <p>In any case, the player will be added to the game's transient list of
+   * participants where team information, faction and color will be set. When the game starts, this list will be reduced
+   * to only the players who are in the game and then persisted.</p>
+   */
+  private void onLobbyEntered(Player player, Game game) {
+    if (game.getConnectedPlayers().containsKey(player.getId())) {
+      log.warn("Player '{}' entered state '{}' but is already connected", player, PlayerGameState.LOBBY);
       return;
     }
-
-    log.debug("Game ended: {}", game);
-
-    GameState previousState = game.getState();
-    game.setEndTime(Instant.now());
-    try {
-      changeGameState(game, GameState.ENDED);
-    } catch (IllegalStateException e) {
-      // Don't prevent a programming error from ending the game, but let us know about it.
-      log.warn("Illegally tried to transition game '{}' from state '{}' to '{}'", game, previousState, GameState.ENDED, e);
-    }
-
-    // Games can also end before they even started, in which case we stop processing it
-    if (previousState != GameState.PLAYING) {
-      return;
-    }
-
-    updateGameValidity(game);
-    enqueueForRatingUpdate(game);
-    processGamesAwaitingRatingUpdate();
-    Optional.ofNullable(game.getMapVersion()).ifPresent(mapVersion -> mapService.incrementTimesPlayed(mapVersion.getMap()));
-
-
-    Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
-    Map<Integer, ArmyResult> playerIdToResult = mapArmyResultsToPlayerIds(game, armyIdToResult);
-    GameResultMessage gameResultMessage = buildGameResult(game, playerIdToResult);
-
-    settlePlayerScores(game, armyIdToResult);
-    clientService.broadcastGameResult(gameResultMessage);
-    updateDivisionScoresIfValid(game);
-    gameRepository.save(game);
-
-    try {
-      game.getPlayerStats().values().forEach(stats -> {
-        Player player = stats.getPlayer();
-        armyStatisticsService.process(player, game);
-      });
-    } catch (Exception e) {
-      log.warn("Army statistics could not be updated", e);
-    }
-
-    if (game.getConnectedPlayers().isEmpty()) {
-      onGameClosed(game);
+    log.debug("Player '{}' entered state: {}", player, PlayerGameState.LOBBY);
+    addPlayer(game, player);
+    if (Objects.equals(game.getHost(), player)) {
+      changeGameState(game, GameState.OPEN);
+      clientService.hostGame(game, player);
+    } else {
+      connectToHost(game, player);
+      game.getConnectedPlayers().values().stream()
+        .filter(connectedPlayer -> !Objects.equals(game.getHost(), connectedPlayer) && !Objects.equals(player, connectedPlayer))
+        .forEach(otherPlayer -> connectPeers(player, otherPlayer));
     }
   }
 
@@ -1068,30 +1043,55 @@ public class GameService {
     });
   }
 
-  /**
-   * <p>Called when a player's game entered {@link PlayerGameState#LOBBY}. If the player is host, the state of the
-   * {@link Game} instance will be updated and the player is requested to "host" a game (open a port so others can
-   * connect). A joining player whose game entered {@link PlayerGameState#LOBBY} will be told to connect to the host and
-   * any other players in the game.</p> <p>In any case, the player will be added to the game's transient list of
-   * participants where team information, faction and color will be set. When the game starts, this list will be reduced
-   * to only the players who are in the game and then persisted.</p>
-   */
-  private void onLobbyEntered(Player player, Game game) {
-    if (game.getConnectedPlayers().containsKey(player.getId())) {
-      log.warn("Player '{}' entered state '{}' but is already connected", player, PlayerGameState.LOBBY);
+  @Transactional
+  protected void onGameEnded(Game game) {
+    if (game.getState() == GameState.ENDED) {
       return;
     }
-    log.debug("Player '{}' entered state: {}", player, PlayerGameState.LOBBY);
-    if (Objects.equals(game.getHost(), player)) {
-      changeGameState(game, GameState.OPEN);
-      clientService.hostGame(game, player);
-    } else {
-      connectToHost(game, player);
-      game.getConnectedPlayers().values().stream()
-        .filter(connectedPlayer -> !Objects.equals(game.getHost(), connectedPlayer))
-        .forEach(otherPlayer -> connectPeers(player, otherPlayer));
+
+    log.debug("Game ended: {}", game);
+
+    GameState previousState = game.getState();
+    game.setEndTime(Instant.now());
+    try {
+      changeGameState(game, GameState.ENDED);
+    } catch (IllegalStateException e) {
+      // Don't prevent a programming error from ending the game, but let us know about it.
+      log.warn("Illegally tried to transition game '{}' from state '{}' to '{}'", game, previousState, GameState.ENDED, e);
     }
-    addPlayer(game, player);
+
+    // Games can also end before they even started, in which case we stop processing it
+    if (previousState != GameState.PLAYING) {
+      return;
+    }
+
+    updateGameValidity(game);
+    enqueueForRatingUpdate(game);
+    processGamesAwaitingRatingUpdate();
+    Optional.ofNullable(game.getMapVersion()).ifPresent(mapVersion -> mapService.incrementTimesPlayed(mapVersion.getMap()));
+
+
+    Map<Integer, ArmyResult> armyIdToResult = findMostReportedCompleteArmyResultsReportedByConnectedPlayers(game);
+    Map<Integer, ArmyResult> playerIdToResult = mapArmyResultsToPlayerIds(game, armyIdToResult);
+    GameResultResponse gameResultResponse = buildGameResult(game, playerIdToResult);
+
+    settlePlayerScores(game, armyIdToResult);
+    clientService.broadcastGameResult(gameResultResponse);
+    updateDivisionScoresIfValid(game);
+    gameRepository.save(game);
+
+    try {
+      game.getPlayerStats().values().forEach(stats -> {
+        Player player = stats.getPlayer();
+        armyStatisticsService.process(player, game);
+      });
+    } catch (Exception e) {
+      log.warn("Army statistics could not be updated", e);
+    }
+
+    if (game.getConnectedPlayers().isEmpty()) {
+      onGameClosed(game);
+    }
   }
 
   private void connectToHost(Game game, Player player) {
