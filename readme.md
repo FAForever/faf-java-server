@@ -1,14 +1,14 @@
 # Spring Boot based FAF-Server
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/18f658351dba40c98225f0c9e55d4b82)](https://www.codacy.com/app/FAForever/faf-java-server?utm_source=github.com&utm_medium=referral&utm_content=FAForever/faf-java-server&utm_campaign=badger) [![Build Status](https://travis-ci.org/FAForever/faf-java-server.svg?branch=develop)](https://travis-ci.org/FAForever/faf-java-server) [![Coveralls Status](https://img.shields.io/coveralls/FAForever/faf-java-server/develop.svg)](https://coveralls.io/github/FAForever/faf-java-server)
- 
+
 This is a reimplementation of the  [Forged Alliance Forever](https://www.faforever.com/)'s server application.
 
 It abstracts the communication protocol as far as possible in order to stay compatible with current server's
 legacy protocol while at the same time allowing new protocols to be added and supported simultaneously.
 
 It's compatible with the legacy database as well, so it can be used as a drop-in replacement of the existing server.
- 
+
 ## How to run
 
 ### Prerequisites
@@ -19,7 +19,7 @@ In order to run this software, you need to set up a [FAF database](https://githu
 
 1. Clone the repository
 1. Import the project into IntelliJ as Gradle project. Doing so will delete the .idea folder which also deletes launch
-configurations and code style settings. Please revert such deleted files first (Version Control (Alt+F9) -> Local 
+configurations and code style settings. Please revert such deleted files first (Version Control (Alt+F9) -> Local
 Changes)
 1. Configure your JDK 10 if you haven't already
 1. Make sure you have the _IntelliJ Lombok plugin_ installed
@@ -28,8 +28,9 @@ Changes)
 ### From source using the command line
 
 1. Clone the repository
+1. Download [GeoLite2 database](http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz) into `faf-java-server-app/build/cache/geoIp.mmdb`
 1. Run `.\gradlew bootRun`
- 
+
 ### From binary
 
 Given the number of required configuration values, it's easiest to run the server using `faf-stack`:
@@ -126,7 +127,7 @@ handling client-side
 * Extended (v2) protocol, fixing shortcomings of the legacy protocol
 * Auto-generated v2 protocol documentation to ensure it's always up-to-date, complete and error-free
 * OAuth2 support, so that basically everyone can write services that connect to the server
-* Helpful, detailed, and runtime-configurable logging for easier investigation in case of problems 
+* Helpful, detailed, and runtime-configurable logging for easier investigation in case of problems
 * Authentication toggle, allowing to disable authentication when being run as a test-server
 * Transactional database access, ensuring database integrity
 * Invalidation of "unfinished" games in case of server crash/restart
