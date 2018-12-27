@@ -28,7 +28,6 @@ Changes)
 ### From source using the command line
 
 1. Clone the repository
-1. Download [GeoLite2 database](http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz) into `faf-java-server-app/build/cache/geoIp.mmdb`
 1. Run `.\gradlew bootRun`
 
 ### From binary
@@ -36,6 +35,15 @@ Changes)
 Given the number of required configuration values, it's easiest to run the server using `faf-stack`:
 
     docker-compose up -d faf-server
+
+### Note on first time startup
+
+The server will need to download the GeoLite2 database which is around `60mb` so
+it may take a wile to start up the first time. You know the server is ready when
+you see something like:
+```
+c.faforever.server.FafServerApplication  : Started FafServerApplication in 258.971 seconds
+```
 
 ## Technology Stack
 
