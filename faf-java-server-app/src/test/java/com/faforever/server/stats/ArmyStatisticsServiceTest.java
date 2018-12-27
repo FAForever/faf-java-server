@@ -551,7 +551,7 @@ public class ArmyStatisticsServiceTest {
   public void testSleepIsForTheWeakNoEndTime() throws Exception {
     game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
     game.setEndTime(null);
-    player.setTimeZone(TimeZone.getDefault());
+    player.setTimeZone(TimeZone.getTimeZone("UTC"));
     game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
     instance.process(player, game);
@@ -577,21 +577,19 @@ public class ArmyStatisticsServiceTest {
   public void testSleepIsForTheWeakTooEarly() throws Exception {
     game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
     game.setEndTime(Instant.parse("2018-07-18T02:59:00.0Z"));
-    player.setTimeZone(TimeZone.getDefault());
+    player.setTimeZone(TimeZone.getTimeZone("UTC"));
+    game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
     instance.process(player, game);
 
-    assertThat(achievementUpdates, is(empty()));
-
-    verifyNoMoreInteractions(achievementService);
-    verifyZeroInteractions(eventService);
+    assertThat(achievementUpdates, not(hasItem(new AchievementUpdate(42, AchievementId.ACH_SLEEP_IS_FOR_THE_WEAK, AchievementUpdate.UpdateType.UNLOCK, 0))));
   }
 
   @Test
   public void testSleepIsForTheWeakJustRight() throws Exception {
     game.replaceArmyStatistics(readStats("/stats/game_stats_simple_win.json"));
     game.setEndTime(Instant.parse("2018-07-18T03:00:00.0Z"));
-    player.setTimeZone(TimeZone.getDefault());
+    player.setTimeZone(TimeZone.getTimeZone("UTC"));
     game.getReportedArmyResults().put(player.getId(), ImmutableMap.of(1, ArmyResult.of(1, Outcome.VICTORY, null)));
 
     instance.process(player, game);
