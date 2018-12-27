@@ -2,6 +2,7 @@ package com.faforever.server.geoip;
 
 import com.faforever.server.config.ServerProperties;
 import com.faforever.server.config.ServerProperties.GeoIp;
+import com.maxmind.db.InvalidDatabaseException;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.DatabaseReader.Builder;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
@@ -44,7 +45,12 @@ public class GeoIpService {
     if (Files.notExists(databaseFile)) {
       updateDatabaseFile();
     }
-    readDatabase(databaseFile);
+    try {
+        readDatabase(databaseFile);
+    } catch (InvalidDatabaseException e) {
+        log.warn("GeoIp database file corrupted. Re downloading...");
+        updateDatabaseFile();
+    }
   }
 
   @Scheduled(cron = "0 0 0 * * WED")
