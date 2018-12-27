@@ -101,7 +101,7 @@ public class ArmyStatisticsService {
       .filter(item -> item.getArmyId() == finalArmyId)
       .findFirst();
     if (!armyOutcome.isPresent()) {
-      log.warn("No outcome for army '{}´ (player '{}') has been reported for game '{}', " +
+      log.warn("No outcome for army '{}' (player '{}') has been reported for game '{}', " +
         "aborting stats processing", playerArmyId, player, game);
       return;
     }
@@ -431,4 +431,3 @@ public class ArmyStatisticsService {
     }
   }
 }
-
