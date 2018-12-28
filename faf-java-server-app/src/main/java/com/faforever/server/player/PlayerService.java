@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.management.MXBean;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -51,6 +52,7 @@ public class PlayerService {
 
   @Transactional
   public void setPlayerOnline(Player player) {
+    player.setLastLogin(new Date());
     log.debug("Adding player '{}'", player);
 
     onlinePlayerRepository.save(player);
