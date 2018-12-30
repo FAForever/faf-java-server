@@ -36,7 +36,13 @@ public class PlayerService {
   public static final String TAG_PLAYER_GAME_STATE = "gameState";
   private static final String TAG_PLAYER_GAME_COUNTRY = "country";
 
-  public PlayerService(ClientService clientService, MeterRegistry meterRegistry, OnlinePlayerRepository onlinePlayerRepository, ApplicationEventPublisher eventPublisher, GeoIpService geoIpService) {
+  public PlayerService(
+    ClientService clientService,
+    MeterRegistry meterRegistry,
+    OnlinePlayerRepository onlinePlayerRepository,
+    ApplicationEventPublisher eventPublisher,
+    GeoIpService geoIpService
+  ) {
     this.clientService = clientService;
     this.meterRegistry = meterRegistry;
     this.onlinePlayerRepository = onlinePlayerRepository;

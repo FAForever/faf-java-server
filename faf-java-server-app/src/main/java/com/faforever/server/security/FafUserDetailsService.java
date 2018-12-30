@@ -5,14 +5,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
-
 @Service
 public class FafUserDetailsService implements UserDetailsService {
 
   private final UserRepository userRepository;
 
-  @Inject
   public FafUserDetailsService(UserRepository userRepository) {
     this.userRepository = userRepository;
   }

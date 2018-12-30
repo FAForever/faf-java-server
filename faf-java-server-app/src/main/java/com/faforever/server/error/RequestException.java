@@ -27,15 +27,13 @@ public class RequestException extends RuntimeException {
   public RequestException(ErrorCode errorCode, Object... args) {
     this(null, null, errorCode, args);
   }
+
   public RequestException(UUID requestId, ErrorCode errorCode, Object... args) {
     this(requestId, null, errorCode, args);
   }
 
   private RequestException(UUID requestId, Throwable cause, ErrorCode errorCode, Object... args) {
-    super(MessageFormat.format(
-      errorCode.getTitle().replace("'", "''")
-        + ": "
-        + errorCode.getDetail().replace("'", "''"), args), cause);
+    super(MessageFormat.format(errorCode.getTitle() + ": " + errorCode.getDetail(), args), cause);
     this.requestId = requestId;
     this.errorCode = errorCode;
     this.args = args;

@@ -70,3 +70,4 @@ logging:
     org.hibernate: warn
     com.zaxxer.hikari: warn
     com.faforever.server.geoip: error
+    com.faforever.server.game: debug

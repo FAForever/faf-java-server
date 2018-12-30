@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
+  // Note that the messages are expected to be formatted with MessageFormat, thus all ' needs to be escaped by ''.
   INVALID_LOGIN(100, "Invalid login credentials", "Please check your username and or password."),
   ALREADY_IN_GAME(101, "Already in game", "You can''t join a game while you are still in another one."),
   NOT_IN_A_GAME(102, "Unexpected game message", "The server received a game message from you, however, you are currently not associated with a game. This can happen if you got disconnected from the server."),

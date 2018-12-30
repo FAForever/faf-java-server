@@ -667,9 +667,11 @@ public class GameService {
   }
 
   public void reportGameEnded(Player reporter) {
+    Game game = reporter.getCurrentGame();
+    log.debug("Player '{}' reported game end for game: {}", reporter, game);
+
     Requests.verify(reporter.getCurrentGame() != null, ErrorCode.NOT_IN_A_GAME);
 
-    Game game = reporter.getCurrentGame();
     game.getPlayerIdsWhoReportedGameEnd().add(reporter.getId());
 
     long missingGameEndedReports = reporter.getCurrentGame().getConnectedPlayers().values().stream()

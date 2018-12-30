@@ -17,6 +17,7 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
@@ -51,6 +52,9 @@ public abstract class Login {
 
   @Column(name = "ip")
   private String ip;
+
+  @Column(name = "last_login")
+  private Instant lastLogin;
 
   @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
   private Set<BanDetails> banDetails = new HashSet<>();

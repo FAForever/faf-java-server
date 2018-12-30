@@ -6,6 +6,7 @@ import com.faforever.server.error.ErrorCode;
 import com.faforever.server.error.Requests;
 import com.faforever.server.player.Player;
 import com.faforever.server.security.GroupAssociation.Group;
+import lombok.Getter;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,6 +22,7 @@ import java.util.Set;
 @ToString
 public class FafUserDetails extends org.springframework.security.core.userdetails.User implements ConnectionAware {
 
+  @Getter
   private final User user;
 
   public FafUserDetails(@NotNull User user) {
