@@ -16,6 +16,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.net.InetAddress;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -69,6 +71,15 @@ public class PlayerServiceTest {
     instance.removePlayer(fafUserDetails.getPlayer());
 
     assertThat(instance.getOnlinePlayer(player.getId()).isPresent(), is(false));
+  }
+
+  @Test
+  public void setPlayerOnlineUpdatesLastLogin() {
+    FafUserDetails fafUserDetails = createFafUserDetails();
+
+    assertThat(fafUserDetails.getPlayer().getLastLogin(), is((OffsetDateTime) null));
+    instance.setPlayerOnline(fafUserDetails.getPlayer());
+    assertThat(fafUserDetails.getPlayer().getLastLogin(), not(is((OffsetDateTime) null)));
   }
 
   @Test

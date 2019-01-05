@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.MXBean;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +52,7 @@ public class PlayerService {
 
   @Transactional
   public void setPlayerOnline(Player player) {
+    player.setLastLogin(OffsetDateTime.now());
     log.debug("Adding player '{}'", player);
 
     onlinePlayerRepository.save(player);
