@@ -80,6 +80,7 @@ public class GameService {
    */
   public static final int NO_TEAM_ID = 1;
   public static final int OBSERVERS_TEAM_ID = -1;
+  public static final int COOP_DIFFICULTY = 3;
   public static final String OPTION_FOG_OF_WAR = "FogOfWar";
   public static final String OPTION_CHEATS_ENABLED = "CheatsEnabled";
   public static final String OPTION_PREBUILT_UNITS = "PrebuiltUnits";
@@ -173,6 +174,7 @@ public class GameService {
       ValidityVoter.fogOfWarVoter(),
       ValidityVoter.cheatsEnabledVoter(),
       ValidityVoter.prebuiltUnitsVoter(),
+      ValidityVoter.difficultyVoter(modService),
       ValidityVoter.civiliansRevealedVoter(modService),
       ValidityVoter.noRushVoter(),
       ValidityVoter.restrictedUnitsVoter(),

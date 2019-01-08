@@ -14,8 +14,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.faforever.server.game.GameService.NO_TEAM_ID;
+import static com.faforever.server.game.GameService.COOP_DIFFICULTY;
 import static com.faforever.server.game.GameService.OPTION_CHEATS_ENABLED;
 import static com.faforever.server.game.GameService.OPTION_CIVILIANS_REVEALED;
+import static com.faforever.server.game.GameService.OPTION_DIFFICULTY;
 import static com.faforever.server.game.GameService.OPTION_FOG_OF_WAR;
 import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
 import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
@@ -136,6 +138,11 @@ class ValidityVoter {
 
   Function<Game, Validity> hasAiVoter() {
     return game -> game.getAiOptions().size() > 0 ? Validity.HAS_AI : Validity.VALID;
+  }
+
+  Function<Game, Validity> difficultyVoter(ModService modService) {
+    return game -> ((int) game.getOptions().getOrDefault(OPTION_DIFFICULTY, COOP_DIFFICULTY)) < 3 && modService.isCoop(game.getFeaturedMod())
+      ? Validity.WRONG_DIFFICULTY : Validity.VALID;
   }
 
   Function<Game, Validity> civiliansRevealedVoter(ModService modService) {
