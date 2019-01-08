@@ -66,6 +66,7 @@ import static com.faforever.server.error.RequestExceptionWithCode.requestExcepti
 import static com.faforever.server.game.GameService.NO_TEAM_ID;
 import static com.faforever.server.game.GameService.OPTION_ARMY;
 import static com.faforever.server.game.GameService.OPTION_CHEATS_ENABLED;
+import static com.faforever.server.game.GameService.OPTION_CIVILIANS_REVEALED;
 import static com.faforever.server.game.GameService.OPTION_COLOR;
 import static com.faforever.server.game.GameService.OPTION_DIFFICULTY;
 import static com.faforever.server.game.GameService.OPTION_EXPANSION;
@@ -74,7 +75,6 @@ import static com.faforever.server.game.GameService.OPTION_FOG_OF_WAR;
 import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
 import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
 import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
-import static com.faforever.server.game.GameService.OPTION_REVEALED_CIVILIANS;
 import static com.faforever.server.game.GameService.OPTION_START_SPOT;
 import static com.faforever.server.game.GameService.OPTION_TEAM;
 import static com.faforever.server.game.GameService.OPTION_TEAM_LOCK;
@@ -1261,6 +1261,8 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityTeamSpawnCoop() throws Exception {
     Game game = hostGame(player1, 1);
+    game.setVictoryCondition(VictoryCondition.SANDBOX);
+
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_TEAM_SPAWN, "random");
     when(modService.isCoop(any())).thenReturn(true);
@@ -1274,8 +1276,10 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityCiviliansRevealedCoop() throws Exception {
     Game game = hostGame(player1, 1);
+    game.setVictoryCondition(VictoryCondition.SANDBOX);
+
     addPlayer(game, player2);
-    instance.updateGameOption(player1, OPTION_REVEALED_CIVILIANS, "Yes");
+    instance.updateGameOption(player1, OPTION_CIVILIANS_REVEALED, "Yes");
     when(modService.isCoop(any())).thenReturn(true);
 
     launchGame(game);
@@ -1287,6 +1291,8 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityDifficultyLowCoop() throws Exception {
     Game game = hostGame(player1, 1);
+    game.setVictoryCondition(VictoryCondition.SANDBOX);
+
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_DIFFICULTY, 1);
     when(modService.isCoop(any())).thenReturn(true);
@@ -1300,6 +1306,8 @@ public class GameServiceTest {
   @Test
   public void updateGameValidityExpansionDisabledCoop() throws Exception {
     Game game = hostGame(player1, 1);
+    game.setVictoryCondition(VictoryCondition.SANDBOX);
+
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_EXPANSION, false);
     when(modService.isCoop(any())).thenReturn(true);
