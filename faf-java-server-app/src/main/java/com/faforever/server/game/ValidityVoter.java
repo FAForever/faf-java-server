@@ -25,6 +25,7 @@ import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
 import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
 import static com.faforever.server.game.GameService.OPTION_TEAM;
 import static com.faforever.server.game.GameService.OPTION_TEAM_LOCK;
+import static com.faforever.server.game.GameService.OPTION_TEAM_SPAWN;
 
 @UtilityClass
 class ValidityVoter {
@@ -154,5 +155,10 @@ class ValidityVoter {
   Function<Game, Validity> civiliansRevealedVoter(ModService modService) {
     return game -> !"No".equals(game.getOptions().get(OPTION_CIVILIANS_REVEALED)) && modService.isCoop(game.getFeaturedMod())
       ? Validity.CIVILIANS_REVEALED : Validity.VALID;
+  }
+
+  Function<Game, Validity> teamSpawnVoter(ModService modService) {
+    return game -> !"fixed".equals(game.getOptions().get(OPTION_TEAM_SPAWN)) && modService.isCoop(game.getFeaturedMod())
+      ? Validity.SPAWN_NOT_FIXED : Validity.VALID;
   }
 }
