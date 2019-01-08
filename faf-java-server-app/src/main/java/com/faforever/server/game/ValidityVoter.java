@@ -119,8 +119,14 @@ class ValidityVoter {
   }
 
   Function<Game, Validity> victoryConditionVoter(ModService modService) {
-    return game -> game.getVictoryCondition() != VictoryCondition.DEMORALIZATION && !modService.isCoop(game.getFeaturedMod())
-      ? Validity.WRONG_VICTORY_CONDITION : Validity.VALID;
+    return game -> {
+      if (modService.isCoop(game.getFeaturedMod())) {
+        return game.getVictoryCondition() != VictoryCondition.SANDBOX
+          ? Validity.WRONG_VICTORY_CONDITION : Validity.VALID;
+      }
+      return game.getVictoryCondition() != VictoryCondition.DEMORALIZATION
+        ? Validity.WRONG_VICTORY_CONDITION : Validity.VALID;
+    };
   }
 
   Function<Game, Validity> isRankedVoter(ModService modService) {
