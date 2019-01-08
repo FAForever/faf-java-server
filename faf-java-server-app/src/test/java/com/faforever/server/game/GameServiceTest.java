@@ -955,6 +955,7 @@ public class GameServiceTest {
     Game game = hostGame(player1, 1);
     addPlayer(game, player2);
     addPlayer(game, player3);
+    when(modService.isCoop(any())).thenReturn(false);
 
     instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
     instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 2);
@@ -965,6 +966,26 @@ public class GameServiceTest {
     instance.updateGameValidity(game);
 
     assertThat(game.getValidity(), is(Validity.UNEVEN_TEAMS));
+  }
+
+  @Test
+  public void updateGameValidityUnevenTeamsCoop() throws Exception {
+    Player player3 = (Player) new Player().setId(3);
+
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+    addPlayer(game, player3);
+    when(modService.isCoop(any())).thenReturn(true);
+
+    instance.updatePlayerOption(player1, player1.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player2.getId(), OPTION_TEAM, 2);
+    instance.updatePlayerOption(player1, player3.getId(), OPTION_TEAM, 3);
+
+    launchGame(game);
+
+    instance.updateGameValidity(game);
+
+    assertThat(game.getValidity(), not(is(Validity.UNEVEN_TEAMS)));
   }
 
   /**
