@@ -110,8 +110,8 @@ class ValidityVoter {
     return game -> !"explored".equals(game.getOptions().get(OPTION_FOG_OF_WAR)) ? Validity.NO_FOG_OF_WAR : Validity.VALID;
   }
 
-  Function<Game, Validity> evenTeamsVoter() {
-    return game -> !areTeamsEven(game) ? Validity.UNEVEN_TEAMS : Validity.VALID;
+  Function<Game, Validity> evenTeamsVoter(ModService modService) {
+    return game -> !areTeamsEven(game) && !modService.isCoop(game.getFeaturedMod()) ? Validity.UNEVEN_TEAMS : Validity.VALID;
   }
 
   Function<Game, Validity> freeForAllVoter() {

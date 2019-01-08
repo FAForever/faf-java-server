@@ -169,7 +169,7 @@ public class GameService {
       ValidityVoter.isRankedVoter(modService),
       ValidityVoter.victoryConditionVoter(modService),
       ValidityVoter.freeForAllVoter(),
-      ValidityVoter.evenTeamsVoter(),
+      ValidityVoter.evenTeamsVoter(modService),
       ValidityVoter.fogOfWarVoter(),
       ValidityVoter.cheatsEnabledVoter(),
       ValidityVoter.prebuiltUnitsVoter(),
