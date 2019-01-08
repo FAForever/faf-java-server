@@ -175,6 +175,7 @@ public class GameService {
       ValidityVoter.cheatsEnabledVoter(),
       ValidityVoter.prebuiltUnitsVoter(),
       ValidityVoter.difficultyVoter(modService),
+      ValidityVoter.expansionDisabledVoter(modService),
       ValidityVoter.civiliansRevealedVoter(modService),
       ValidityVoter.noRushVoter(),
       ValidityVoter.restrictedUnitsVoter(),
