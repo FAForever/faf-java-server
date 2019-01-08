@@ -28,6 +28,12 @@ public enum Validity {
   STALE,
   /** The game had at least one AI player. */
   HAS_AI,
-  /** The game was in progress while the server was being shut down. */
+  CIVILIANS_REVEALED,
+  WRONG_DIFFICULTY,
+  EXPANSION_DISABLED,
+  SPAWN_NOT_FIXED,
+  /** The game was in progress while the server was being shut down.
+   *  TODO: Add this to FAForever/db
+   */
   SERVER_SHUTDOWN,
 }
