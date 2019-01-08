@@ -91,7 +91,7 @@ public class GameService {
   public static final String OPTION_TEAM = "Team";
   public static final String OPTION_TEAM_LOCK = "TeamLock";
   public static final String OPTION_TEAM_SPAWN = "TeamSpawn";
-  public static final String OPTION_REVEALED_CIVILIANS = "RevealedCivilians";
+  public static final String OPTION_CIVILIANS_REVEALED = "RevealedCivilians";
   public static final String OPTION_DIFFICULTY = "Difficulty";
   public static final String OPTION_EXPANSION = "Expansion";
   public static final String OPTION_VICTORY_CONDITION = VictoryCondition.GAME_OPTION_NAME;
@@ -173,6 +173,7 @@ public class GameService {
       ValidityVoter.fogOfWarVoter(),
       ValidityVoter.cheatsEnabledVoter(),
       ValidityVoter.prebuiltUnitsVoter(),
+      ValidityVoter.civiliansRevealedVoter(modService),
       ValidityVoter.noRushVoter(),
       ValidityVoter.restrictedUnitsVoter(),
       ValidityVoter.rankedMapVoter(),
