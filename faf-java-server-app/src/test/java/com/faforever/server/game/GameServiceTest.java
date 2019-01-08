@@ -840,46 +840,71 @@ public class GameServiceTest {
     assertThat(game.getValidity(), is(Validity.BAD_MAP));
   }
 
-  @Test
-  public void updateGameValidityWrongVictoryConditionDominationNotCoop() throws Exception {
+  public void updateGameValidityWrongVictoryCondition(boolean isCoop, VictoryCondition victoryCondition, Validity validity)  throws Exception {
     Game game = hostGame(player1, 1);
 
-    game.setVictoryCondition(VictoryCondition.DOMINATION);
-    when(modService.isCoop(any())).thenReturn(false);
+    game.setVictoryCondition(victoryCondition);
+    when(modService.isCoop(any())).thenReturn(isCoop);
 
     launchGame(game);
 
     instance.updateGameValidity(game);
 
-    assertThat(game.getValidity(), is(Validity.WRONG_VICTORY_CONDITION));
+    assertThat(game.getValidity(), is(validity));
+  }
+
+  @Test
+  public void updateGameValidityWrongVictoryConditionDominationNotCoop() throws Exception {
+    updateGameValidityWrongVictoryCondition(
+      false,
+      VictoryCondition.DOMINATION,
+      Validity.WRONG_VICTORY_CONDITION
+    );
   }
 
   @Test
   public void updateGameValidityWrongVictoryConditionEradicationNotCoop() throws Exception {
-    Game game = hostGame(player1, 1);
-
-    game.setVictoryCondition(VictoryCondition.ERADICATION);
-    when(modService.isCoop(any())).thenReturn(false);
-
-    launchGame(game);
-
-    instance.updateGameValidity(game);
-
-    assertThat(game.getValidity(), is(Validity.WRONG_VICTORY_CONDITION));
+    updateGameValidityWrongVictoryCondition(
+      false,
+      VictoryCondition.ERADICATION,
+      Validity.WRONG_VICTORY_CONDITION
+    );
   }
 
   @Test
   public void updateGameValidityWrongVictoryConditionSandboxNotCoop() throws Exception {
-    Game game = hostGame(player1, 1);
+    updateGameValidityWrongVictoryCondition(
+      false,
+      VictoryCondition.SANDBOX,
+      Validity.WRONG_VICTORY_CONDITION
+    );
+  }
 
-    game.setVictoryCondition(VictoryCondition.SANDBOX);
-    when(modService.isCoop(any())).thenReturn(false);
+  @Test
+  public void updateGameValidityWrongVictoryConditionDemoralizationCoop() throws Exception {
+    updateGameValidityWrongVictoryCondition(
+      true,
+      VictoryCondition.DEMORALIZATION,
+      Validity.WRONG_VICTORY_CONDITION
+    );
+  }
 
-    launchGame(game);
+  @Test
+  public void updateGameValidityWrongVictoryConditionDominationCoop() throws Exception {
+    updateGameValidityWrongVictoryCondition(
+      true,
+      VictoryCondition.DOMINATION,
+      Validity.WRONG_VICTORY_CONDITION
+    );
+  }
 
-    instance.updateGameValidity(game);
-
-    assertThat(game.getValidity(), is(Validity.WRONG_VICTORY_CONDITION));
+  @Test
+  public void updateGameValidityWrongVictoryConditionEradicationCoop() throws Exception {
+    updateGameValidityWrongVictoryCondition(
+      true,
+      VictoryCondition.ERADICATION,
+      Validity.WRONG_VICTORY_CONDITION
+    );
   }
 
   @Test
