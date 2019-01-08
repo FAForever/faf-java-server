@@ -1280,6 +1280,7 @@ public class GameServiceTest {
 
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_CIVILIANS_REVEALED, "Yes");
+    instance.updateGameOption(player1, OPTION_EXPANSION, "true");
     when(modService.isCoop(any())).thenReturn(true);
 
     launchGame(game);
@@ -1309,7 +1310,7 @@ public class GameServiceTest {
     game.setVictoryCondition(VictoryCondition.SANDBOX);
 
     addPlayer(game, player2);
-    instance.updateGameOption(player1, OPTION_EXPANSION, false);
+    instance.updateGameOption(player1, OPTION_EXPANSION, "false");
     when(modService.isCoop(any())).thenReturn(true);
 
     launchGame(game);
