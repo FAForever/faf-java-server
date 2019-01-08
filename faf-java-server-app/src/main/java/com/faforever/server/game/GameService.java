@@ -90,6 +90,10 @@ public class GameService {
   public static final String OPTION_TITLE = "Title";
   public static final String OPTION_TEAM = "Team";
   public static final String OPTION_TEAM_LOCK = "TeamLock";
+  public static final String OPTION_TEAM_SPAWN = "TeamSpawn";
+  public static final String OPTION_REVEALED_CIVILIANS = "RevealedCivilians";
+  public static final String OPTION_DIFFICULTY = "Difficulty";
+  public static final String OPTION_EXPANSION = "Expansion";
   public static final String OPTION_VICTORY_CONDITION = VictoryCondition.GAME_OPTION_NAME;
   public static final Duration DEFAULT_MIN_DELAY = Duration.ofSeconds(1);
   public static final Duration DEFAULT_MAX_DELAY = Duration.ofSeconds(5);

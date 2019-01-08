@@ -67,13 +67,18 @@ import static com.faforever.server.game.GameService.NO_TEAM_ID;
 import static com.faforever.server.game.GameService.OPTION_ARMY;
 import static com.faforever.server.game.GameService.OPTION_CHEATS_ENABLED;
 import static com.faforever.server.game.GameService.OPTION_COLOR;
+import static com.faforever.server.game.GameService.OPTION_DIFFICULTY;
+import static com.faforever.server.game.GameService.OPTION_EXPANSION;
 import static com.faforever.server.game.GameService.OPTION_FACTION;
 import static com.faforever.server.game.GameService.OPTION_FOG_OF_WAR;
 import static com.faforever.server.game.GameService.OPTION_NO_RUSH;
 import static com.faforever.server.game.GameService.OPTION_PREBUILT_UNITS;
 import static com.faforever.server.game.GameService.OPTION_RESTRICTED_CATEGORIES;
+import static com.faforever.server.game.GameService.OPTION_REVEALED_CIVILIANS;
 import static com.faforever.server.game.GameService.OPTION_START_SPOT;
 import static com.faforever.server.game.GameService.OPTION_TEAM;
+import static com.faforever.server.game.GameService.OPTION_TEAM_LOCK;
+import static com.faforever.server.game.GameService.OPTION_TEAM_SPAWN;
 import static com.faforever.server.game.GameService.OPTION_VICTORY_CONDITION;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -1067,7 +1072,7 @@ public class GameServiceTest {
   public void updateGameValidityTeamsUnlocked() throws Exception {
     Game game = hostGame(player1, 1);
     addPlayer(game, player2);
-    game.getOptions().put(GameService.OPTION_TEAM_LOCK, "unlocked");
+    game.getOptions().put(OPTION_TEAM_LOCK, "unlocked");
     launchGame(game);
 
     reportPlayerScores(player1, player2);
@@ -1230,6 +1235,58 @@ public class GameServiceTest {
     instance.updateGameValidity(game);
 
     assertThat(game.getValidity(), is(Validity.TOO_SHORT));
+  }
+
+  @Test
+  public void updateGameValidityTeamSpawnCoop() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+    instance.updateGameOption(player1, OPTION_TEAM_SPAWN, "random");
+    when(modService.isCoop(any())).thenReturn(true);
+
+    launchGame(game);
+    instance.updateGameValidity(game);
+
+    assertThat(game.getValidity(), is(Validity.SPAWN_NOT_FIXED));
+  }
+
+  @Test
+  public void updateGameValidityCiviliansRevealedCoop() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+    instance.updateGameOption(player1, OPTION_REVEALED_CIVILIANS, "Yes");
+    when(modService.isCoop(any())).thenReturn(true);
+
+    launchGame(game);
+    instance.updateGameValidity(game);
+
+    assertThat(game.getValidity(), is(Validity.CIVILIANS_REVEALED));
+  }
+
+  @Test
+  public void updateGameValidityDifficultyLowCoop() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+    instance.updateGameOption(player1, OPTION_DIFFICULTY, 1);
+    when(modService.isCoop(any())).thenReturn(true);
+
+    launchGame(game);
+    instance.updateGameValidity(game);
+
+    assertThat(game.getValidity(), is(Validity.WRONG_DIFFICULTY));
+  }
+
+  @Test
+  public void updateGameValidityExpansionDisabledCoop() throws Exception {
+    Game game = hostGame(player1, 1);
+    addPlayer(game, player2);
+    instance.updateGameOption(player1, OPTION_EXPANSION, false);
+    when(modService.isCoop(any())).thenReturn(true);
+
+    launchGame(game);
+    instance.updateGameValidity(game);
+
+    assertThat(game.getValidity(), is(Validity.EXPANSION_DISABLED));
   }
 
   @Test(expected = IllegalStateException.class)
