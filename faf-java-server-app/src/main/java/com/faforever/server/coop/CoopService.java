@@ -30,6 +30,10 @@ public class CoopService {
     Requests.verify(game != null, ErrorCode.COOP_CANT_REPORT_NOT_IN_GAME);
 
     log.debug("Player '{}' reported coop result '{}' with secondary targets '{}' for game: {}", player, duration, secondaryTargets, game);
+    if (game.getValidity() != Validity.COOP_UNRANKED) {
+        log.debug("Game is not valid");
+        return;
+    }
 
     Optional<CoopMap> optional = coopMapRepository.findOneByFilenameLikeIgnoreCase(game.getMapFolderName());
     if (optional.isPresent()) {
