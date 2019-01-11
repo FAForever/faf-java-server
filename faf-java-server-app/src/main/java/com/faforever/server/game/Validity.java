@@ -24,8 +24,7 @@ public enum Validity {
   UNEVEN_TEAMS,
   UNKNOWN_RESULT,
   TEAMS_UNLOCKED,
-  /** The server never received a game-end message (usually because the server crashed). */
-  STALE,
+  MULTI_TEAM,
   /** The game had at least one AI player. */
   HAS_AI,
   CIVILIANS_REVEALED,
@@ -33,6 +32,10 @@ public enum Validity {
   EXPANSION_DISABLED,
   SPAWN_NOT_FIXED,
   OTHER_UNRANK,
+  /** The server never received a game-end message (usually because the server crashed).
+   *  TODO: Add this to FAForever/db
+   */
+  STALE,
   /** The game was in progress while the server was being shut down.
    *  TODO: Add this to FAForever/db
    */
