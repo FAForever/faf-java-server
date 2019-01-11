@@ -32,6 +32,7 @@ public enum Validity {
   WRONG_DIFFICULTY,
   EXPANSION_DISABLED,
   SPAWN_NOT_FIXED,
+  OTHER_UNRANK,
   /** The game was in progress while the server was being shut down.
    *  TODO: Add this to FAForever/db
    */
