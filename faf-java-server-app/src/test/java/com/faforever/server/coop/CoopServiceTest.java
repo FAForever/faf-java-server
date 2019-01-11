@@ -3,6 +3,7 @@ package com.faforever.server.coop;
 import com.faforever.server.error.ErrorCode;
 import com.faforever.server.game.Game;
 import com.faforever.server.game.GamePlayerStats;
+import com.faforever.server.game.Validity;
 import com.faforever.server.player.Player;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,9 +26,10 @@ import static com.faforever.server.error.RequestExceptionWithCode.requestExcepti
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CoopServiceTest {
 
   @Rule
@@ -50,8 +52,37 @@ public class CoopServiceTest {
   }
 
   @Test
+  public void reportOperationCompleteNotValid() throws Exception {
+    /** Coop games cannot have state VALID. Should be COOP_UNRANKED
+    *   for it to show up in the leaderboard.
+    */
+    Game game = new Game()
+                  .setId(42)
+                  .setMapFolderName("SCMP_001")
+                  .setValidity(Validity.VALID);
+
+    Player player = new Player();
+    player.setCurrentGame(game);
+
+    /** This needs to exist in order for the test to fail in case the validity
+     * check is removed. For the test to pass however, we need to allow this
+     * unused mock by using the Silent runner. There are ways to just enable
+     * lenient stubbing on a single mock, but they don't seem to work with the
+     * current project configurations.
+     */
+    CoopMap mission = new CoopMap();
+    when(coopMapRepository.findOneByFilenameLikeIgnoreCase("SCMP_001")).thenReturn(Optional.of(mission));
+
+    instance.reportOperationComplete(player, false, Duration.ofMinutes(8));
+    verifyZeroInteractions(coopLeaderboardRepository);
+  }
+
+  @Test
   public void reportOperationComplete() throws Exception {
-    Game game = new Game().setId(42).setMapFolderName("SCMP_001");
+    Game game = new Game()
+                  .setId(42)
+                  .setMapFolderName("SCMP_001")
+                  .setValidity(Validity.COOP_UNRANKED);
     Map<Integer, GamePlayerStats> playerStats = game.getPlayerStats();
     playerStats.put(1, new GamePlayerStats());
     playerStats.put(2, new GamePlayerStats());
