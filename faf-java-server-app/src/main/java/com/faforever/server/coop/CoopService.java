@@ -31,8 +31,9 @@ public class CoopService {
     Requests.verify(game != null, ErrorCode.COOP_CANT_REPORT_NOT_IN_GAME);
 
     log.debug("Player '{}' reported coop result '{}' with secondary targets '{}' for game: {}", player, duration, secondaryTargets, game);
-    if (game.getValidity() != Validity.COOP_UNRANKED) {
-        log.debug("Game is not valid");
+    Validity validity = game.getValidity();
+    if (validity != Validity.COOP_UNRANKED) {
+        log.debug("The game validity '{}' is not eligible for coop leaderboards.", validity);
         return;
     }
 
