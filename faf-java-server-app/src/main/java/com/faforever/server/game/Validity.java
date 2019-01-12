@@ -31,6 +31,7 @@ public enum Validity {
   WRONG_DIFFICULTY,
   EXPANSION_DISABLED,
   SPAWN_NOT_FIXED,
+  /** The game was unranked for a reason which has not been added to the database yet. */
   OTHER_UNRANK,
   /** The server never received a game-end message (usually because the server crashed).
    *  TODO: Add this to FAForever/db
