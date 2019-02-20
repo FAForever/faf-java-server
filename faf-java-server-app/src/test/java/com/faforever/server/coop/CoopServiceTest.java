@@ -53,7 +53,7 @@ public class CoopServiceTest {
 
   @Test
   public void reportOperationCompleteNotValid() throws Exception {
-    /** Coop games cannot have state VALID. Should be COOP_UNRANKED
+    /* Coop games cannot have state VALID. Should be COOP_UNRANKED
     *   for it to show up in the leaderboard.
     */
     Game game = new Game()
@@ -64,7 +64,7 @@ public class CoopServiceTest {
     Player player = new Player();
     player.setCurrentGame(game);
 
-    /** This needs to exist in order for the test to fail in case the validity
+    /* This needs to exist in order for the test to fail in case the validity
      * check is removed. For the test to pass however, we need to allow this
      * unused mock by using the Silent runner. There are ways to just enable
      * lenient stubbing on a single mock, but they don't seem to work with the
