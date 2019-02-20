@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import static com.faforever.server.game.GameService.NO_TEAM_ID;
 import static com.faforever.server.game.GameService.COOP_DIFFICULTY;
+import static com.faforever.server.game.GameService.DEFAULT_EXPANSION;
 import static com.faforever.server.game.GameService.OPTION_CHEATS_ENABLED;
 import static com.faforever.server.game.GameService.OPTION_CIVILIANS_REVEALED;
 import static com.faforever.server.game.GameService.OPTION_DIFFICULTY;
@@ -148,7 +149,7 @@ class ValidityVoter {
   }
 
   Function<Game, Validity> expansionDisabledVoter(ModService modService) {
-    return game -> !"true".equals(game.getOptions().get(OPTION_EXPANSION)) && modService.isCoop(game.getFeaturedMod())
+    return game -> ((int) game.getOptions().getOrDefault(OPTION_EXPANSION, DEFAULT_EXPANSION)) != 1 && modService.isCoop(game.getFeaturedMod())
       ? Validity.EXPANSION_DISABLED : Validity.VALID;
   }
 

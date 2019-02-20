@@ -1266,7 +1266,7 @@ public class GameServiceTest {
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_TEAM_SPAWN, "random");
     instance.updateGameOption(player1, OPTION_CIVILIANS_REVEALED, "No");
-    instance.updateGameOption(player1, OPTION_EXPANSION, "true");
+    instance.updateGameOption(player1, OPTION_EXPANSION, 1);
     when(modService.isCoop(any())).thenReturn(true);
 
     launchGame(game);
@@ -1283,7 +1283,7 @@ public class GameServiceTest {
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_TEAM_SPAWN, "fixed");
     instance.updateGameOption(player1, OPTION_CIVILIANS_REVEALED, "Yes");
-    instance.updateGameOption(player1, OPTION_EXPANSION, "true");
+    instance.updateGameOption(player1, OPTION_EXPANSION, 1);
     when(modService.isCoop(any())).thenReturn(true);
 
     launchGame(game);
@@ -1317,7 +1317,7 @@ public class GameServiceTest {
     addPlayer(game, player2);
     instance.updateGameOption(player1, OPTION_TEAM_SPAWN, "fixed");
     instance.updateGameOption(player1, OPTION_CIVILIANS_REVEALED, "No");
-    instance.updateGameOption(player1, OPTION_EXPANSION, "false");
+    instance.updateGameOption(player1, OPTION_EXPANSION, 0);
     when(modService.isCoop(any())).thenReturn(true);
 
     launchGame(game);
