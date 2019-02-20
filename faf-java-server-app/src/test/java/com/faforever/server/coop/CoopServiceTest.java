@@ -25,11 +25,13 @@ import java.util.Optional;
 import static com.faforever.server.error.RequestExceptionWithCode.requestExceptionWithCode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class CoopServiceTest {
 
   @Rule
@@ -64,14 +66,8 @@ public class CoopServiceTest {
     Player player = new Player();
     player.setCurrentGame(game);
 
-    /* This needs to exist in order for the test to fail in case the validity
-     * check is removed. For the test to pass however, we need to allow this
-     * unused mock by using the Silent runner. There are ways to just enable
-     * lenient stubbing on a single mock, but they don't seem to work with the
-     * current project configurations.
-     */
     CoopMap mission = new CoopMap();
-    when(coopMapRepository.findOneByFilenameLikeIgnoreCase("SCMP_001")).thenReturn(Optional.of(mission));
+    verify(coopMapRepository, never()).findOneByFilenameLikeIgnoreCase(any());
 
     instance.reportOperationComplete(player, false, Duration.ofMinutes(8));
     verifyZeroInteractions(coopLeaderboardRepository);
