@@ -66,7 +66,6 @@ public class CoopServiceTest {
     Player player = new Player();
     player.setCurrentGame(game);
 
-    CoopMap mission = new CoopMap();
     verify(coopMapRepository, never()).findOneByFilenameLikeIgnoreCase(any());
 
     instance.reportOperationComplete(player, false, Duration.ofMinutes(8));
