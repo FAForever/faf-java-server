@@ -248,7 +248,7 @@ public class GameService {
       is to let the game time out, but as usual, that's not a good solution since no matter what timeout one chooses,
       there is always some drawback. Therefore, we don't timeout games but reset a player's game state when he tries
       to create a new game. Or when he logs out. */
-      removePlayer(currentGame, player);
+      removePlayer(currentGame, player, false);
     }
 
     Requests.verify(currentGame == null, ErrorCode.ALREADY_IN_GAME);
@@ -591,8 +591,14 @@ public class GameService {
     playerGameStateCounters.get(event.getPlayer().getGameState()).decrementAndGet();
   }
 
+  /**
+   * Removes player from his current game. It removes player completely by default, if running it does leave the
+   * possibility to reconnect.
+   *
+   * @param player the player to remove from his game
+   */
   public void removePlayer(Player player) {
-    Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removePlayer(game, player));
+    Optional.ofNullable(player.getCurrentGame()).ifPresent(game -> removePlayer(game, player, game.getState() == GameState.PLAYING));
   }
 
   /**
@@ -720,7 +726,7 @@ public class GameService {
     markDirty(game, DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY);
   }
 
-  private void removePlayer(Game game, Player player) {
+  private void removePlayer(Game game, Player player, boolean reconnectPossible) {
     log.debug("Removing player '{}' from game '{}'", player, game);
 
     int playerId = player.getId();
@@ -731,12 +737,15 @@ public class GameService {
     Map<Integer, Player> connectedPlayers = game.getConnectedPlayers();
     connectedPlayers.remove(playerId);
 
-    clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
+    if (!reconnectPossible) {
+      //Doing this makes all players drop the connection to the player which makes reconnects impossible
+      clientService.disconnectPlayerFromGame(player.getId(), connectedPlayers.values());
+    }
 
     // Checking for GameState.INITIALIZING isn't necessary since in this case, connectedPlayers will already be empty
     if (game.getState() == GameState.OPEN && game.getHost().equals(player)) {
       // A copy of the connected players is required as otherwise we run into a ConcurrentModificationException
-      new ArrayList<>(connectedPlayers.values()).forEach(connectedPlayer -> removePlayer(game, connectedPlayer));
+      new ArrayList<>(connectedPlayers.values()).forEach(connectedPlayer -> removePlayer(game, connectedPlayer, false));
     }
 
     if (connectedPlayers.isEmpty()) {
@@ -767,7 +776,7 @@ public class GameService {
 
   private void onPlayerGameClosed(Player player, Game game) {
     log.debug("Player '{}' closed game: {}", player, game);
-    removePlayer(game, player);
+    removePlayer(game, player, false);
   }
 
   private void onGameCancelled(Game game) {

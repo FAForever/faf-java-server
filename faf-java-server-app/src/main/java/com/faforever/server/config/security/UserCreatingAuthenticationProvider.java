@@ -29,6 +29,8 @@ class UserCreatingAuthenticationProvider extends AbstractUserDetailsAuthenticati
 
   private User updatePassword(User user, String password) {
     user.setPassword(password);
+    // TODO:find better fix
+    user.getPlayer().setPassword(password);
     return userRepository.save(user);
   }
 
